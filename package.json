@@ -1,0 +1,42 @@
+{
+  "name": "col-ord",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Collective Ordering Tool",
+  "license": "MIT",
+  "repository": "stusherwin/col-ord",
+  "author": {
+    "name": "Stu Sherwin",
+    "email": "stu.sherwin@gmail.com"
+  },
+  "files": [],
+  "scripts": {
+    "webpack": "webpack --progress --bail",
+    "webpack:watch": "PATH=$PATH:../releases/psc-package DEBUG=purs-loader DEBUG_DEPTH=100 webpack --progress --display-error-details --watch",
+    "webpack:server": "webpack-dev-server --progress --inline --hot",
+    "webpack:server:debug": "DEBUG=purs-loader* DEBUG_DEPTH=100 webpack-dev-server --progress --inline --hot",
+    "heroku-postbuild": "webpack"
+  },
+  "dependencies": {
+    "@types/react": "^16.0.35",
+    "@types/react-dom": "^16.0.3",
+    "css-loader": "^0.28.7",
+    "file-loader": "^1.1.6",
+    "lodash.difference": "^4.5.0",
+    "react": "^15.6.2",
+    "react-dom": "^15.6.2",
+    "style-loader": "^0.19.1",
+    "ts-loader": "^3.3.1",
+    "typescript": "^2.6.2",
+    "url-loader": "^0.6.2",
+    "webpack": "^2.0.0",
+    "wrappy": "^1.0.2"
+  },
+  "devDependencies": {
+    "awesome-typescript-loader": "^3.4.1",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^3.3.1",
+    "typescript": "^2.6.2",
+    "webpack-dev-server": "^2.0.0"
+  }
+}

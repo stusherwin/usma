@@ -1,0 +1,8 @@
+/node_modules/
+/output/
+/generated-docs/
+/.stack-work/
+/client/static/js/bundle.js
+/client/static/css/bundle.css
+npm-debug.log
+run-server
