@@ -15,7 +15,12 @@
     "webpack:watch": "PATH=$PATH:../releases/psc-package DEBUG=purs-loader DEBUG_DEPTH=100 webpack --progress --display-error-details --watch",
     "webpack:server": "webpack-dev-server --progress --inline --hot",
     "webpack:server:debug": "DEBUG=purs-loader* DEBUG_DEPTH=100 webpack-dev-server --progress --inline --hot",
-    "heroku-postbuild": "webpack"
+    "heroku-postbuild": "webpack",
+    "dev": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=webpack.config.js",
+    "watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=tailwind.webpack.config.js",
+    "prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js",
+    "serve": "webpack:server && watch"
+
   },
   "dependencies": {
     "@types/react": "^16.0.35",
@@ -29,14 +34,19 @@
     "ts-loader": "^3.3.1",
     "typescript": "^2.6.2",
     "url-loader": "^0.6.2",
-    "webpack": "^2.0.0",
+    "webpack": "^3.8.1",
     "wrappy": "^1.0.2"
   },
   "devDependencies": {
     "awesome-typescript-loader": "^3.4.1",
     "source-map-loader": "^0.2.3",
-    "ts-loader": "^3.3.1",
-    "typescript": "^2.6.2",
-    "webpack-dev-server": "^2.0.0"
-  }
+    "tailwindcss": "^0.6.4",
+    "webpack-dev-server": "^2.0.0",
+    "cross-env": "^5.1",
+    "css-loader": "^0.28.7",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "postcss": "^6.0.14",
+    "postcss-loader": "^2.0.8",
+    "style-loader": "^0.19.0"
+   }
 }

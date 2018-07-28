@@ -7,8 +7,6 @@ const webpack = require('webpack');
 const isWebpackDevServer = process.argv.filter(a => path.basename(a).indexOf('webpack-dev-server') >= 0).length;
 const isWatch = process.argv.filter(a => a === '--watch').length
 
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-
 var plugins =
   isWebpackDevServer || !isWatch ? [] : [
     function(){
@@ -23,8 +21,8 @@ module.exports = {
     entry: "./client/src/index.tsx",
 
     output: {
-        filename: "js/bundle.js",
-        path: __dirname + "/client/static"
+        filename: "./dist/app.js",
+        path: __dirname + "/dist"
     },
 
     devServer: {

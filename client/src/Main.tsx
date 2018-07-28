@@ -40,7 +40,10 @@ export class Main extends React.Component<MainProps, MainState> {
   render() {
     return (
       <div>
-      <h1>Orders</h1>
+        <div className="min-h-screen flex items-center justify-center">
+          <h1 className="text-5xl text-red font-sans">Orders</h1>
+        </div>
+  
         <ul>
           { this.state.orders.map(o => <li>{ Util.toDateString(o.date) }</li>) }
         </ul>
