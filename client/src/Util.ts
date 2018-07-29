@@ -1,5 +1,10 @@
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 export class Util {
-  static toDateString(date: Date): string {
-    return `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
+  static formatDate(date: Date): string {
+    return `${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`
+  }
+
+  static formatMoney(pence: number): string {
+    return (pence / 100.0).toFixed(2)
   }
 }

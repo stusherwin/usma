@@ -23,8 +23,14 @@ export class ApiError {
 
 export class ServerApi {
   static getOrders(): Promise<Order[]> {
-    const req = new Request(`/api/orders`)
-    return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
+    return Promise.resolve([
+      { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: false },
+      { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
+      { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
+      { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
+    ])
+    // const req = new Request(`/api/orders`)
+    // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
   }
 }
 
@@ -55,6 +61,8 @@ function toDate(date: ApiDate): Date {
 function toOrder(o: ApiOrder): Order {
   return {
     id: o.oId,
-    date: toDate(o.oDate)
+    createdDate: toDate(o.oDate),
+    total: 31240,
+    complete: true
   }
 }

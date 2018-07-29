@@ -1,3 +1,5 @@
 export type Order = { id: number
-                    , date: Date
+                    , createdDate: Date
+                    , total: number
+                    , complete: boolean
                     }
