@@ -3,3 +3,12 @@ export type Order = { id: number
                     , total: number
                     , complete: boolean
                     }
+
+export type Product = { id: number
+                      , name: string
+                      , price: number
+                      }
+
+export type Household = { id: number
+                        , name: string
+                        }

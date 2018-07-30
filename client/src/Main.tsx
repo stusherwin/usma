@@ -1,51 +1,89 @@
 import * as React from 'react';
 
-import { Order } from './Types'
+import { Order, Product, Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 
 export interface MainProps {}
-export interface MainState { initialDataLoaded: boolean
-                           , orders: Order[]
+export interface MainState { initialised: boolean
+                           , loading: boolean
                            , error: ApiError | null
+                           , orders: Order[]
+                           , products: Product[]
+                           , households: Household[]
+                           , location: string | undefined
                            }
 
 export class Main extends React.Component<MainProps, MainState> {
   constructor(props: MainProps) {
     super(props)
 
-    this.state = { initialDataLoaded: false
-                 , orders: []
+    const urlParts = window.location.href.split('/').filter(l => l.length).slice(2)
+
+    this.state = { initialised: false
+                 , loading: false
                  , error: null
+                 , orders: []
+                 , products: []
+                 , households: []
+                 , location: urlParts[0]
                  }
   }
 
   componentDidMount() {
-    Promise.all([ServerApi.getOrders()])
+    this.request(Promise.all([ServerApi.getOrders(), ServerApi.getProducts(), ServerApi.getHouseholds()]))
       .then(results => {
-        let orders = results[0]
-
-        this.setState({ orders
-                      , initialDataLoaded: true
-                      })
-      })
-      .catch(err => {
-        let apiError = err as ApiError
-        console.log(err)
-        this.setState({ error: apiError
+        this.setState({ orders: results[0]
+                      , products: results[1]
+                      , households: results[2]
+                      , initialised: true
                       })
       })
   }
 
-  render() {
-    const urlParts = window.location.href.split('/').filter(l => l.length).slice(2)
+  request = (p: Promise<any>) => {
+    this.setState({loading: true})
+    p.then(_ => this.setState({loading: false}))
+     .catch(err => {
+       let apiError = err as ApiError
+       console.log(err)
+       this.setState({ loading: false
+                     , error: apiError
+                     })
+     })
 
-    switch(urlParts[0]) {
+    return p
+  }
+
+  body() {
+    if(!this.state.initialised) return null
+
+    switch(this.state.location) {
       case 'orders': return <OrdersPage orders={ this.state.orders } />
-      case 'products': return <ProductsPage />
-      case 'households': return <HouseholdsPage />
+      case 'products': return <ProductsPage products={ this.state.products } />
+      case 'households': return <HouseholdsPage households={ this.state.households } />
       default: return <div>Page not found</div>
     }
+  }
+
+  updatePath = (location: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    window.history.pushState(location, location, location)
+    this.setState({location})
+  }
+
+  render() {
+    return (
+      <div>
+        <div>
+          <a href="orders" onClick={this.updatePath('orders')}>Orders</a>
+          <a href="products" onClick={this.updatePath('products')}>Products</a>
+          <a href="households" onClick={this.updatePath('households')}>Households</a>
+        </div>
+        <div style={{visibility: this.state.loading? 'visible' : 'hidden'}}>Loading...</div>
+        { this.body() }
+      </div>
+    )
   }
 }
 
@@ -64,7 +102,7 @@ const OrdersPage = (props: { orders: Order[] }) => {
   )
 }
 
-const ProductsPage = (props: {}) => {
+const ProductsPage = (props: { products: Product[] }) => {
   return (
     <div>
       <h1>Products</h1>
@@ -72,7 +110,7 @@ const ProductsPage = (props: {}) => {
   )
 }
 
-const HouseholdsPage = (props: {}) => {
+const HouseholdsPage = (props: { households: Household[] }) => {
   return (
     <div>
       <h1>Households</h1>

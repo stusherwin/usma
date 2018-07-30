@@ -1,4 +1,5 @@
-import { Order } from './Types'
+import { Order, Product, Household } from './Types'
+import { setTimeout } from 'timers';
 
 type ApiOrder = { oId: number
                 , oDate: ApiDate
@@ -22,8 +23,14 @@ export class ApiError {
 }
 
 export class ServerApi {
+  static respond<T>(data: T) {
+    return new Promise<T>((resolve, reject) => {
+      setTimeout(() => resolve(data), 5000)
+    })
+  }
+
   static getOrders(): Promise<Order[]> {
-    return Promise.resolve([
+    return ServerApi.respond([
       { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: false },
       { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
       { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
@@ -31,6 +38,24 @@ export class ServerApi {
     ])
     // const req = new Request(`/api/orders`)
     // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
+  }
+
+  static getProducts(): Promise<Product[]> {
+    return ServerApi.respond([
+      { id: 1, name: 'Jam', price: 1240 },
+      { id: 2, name: 'Butter', price: 9523 },
+      { id: 3, name: 'Milk', price: 5210 },
+      { id: 4, name: 'Bananas', price: 1200 }
+    ])
+  }
+
+  static getHouseholds(): Promise<Household[]> {
+    return ServerApi.respond([
+      { id: 1, name: '123 Front Road' },
+      { id: 2, name: '1 Main Terrace' },
+      { id: 3, name: '24 The Street' },
+      { id: 4, name: '3 Bowling Alley' }
+    ])
   }
 }
 
