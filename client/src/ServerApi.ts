@@ -23,21 +23,48 @@ export class ApiError {
 }
 
 export class ServerApi {
-  static respond<T>(data: T) {
+  private static orders = [
+    { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
+    { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
+    { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
+    { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
+  ]
+
+  private static respond<T>(data: T) {
     return new Promise<T>((resolve, reject) => {
-      setTimeout(() => resolve(data), 5000)
+      setTimeout(() => resolve(data), 1000)
+    })
+  }
+
+  private static fail<T>(error: string) {
+    return new Promise<T>((resolve, reject) => {
+      setTimeout(() => reject(error), 1000)
     })
   }
 
   static getOrders(): Promise<Order[]> {
-    return ServerApi.respond([
-      { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: false },
-      { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
-      { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
-      { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
-    ])
+    return ServerApi.respond(ServerApi.orders.slice())
     // const req = new Request(`/api/orders`)
     // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
+  }
+
+  static getOrder(id: number): Promise<Order> {
+    let order = ServerApi.orders.find(o => o.id == id)
+    if(!order) return ServerApi.fail('Order not found')
+    console.log(order)
+    return ServerApi.respond(order)
+  }
+
+  static newOrder(): Promise<number> {
+    let maxId = !ServerApi.orders.length ? 0 : Math.max(...ServerApi.orders.map(o => o.id))
+    let newId = maxId + 1
+    ServerApi.orders.push({ id: newId, createdDate: new Date(2018, 0, 5), total: 33230, complete: false })
+    return ServerApi.respond(newId)
+  }
+
+  static deleteOrder(id: number): Promise<{}> {
+    ServerApi.orders.splice(ServerApi.orders.findIndex(o => o.id == id), 1)
+    return ServerApi.respond({})
   }
 
   static getProducts(): Promise<Product[]> {
