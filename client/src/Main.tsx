@@ -26,6 +26,10 @@ export class Main extends React.Component<MainProps, MainState> {
                  }
   }
 
+  componentDidMount() {
+    window.onpopstate = e => this.setState({url: e.state})
+  }
+
   request = <T extends {}>(p: Promise<T>) => {
     this.setState({ loading: true })
     p.then(_ => this.setState({ loading: false }))

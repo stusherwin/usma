@@ -1,4 +1,4 @@
-import { OrderList_Order, Order_Details, ProductList_Product, HouseholdList_Household } from './Types'
+import { OrderList_Order, Order, OrderHousehold, ProductList_Product, HouseholdList_Household } from './Types'
 import { setTimeout } from 'timers';
 
 type ApiOrder = { oId: number
@@ -44,7 +44,7 @@ export class ServerApi {
     { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
   ]
 
-  private static orderDetails: Order_Details[] = [
+  private static orderDetails: Order[] = [
     { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
       { id: 1, name: '123 Front Road', status: 'paid', total: 6954 },
       { id: 2, name: '1 Main Terrace', status: 'paid', total: 4455 },
@@ -53,6 +53,13 @@ export class ServerApi {
     ] },
   ]
 
+  private static orderHouseholdDetails: OrderHousehold[] = [
+    { orderId: 1, orderCreatedDate: new Date(2018, 0, 1), householdId: 1, householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
+      { productId: 1, productName: 'Jam', quantity: 1, total: 1240 },
+      { productId: 2, productName: 'Butter', quantity: 2, total: 9523 },
+    ] },
+  ]
+  
   private static respond<T>(data: T) {
     return new Promise<T>((resolve, reject) => {
       setTimeout(() => resolve(data), 1000)
@@ -71,8 +78,15 @@ export class ServerApi {
     // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
   }
 
-  static getOrderDetails(id: number): Promise<Order_Details> {
+  static getOrderDetails(id: number): Promise<Order> {
     let order = ServerApi.orderDetails.find(o => o.id == id)
+    if(!order) return ServerApi.fail('Order not found')
+    console.log(order)
+    return ServerApi.respond(order)
+  }
+
+  static getOrderHouseholdDetails(orderId: number, householdId: number): Promise<OrderHousehold> {
+    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
     if(!order) return ServerApi.fail('Order not found')
     console.log(order)
     return ServerApi.respond(order)
