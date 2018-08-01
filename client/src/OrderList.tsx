@@ -1,15 +1,16 @@
 import * as React from 'react';
 
-import { Order } from './Types'
+import { OrderList_Order } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
+import { Money } from './Money'
 
 export interface OrderListProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
                                 , navigate: (location: string) => void
                                 }
 
-export class OrderList extends React.Component<OrderListProps, { orders: Order[], initialised: boolean }> {
+export class OrderList extends React.Component<OrderListProps, { orders: OrderList_Order[], initialised: boolean }> {
   constructor(props: OrderListProps) {
     super(props)
 
@@ -19,7 +20,7 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
   }
 
   componentDidMount() {
-    this.props.request(ServerApi.getOrders())
+    this.props.request(ServerApi.getOrderList())
       .then(orders => {
         this.setState({ orders
                       , initialised: true
@@ -28,7 +29,7 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
   }
 
   newOrder = () => {
-    this.props.request(ServerApi.newOrder()).then(id => this.props.navigate('' + id))
+    this.props.request(ServerApi.newOrder()).then(id => this.props.navigate('/orders/' + id))
   }
 
   render() {
@@ -45,8 +46,8 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
             <div>
               <div>
                 <span>{ Util.formatDate(currentOrder.createdDate) }</span>
-                <span>&pound;{ Util.formatMoney(currentOrder.total) }</span>
-                <Link action={() => this.props.navigate('' + currentOrder.id)}>Manage</Link>
+                <Money amount={currentOrder.total} />
+                <Link action={() => this.props.navigate('/orders/' + currentOrder.id)}>Manage</Link>
               </div>
             </div>
           </div>
@@ -57,8 +58,8 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
             { pastOrders.map(o => (
               <div key={o.id}>
                 <span>{ Util.formatDate(o.createdDate) }</span>
-                <span>&pound;{ Util.formatMoney(o.total) }</span>
-                <Link action={() => this.props.navigate('' + o.id)}>View</Link>
+                <Money amount={o.total} />
+                <Link action={() => this.props.navigate('/orders/' + o.id)}>View</Link>
               </div>
             )) }
           </div>

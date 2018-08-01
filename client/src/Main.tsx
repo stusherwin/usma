@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { Order, Product, Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
@@ -19,7 +18,7 @@ export class Main extends React.Component<MainProps, MainState> {
   constructor(props: MainProps) {
     super(props)
 
-    const url = window.location.href.split('/').filter(l => l.length).slice(2).join('/')
+    const url = '/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
 
     this.state = { loading: false
                  , error: null
@@ -42,7 +41,7 @@ export class Main extends React.Component<MainProps, MainState> {
   }
 
   navigate = (url: string) => {
-    window.history.pushState(url, url, '/' + url)
+    window.history.pushState(url, url, url)
     this.setState({ url })
   }
 
@@ -50,9 +49,9 @@ export class Main extends React.Component<MainProps, MainState> {
     return (
       <div>
         <div>
-          <Link action={() => this.navigate('orders')}>Orders</Link>
-          <Link action={() => this.navigate('products')}>Products</Link>
-          <Link action={() => this.navigate('households')}>Households</Link>
+          <Link action={() => this.navigate('/orders')}>Orders</Link>
+          <Link action={() => this.navigate('/products')}>Products</Link>
+          <Link action={() => this.navigate('/households')}>Households</Link>
         </div>
         <div style={{visibility: this.state.loading? 'visible' : 'hidden'}}>Loading...</div>
         { this.body() }
@@ -61,7 +60,7 @@ export class Main extends React.Component<MainProps, MainState> {
   }
 
   body() {
-    let urlParts = this.state.url.split('/')
+    let urlParts = this.state.url.split('/').slice(1)
     let location = urlParts[0]
 
     switch(location) {

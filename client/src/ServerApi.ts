@@ -1,4 +1,4 @@
-import { Order, Product, Household } from './Types'
+import { OrderList_Order, Order_Details, ProductList_Product, HouseholdList_Household } from './Types'
 import { setTimeout } from 'timers';
 
 type ApiOrder = { oId: number
@@ -23,11 +23,34 @@ export class ApiError {
 }
 
 export class ServerApi {
-  private static orders = [
+  private static productList: ProductList_Product[] = [
+    { id: 1, name: 'Jam', price: 1240 },
+    { id: 2, name: 'Butter', price: 9523 },
+    { id: 3, name: 'Milk', price: 5210 },
+    { id: 4, name: 'Bananas', price: 1200 }
+  ]
+
+  private static householdList: HouseholdList_Household[] = [
+    { id: 1, name: '123 Front Road' },
+    { id: 2, name: '1 Main Terrace' },
+    { id: 3, name: '24 The Street' },
+    { id: 4, name: '3 Bowling Alley' }
+  ]
+
+  private static orderList: OrderList_Order[] = [
     { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
     { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
     { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
     { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
+  ]
+
+  private static orderDetails: Order_Details[] = [
+    { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
+      { id: 1, name: '123 Front Road', status: 'paid', total: 6954 },
+      { id: 2, name: '1 Main Terrace', status: 'paid', total: 4455 },
+      { id: 3, name: '24 The Street', status: 'unpaid', total: 4636 },
+      { id: 4, name: '3 Bowling Alley', status: 'unpaid', total: 10331 }
+    ] },
   ]
 
   private static respond<T>(data: T) {
@@ -42,47 +65,37 @@ export class ServerApi {
     })
   }
 
-  static getOrders(): Promise<Order[]> {
-    return ServerApi.respond(ServerApi.orders.slice())
+  static getOrderList(): Promise<OrderList_Order[]> {
+    return ServerApi.respond(ServerApi.orderList.slice())
     // const req = new Request(`/api/orders`)
     // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
   }
 
-  static getOrder(id: number): Promise<Order> {
-    let order = ServerApi.orders.find(o => o.id == id)
+  static getOrderDetails(id: number): Promise<Order_Details> {
+    let order = ServerApi.orderDetails.find(o => o.id == id)
     if(!order) return ServerApi.fail('Order not found')
     console.log(order)
     return ServerApi.respond(order)
   }
 
+  static getProductList(): Promise<ProductList_Product[]> {
+    return ServerApi.respond(ServerApi.productList.slice())
+  }
+
+  static getHouseholdList(): Promise<HouseholdList_Household[]> {
+    return ServerApi.respond(ServerApi.householdList.slice())
+  }
+
   static newOrder(): Promise<number> {
-    let maxId = !ServerApi.orders.length ? 0 : Math.max(...ServerApi.orders.map(o => o.id))
+    let maxId = !ServerApi.orderList.length ? 0 : Math.max(...ServerApi.orderList.map(o => o.id))
     let newId = maxId + 1
-    ServerApi.orders.push({ id: newId, createdDate: new Date(2018, 0, 5), total: 33230, complete: false })
+    ServerApi.orderList.push({ id: newId, createdDate: new Date(2018, 0, 5), total: 0, complete: false })
     return ServerApi.respond(newId)
   }
 
   static deleteOrder(id: number): Promise<{}> {
-    ServerApi.orders.splice(ServerApi.orders.findIndex(o => o.id == id), 1)
+    ServerApi.orderList.splice(ServerApi.orderList.findIndex(o => o.id == id), 1)
     return ServerApi.respond({})
-  }
-
-  static getProducts(): Promise<Product[]> {
-    return ServerApi.respond([
-      { id: 1, name: 'Jam', price: 1240 },
-      { id: 2, name: 'Butter', price: 9523 },
-      { id: 3, name: 'Milk', price: 5210 },
-      { id: 4, name: 'Bananas', price: 1200 }
-    ])
-  }
-
-  static getHouseholds(): Promise<Household[]> {
-    return ServerApi.respond([
-      { id: 1, name: '123 Front Road' },
-      { id: 2, name: '1 Main Terrace' },
-      { id: 3, name: '24 The Street' },
-      { id: 4, name: '3 Bowling Alley' }
-    ])
   }
 }
 
@@ -110,11 +123,11 @@ function toDate(date: ApiDate): Date {
   return new Date(Date.UTC(date.year, date.month - 1, date.day))
 }
 
-function toOrder(o: ApiOrder): Order {
+function toOrder(o: ApiOrder): OrderList_Order {
   return {
     id: o.oId,
     createdDate: toDate(o.oDate),
     total: 31240,
-    complete: true
+    complete: true,
   }
 }

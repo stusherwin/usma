@@ -1,16 +1,17 @@
 import * as React from 'react';
 
-import { Order } from './Types'
+import { Order_Details } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
+import { Money } from './Money'
 
 export interface OrderPageProps { id: number
                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                 , navigate: (location: string) => void
                                 }
 
-export interface OrderPageState { order: Order | null
+export interface OrderPageState { order: Order_Details | null
                                 , initialised: boolean
                                 }
 
@@ -24,7 +25,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
   }
 
   componentDidMount() {
-    this.props.request(ServerApi.getOrder(this.props.id))
+    this.props.request(ServerApi.getOrderDetails(this.props.id))
       .then(order => this.setState({ order
                                    , initialised: true
                                    }))
@@ -32,7 +33,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
   }
 
   delete = () => {
-    this.props.request(ServerApi.deleteOrder(this.props.id)).then(_ => this.props.navigate(''))
+    this.props.request(ServerApi.deleteOrder(this.props.id)).then(_ => this.props.navigate('/orders'))
   }
 
   render() {
@@ -41,8 +42,21 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
 
     return (
       <div>
-        <h1>Order: {Util.formatDate(this.state.order.createdDate)}</h1>
-        <Link action={this.delete}>Delete</Link>
+        <div><Link action={() => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
+        <h1>{Util.formatDate(this.state.order.createdDate)}</h1>
+        {!this.state.order.complete && !this.state.order.households.length ? <Link action={this.delete}>Delete</Link> : null}
+        <div>
+          {this.state.order.households.map(h => <div>
+            <span>{h.name}</span>
+            <Money amount={h.total} />
+            <span>{h.status}</span>
+            <Link action={() => {}}>Manage</Link>
+          </div>)}
+          <div>
+            <span>Total:</span>
+            <Money amount={this.state.order.total} />
+          </div>
+        </div>
       </div>
     )
   }
