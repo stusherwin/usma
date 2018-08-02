@@ -53,9 +53,9 @@ export class Main extends React.Component<MainProps, MainState> {
     return (
       <div>
         <div>
-          <Link action={() => this.navigate('/orders')}>Orders</Link>
-          <Link action={() => this.navigate('/products')}>Products</Link>
-          <Link action={() => this.navigate('/households')}>Households</Link>
+          <Link action={_ => this.navigate('/orders')}>Orders</Link>
+          <Link action={_ => this.navigate('/products')}>Products</Link>
+          <Link action={_ => this.navigate('/households')}>Households</Link>
         </div>
         <div style={{visibility: this.state.loading? 'visible' : 'hidden'}}>Loading...</div>
         { this.body() }

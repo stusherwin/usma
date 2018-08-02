@@ -47,7 +47,7 @@ export class OrderList extends React.Component<OrderListProps, { orders: OrderLi
               <div>
                 <span>{ Util.formatDate(currentOrder.createdDate) }</span>
                 <Money amount={currentOrder.total} />
-                <Link action={() => this.props.navigate('/orders/' + currentOrder.id)}>Manage</Link>
+                <Link action={_ => this.props.navigate('/orders/' + currentOrder.id)}>Manage</Link>
               </div>
             </div>
           </div>
@@ -59,7 +59,7 @@ export class OrderList extends React.Component<OrderListProps, { orders: OrderLi
               <div key={o.id}>
                 <span>{ Util.formatDate(o.createdDate) }</span>
                 <Money amount={o.total} />
-                <Link action={() => this.props.navigate('/orders/' + o.id)}>View</Link>
+                <Link action={_ => this.props.navigate('/orders/' + o.id)}>View</Link>
               </div>
             )) }
           </div>

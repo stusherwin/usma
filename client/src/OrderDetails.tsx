@@ -43,7 +43,7 @@ export class OrderDetails extends React.Component<OrderDetailsProps, OrderDetail
 
     return (
       <div>
-        <div><Link action={() => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
+        <div><Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
         <h1>{Util.formatDate(this.state.order.createdDate)}</h1>
         {!this.state.order.complete && !this.state.order.households.length ? <Link action={this.delete}>Delete</Link> : null}
         <div>
@@ -51,7 +51,7 @@ export class OrderDetails extends React.Component<OrderDetailsProps, OrderDetail
             <span>{h.name}</span>
             <Money amount={h.total} />
             <span>{h.status}</span>
-            <Link action={() => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
+            <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
           </div>)}
           <div>
             <span>Total:</span>

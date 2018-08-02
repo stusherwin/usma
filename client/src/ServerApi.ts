@@ -111,6 +111,35 @@ export class ServerApi {
     ServerApi.orderList.splice(ServerApi.orderList.findIndex(o => o.id == id), 1)
     return ServerApi.respond({})
   }
+
+  static addHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
+    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return ServerApi.fail('Order not found')
+    let product = ServerApi.productList.find(p => p.id == productId)
+    if(!product) return ServerApi.fail('Product not found')    
+    order.items.unshift({productId, productName: product.name, quantity: quantity, total: product.price * quantity})
+    return ServerApi.respond({})    
+  }
+
+  static removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
+    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return ServerApi.fail('Order not found')
+    let itemIndex = order.items.findIndex(i => i.productId == productId)
+    order.items.splice(itemIndex, 1)
+    return ServerApi.respond({})    
+  }
+
+  static updateHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
+    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return ServerApi.fail('Order not found')
+    let item = order.items.find(i => i.productId == productId)
+    if(!item) return ServerApi.fail('Item not found')
+    let product = ServerApi.productList.find(p => p.id == productId)
+    if(!product) return ServerApi.fail('Product not found')    
+    item.quantity = quantity
+    item.total = quantity * product.price
+    return ServerApi.respond({})    
+  }
 }
 
 function fetchHttpRequest<T>(req: Request, process: (res: any) => T): Promise<T> {
