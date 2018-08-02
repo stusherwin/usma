@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { OrderHousehold, ProductList_Product, OrderHousehold_Item } from './Types'
+import { HouseholdOrder, Product, HouseholdOrder_Item } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
@@ -12,12 +12,12 @@ export interface OrderHouseholdPageProps { orderId: number
                                          , navigate: (location: string) => void
                                          }
 
-export interface OrderHouseholdPageState { details: OrderHousehold | null
-                                         , products: ProductList_Product[]
+export interface OrderHouseholdPageState { details: HouseholdOrder | null
+                                         , products: Product[]
                                          , initialised: boolean
-                                         , addingProduct: ProductList_Product | null
+                                         , addingProduct: Product | null
                                          , addingProductQuantity: number
-                                         , editingProduct: ProductList_Product | null
+                                         , editingProduct: Product | null
                                          , editingProductQuantity: number
                                          }
 
@@ -44,7 +44,7 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
       .catch(_ => this.setState({ initialised: true }))
   }
 
-  startAdd = (product: ProductList_Product) => this.setState({ addingProduct: product })
+  startAdd = (product: Product) => this.setState({ addingProduct: product })
 
   addingProductChanged = (event: React.ChangeEvent<HTMLSelectElement>) =>
     this.setState({ addingProduct: this.state.products.find(p => '' + p.id == event.target.value) || null })
@@ -69,14 +69,14 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
                                      }))
   }
 
-  delete = (item: OrderHousehold_Item) => {
+  delete = (item: HouseholdOrder_Item) => {
     this.props.request(ServerApi.removeHouseholdOrderItem(this.props.orderId, this.props.householdId, item.productId))
       .then(() => this.props.request(ServerApi.getOrderHouseholdDetails(this.props.orderId, this.props.householdId)))
       .then(details => this.setState({ details
                                      }))
   }
 
-  startEdit = (item: OrderHousehold_Item) => {
+  startEdit = (item: HouseholdOrder_Item) => {
     let product = this.state.products.find(p => p.id == item.productId)
     if(!product) return
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Order } from './Types'
+import { OrderSummary } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
@@ -12,7 +12,7 @@ export interface OrderDetailsProps { id: number
                                    , navigate: (location: string) => void
                                    }
 
-export interface OrderDetailsState { order: Order | null
+export interface OrderDetailsState { order: OrderSummary | null
                                    , initialised: boolean
                                    }
 

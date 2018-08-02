@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { HouseholdList_Household } from './Types'
+import { Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 
@@ -8,7 +8,7 @@ export interface HouseholdsPageProps { request: <T extends {}>(p: Promise<T>) =>
                                      , navigate: (location: string) => void
                                      }
 
-export class HouseholdsPage extends React.Component<HouseholdsPageProps, { households: HouseholdList_Household[], initialised: boolean }> {
+export class HouseholdsPage extends React.Component<HouseholdsPageProps, { households: Household[], initialised: boolean }> {
   constructor(props: HouseholdsPageProps) {
     super(props)
 

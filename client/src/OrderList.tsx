@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { OrderList_Order } from './Types'
+import { Order } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
@@ -10,7 +10,7 @@ export interface OrderListProps { request: <T extends {}>(p: Promise<T>) => Prom
                                 , navigate: (location: string) => void
                                 }
 
-export class OrderList extends React.Component<OrderListProps, { orders: OrderList_Order[], initialised: boolean }> {
+export class OrderList extends React.Component<OrderListProps, { orders: Order[], initialised: boolean }> {
   constructor(props: OrderListProps) {
     super(props)
 

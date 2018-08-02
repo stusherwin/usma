@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ProductList_Product } from './Types'
+import { Product } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Money } from './Money'
@@ -9,7 +9,7 @@ export interface ProductsPageProps { request: <T extends {}>(p: Promise<T>) => P
                                    , navigate: (location: string) => void
                                    }
 
-export class ProductsPage extends React.Component<ProductsPageProps, { products: ProductList_Product[], initialised: boolean }> {
+export class ProductsPage extends React.Component<ProductsPageProps, { products: Product[], initialised: boolean }> {
   constructor(props: ProductsPageProps) {
     super(props)
 

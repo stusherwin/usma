@@ -1,4 +1,4 @@
-import { OrderList_Order, Order, OrderHousehold, ProductList_Product, HouseholdList_Household } from './Types'
+import { Order, OrderSummary, HouseholdOrder, Product, Household } from './Types'
 import { setTimeout } from 'timers';
 
 type ApiOrder = { oId: number
@@ -23,28 +23,28 @@ export class ApiError {
 }
 
 export class ServerApi {
-  private static productList: ProductList_Product[] = [
+  private static productList: Product[] = [
     { id: 1, name: 'Jam', price: 1240 },
     { id: 2, name: 'Butter', price: 9523 },
     { id: 3, name: 'Milk', price: 5210 },
     { id: 4, name: 'Bananas', price: 1200 }
   ]
 
-  private static householdList: HouseholdList_Household[] = [
+  private static householdList: Household[] = [
     { id: 1, name: '123 Front Road' },
     { id: 2, name: '1 Main Terrace' },
     { id: 3, name: '24 The Street' },
     { id: 4, name: '3 Bowling Alley' }
   ]
 
-  private static orderList: OrderList_Order[] = [
+  private static orderList: Order[] = [
     { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
     { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
     { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
     { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
   ]
 
-  private static orderDetails: Order[] = [
+  private static orderDetails: OrderSummary[] = [
     { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
       { id: 1, name: '123 Front Road', status: 'paid', total: 6954 },
       { id: 2, name: '1 Main Terrace', status: 'paid', total: 4455 },
@@ -53,7 +53,7 @@ export class ServerApi {
     ] },
   ]
 
-  private static orderHouseholdDetails: OrderHousehold[] = [
+  private static orderHouseholdDetails: HouseholdOrder[] = [
     { orderId: 1, orderCreatedDate: new Date(2018, 0, 1), householdId: 1, householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
       { productId: 1, productName: 'Jam', quantity: 1, total: 1240 },
       { productId: 2, productName: 'Butter', quantity: 2, total: 9523 },
@@ -72,31 +72,31 @@ export class ServerApi {
     })
   }
 
-  static getOrderList(): Promise<OrderList_Order[]> {
+  static getOrderList(): Promise<Order[]> {
     return ServerApi.respond(ServerApi.orderList.slice())
     // const req = new Request(`/api/orders`)
     // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
   }
 
-  static getOrderDetails(id: number): Promise<Order> {
+  static getOrderDetails(id: number): Promise<OrderSummary> {
     let order = ServerApi.orderDetails.find(o => o.id == id)
     if(!order) return ServerApi.fail('Order not found')
     console.log(order)
     return ServerApi.respond(order)
   }
 
-  static getOrderHouseholdDetails(orderId: number, householdId: number): Promise<OrderHousehold> {
+  static getOrderHouseholdDetails(orderId: number, householdId: number): Promise<HouseholdOrder> {
     let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
     if(!order) return ServerApi.fail('Order not found')
     console.log(order)
     return ServerApi.respond(order)
   }
 
-  static getProductList(): Promise<ProductList_Product[]> {
+  static getProductList(): Promise<Product[]> {
     return ServerApi.respond(ServerApi.productList.slice())
   }
 
-  static getHouseholdList(): Promise<HouseholdList_Household[]> {
+  static getHouseholdList(): Promise<Household[]> {
     return ServerApi.respond(ServerApi.householdList.slice())
   }
 
@@ -166,7 +166,7 @@ function toDate(date: ApiDate): Date {
   return new Date(Date.UTC(date.year, date.month - 1, date.day))
 }
 
-function toOrder(o: ApiOrder): OrderList_Order {
+function toOrder(o: ApiOrder): Order {
   return {
     id: o.oId,
     createdDate: toDate(o.oDate),

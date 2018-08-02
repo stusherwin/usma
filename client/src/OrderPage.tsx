@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Order } from './Types'
+import { OrderSummary } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
