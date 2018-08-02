@@ -1,4 +1,4 @@
-import { Order, OrderSummary, HouseholdOrder, Product, Household } from './Types'
+import { Order, OrderSummary, HouseholdOrderSummary, Product, Household } from './Types'
 import { setTimeout } from 'timers';
 
 type ApiOrder = { oId: number
@@ -22,124 +22,119 @@ export class ApiError {
   status: number | null
 }
 
-export class ServerApi {
-  private static productList: Product[] = [
-    { id: 1, name: 'Jam', price: 1240 },
-    { id: 2, name: 'Butter', price: 9523 },
-    { id: 3, name: 'Milk', price: 5210 },
-    { id: 4, name: 'Bananas', price: 1200 }
-  ]
+let productList: Product[] = [
+  { id: 1, name: 'Jam', price: 1240 },
+  { id: 2, name: 'Butter', price: 9523 },
+  { id: 3, name: 'Milk', price: 5210 },
+  { id: 4, name: 'Bananas', price: 1200 }
+]
 
-  private static householdList: Household[] = [
-    { id: 1, name: '123 Front Road' },
-    { id: 2, name: '1 Main Terrace' },
-    { id: 3, name: '24 The Street' },
-    { id: 4, name: '3 Bowling Alley' }
-  ]
+let householdList: Household[] = [
+  { id: 1, name: '123 Front Road' },
+  { id: 2, name: '1 Main Terrace' },
+  { id: 3, name: '24 The Street' },
+  { id: 4, name: '3 Bowling Alley' }
+]
 
-  private static orderList: Order[] = [
-    { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
-    { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
-    { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
-    { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
-  ]
+let orderList: Order[] = [
+  { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
+  { id: 2, createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
+  { id: 3, createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
+  { id: 4, createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
+]
 
-  private static orderDetails: OrderSummary[] = [
-    { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
-      { id: 1, name: '123 Front Road', status: 'paid', total: 6954 },
-      { id: 2, name: '1 Main Terrace', status: 'paid', total: 4455 },
-      { id: 3, name: '24 The Street', status: 'unpaid', total: 4636 },
-      { id: 4, name: '3 Bowling Alley', status: 'unpaid', total: 10331 }
-    ] },
-  ]
+let orderDetails: OrderSummary[] = [
+  { id: 1, createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
+    { id: 1, name: '123 Front Road', status: 'paid', total: 6954 },
+    { id: 2, name: '1 Main Terrace', status: 'paid', total: 4455 },
+    { id: 3, name: '24 The Street', status: 'unpaid', total: 4636 },
+    { id: 4, name: '3 Bowling Alley', status: 'unpaid', total: 10331 }
+  ] },
+]
 
-  private static orderHouseholdDetails: HouseholdOrder[] = [
-    { orderId: 1, orderCreatedDate: new Date(2018, 0, 1), householdId: 1, householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
-      { productId: 1, productName: 'Jam', quantity: 1, total: 1240 },
-      { productId: 2, productName: 'Butter', quantity: 2, total: 9523 },
-    ] },
-  ]
-  
-  private static respond<T>(data: T) {
-    return new Promise<T>((resolve, reject) => {
-      setTimeout(() => resolve(data), 1000)
-    })
-  }
+let orderHouseholdDetails: HouseholdOrderSummary[] = [
+  { orderId: 1, orderCreatedDate: new Date(2018, 0, 1), householdId: 1, householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
+    { productId: 1, productName: 'Jam', quantity: 1, total: 1240 },
+    { productId: 2, productName: 'Butter', quantity: 2, total: 9523 },
+  ] },
+]
 
-  private static fail<T>(error: string) {
-    return new Promise<T>((resolve, reject) => {
-      setTimeout(() => reject(error), 1000)
-    })
-  }
-
-  static getOrderList(): Promise<Order[]> {
-    return ServerApi.respond(ServerApi.orderList.slice())
+let query = {
+  orders(): Promise<Order[]> {
+    return respond(orderList.slice())
     // const req = new Request(`/api/orders`)
     // return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
-  }
+  },
 
-  static getOrderDetails(id: number): Promise<OrderSummary> {
-    let order = ServerApi.orderDetails.find(o => o.id == id)
-    if(!order) return ServerApi.fail('Order not found')
+  orderSummary(id: number): Promise<OrderSummary> {
+    let order = orderDetails.find(o => o.id == id)
+    if(!order) return fail('Order not found')
     console.log(order)
-    return ServerApi.respond(order)
-  }
+    return respond(order)
+  },
 
-  static getOrderHouseholdDetails(orderId: number, householdId: number): Promise<HouseholdOrder> {
-    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return ServerApi.fail('Order not found')
+  householdOrderSummary(orderId: number, householdId: number): Promise<HouseholdOrderSummary> {
+    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return fail('Order not found')
     console.log(order)
-    return ServerApi.respond(order)
-  }
+    return respond(order)
+  },
 
-  static getProductList(): Promise<Product[]> {
-    return ServerApi.respond(ServerApi.productList.slice())
-  }
+  products(): Promise<Product[]> {
+    return respond(productList.slice())
+  },
 
-  static getHouseholdList(): Promise<Household[]> {
-    return ServerApi.respond(ServerApi.householdList.slice())
-  }
+  households(): Promise<Household[]> {
+    return respond(householdList.slice())
+  },
+}
 
-  static newOrder(): Promise<number> {
-    let maxId = !ServerApi.orderList.length ? 0 : Math.max(...ServerApi.orderList.map(o => o.id))
+let command = {
+  newOrder(): Promise<number> {
+    let maxId = !orderList.length ? 0 : Math.max(...orderList.map(o => o.id))
     let newId = maxId + 1
-    ServerApi.orderList.push({ id: newId, createdDate: new Date(2018, 0, 5), total: 0, complete: false })
-    return ServerApi.respond(newId)
-  }
+    orderList.push({ id: newId, createdDate: new Date(2018, 0, 5), total: 0, complete: false })
+    return respond(newId)
+  },
 
-  static deleteOrder(id: number): Promise<{}> {
-    ServerApi.orderList.splice(ServerApi.orderList.findIndex(o => o.id == id), 1)
-    return ServerApi.respond({})
-  }
+  deleteOrder(id: number): Promise<{}> {
+    orderList.splice(orderList.findIndex(o => o.id == id), 1)
+    return respond({})
+  },
 
-  static addHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
-    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return ServerApi.fail('Order not found')
-    let product = ServerApi.productList.find(p => p.id == productId)
-    if(!product) return ServerApi.fail('Product not found')    
+  addHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
+    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return fail('Order not found')
+    let product = productList.find(p => p.id == productId)
+    if(!product) return fail('Product not found')    
     order.items.unshift({productId, productName: product.name, quantity: quantity, total: product.price * quantity})
-    return ServerApi.respond({})    
-  }
+    return respond({})    
+  },
 
-  static removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
-    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return ServerApi.fail('Order not found')
+  removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
+    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return fail('Order not found')
     let itemIndex = order.items.findIndex(i => i.productId == productId)
     order.items.splice(itemIndex, 1)
-    return ServerApi.respond({})    
-  }
+    return respond({})    
+  },
 
-  static updateHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
-    let order = ServerApi.orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return ServerApi.fail('Order not found')
+  updateHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
+    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
+    if(!order) return fail('Order not found')
     let item = order.items.find(i => i.productId == productId)
-    if(!item) return ServerApi.fail('Item not found')
-    let product = ServerApi.productList.find(p => p.id == productId)
-    if(!product) return ServerApi.fail('Product not found')    
+    if(!item) return fail('Item not found')
+    let product = productList.find(p => p.id == productId)
+    if(!product) return fail('Product not found')    
     item.quantity = quantity
     item.total = quantity * product.price
-    return ServerApi.respond({})    
+    return respond({})    
   }
+}
+
+export let ServerApi = {
+  query,
+  command
 }
 
 function fetchHttpRequest<T>(req: Request, process: (res: any) => T): Promise<T> {
@@ -173,4 +168,16 @@ function toOrder(o: ApiOrder): Order {
     total: 31240,
     complete: true,
   }
+}
+
+function respond<T>(data: T) {
+  return new Promise<T>((resolve, reject) => {
+    setTimeout(() => resolve(data), 1000)
+  })
+}
+
+function fail<T>(error: string) {
+  return new Promise<T>((resolve, reject) => {
+    setTimeout(() => reject(error), 1000)
+  })
 }

@@ -20,7 +20,7 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
   }
 
   componentDidMount() {
-    this.props.request(ServerApi.getOrderList())
+    this.props.request(ServerApi.query.orders())
       .then(orders => {
         this.setState({ orders
                       , initialised: true
@@ -29,7 +29,7 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
   }
 
   newOrder = () => {
-    this.props.request(ServerApi.newOrder()).then(id => this.props.navigate('/orders/' + id))
+    this.props.request(ServerApi.command.newOrder()).then(id => this.props.navigate('/orders/' + id))
   }
 
   render() {

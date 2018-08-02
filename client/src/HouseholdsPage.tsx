@@ -18,7 +18,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, { house
   }
 
   componentDidMount() {
-    this.props.request(ServerApi.getHouseholdList())
+    this.props.request(ServerApi.query.households())
       .then(households => {
         this.setState({ households
                       , initialised: true

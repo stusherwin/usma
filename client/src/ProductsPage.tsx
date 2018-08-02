@@ -19,7 +19,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, { products:
   }
 
   componentDidMount() {
-    this.props.request(ServerApi.getProductList())
+    this.props.request(ServerApi.query.products())
       .then(products => {
         this.setState({ products
                       , initialised: true

@@ -17,21 +17,21 @@ export type OrderSummary_Household = { id: number
                                      , status: 'paid' | 'unpaid' | 'cancelled'
                                      }
 
-export type HouseholdOrder = { orderId: number
-                             , orderCreatedDate: Date
-                             , householdId: number
-                             , householdName: string 
-                             , paid: boolean
-                             , cancelled: boolean
-                             , items: HouseholdOrder_Item[]
-                             , total: number
-                             }
+export type HouseholdOrderSummary = { orderId: number
+                                    , orderCreatedDate: Date
+                                    , householdId: number
+                                    , householdName: string 
+                                    , paid: boolean
+                                    , cancelled: boolean
+                                    , items: HouseholdOrderSummary_Item[]
+                                    , total: number
+                                    }
 
-export type HouseholdOrder_Item = { productId: number
-                                  , productName: string
-                                  , quantity: number
-                                  , total: number
-                                  }
+export type HouseholdOrderSummary_Item = { productId: number
+                                         , productName: string
+                                         , quantity: number
+                                         , total: number
+                                         }
 
 export type Product = { id: number
                       , name: string

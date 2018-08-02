@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { HouseholdOrder, Product, HouseholdOrder_Item } from './Types'
+import { HouseholdOrderSummary, Product, HouseholdOrderSummary_Item } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
@@ -12,7 +12,7 @@ export interface OrderHouseholdPageProps { orderId: number
                                          , navigate: (location: string) => void
                                          }
 
-export interface OrderHouseholdPageState { details: HouseholdOrder | null
+export interface OrderHouseholdPageState { details: HouseholdOrderSummary | null
                                          , products: Product[]
                                          , initialised: boolean
                                          , addingProduct: Product | null
@@ -36,7 +36,7 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
   }
 
   componentDidMount() {
-    this.props.request(Promise.all([ServerApi.getOrderHouseholdDetails(this.props.orderId, this.props.householdId), ServerApi.getProductList()]))
+    this.props.request(Promise.all([ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId), ServerApi.query.products()]))
       .then(results => this.setState({ details: results[0]
                                      , products: results[1]
                                      , initialised: true
@@ -61,22 +61,22 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
   confirmAdd = () => {
     if(!this.state.addingProduct) return
 
-    this.props.request(ServerApi.addHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
-      .then(() => this.props.request(ServerApi.getOrderHouseholdDetails(this.props.orderId, this.props.householdId)))
+    this.props.request(ServerApi.command.addHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
+      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(details => this.setState({ details
                                      , addingProduct: null
                                      , addingProductQuantity: 1
                                      }))
   }
 
-  delete = (item: HouseholdOrder_Item) => {
-    this.props.request(ServerApi.removeHouseholdOrderItem(this.props.orderId, this.props.householdId, item.productId))
-      .then(() => this.props.request(ServerApi.getOrderHouseholdDetails(this.props.orderId, this.props.householdId)))
+  delete = (item: HouseholdOrderSummary_Item) => {
+    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.orderId, this.props.householdId, item.productId))
+      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(details => this.setState({ details
                                      }))
   }
 
-  startEdit = (item: HouseholdOrder_Item) => {
+  startEdit = (item: HouseholdOrderSummary_Item) => {
     let product = this.state.products.find(p => p.id == item.productId)
     if(!product) return
 
@@ -92,8 +92,8 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
   confirmEdit = () => {
     if(!this.state.editingProduct) return
 
-    this.props.request(ServerApi.updateHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
-      .then(() => this.props.request(ServerApi.getOrderHouseholdDetails(this.props.orderId, this.props.householdId)))
+    this.props.request(ServerApi.command.updateHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
+      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(details => this.setState({ details
                                      , editingProduct: null
                                      , editingProductQuantity: 1

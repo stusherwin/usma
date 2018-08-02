@@ -26,7 +26,7 @@ export class OrderDetails extends React.Component<OrderDetailsProps, OrderDetail
   }
 
   componentDidMount() {
-    this.props.request(ServerApi.getOrderDetails(this.props.id))
+    this.props.request(ServerApi.query.orderSummary(this.props.id))
       .then(order => this.setState({ order
                                    , initialised: true
                                    }))
@@ -34,7 +34,7 @@ export class OrderDetails extends React.Component<OrderDetailsProps, OrderDetail
   }
 
   delete = () => {
-    this.props.request(ServerApi.deleteOrder(this.props.id)).then(_ => this.props.navigate('/orders'))
+    this.props.request(ServerApi.command.deleteOrder(this.props.id)).then(_ => this.props.navigate('/orders'))
   }
 
   render() {
