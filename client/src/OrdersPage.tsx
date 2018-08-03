@@ -10,7 +10,7 @@ export interface OrdersPageProps { request: <T extends {}>(p: Promise<T>) => Pro
 
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   render() {
-    let orderId = parseInt(this.props.urlParts[0]) || null
+    let orderId = this.props.urlParts[0]
     let urlRemainder = this.props.urlParts.slice(1)
 
     if(orderId) return <OrderPage id={orderId} request={this.props.request} navigate={this.props.navigate} urlParts={urlRemainder} />

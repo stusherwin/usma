@@ -8,7 +8,7 @@ import { Money } from './Money'
 import { OrderHouseholdPage } from './OrderHouseholdPage'
 import { OrderDetails } from './OrderDetails'
 
-export interface OrderPageProps { id: number
+export interface OrderPageProps { id: string
                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                 , navigate: (location: string) => void
                                 , urlParts: string[]

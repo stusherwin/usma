@@ -29,7 +29,8 @@ export class OrderList extends React.Component<OrderListProps, { orders: Order[]
   }
 
   newOrder = () => {
-    this.props.request(ServerApi.command.newOrder()).then(id => this.props.navigate('/orders/' + id))
+    let date = new Date()
+    this.props.request(ServerApi.command.newOrder(date)).then(id => this.props.navigate(`/orders/${Util.dateString(date)}`))
   }
 
   render() {

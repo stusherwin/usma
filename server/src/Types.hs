@@ -4,22 +4,27 @@
 module Types where
   import Data.Aeson
   import GHC.Generics
-  import Data.Time.Calendar (toGregorian, fromGregorian, Day )
+  import Data.Time.Calendar (Day)
   
-  data Order = Order { oId :: Int
-                     , oDate :: Date
+  data Order = Order { oId :: String
+                     , oCreatedDate :: String
                      } deriving (Eq, Show, Generic)
   instance ToJSON Order
 
-  data Date = Date { year :: Int
-                   , month :: Int
-                   , day :: Int
-                   } deriving (Eq, Ord, Show, Generic)
-  instance ToJSON Date
+  data OrderSummary = OrderSummary { osId :: String
+                                   , osCreatedDate :: String
+                                   , osComplete :: Bool
+                                   , osHouseholds :: [OrderSummary_Household]
+                                   , osTotal :: Int
+                                   } deriving (Eq, Show, Generic)
+  instance ToJSON OrderSummary
 
-  toDate :: Day -> Date
-  toDate day = let (y, m, d) = toGregorian day
-                    in Date (fromInteger y) m d
+  data OrderSummary_Household = OrderSummary_Household { oshId :: Int
+                                                       , oshName :: String
+                                                       , oshTotal :: Int
+                                                       , oshStatus :: OrderSummary_Status
+                                                       } deriving (Eq, Show, Generic)
+  instance ToJSON OrderSummary_Household
 
-  fromDate :: Date -> Day
-  fromDate d = fromGregorian (toInteger $ year d) (month d) (day d)
+  data OrderSummary_Status = Paid | Unpaid | Cancelled  deriving (Eq, Show, Generic)
+  instance ToJSON OrderSummary_Status

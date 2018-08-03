@@ -6,7 +6,7 @@ import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
 
-export interface OrderHouseholdPageProps { orderId: number
+export interface OrderHouseholdPageProps { orderId: string
                                          , householdId: number
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                          , navigate: (location: string) => void

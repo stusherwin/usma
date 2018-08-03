@@ -7,7 +7,7 @@ import { Link } from './Link'
 import { Money } from './Money'
 import { OrderHouseholdPage } from './OrderHouseholdPage'
 
-export interface OrderDetailsProps { id: number
+export interface OrderDetailsProps { id: string
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , navigate: (location: string) => void
                                    }
@@ -40,6 +40,7 @@ export class OrderDetails extends React.Component<OrderDetailsProps, OrderDetail
   render() {
     if(!this.state.initialised) return <div>Initialising...</div>
     if(!this.state.order) return <div>Order not found.</div>
+    console.log(this.state.order)
 
     return (
       <div>

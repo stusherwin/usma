@@ -26,10 +26,11 @@ module Main where
   import System.Environment (getEnv, getArgs)
   import Web.Cookie (parseCookiesText)
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
+  import Data.Time.Calendar (Day)
   
   import Types 
   import Api
-  import Database
+  import qualified Database as D
 
   main :: IO ()
   main = do
@@ -50,10 +51,25 @@ module Main where
            :<|> serveDirectoryFileServer "client/static"
 
   appServer :: ByteString -> Server AppAPI
-  appServer conn = ordersServer conn
-
-  ordersServer :: ByteString -> Server OrdersAPI
-  ordersServer conn = getAll
+  appServer conn = queryServer conn
+              :<|> commandServer conn 
+  
+  queryServer :: ByteString -> Server QueryAPI
+  queryServer conn = orders
+                :<|> orderSummary 
     where
-    getAll :: Handler [Order]
-    getAll = liftIO $ getAllOrders conn
+    orders :: Handler [Order]
+    orders = liftIO $ D.getAllOrders conn
+
+    orderSummary :: Day -> Handler OrderSummary
+    orderSummary day = do
+      result <- liftIO $ D.getOrderSummary conn day
+      case result of
+        Just v -> return v
+        _ -> throwError err404
+  
+  commandServer :: ByteString -> Server CommandAPI
+  commandServer conn = createOrder
+    where
+    createOrder :: Day -> Handler ()
+    createOrder = liftIO . (D.createOrder conn)

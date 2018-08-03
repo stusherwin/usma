@@ -1,10 +1,10 @@
-export type Order = { id: number
+export type Order = { id: string
                     , createdDate: Date
                     , total: number
                     , complete: boolean
                     }
 
-export type OrderSummary = { id: number
+export type OrderSummary = { id: string
                            , createdDate: Date
                            , complete: boolean
                            , households: OrderSummary_Household[]
@@ -17,7 +17,7 @@ export type OrderSummary_Household = { id: number
                                      , status: 'paid' | 'unpaid' | 'cancelled'
                                      }
 
-export type HouseholdOrderSummary = { orderId: number
+export type HouseholdOrderSummary = { orderId: string
                                     , orderCreatedDate: Date
                                     , householdId: number
                                     , householdName: string 

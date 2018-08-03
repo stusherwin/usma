@@ -2,7 +2,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Database (getAllOrders) where
+module Database (getAllOrders, getOrderSummary, createOrder) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -17,34 +17,44 @@ module Database (getAllOrders) where
   import Data.Text.Encoding (encodeUtf8)
   import Types
   import qualified Data.IntMap.Strict as IM (IntMap(..), fromList, elems, lookup, insert, size)
+  import Data.Time.Calendar (Day, showGregorian)
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
 
-  instance FromRow Order where
-    fromRow = Order <$> field <*> field
-
-  instance FromField Date where
-    fromField f date = do
-      sqlDate <- fromField f date
-      case sqlDate of
-        Just (Finite day) -> return $ toDate day
-        _ -> mzero
-
-  instance ToField Date where
-    toField = toField . fromDate
-             
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
+  -- infixl 4 <&>
 
   (&) :: a -> (a -> b) -> b
   (&) = flip ($)
+  -- infixr 0 &
   
   getAllOrders :: ByteString -> IO [Order]
   getAllOrders connectionString = do
     conn <- connectPostgreSQL connectionString
-    result <- query_ conn
-      " select id, date\
+    rOrders <- query_ conn
+      " select date\
       \ from \"order\""
     close conn
-    return result
+    return $ (rOrders :: [Only Day]) <&> \(Only day) -> Order (showGregorian day) (showGregorian day)
+
+  getOrderSummary :: ByteString -> Day -> IO (Maybe OrderSummary)
+  getOrderSummary connectionString day = do
+    conn <- connectPostgreSQL connectionString
+    rOrders <- query conn
+      " select date\
+      \ from \"order\"\
+      \ where date = ?"
+      (Only day)
+    close conn
+    return $ listToMaybe $ (rOrders :: [Only Day]) <&> \(Only day) -> OrderSummary (showGregorian day) (showGregorian day) False [] 0
+
+  createOrder :: ByteString -> Day -> IO ()
+  createOrder connectionString date = do
+    conn <- connectPostgreSQL connectionString
+    execute conn
+      "insert into \"order\" (date) values (?)"
+      (Only date)
+    close conn
+    return ()

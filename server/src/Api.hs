@@ -5,16 +5,23 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Api where
-  import Data.Text (Text)
+  import Data.Time.Calendar (Day)
   import Servant
   import Types
  
   type AppAPI = 
-         "api" :> "orders" :> OrdersAPI
+         "api" :> (
+              "query" :> QueryAPI
+         :<|> "command" :> CommandAPI
+         )
+
+  type QueryAPI =
+         "orders" :> Get '[JSON] [Order]
+    :<|> "order-summary" :> Capture "date" Day :> Get '[JSON] OrderSummary
  
-  type OrdersAPI =
-         Get '[JSON] [Order] 
-    
+  type CommandAPI =
+         "create-order" :> Capture "date" Day :> Post '[JSON] ()
+
   type FullAPI =
          AppAPI
     :<|> Raw
