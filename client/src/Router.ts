@@ -10,19 +10,20 @@ export class Router {
   resolve(url: string): JSX.Element {
     for(let r of this.routes) {
       let identifierRegExp = /\{([^\}]+)\}/gi
-      let identifiers = identifierRegExp.exec(r.route)
       let routeRegExp = new RegExp('^' + r.route.replace(identifierRegExp, '([^/]+)'), "gi")
-      let matches = routeRegExp.exec(url)
-      if(!matches) {
+      const routeMatches = routeRegExp.exec(url)
+      if(!routeMatches) {
         continue;
       }
 
       let identifierValues: {[key: string]: string} = {}
-      if(identifiers && identifiers.length > 1 && matches && matches.length > 1) {
-        for(let i = 1; i < identifiers.length; i++) {
-          identifierValues[identifiers[i]] = matches[i]
-        }
+      let identifierMatches: any = null;
+      
+      for(let i = 1; i < routeMatches.length; i++) {
+        identifierMatches = identifierRegExp.exec(r.route)
+        identifierValues[identifierMatches[1]] = routeMatches[i]
       }
+      
       return r.component(identifierValues)
     }
     return React.createElement('div', null, 'Page not found')

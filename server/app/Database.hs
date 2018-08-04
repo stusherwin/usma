@@ -2,7 +2,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Database (getAllOrders, getOrderSummary, createOrder) where
+module Database (getAllOrders, getOrderSummary, getHouseholdOrderSummary, createOrder) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -34,27 +34,62 @@ module Database (getAllOrders, getOrderSummary, createOrder) where
   getAllOrders connectionString = do
     conn <- connectPostgreSQL connectionString
     rOrders <- query_ conn
-      " select date\
-      \ from \"order\""
+      " select o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total \
+      \ from \"order\" o \
+      \ left join household_order ho on ho.order_id = o.id \
+      \ left join household_order_item hoi on hoi.order_id = o.id \
+      \ left join product p on p.id = hoi.product_id \
+      \ group by o.id"
     close conn
-    return $ (rOrders :: [Only Day]) <&> \(Only day) -> Order (showGregorian day) (showGregorian day)
+    return $ (rOrders :: [(Day, Bool, Int)]) <&> \(createdDate, complete, total) -> Order (showGregorian createdDate) (showGregorian createdDate) complete total
 
   getOrderSummary :: ByteString -> Day -> IO (Maybe OrderSummary)
   getOrderSummary connectionString day = do
     conn <- connectPostgreSQL connectionString
     rOrders <- query conn
-      " select date\
-      \ from \"order\"\
-      \ where date = ?"
+      " select created_date, complete, coalesce(sum(p.price * hoi.quantity), 0) as total \
+      \ from \"order\" o\
+      \ left join household_order ho on ho.order_id = o.id \
+      \ left join household_order_item hoi on hoi.order_id = o.id \
+      \ left join product p on p.id = hoi.product_id \
+      \ where o.created_date = ? \
+      \ group by o.id "
+      (Only day)
+    rHouseholds <- query conn
+      " select h.id, h.name, coalesce(sum(p.price * hoi.quantity), 0) as total, case when ho.status='P' then 'paid' when ho.status='U' then 'unpaid' else 'cancelled' end as status \
+      \ from \"order\" o\
+      \ inner join household_order ho on ho.order_id = o.id \
+      \ inner join household h on h.id = ho.household_id \
+      \ left join household_order_item hoi on hoi.household_id = h.id \
+      \ left join product p on p.id = hoi.product_id \
+      \ where o.created_date = ? \
+      \ group by h.id, h.name, ho.status"
       (Only day)
     close conn
-    return $ listToMaybe $ (rOrders :: [Only Day]) <&> \(Only day) -> OrderSummary (showGregorian day) (showGregorian day) False [] 0
+    let households = (rHouseholds :: [(Int, String, Int, String)]) <&> \(id, name, total, status) -> OrderSummary_Household id name total status
+    return $ listToMaybe $ (rOrders :: [(Day, Bool, Int)]) <&> \(createdDate, complete, total) -> OrderSummary (showGregorian createdDate) (showGregorian createdDate) complete total households
 
+  getHouseholdOrderSummary :: ByteString -> Day -> Int -> IO (Maybe HouseholdOrderSummary)
+  getHouseholdOrderSummary connectionString orderCreatedDate householdId = do
+    conn <- connectPostgreSQL connectionString
+    rOrders <- query conn
+      " select o.created_date, h.id, h.\"name\", coalesce(sum(p.price * hoi.quantity), 0) \
+      \ from \"order\" o\
+      \ inner join household_order ho on ho.order_id = o.id \
+      \ inner join household h on h.id = ho.household_id \
+      \ left join household_order_item hoi on hoi.order_id = o.id \
+      \ left join product p on p.id = hoi.product_id \
+      \ where o.created_date = ? and h.id = ? \
+      \ group by o.created_date, h.id, h.name "
+      (orderCreatedDate, householdId)
+    close conn
+    return $ listToMaybe $ (rOrders :: [(Day, Int, String, Int)]) <&> \(orderCreatedDate, householdId, householdName, total) -> HouseholdOrderSummary (showGregorian orderCreatedDate) (showGregorian orderCreatedDate) householdId householdName True False total []
+  
   createOrder :: ByteString -> Day -> IO ()
   createOrder connectionString date = do
     conn <- connectPostgreSQL connectionString
     execute conn
-      "insert into \"order\" (date) values (?)"
+      "insert into \"order\" (created_date, complete) values (?, false)"
       (Only date)
     close conn
     return ()

@@ -57,6 +57,7 @@ module Main where
   queryServer :: ByteString -> Server QueryAPI
   queryServer conn = orders
                 :<|> orderSummary 
+                :<|> householdOrderSummary 
     where
     orders :: Handler [Order]
     orders = liftIO $ D.getAllOrders conn
@@ -64,6 +65,13 @@ module Main where
     orderSummary :: Day -> Handler OrderSummary
     orderSummary day = do
       result <- liftIO $ D.getOrderSummary conn day
+      case result of
+        Just v -> return v
+        _ -> throwError err404
+
+    householdOrderSummary :: Day -> Int -> Handler HouseholdOrderSummary
+    householdOrderSummary orderCreatedDate householdId = do
+      result <- liftIO $ D.getHouseholdOrderSummary conn orderCreatedDate householdId
       case result of
         Just v -> return v
         _ -> throwError err404

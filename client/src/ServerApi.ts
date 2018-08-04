@@ -1,16 +1,18 @@
-import { Order, OrderSummary, HouseholdOrderSummary, Product, Household } from './Types'
+import { Order, OrderSummary, HouseholdOrderSummary, Product, Household, OrderSummary_Household } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
 type ApiOrder = { oId: string
                 , oCreatedDate: string
+                , oComplete: boolean
+                , oTotal: number
                 }
 
 type ApiOrderSummary = { osId: string
                        , osCreatedDate: string
                        , osComplete: boolean
-                       , osHouseholds: ApiOrderSummary_Household[]
                        , osTotal: number
+                       , osHouseholds: ApiOrderSummary_Household[]
                        }
 
 type ApiOrderSummary_Household = { oshId: string 
@@ -18,6 +20,22 @@ type ApiOrderSummary_Household = { oshId: string
                                  , oshTotal: number
                                  , oshStatus: 'paid' | 'unpaid' | 'cancelled'
                                  }
+
+type ApiHouseholdOrderSummary = { hosOrderId: string
+                                , hosOrderCreatedDate: Date
+                                , hosHouseholdId: string
+                                , hosHouseholdName: string 
+                                , hosPaid: boolean
+                                , hosCancelled: boolean
+                                , hosItems: ApiHouseholdOrderSummary_Item[]
+                                , hosTotal: number
+                                }
+
+type ApiHouseholdOrderSummary_Item = { hosiProductId: string
+                                     , hosiProductName: string
+                                     , hosiQuantity: number
+                                     , hosiTotal: number
+                                     }
 
 export class ApiError {
   constructor(error: string, message: string, status: number | null) {
@@ -70,25 +88,18 @@ let orderHouseholdDetails: HouseholdOrderSummary[] = [
 
 let query = {
   orders(): Promise<Order[]> {
-    // return respond(orderList.slice())
-    const req = new Request(`/api/query/orders`)
-    return fetchHttpRequest(req, res => (res as ApiOrder[]).map(toOrder))
+    return Http.get<ApiOrder[]>('/api/query/orders')
+               .then(res => res.map(toOrder))
   },
 
-  orderSummary(id: string): Promise<OrderSummary> {
-    // let order = orderDetails.find(o => o.id == id)
-    // if(!order) return fail('Order not found')
-    // console.log(order)
-    // return respond(order)
-    const req = new Request(`/api/query/order-summary/${id}`)
-    return fetchHttpRequest(req, res => toOrderSummary(res as ApiOrderSummary))
+  orderSummary(orderId: string): Promise<OrderSummary> {
+    return Http.get<ApiOrderSummary>(`/api/query/order-summary/${orderId}`)
+               .then(toOrderSummary)
   },
 
   householdOrderSummary(orderId: string, householdId: string): Promise<HouseholdOrderSummary> {
-    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return fail('Order not found')
-    console.log(order)
-    return respond(order)
+    return Http.get<ApiHouseholdOrderSummary>(`/api/query/household-order-summary/${orderId}/${householdId}`)
+               .then(toHouseholdOrderSummary)
   },
 
   products(): Promise<Product[]> {
@@ -102,15 +113,7 @@ let query = {
 
 let command = {
   newOrder(date: Date): Promise<{}> {
-    // let maxId = !orderList.length ? 0 : Math.max(...orderList.map(o => o.id))
-    // let newId = maxId + 1
-    // orderList.push({ id: newId, createdDate: new Date(2018, 0, 5), total: 0, complete: false })
-    // return respond(newId)
-    const req = new Request(`/api/command/create-order/${Util.dateString(date)}`,
-                              { method: 'POST'
-                              , headers: new Headers({'Content-Type' : 'application/json'})
-                              })
-    return fetchHttpRequest(req)
+    return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
   },
 
   deleteOrder(id: string): Promise<{}> {
@@ -153,23 +156,49 @@ export let ServerApi = {
   command
 }
 
-function fetchHttpRequest<T>(req: Request, process?: (res: any) => T): Promise<T> {
-  try {
-    return fetch(req, {credentials: 'same-origin'})
-      .then(res => {
-        if(!res.ok) {
-          return res.text().then(txt => { throw new ApiError(`${res.statusText} (${res.status})`, txt, res.status) })
-        }
-        let contentType = res.headers.get('content-type')
-        if (contentType == null || !contentType.includes('application/json')) {
-          throw new ApiError('Invalid server response', 'Expected response to have content-type application/json.', null);
-        }
-        return res.json()
-      })
-      .then(res => Promise.resolve(process? process(res) : res))
-      .catch(err => Promise.reject(new ApiError('Error from the server', 'Received an unexpected response from the server: ' + err.error, err.status || null)))
-  } catch(TypeError) {
-    return Promise.reject(new ApiError('Can\'t connect to the server', 'The server seems to be down or busy, please wait a while and try again.', null))
+export class Http {
+  static get<T>(url: string /*, query?: {[key: string]: string}*/): Promise<T> {
+    return this.fetchHttpRequest(new Request(url /*+ this.queryString(query)*/))
+  }
+  
+  static post<T>(url: string/*, query: {[key: string]: string}*/, body: {}): Promise<T> {
+    return this.fetchHttpRequest(new Request(url /*+ this.queryString(query)*/,
+      { method: 'POST'
+      , headers: new Headers({'Content-Type' : 'application/json'})
+      , body: JSON.stringify(body)
+      }))
+  }
+
+  private static queryString(query?: {[key: string]: string}): string {
+    if(!query) return ''
+
+    let qs = []
+    for(let key in query) {
+      qs.push(key + '=' + encodeURIComponent(query[key]))
+    }
+    if(!qs.length) return ''
+
+    return '?' + qs.join('&')
+  }
+
+  private static fetchHttpRequest<T>(req: Request): Promise<T> {
+    try {
+      return fetch(req, {credentials: 'same-origin'})
+        .then(res => {
+          if(!res.ok) {
+            return res.text().then(txt => { throw new ApiError(`${res.statusText} (${res.status})`, txt, res.status) })
+          }
+          let contentType = res.headers.get('content-type')
+          if (contentType == null || !contentType.includes('application/json')) {
+            throw new ApiError('Invalid server response', 'Expected response to have content-type application/json.', null);
+          }
+          return res.json()
+        })
+        .then(res => res as T)
+        .catch(err => Promise.reject(new ApiError('Error from the server', 'Received an unexpected response from the server: ' + err.error, err.status || null)))
+    } catch(TypeError) {
+      return Promise.reject(new ApiError('Can\'t connect to the server', 'The server seems to be down or busy, please wait a while and try again.', null))
+    }
   }
 }
 
@@ -177,8 +206,8 @@ function toOrder(o: ApiOrder): Order {
   return {
     id: o.oId,
     createdDate: new Date(o.oCreatedDate),
-    total: 31240,
-    complete: true,
+    complete: o.oComplete,
+    total: o.oTotal,
   }
 }
 
@@ -186,9 +215,31 @@ function toOrderSummary(o: ApiOrderSummary): OrderSummary {
   return {
     id: o.osId,
     createdDate: new Date(o.osCreatedDate),
-    total: o.osTotal,
     complete: o.osComplete,
-    households: []
+    total: o.osTotal,
+    households: o.osHouseholds.map(toOrderSummary_Household)
+  }
+}
+
+function toOrderSummary_Household(o: ApiOrderSummary_Household): OrderSummary_Household {
+  return {
+    id: o.oshId, 
+    name: o.oshName,
+    total: o.oshTotal,
+    status: o.oshStatus
+  }
+}
+
+function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSummary {
+  return {
+    orderId: o.hosOrderId,
+    orderCreatedDate: new Date(o.hosOrderCreatedDate),
+    householdId: o.hosHouseholdId,
+    householdName: o.hosHouseholdName, 
+    paid: o.hosPaid,
+    cancelled: o.hosCancelled,
+    total: o.hosTotal,
+    items: []
   }
 }
 

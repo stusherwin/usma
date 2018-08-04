@@ -17,7 +17,8 @@ module Api where
 
   type QueryAPI =
          "orders" :> Get '[JSON] [Order]
-    :<|> "order-summary" :> Capture "date" Day :> Get '[JSON] OrderSummary
+    :<|> "order-summary" :> Capture "orderId" Day :> Get '[JSON] OrderSummary
+    :<|> "household-order-summary" :> Capture "orderId" Day :> Capture "householdId" Int :> Get '[JSON] HouseholdOrderSummary
  
   type CommandAPI =
          "create-order" :> Capture "date" Day :> Post '[JSON] ()
