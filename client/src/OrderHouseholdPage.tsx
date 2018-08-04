@@ -7,7 +7,7 @@ import { Link } from './Link'
 import { Money } from './Money'
 
 export interface OrderHouseholdPageProps { orderId: string
-                                         , householdId: number
+                                         , householdId: string
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                          , navigate: (location: string) => void
                                          }

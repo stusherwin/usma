@@ -13,7 +13,7 @@ type ApiOrderSummary = { osId: string
                        , osTotal: number
                        }
 
-type ApiOrderSummary_Household = { oshId: number 
+type ApiOrderSummary_Household = { oshId: string 
                                  , oshName: string
                                  , oshTotal: number
                                  , oshStatus: 'paid' | 'unpaid' | 'cancelled'
@@ -32,17 +32,17 @@ export class ApiError {
 }
 
 let productList: Product[] = [
-  { id: 1, name: 'Jam', price: 1240 },
-  { id: 2, name: 'Butter', price: 9523 },
-  { id: 3, name: 'Milk', price: 5210 },
-  { id: 4, name: 'Bananas', price: 1200 }
+  { id: '1', name: 'Jam', price: 1240 },
+  { id: '2', name: 'Butter', price: 9523 },
+  { id: '3', name: 'Milk', price: 5210 },
+  { id: '4', name: 'Bananas', price: 1200 }
 ]
 
 let householdList: Household[] = [
-  { id: 1, name: '123 Front Road' },
-  { id: 2, name: '1 Main Terrace' },
-  { id: 3, name: '24 The Street' },
-  { id: 4, name: '3 Bowling Alley' }
+  { id: '1', name: '123 Front Road' },
+  { id: '2', name: '1 Main Terrace' },
+  { id: '3', name: '24 The Street' },
+  { id: '4', name: '3 Bowling Alley' }
 ]
 
 let orderList: Order[] = [
@@ -54,17 +54,17 @@ let orderList: Order[] = [
 
 let orderDetails: OrderSummary[] = [
   { id: '2018-01-01', createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
-    { id: 1, name: '123 Front Road', status: 'paid', total: 6954 },
-    { id: 2, name: '1 Main Terrace', status: 'paid', total: 4455 },
-    { id: 3, name: '24 The Street', status: 'unpaid', total: 4636 },
-    { id: 4, name: '3 Bowling Alley', status: 'unpaid', total: 10331 }
+    { id: '1', name: '123 Front Road', status: 'paid', total: 6954 },
+    { id: '2', name: '1 Main Terrace', status: 'paid', total: 4455 },
+    { id: '3', name: '24 The Street', status: 'unpaid', total: 4636 },
+    { id: '4', name: '3 Bowling Alley', status: 'unpaid', total: 10331 }
   ] },
 ]
 
 let orderHouseholdDetails: HouseholdOrderSummary[] = [
-  { orderId: '2018-01-01', orderCreatedDate: new Date(2018, 0, 1), householdId: 1, householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
-    { productId: 1, productName: 'Jam', quantity: 1, total: 1240 },
-    { productId: 2, productName: 'Butter', quantity: 2, total: 9523 },
+  { orderId: '2018-01-01', orderCreatedDate: new Date(2018, 0, 1), householdId: '1', householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
+    { productId: '1', productName: 'Jam', quantity: 1, total: 1240 },
+    { productId: '2', productName: 'Butter', quantity: 2, total: 9523 },
   ] },
 ]
 
@@ -84,7 +84,7 @@ let query = {
     return fetchHttpRequest(req, res => toOrderSummary(res as ApiOrderSummary))
   },
 
-  householdOrderSummary(orderId: string, householdId: number): Promise<HouseholdOrderSummary> {
+  householdOrderSummary(orderId: string, householdId: string): Promise<HouseholdOrderSummary> {
     let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
     if(!order) return fail('Order not found')
     console.log(order)
@@ -118,7 +118,7 @@ let command = {
     return respond({})
   },
 
-  addHouseholdOrderItem(orderId: string, householdId: number, productId: number, quantity: number): Promise<{}> {
+  addHouseholdOrderItem(orderId: string, householdId: string, productId: string, quantity: number): Promise<{}> {
     let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
     if(!order) return fail('Order not found')
     let product = productList.find(p => p.id == productId)
@@ -127,7 +127,7 @@ let command = {
     return respond({})    
   },
 
-  removeHouseholdOrderItem(orderId: string, householdId: number, productId: number): Promise<{}> {
+  removeHouseholdOrderItem(orderId: string, householdId: string, productId: string): Promise<{}> {
     let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
     if(!order) return fail('Order not found')
     let itemIndex = order.items.findIndex(i => i.productId == productId)
@@ -135,7 +135,7 @@ let command = {
     return respond({})    
   },
 
-  updateHouseholdOrderItem(orderId: string, householdId: number, productId: number, quantity: number): Promise<{}> {
+  updateHouseholdOrderItem(orderId: string, householdId: string, productId: string, quantity: number): Promise<{}> {
     let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
     if(!order) return fail('Order not found')
     let item = order.items.find(i => i.productId == productId)
