@@ -1,4 +1,4 @@
-import { Order, OrderSummary, HouseholdOrderSummary, Product, Household, OrderSummary_Household } from './Types'
+import { Order, OrderSummary, HouseholdOrderSummary, Product, Household, OrderSummary_Household, HouseholdOrderSummary_Item } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
@@ -8,27 +8,23 @@ type ApiOrder = { oId: string
                 , oTotal: number
                 }
 
-type ApiOrderSummary = { osId: string
-                       , osCreatedDate: string
+type ApiOrderSummary = { osCreatedDate: Date
                        , osComplete: boolean
                        , osTotal: number
                        , osHouseholds: ApiOrderSummary_Household[]
                        }
 
-type ApiOrderSummary_Household = { oshId: string 
+type ApiOrderSummary_Household = { oshId: string
                                  , oshName: string
-                                 , oshTotal: number
                                  , oshStatus: 'paid' | 'unpaid' | 'cancelled'
+                                 , oshTotal: number
                                  }
 
-type ApiHouseholdOrderSummary = { hosOrderId: string
-                                , hosOrderCreatedDate: Date
-                                , hosHouseholdId: string
+type ApiHouseholdOrderSummary = { hosOrderCreatedDate: Date
                                 , hosHouseholdName: string 
-                                , hosPaid: boolean
-                                , hosCancelled: boolean
-                                , hosItems: ApiHouseholdOrderSummary_Item[]
+                                , hosStatus: 'paid' | 'unpaid' | 'cancelled'
                                 , hosTotal: number
+                                , hosItems: ApiHouseholdOrderSummary_Item[]
                                 }
 
 type ApiHouseholdOrderSummary_Item = { hosiProductId: string
@@ -64,14 +60,14 @@ let householdList: Household[] = [
 ]
 
 let orderList: Order[] = [
-  { id: '2018-01-01', createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
-  { id: '2018-01-02', createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
-  { id: '2018-01-03', createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
-  { id: '2018-01-04', createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
+  { id: '1', createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
+  { id: '2', createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
+  { id: '3', createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
+  { id: '4', createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
 ]
 
 let orderDetails: OrderSummary[] = [
-  { id: '2018-01-01', createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
+  { createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
     { id: '1', name: '123 Front Road', status: 'paid', total: 6954 },
     { id: '2', name: '1 Main Terrace', status: 'paid', total: 4455 },
     { id: '3', name: '24 The Street', status: 'unpaid', total: 4636 },
@@ -80,7 +76,7 @@ let orderDetails: OrderSummary[] = [
 ]
 
 let orderHouseholdDetails: HouseholdOrderSummary[] = [
-  { orderId: '2018-01-01', orderCreatedDate: new Date(2018, 0, 1), householdId: '1', householdName: '123 Front Road', paid: true, cancelled: false, total: 6954, items: [
+  { orderCreatedDate: new Date(2018, 0, 1), householdName: '123 Front Road', status: 'paid', total: 6954, items: [
     { productId: '1', productName: 'Jam', quantity: 1, total: 1240 },
     { productId: '2', productName: 'Butter', quantity: 2, total: 9523 },
   ] },
@@ -112,42 +108,35 @@ let query = {
 }
 
 let command = {
-  newOrder(date: Date): Promise<{}> {
+  newOrder(date: Date): Promise<number> {
     return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
   },
 
   deleteOrder(id: string): Promise<{}> {
-    orderList.splice(orderList.findIndex(o => o.id == id), 1)
-    return respond({})
+    return Http.post(`/api/command/delete-order/${id}`, {})
   },
 
   addHouseholdOrderItem(orderId: string, householdId: string, productId: string, quantity: number): Promise<{}> {
-    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return fail('Order not found')
-    let product = productList.find(p => p.id == productId)
-    if(!product) return fail('Product not found')    
-    order.items.unshift({productId, productName: product.name, quantity: quantity, total: product.price * quantity})
-    return respond({})    
+    return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: parseInt(orderId)
+                                                                 , ehoiHouseholdId: parseInt(householdId)
+                                                                 , ehoiProductId: parseInt(productId)
+                                                                 , ehoiQuantity: quantity
+                                                                 })
   },
 
   removeHouseholdOrderItem(orderId: string, householdId: string, productId: string): Promise<{}> {
-    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return fail('Order not found')
-    let itemIndex = order.items.findIndex(i => i.productId == productId)
-    order.items.splice(itemIndex, 1)
-    return respond({})    
+    return Http.post(`/api/command/remove-household-order-item`, { rhoiOrderId: parseInt(orderId)
+                                                                 , rhoiHouseholdId: parseInt(householdId)
+                                                                 , rhoiProductId: parseInt(productId)
+                                                                 })
   },
 
   updateHouseholdOrderItem(orderId: string, householdId: string, productId: string, quantity: number): Promise<{}> {
-    let order = orderHouseholdDetails.find(o => o.orderId == orderId && o.householdId == householdId)
-    if(!order) return fail('Order not found')
-    let item = order.items.find(i => i.productId == productId)
-    if(!item) return fail('Item not found')
-    let product = productList.find(p => p.id == productId)
-    if(!product) return fail('Product not found')    
-    item.quantity = quantity
-    item.total = quantity * product.price
-    return respond({})    
+    return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: parseInt(orderId)
+                                                                 , ehoiHouseholdId: parseInt(householdId)
+                                                                 , ehoiProductId: parseInt(productId)
+                                                                 , ehoiQuantity: quantity
+                                                                 })
   }
 }
 
@@ -213,7 +202,6 @@ function toOrder(o: ApiOrder): Order {
 
 function toOrderSummary(o: ApiOrderSummary): OrderSummary {
   return {
-    id: o.osId,
     createdDate: new Date(o.osCreatedDate),
     complete: o.osComplete,
     total: o.osTotal,
@@ -232,14 +220,20 @@ function toOrderSummary_Household(o: ApiOrderSummary_Household): OrderSummary_Ho
 
 function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSummary {
   return {
-    orderId: o.hosOrderId,
     orderCreatedDate: new Date(o.hosOrderCreatedDate),
-    householdId: o.hosHouseholdId,
     householdName: o.hosHouseholdName, 
-    paid: o.hosPaid,
-    cancelled: o.hosCancelled,
+    status: o.hosStatus,
     total: o.hosTotal,
-    items: []
+    items: o.hosItems.map(toHouseholdOrderSummary_Item)
+  }
+}
+
+function toHouseholdOrderSummary_Item(o: ApiHouseholdOrderSummary_Item): HouseholdOrderSummary_Item {
+  return {
+    productId: o.hosiProductId, 
+    productName: o.hosiProductName,
+    quantity: o.hosiQuantity,
+    total: o.hosiTotal
   }
 }
 

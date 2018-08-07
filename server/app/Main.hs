@@ -62,22 +62,34 @@ module Main where
     orders :: Handler [Order]
     orders = liftIO $ D.getAllOrders conn
 
-    orderSummary :: Day -> Handler OrderSummary
-    orderSummary day = do
-      result <- liftIO $ D.getOrderSummary conn day
+    orderSummary :: Int -> Handler OrderSummary
+    orderSummary orderId = do
+      result <- liftIO $ D.getOrderSummary conn orderId
       case result of
         Just v -> return v
         _ -> throwError err404
 
-    householdOrderSummary :: Day -> Int -> Handler HouseholdOrderSummary
-    householdOrderSummary orderCreatedDate householdId = do
-      result <- liftIO $ D.getHouseholdOrderSummary conn orderCreatedDate householdId
+    householdOrderSummary :: Int -> Int -> Handler HouseholdOrderSummary
+    householdOrderSummary orderId householdId = do
+      result <- liftIO $ D.getHouseholdOrderSummary conn orderId householdId
       case result of
         Just v -> return v
         _ -> throwError err404
   
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrder
+                  :<|> deleteOrder
+                  :<|> ensureHouseholdOrderItem
+                  :<|> removeHouseholdOrderItem
     where
-    createOrder :: Day -> Handler ()
+    createOrder :: Day -> Handler Int
     createOrder = liftIO . (D.createOrder conn)
+
+    deleteOrder :: Int -> Handler ()
+    deleteOrder = liftIO . (D.deleteOrder conn)
+
+    ensureHouseholdOrderItem :: EnsureHouseholdOrderItem -> Handler ()
+    ensureHouseholdOrderItem command = liftIO $ D.ensureHouseholdOrderItem conn (ehoiOrderId command) (ehoiHouseholdId command) (ehoiProductId command) (ehoiQuantity command)
+
+    removeHouseholdOrderItem :: RemoveHouseholdOrderItem -> Handler ()
+    removeHouseholdOrderItem command = liftIO $ D.removeHouseholdOrderItem conn (rhoiOrderId command) (rhoiHouseholdId command) (rhoiProductId command)

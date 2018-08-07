@@ -6,15 +6,14 @@ module Types where
   import GHC.Generics
   import Data.Time.Calendar (Day)
   
-  data Order = Order { oId :: String
+  data Order = Order { oId :: Int
                      , oCreatedDate :: String
                      , oComplete :: Bool
                      , oTotal :: Int
                      } deriving (Eq, Show, Generic)
   instance ToJSON Order
 
-  data OrderSummary = OrderSummary { osId :: String
-                                   , osCreatedDate :: String
+  data OrderSummary = OrderSummary { osCreatedDate :: String
                                    , osComplete :: Bool
                                    , osTotal :: Int
                                    , osHouseholds :: [OrderSummary_Household]
@@ -23,20 +22,17 @@ module Types where
 
   data OrderSummary_Household = OrderSummary_Household { oshId :: Int
                                                        , oshName :: String
+                                                       , oshStatus :: HouseholdOrderStatus
                                                        , oshTotal :: Int
-                                                       , oshStatus :: String --OrderSummary_Status
                                                        } deriving (Eq, Show, Generic)
   instance ToJSON OrderSummary_Household
 
-  data OrderSummary_Status = Paid | Unpaid | Cancelled  deriving (Eq, Show, Generic)
-  instance ToJSON OrderSummary_Status
+  data HouseholdOrderStatus = Paid | Unpaid | Cancelled  deriving (Eq, Show, Generic)
+  instance ToJSON HouseholdOrderStatus
 
-  data HouseholdOrderSummary = HouseholdOrderSummary { hosOrderId :: String
-                                                     , hosOrderCreatedDate :: String
-                                                     , hosHouseholdId :: Int
+  data HouseholdOrderSummary = HouseholdOrderSummary { hosOrderCreatedDate :: String
                                                      , hosHouseholdName :: String 
-                                                     , hosPaid :: Bool
-                                                     , hosCancelled :: Bool
+                                                     , hosStatus :: HouseholdOrderStatus
                                                      , hosTotal :: Int
                                                      , hosItems :: [HouseholdOrderSummary_Item]
                                                      } deriving (Eq, Show, Generic)
@@ -48,3 +44,18 @@ module Types where
                                                                , hosiTotal :: Int
                                                                } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderSummary_Item
+
+  data EnsureHouseholdOrderItem = EnsureHouseholdOrderItem { ehoiOrderId :: Int
+                                                           , ehoiHouseholdId :: Int
+                                                           , ehoiProductId :: Int 
+                                                           , ehoiQuantity :: Int
+                                                           } deriving (Eq, Show, Generic)
+  instance ToJSON EnsureHouseholdOrderItem
+  instance FromJSON EnsureHouseholdOrderItem
+                                                                 
+  data RemoveHouseholdOrderItem = RemoveHouseholdOrderItem { rhoiOrderId :: Int
+                                                           , rhoiHouseholdId :: Int
+                                                           , rhoiProductId :: Int 
+                                                           } deriving (Eq, Show, Generic)
+  instance ToJSON RemoveHouseholdOrderItem
+  instance FromJSON RemoveHouseholdOrderItem

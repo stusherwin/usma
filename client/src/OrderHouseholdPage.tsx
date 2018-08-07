@@ -38,10 +38,10 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
   componentDidMount() {
     console.log(this.props)
     this.props.request(Promise.all([ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId), ServerApi.query.products()]))
-      .then(results => this.setState({ details: results[0]
+      .then(results => { console.log(results); this.setState({ details: results[0]
                                      , products: results[1]
                                      , initialised: true
-                                     }))
+                                     })})
       .catch(_ => this.setState({ initialised: true }))
   }
 
@@ -121,7 +121,7 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
         </div>
         <h1>{details.householdName}</h1>
         <div>
-          {!details.cancelled ? <Link disabled={!!this.state.addingProduct} action={_ => {}}>Cancel order</Link> : null}
+          {details.status != 'cancelled' ? <Link disabled={!!this.state.addingProduct} action={_ => {}}>Cancel order</Link> : null}
           <Link disabled={!!this.state.addingProduct} action={_ => {}}>Record payment</Link>
         </div>
         {!!unusedProducts.length && <div><Link action={() => this.startAdd(unusedProducts[0])}>Add</Link></div>}

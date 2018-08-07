@@ -6,3 +6,4 @@
 /client/static/css/bundle.css
 npm-debug.log
 run-server
+/dist/

@@ -4,27 +4,23 @@ export type Order = { id: string
                     , complete: boolean
                     }
 
-export type OrderSummary = { id: string
-                           , createdDate: Date
+export type OrderSummary = { createdDate: Date
                            , complete: boolean
                            , households: OrderSummary_Household[]
                            , total: number
                            }
 
-export type OrderSummary_Household = { id: string 
+export type OrderSummary_Household = { id: string
                                      , name: string
                                      , total: number
                                      , status: 'paid' | 'unpaid' | 'cancelled'
                                      }
 
-export type HouseholdOrderSummary = { orderId: string
-                                    , orderCreatedDate: Date
-                                    , householdId: string
+export type HouseholdOrderSummary = { orderCreatedDate: Date
                                     , householdName: string 
-                                    , paid: boolean
-                                    , cancelled: boolean
-                                    , items: HouseholdOrderSummary_Item[]
+                                    , status: 'paid' | 'unpaid' | 'cancelled'
                                     , total: number
+                                    , items: HouseholdOrderSummary_Item[]
                                     }
 
 export type HouseholdOrderSummary_Item = { productId: string
