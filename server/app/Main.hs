@@ -56,11 +56,19 @@ module Main where
   
   queryServer :: ByteString -> Server QueryAPI
   queryServer conn = orders
+                :<|> products
+                :<|> households
                 :<|> orderSummary 
                 :<|> householdOrderSummary 
     where
     orders :: Handler [Order]
     orders = liftIO $ D.getAllOrders conn
+
+    products :: Handler [Product]
+    products = liftIO $ D.getAllProducts conn
+
+    households :: Handler [Household]
+    households = liftIO $ D.getAllHouseholds conn
 
     orderSummary :: Int -> Handler OrderSummary
     orderSummary orderId = do

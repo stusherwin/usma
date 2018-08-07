@@ -13,6 +13,17 @@ module Types where
                      } deriving (Eq, Show, Generic)
   instance ToJSON Order
 
+  data Product = Product { pId :: Int
+                         , pName :: String
+                         , pPrice :: Int
+                         } deriving (Eq, Show, Generic)
+  instance ToJSON Product
+
+  data Household = Household { hId :: Int
+                             , hName :: String
+                             } deriving (Eq, Show, Generic)
+  instance ToJSON Household
+
   data OrderSummary = OrderSummary { osCreatedDate :: String
                                    , osComplete :: Bool
                                    , osTotal :: Int

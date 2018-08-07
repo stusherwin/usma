@@ -2,86 +2,6 @@ import { Order, OrderSummary, HouseholdOrderSummary, Product, Household, OrderSu
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
-type ApiOrder = { oId: string
-                , oCreatedDate: string
-                , oComplete: boolean
-                , oTotal: number
-                }
-
-type ApiOrderSummary = { osCreatedDate: Date
-                       , osComplete: boolean
-                       , osTotal: number
-                       , osHouseholds: ApiOrderSummary_Household[]
-                       }
-
-type ApiOrderSummary_Household = { oshId: string
-                                 , oshName: string
-                                 , oshStatus: 'paid' | 'unpaid' | 'cancelled'
-                                 , oshTotal: number
-                                 }
-
-type ApiHouseholdOrderSummary = { hosOrderCreatedDate: Date
-                                , hosHouseholdName: string 
-                                , hosStatus: 'paid' | 'unpaid' | 'cancelled'
-                                , hosTotal: number
-                                , hosItems: ApiHouseholdOrderSummary_Item[]
-                                }
-
-type ApiHouseholdOrderSummary_Item = { hosiProductId: string
-                                     , hosiProductName: string
-                                     , hosiQuantity: number
-                                     , hosiTotal: number
-                                     }
-
-export class ApiError {
-  constructor(error: string, message: string, status: number | null) {
-    this.error = error
-    this.message = message
-    this.status = status
-  }
-
-  error: string
-  message: string
-  status: number | null
-}
-
-let productList: Product[] = [
-  { id: '1', name: 'Jam', price: 1240 },
-  { id: '2', name: 'Butter', price: 9523 },
-  { id: '3', name: 'Milk', price: 5210 },
-  { id: '4', name: 'Bananas', price: 1200 }
-]
-
-let householdList: Household[] = [
-  { id: '1', name: '123 Front Road' },
-  { id: '2', name: '1 Main Terrace' },
-  { id: '3', name: '24 The Street' },
-  { id: '4', name: '3 Bowling Alley' }
-]
-
-let orderList: Order[] = [
-  { id: '1', createdDate: new Date(2018, 0, 1), total: 31240, complete: true },
-  { id: '2', createdDate: new Date(2018, 0, 2), total: 29523, complete: true },
-  { id: '3', createdDate: new Date(2018, 0, 3), total: 45210, complete: true },
-  { id: '4', createdDate: new Date(2018, 0, 4), total: 11200, complete: true }
-]
-
-let orderDetails: OrderSummary[] = [
-  { createdDate: new Date(2018, 0, 1), total: 31240, complete: true, households: [
-    { id: '1', name: '123 Front Road', status: 'paid', total: 6954 },
-    { id: '2', name: '1 Main Terrace', status: 'paid', total: 4455 },
-    { id: '3', name: '24 The Street', status: 'unpaid', total: 4636 },
-    { id: '4', name: '3 Bowling Alley', status: 'unpaid', total: 10331 }
-  ] },
-]
-
-let orderHouseholdDetails: HouseholdOrderSummary[] = [
-  { orderCreatedDate: new Date(2018, 0, 1), householdName: '123 Front Road', status: 'paid', total: 6954, items: [
-    { productId: '1', productName: 'Jam', quantity: 1, total: 1240 },
-    { productId: '2', productName: 'Butter', quantity: 2, total: 9523 },
-  ] },
-]
-
 let query = {
   orders(): Promise<Order[]> {
     return Http.get<ApiOrder[]>('/api/query/orders')
@@ -99,11 +19,13 @@ let query = {
   },
 
   products(): Promise<Product[]> {
-    return respond(productList.slice())
+    return Http.get<ApiProduct[]>('/api/query/products')
+               .then(res => res.map(toProduct))
   },
 
   households(): Promise<Household[]> {
-    return respond(householdList.slice())
+    return Http.get<ApiHousehold[]>('/api/query/households')
+               .then(res => res.map(toHousehold))
   },
 }
 
@@ -191,12 +113,79 @@ export class Http {
   }
 }
 
+type ApiOrder = { oId: string
+                , oCreatedDate: string
+                , oComplete: boolean
+                , oTotal: number
+                }
+
+type ApiProduct = { pId: string
+                  , pName: string
+                  , pPrice: number
+                  }
+
+type ApiHousehold = { hId: string
+                    , hName: string
+                    }
+
+type ApiOrderSummary = { osCreatedDate: Date
+                       , osComplete: boolean
+                       , osTotal: number
+                       , osHouseholds: ApiOrderSummary_Household[]
+                       }
+
+type ApiOrderSummary_Household = { oshId: string
+                                 , oshName: string
+                                 , oshStatus: 'paid' | 'unpaid' | 'cancelled'
+                                 , oshTotal: number
+                                 }
+
+type ApiHouseholdOrderSummary = { hosOrderCreatedDate: Date
+                                , hosHouseholdName: string 
+                                , hosStatus: 'paid' | 'unpaid' | 'cancelled'
+                                , hosTotal: number
+                                , hosItems: ApiHouseholdOrderSummary_Item[]
+                                }
+
+type ApiHouseholdOrderSummary_Item = { hosiProductId: string
+                                     , hosiProductName: string
+                                     , hosiQuantity: number
+                                     , hosiTotal: number
+                                     }
+
+export class ApiError {
+  constructor(error: string, message: string, status: number | null) {
+    this.error = error
+    this.message = message
+    this.status = status
+  }
+
+  error: string
+  message: string
+  status: number | null
+}
+
 function toOrder(o: ApiOrder): Order {
   return {
     id: o.oId,
     createdDate: new Date(o.oCreatedDate),
     complete: o.oComplete,
     total: o.oTotal,
+  }
+}
+
+function toProduct(p: ApiProduct): Product {
+  return {
+    id: p.pId,
+    name: p.pName,
+    price: p.pPrice
+  }
+}
+
+function toHousehold(h: ApiHousehold): Household {
+  return {
+    id: h.hId,
+    name: h.hName,
   }
 }
 

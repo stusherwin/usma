@@ -17,6 +17,8 @@ module Api where
 
   type QueryAPI =
          "orders" :> Get '[JSON] [Order]
+    :<|> "products" :> Get '[JSON] [Product]
+    :<|> "households" :> Get '[JSON] [Household]
     :<|> "order-summary" :> Capture "orderId" Int :> Get '[JSON] OrderSummary
     :<|> "household-order-summary" :> Capture "orderId" Int :> Capture "householdId" Int :> Get '[JSON] HouseholdOrderSummary
  

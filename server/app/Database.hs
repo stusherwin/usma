@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database (getAllOrders, getOrderSummary, getHouseholdOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem) where
+module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -47,6 +47,32 @@ module Database (getAllOrders, getOrderSummary, getHouseholdOrderSummary, create
     where
     order :: (Int, Day, Bool, Int) -> Order
     order (id, createdDate, complete, total) = Order id (showGregorian createdDate) complete total
+
+  getAllProducts :: ByteString -> IO [Product]
+  getAllProducts connectionString = do
+    conn <- connectPostgreSQL connectionString
+    rProducts <- query_ conn [sql|
+      select p.id, p.name, p.price
+      from product p
+    |]
+    close conn
+    return $ rProducts <&> product
+    where
+    product :: (Int, String, Int) -> Product
+    product (id, name, price) = Product id name price
+
+  getAllHouseholds :: ByteString -> IO [Household]
+  getAllHouseholds connectionString = do
+    conn <- connectPostgreSQL connectionString
+    rHouseholds <- query_ conn [sql|
+      select h.id, h.name
+      from household h
+    |]
+    close conn
+    return $ rHouseholds <&> household
+    where
+    household :: (Int, String) -> Household
+    household (id, name) = Household id name
 
   getOrderSummary :: ByteString -> Int -> IO (Maybe OrderSummary)
   getOrderSummary connectionString orderId = do
