@@ -8,12 +8,12 @@ let query = {
                .then(res => res.map(toOrder))
   },
 
-  orderSummary(orderId: string): Promise<OrderSummary> {
+  orderSummary(orderId: number): Promise<OrderSummary> {
     return Http.get<ApiOrderSummary>(`/api/query/order-summary/${orderId}`)
                .then(toOrderSummary)
   },
 
-  householdOrderSummary(orderId: string, householdId: string): Promise<HouseholdOrderSummary> {
+  householdOrderSummary(orderId: number, householdId: number): Promise<HouseholdOrderSummary> {
     return Http.get<ApiHouseholdOrderSummary>(`/api/query/household-order-summary/${orderId}/${householdId}`)
                .then(toHouseholdOrderSummary)
   },
@@ -34,32 +34,24 @@ let command = {
     return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
   },
 
-  deleteOrder(id: string): Promise<{}> {
+  deleteOrder(id: number): Promise<{}> {
     return Http.post(`/api/command/delete-order/${id}`, {})
   },
 
-  addHouseholdOrderItem(orderId: string, householdId: string, productId: string, quantity: number): Promise<{}> {
-    return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: parseInt(orderId)
-                                                                 , ehoiHouseholdId: parseInt(householdId)
-                                                                 , ehoiProductId: parseInt(productId)
+  ensureHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
+    return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: orderId
+                                                                 , ehoiHouseholdId: householdId
+                                                                 , ehoiProductId: productId
                                                                  , ehoiQuantity: quantity
                                                                  })
   },
 
-  removeHouseholdOrderItem(orderId: string, householdId: string, productId: string): Promise<{}> {
-    return Http.post(`/api/command/remove-household-order-item`, { rhoiOrderId: parseInt(orderId)
-                                                                 , rhoiHouseholdId: parseInt(householdId)
-                                                                 , rhoiProductId: parseInt(productId)
+  removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
+    return Http.post(`/api/command/remove-household-order-item`, { rhoiOrderId: orderId
+                                                                 , rhoiHouseholdId: householdId
+                                                                 , rhoiProductId: productId
                                                                  })
   },
-
-  updateHouseholdOrderItem(orderId: string, householdId: string, productId: string, quantity: number): Promise<{}> {
-    return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: parseInt(orderId)
-                                                                 , ehoiHouseholdId: parseInt(householdId)
-                                                                 , ehoiProductId: parseInt(productId)
-                                                                 , ehoiQuantity: quantity
-                                                                 })
-  }
 }
 
 export let ServerApi = {
@@ -113,41 +105,41 @@ export class Http {
   }
 }
 
-type ApiOrder = { oId: string
+type ApiOrder = { oId: number
                 , oCreatedDate: string
                 , oComplete: boolean
                 , oTotal: number
                 }
 
-type ApiProduct = { pId: string
+type ApiProduct = { pId: number
                   , pName: string
                   , pPrice: number
                   }
 
-type ApiHousehold = { hId: string
+type ApiHousehold = { hId: number
                     , hName: string
                     }
 
-type ApiOrderSummary = { osCreatedDate: Date
+type ApiOrderSummary = { osCreatedDate: string
                        , osComplete: boolean
                        , osTotal: number
                        , osHouseholds: ApiOrderSummary_Household[]
                        }
 
-type ApiOrderSummary_Household = { oshId: string
+type ApiOrderSummary_Household = { oshId: number
                                  , oshName: string
                                  , oshStatus: 'paid' | 'unpaid' | 'cancelled'
                                  , oshTotal: number
                                  }
 
-type ApiHouseholdOrderSummary = { hosOrderCreatedDate: Date
+type ApiHouseholdOrderSummary = { hosOrderCreatedDate: string
                                 , hosHouseholdName: string 
                                 , hosStatus: 'paid' | 'unpaid' | 'cancelled'
                                 , hosTotal: number
                                 , hosItems: ApiHouseholdOrderSummary_Item[]
                                 }
 
-type ApiHouseholdOrderSummary_Item = { hosiProductId: string
+type ApiHouseholdOrderSummary_Item = { hosiProductId: number
                                      , hosiProductName: string
                                      , hosiQuantity: number
                                      , hosiTotal: number

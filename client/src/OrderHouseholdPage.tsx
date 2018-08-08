@@ -6,8 +6,8 @@ import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
 
-export interface OrderHouseholdPageProps { orderId: string
-                                         , householdId: string
+export interface OrderHouseholdPageProps { orderId: number
+                                         , householdId: number
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                          , navigate: (location: string) => void
                                          }
@@ -62,7 +62,7 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
   confirmAdd = () => {
     if(!this.state.addingProduct) return
 
-    this.props.request(ServerApi.command.addHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
       .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(details => this.setState({ details
                                      , addingProduct: null
@@ -93,7 +93,7 @@ export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps,
   confirmEdit = () => {
     if(!this.state.editingProduct) return
 
-    this.props.request(ServerApi.command.updateHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
       .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(details => this.setState({ details
                                      , editingProduct: null
