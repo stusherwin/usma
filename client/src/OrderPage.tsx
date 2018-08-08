@@ -48,15 +48,17 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
         {!order.complete && !order.households.length ? <Link action={this.delete}>Delete</Link> : null}
         <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/full')}>View full order</Link>
         <div>
-          {order.households.map(h => <div>
-            <span>{h.name}</span>
-            <Money amount={h.total} />
-            <span>{h.cancelled && 'cancelled'}</span>
-            {order.complete
-              ? <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>View</Link>
-              : <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
-            }
-          </div>)}
+          {order.households.map(h => (
+            <div key={h.id}>
+              <span>{h.name}</span>
+              <Money amount={h.total} />
+              <span>{h.cancelled && 'cancelled'}</span>
+              {order.complete
+                ? <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>View</Link>
+                : <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
+              }
+            </div>
+          ))}
           <div>
             <span>Total:</span>
             <Money amount={order.total} />

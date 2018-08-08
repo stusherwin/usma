@@ -37,10 +37,10 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
 
   componentDidMount() {
     this.props.request(Promise.all([ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId), ServerApi.query.products()]))
-      .then(results => { console.log(results); this.setState({ summary: results[0]
+      .then(results => this.setState({ summary: results[0]
                                      , products: results[1]
                                      , initialised: true
-                                     })})
+                                     }))
       .catch(_ => this.setState({ initialised: true }))
   }
 
@@ -153,12 +153,12 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
             <div>
               <span>
                 <select value={this.state.addingProduct.id} onChange={this.addingProductChanged}>
-                  {unusedProducts.map(p => <option value={p.id}>{p.name}</option>)}
+                  {unusedProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </span>
               <span>
                 <select value={this.state.addingProductQuantity} onChange={this.addingQuantityChanged}>
-                  {[1,2,3,4,5,6,7,8,9,10].map(q => <option value={q}>x {q}</option>)}
+                  {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
                 </select>
               </span>
               <Money amount={this.state.addingProduct.price * this.state.addingProductQuantity} />
@@ -168,11 +168,11 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           }
           {summary.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
           ? (
-            <div>
+            <div key={i.productId}>
               <span>{i.productName}</span>
               <span>
                 <select value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
-                  {[1,2,3,4,5,6,7,8,9,10].map(q => <option value={q}>x {q}</option>)}
+                  {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
                 </select>
               </span>
               <Money amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
@@ -181,7 +181,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
             </div>
           )
           : (
-            <div>
+            <div key={i.productId}>
               <span>{i.productName}</span>
               <span>x {i.quantity}</span>
               <Money amount={i.total} />
