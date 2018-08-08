@@ -6,13 +6,13 @@ import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
 
-export interface OrderHouseholdPageProps { orderId: number
+export interface HouseholdOrderPageProps { orderId: number
                                          , householdId: number
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                          , navigate: (location: string) => void
                                          }
 
-export interface OrderHouseholdPageState { details: HouseholdOrderSummary | null
+export interface HouseholdOrderPageState { details: HouseholdOrderSummary | null
                                          , products: Product[]
                                          , initialised: boolean
                                          , addingProduct: Product | null
@@ -21,8 +21,8 @@ export interface OrderHouseholdPageState { details: HouseholdOrderSummary | null
                                          , editingProductQuantity: number
                                          }
 
-export class OrderHouseholdPage extends React.Component<OrderHouseholdPageProps, OrderHouseholdPageState> {
-  constructor(props: OrderHouseholdPageProps) {
+export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps, HouseholdOrderPageState> {
+  constructor(props: HouseholdOrderPageProps) {
     super(props)
 
     this.state = { details: null

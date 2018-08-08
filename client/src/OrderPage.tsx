@@ -5,7 +5,6 @@ import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
-import { OrderHouseholdPage } from './OrderHouseholdPage'
 
 export interface OrderPageProps { id: number
                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
