@@ -38,24 +38,27 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
 
   render() {
     if(!this.state.initialised) return <div>Initialising...</div>
-    if(!this.state.order) return <div>Order not found.</div>
-    console.log(this.state.order)
+    const order = this.state.order
+    if(!order) return <div>Order not found.</div>
 
     return (
       <div>
         <div><Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
-        <h1>{Util.formatDate(this.state.order.createdDate)}</h1>
-        {!this.state.order.complete && !this.state.order.households.length ? <Link action={this.delete}>Delete</Link> : null}
+        <h1>{Util.formatDate(order.createdDate)}</h1>
+        {!order.complete && !order.households.length ? <Link action={this.delete}>Delete</Link> : null}
         <div>
-          {this.state.order.households.map(h => <div>
+          {order.households.map(h => <div>
             <span>{h.name}</span>
             <Money amount={h.total} />
             <span>{h.cancelled && 'cancelled'}</span>
-            <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
+            {order.complete
+              ? <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>View</Link>
+              : <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
+            }
           </div>)}
           <div>
             <span>Total:</span>
-            <Money amount={this.state.order.total} />
+            <Money amount={order.total} />
           </div>
         </div>
       </div>

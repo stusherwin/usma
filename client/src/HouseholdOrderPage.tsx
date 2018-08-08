@@ -135,16 +135,17 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
         </div>
         <h1>{summary.householdName} {summary.cancelled && ' (cancelled)'}</h1>
         <div>
-          {summary.cancelled
-            ? <Link disabled={!!this.state.addingProduct} action={this.uncancelOrder}>Uncancel</Link>
-            : <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
-          }
-          {summary.cancelled && 
+          {!summary.orderComplete && (
+            summary.cancelled
+              ? <Link disabled={!!this.state.addingProduct} action={this.uncancelOrder}>Uncancel</Link>
+              : <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
+          )}
+          {!summary.orderComplete && !summary.cancelled && 
             <Link disabled={!!this.state.addingProduct} action={_ => {}}>Record payment</Link>
           }
         </div>
         <div>
-        {!summary.cancelled && !!unusedProducts.length &&
+        {!summary.orderComplete && !summary.cancelled && !!unusedProducts.length &&
           <Link action={() => this.startAdd(unusedProducts[0])}>Add</Link>
         }
         </div>
@@ -185,7 +186,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <span>{i.productName}</span>
               <span>x {i.quantity}</span>
               <Money amount={i.total} />
-              {!summary.cancelled &&
+              {!summary.orderComplete && !summary.cancelled &&
                 <span>
                   <Link disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Link>
                   <Link disabled={!!this.state.addingProduct} action={() => this.delete(i)}>Delete</Link>

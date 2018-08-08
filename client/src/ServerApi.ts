@@ -145,6 +145,7 @@ type ApiOrderSummary_Household = { oshId: number
                                  }
 
 type ApiHouseholdOrderSummary = { hosOrderCreatedDate: string
+                                , hosOrderComplete: boolean
                                 , hosHouseholdName: string 
                                 , hosCancelled: boolean
                                 , hosTotal: number
@@ -214,6 +215,7 @@ function toOrderSummary_Household(o: ApiOrderSummary_Household): OrderSummary_Ho
 function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSummary {
   return {
     orderCreatedDate: new Date(o.hosOrderCreatedDate),
+    orderComplete: o.hosOrderComplete,
     householdName: o.hosHouseholdName, 
     cancelled: o.hosCancelled,
     total: o.hosTotal,

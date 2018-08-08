@@ -17,6 +17,7 @@ export type OrderSummary_Household = { id: number
                                      }
 
 export type HouseholdOrderSummary = { orderCreatedDate: Date
+                                    , orderComplete: boolean
                                     , householdName: string 
                                     , cancelled: boolean
                                     , total: number

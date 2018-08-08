@@ -39,6 +39,7 @@ module Types where
   instance ToJSON OrderSummary_Household
 
   data HouseholdOrderSummary = HouseholdOrderSummary { hosOrderCreatedDate :: String
+                                                     , hosOrderComplete :: Bool
                                                      , hosHouseholdName :: String 
                                                      , hosCancelled :: Bool
                                                      , hosTotal :: Int

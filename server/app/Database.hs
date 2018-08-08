@@ -38,7 +38,8 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     rOrders <- query_ conn [sql|
       select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total
       from "order" o
-      left join household_order_item hoi on hoi.order_id = o.id
+      left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
+      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
       left join product p on p.id = hoi.product_id
       group by o.id, o.created_date, o.complete
     |]
@@ -80,7 +81,8 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     rOrders <- query conn [sql|
       select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total
       from "order" o
-      left join household_order_item hoi on hoi.order_id = o.id
+      left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
+      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
       left join product p on p.id = hoi.product_id
       where o.id = ?
       group by o.id, o.created_date, o.complete
@@ -112,14 +114,14 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   getHouseholdOrderSummary connectionString orderId householdId = do
     conn <- connectPostgreSQL connectionString
     rHouseholds <- query conn [sql|
-      select h.id, h.name, ho.cancelled, o.created_date, coalesce(sum(p.price * hoi.quantity), 0)
+      select h.id, h.name, ho.cancelled, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0)
       from household_order ho
       inner join "order" o on o.id = ho.order_id
       inner join household h on h.id = ho.household_id
       left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
       left join product p on p.id = hoi.product_id
       where ho.order_id = ? and ho.household_id = ?
-      group by h.id, h.name, ho.cancelled, o.created_date
+      group by h.id, h.name, ho.cancelled, o.created_date, o.complete
     |] (orderId, householdId)
     rItems <- query conn [sql|
       select p.id, p.name, hoi.household_id, hoi.quantity, p.price * hoi.quantity as total
@@ -130,10 +132,10 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     close conn
     return $ listToMaybe $ householdOrderSummary rItems <$> rHouseholds
     where
-    householdOrderSummary :: [RHouseholdOrderSummary_Item] -> (Int, String, Bool, Day, Int) -> HouseholdOrderSummary
-    householdOrderSummary rItems (id, name, cancelled, date, total) =
+    householdOrderSummary :: [RHouseholdOrderSummary_Item] -> (Int, String, Bool, Day, Bool, Int) -> HouseholdOrderSummary
+    householdOrderSummary rItems (id, name, cancelled, date, complete, total) =
       let items = filter ((==) id . rItemHouseholdId) rItems <&> item
-      in HouseholdOrderSummary (showGregorian date) name cancelled total items
+      in HouseholdOrderSummary (showGregorian date) complete name cancelled total items
 
     item :: RHouseholdOrderSummary_Item -> HouseholdOrderSummary_Item
     item (id, name, _, quantity, total) = HouseholdOrderSummary_Item id name quantity total
