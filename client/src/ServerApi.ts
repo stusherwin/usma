@@ -1,4 +1,4 @@
-import { Order, OrderSummary, HouseholdOrderSummary, Product, Household, OrderSummary_Household, HouseholdOrderSummary_Item } from './Types'
+import { Order, OrderSummary, HouseholdOrderSummary, FullOrderSummary, Product, Household, OrderSummary_Household, OrderSummary_Item } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
@@ -16,6 +16,11 @@ let query = {
   householdOrderSummary(orderId: number, householdId: number): Promise<HouseholdOrderSummary> {
     return Http.get<ApiHouseholdOrderSummary>(`/api/query/household-order-summary/${orderId}/${householdId}`)
                .then(toHouseholdOrderSummary)
+  },
+
+  fullOrderSummary(orderId: number): Promise<FullOrderSummary> {
+    return Http.get<ApiFullOrderSummary>(`/api/query/full-order-summary/${orderId}`)
+               .then(toFullOrderSummary)
   },
 
   products(): Promise<Product[]> {
@@ -149,14 +154,19 @@ type ApiHouseholdOrderSummary = { hosOrderCreatedDate: string
                                 , hosHouseholdName: string 
                                 , hosCancelled: boolean
                                 , hosTotal: number
-                                , hosItems: ApiHouseholdOrderSummary_Item[]
+                                , hosItems: ApiOrderSummary_Item[]
                                 }
 
-type ApiHouseholdOrderSummary_Item = { hosiProductId: number
-                                     , hosiProductName: string
-                                     , hosiQuantity: number
-                                     , hosiTotal: number
-                                     }
+type ApiFullOrderSummary = { fosOrderCreatedDate: string
+                           , fosTotal: number
+                           , fosItems: ApiOrderSummary_Item[]
+                           }
+
+type ApiOrderSummary_Item = { osiProductId: number
+                            , osiProductName: string
+                            , osiQuantity: number
+                            , osiTotal: number
+                            }
 
 export class ApiError {
   constructor(error: string, message: string, status: number | null) {
@@ -219,16 +229,24 @@ function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSum
     householdName: o.hosHouseholdName, 
     cancelled: o.hosCancelled,
     total: o.hosTotal,
-    items: o.hosItems.map(toHouseholdOrderSummary_Item)
+    items: o.hosItems.map(toOrderSummary_Item)
   }
 }
 
-function toHouseholdOrderSummary_Item(o: ApiHouseholdOrderSummary_Item): HouseholdOrderSummary_Item {
+function toFullOrderSummary(o: ApiFullOrderSummary): FullOrderSummary {
   return {
-    productId: o.hosiProductId, 
-    productName: o.hosiProductName,
-    quantity: o.hosiQuantity,
-    total: o.hosiTotal
+    orderCreatedDate: new Date(o.fosOrderCreatedDate),
+    total: o.fosTotal,
+    items: o.fosItems.map(toOrderSummary_Item)
+  }
+}
+
+function toOrderSummary_Item(o: ApiOrderSummary_Item): OrderSummary_Item {
+  return {
+    productId: o.osiProductId, 
+    productName: o.osiProductName,
+    quantity: o.osiQuantity,
+    total: o.osiTotal
   }
 }
 

@@ -43,16 +43,22 @@ module Types where
                                                      , hosHouseholdName :: String 
                                                      , hosCancelled :: Bool
                                                      , hosTotal :: Int
-                                                     , hosItems :: [HouseholdOrderSummary_Item]
+                                                     , hosItems :: [OrderSummary_Item]
                                                      } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderSummary
 
-  data HouseholdOrderSummary_Item = HouseholdOrderSummary_Item { hosiProductId :: Int
-                                                               , hosiProductName :: String
-                                                               , hosiQuantity :: Int
-                                                               , hosiTotal :: Int
-                                                               } deriving (Eq, Show, Generic)
-  instance ToJSON HouseholdOrderSummary_Item
+  data FullOrderSummary = FullOrderSummary { fosOrderCreatedDate :: String
+                                           , fosTotal :: Int
+                                           , fosItems :: [OrderSummary_Item]
+                                           } deriving (Eq, Show, Generic)
+  instance ToJSON FullOrderSummary
+
+  data OrderSummary_Item = OrderSummary_Item { osiProductId :: Int
+                                             , osiProductName :: String
+                                             , osiQuantity :: Int
+                                             , osiTotal :: Int
+                                             } deriving (Eq, Show, Generic)
+  instance ToJSON OrderSummary_Item
 
   data EnsureHouseholdOrderItem = EnsureHouseholdOrderItem { ehoiOrderId :: Int
                                                            , ehoiHouseholdId :: Int

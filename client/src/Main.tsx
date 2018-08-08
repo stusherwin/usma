@@ -8,6 +8,7 @@ import { Router } from './Router'
 import { OrdersPage } from './OrdersPage'
 import { OrderPage } from './OrderPage'
 import { HouseholdOrderPage } from './HouseholdOrderPage'
+import { FullOrderPage } from './FullOrderPage'
 import { ProductsPage } from './ProductsPage'
 import { HouseholdsPage } from './HouseholdsPage'
 
@@ -31,6 +32,7 @@ export class Main extends React.Component<MainProps, MainState> {
                  }
     
     this.router.route('/orders/{orderId}/households/{householdId}', c => <HouseholdOrderPage orderId={c.orderId} householdId={c.householdId} request={this.request} navigate={this.navigate} />)
+    this.router.route('/orders/{orderId}/full', c => <FullOrderPage orderId={c.orderId} request={this.request} navigate={this.navigate} />)
     this.router.route('/orders/{orderId}', c => <OrderPage id={c.orderId} request={this.request} navigate={this.navigate} />)
     this.router.route('/orders', _ => <OrdersPage request={this.request} navigate={this.navigate} />)
     this.router.route('/products', _ => <ProductsPage request={this.request} navigate={this.navigate} />)

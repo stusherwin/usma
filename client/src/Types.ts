@@ -21,14 +21,19 @@ export type HouseholdOrderSummary = { orderCreatedDate: Date
                                     , householdName: string 
                                     , cancelled: boolean
                                     , total: number
-                                    , items: HouseholdOrderSummary_Item[]
+                                    , items: OrderSummary_Item[]
                                     }
 
-export type HouseholdOrderSummary_Item = { productId: number
-                                         , productName: string
-                                         , quantity: number
-                                         , total: number
-                                         }
+export type FullOrderSummary = { orderCreatedDate: Date
+                               , total: number
+                               , items: OrderSummary_Item[]
+                               }
+
+export type OrderSummary_Item = { productId: number
+                                , productName: string
+                                , quantity: number
+                                , total: number
+                                }
 
 export type Product = { id: number
                       , name: string

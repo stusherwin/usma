@@ -46,6 +46,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
         <div><Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
         <h1>{Util.formatDate(order.createdDate)}</h1>
         {!order.complete && !order.households.length ? <Link action={this.delete}>Delete</Link> : null}
+        <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/full')}>View full order</Link>
         <div>
           {order.households.map(h => <div>
             <span>{h.name}</span>

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { HouseholdOrderSummary, Product, HouseholdOrderSummary_Item } from './Types'
+import { HouseholdOrderSummary, Product, OrderSummary_Item } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
@@ -36,7 +36,6 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
   }
 
   componentDidMount() {
-    console.log(this.props)
     this.props.request(Promise.all([ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId), ServerApi.query.products()]))
       .then(results => { console.log(results); this.setState({ summary: results[0]
                                      , products: results[1]
@@ -70,14 +69,14 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
                                      }))
   }
 
-  delete = (item: HouseholdOrderSummary_Item) => {
+  delete = (item: OrderSummary_Item) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.orderId, this.props.householdId, item.productId))
       .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(summary => this.setState({ summary
                                      }))
   }
 
-  startEdit = (item: HouseholdOrderSummary_Item) => {
+  startEdit = (item: OrderSummary_Item) => {
     let product = this.state.products.find(p => p.id == item.productId)
     if(!product) return
 

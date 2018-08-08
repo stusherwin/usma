@@ -60,6 +60,7 @@ module Main where
                 :<|> households
                 :<|> orderSummary 
                 :<|> householdOrderSummary 
+                :<|> fullOrderSummary 
     where
     orders :: Handler [Order]
     orders = liftIO $ D.getAllOrders conn
@@ -80,6 +81,13 @@ module Main where
     householdOrderSummary :: Int -> Int -> Handler HouseholdOrderSummary
     householdOrderSummary orderId householdId = do
       result <- liftIO $ D.getHouseholdOrderSummary conn orderId householdId
+      case result of
+        Just v -> return v
+        _ -> throwError err404
+
+    fullOrderSummary :: Int -> Handler FullOrderSummary
+    fullOrderSummary orderId = do
+      result <- liftIO $ D.getFullOrderSummary conn orderId
       case result of
         Just v -> return v
         _ -> throwError err404
