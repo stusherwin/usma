@@ -50,7 +50,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           {this.state.order.households.map(h => <div>
             <span>{h.name}</span>
             <Money amount={h.total} />
-            <span>{h.status}</span>
+            <span>{h.cancelled && 'cancelled'}</span>
             <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
           </div>)}
           <div>

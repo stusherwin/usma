@@ -13,10 +13,10 @@ declare h3Id integer;
 declare h4Id integer;
 begin
 
-drop table if exists "houseold_order_item" cascade;
-drop table if exists "houseold_order" cascade;
+drop table if exists "household_order_item" cascade;
+drop table if exists "household_order" cascade;
 drop table if exists "order" cascade;
-drop table if exists "houseold" cascade;
+drop table if exists "household" cascade;
 drop table if exists "product" cascade;
 
 ---
@@ -77,16 +77,16 @@ insert into product ("name", price) values ('Bananas', 1200) returning id into p
 create table household_order
 ( order_id     int     not null
 , household_id int     not null
-, "status"     char(1) not null
+, cancelled    boolean not null
 , primary key (order_id, household_id)
 , foreign key (order_id) references "order" (id)
 , foreign key (household_id) references household (id)
 );
 
-insert into household_order (order_id, household_id, "status") values (o1Id, h1Id, 'U');
-insert into household_order (order_id, household_id, "status") values (o1Id, h2Id, 'P');
-insert into household_order (order_id, household_id, "status") values (o2Id, h3Id, 'U');
-insert into household_order (order_id, household_id, "status") values (o2Id, h4Id, 'C');
+insert into household_order (order_id, household_id, cancelled) values (o1Id, h1Id, false);
+insert into household_order (order_id, household_id, cancelled) values (o1Id, h2Id, false);
+insert into household_order (order_id, household_id, cancelled) values (o2Id, h3Id, false);
+insert into household_order (order_id, household_id, cancelled) values (o2Id, h4Id, true);
 
 ---
 

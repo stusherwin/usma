@@ -52,6 +52,18 @@ let command = {
                                                                  , rhoiProductId: productId
                                                                  })
   },
+
+  cancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/cancel-household-order`, { choOrderId: orderId
+                                                            , choHouseholdId: householdId
+                                                            })
+  },
+
+  uncancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/uncancel-household-order`, { choOrderId: orderId
+                                                              , choHouseholdId: householdId
+                                                              })
+  },
 }
 
 export let ServerApi = {
@@ -128,13 +140,13 @@ type ApiOrderSummary = { osCreatedDate: string
 
 type ApiOrderSummary_Household = { oshId: number
                                  , oshName: string
-                                 , oshStatus: 'paid' | 'unpaid' | 'cancelled'
+                                 , oshCancelled: boolean
                                  , oshTotal: number
                                  }
 
 type ApiHouseholdOrderSummary = { hosOrderCreatedDate: string
                                 , hosHouseholdName: string 
-                                , hosStatus: 'paid' | 'unpaid' | 'cancelled'
+                                , hosCancelled: boolean
                                 , hosTotal: number
                                 , hosItems: ApiHouseholdOrderSummary_Item[]
                                 }
@@ -195,7 +207,7 @@ function toOrderSummary_Household(o: ApiOrderSummary_Household): OrderSummary_Ho
     id: o.oshId, 
     name: o.oshName,
     total: o.oshTotal,
-    status: o.oshStatus
+    cancelled: o.oshCancelled
   }
 }
 
@@ -203,7 +215,7 @@ function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSum
   return {
     orderCreatedDate: new Date(o.hosOrderCreatedDate),
     householdName: o.hosHouseholdName, 
-    status: o.hosStatus,
+    cancelled: o.hosCancelled,
     total: o.hosTotal,
     items: o.hosItems.map(toHouseholdOrderSummary_Item)
   }

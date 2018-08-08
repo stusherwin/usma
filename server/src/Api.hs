@@ -25,6 +25,8 @@ module Api where
   type CommandAPI =
          "create-order" :> Capture "date" Day :> Post '[JSON] Int
     :<|> "delete-order" :> Capture "orderId" Int :> Post '[JSON] ()
+    :<|> "cancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
+    :<|> "uncancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "ensure-household-order-item" :> ReqBody '[JSON] EnsureHouseholdOrderItem :> Post '[JSON] ()
     :<|> "remove-household-order-item" :> ReqBody '[JSON] RemoveHouseholdOrderItem :> Post '[JSON] ()
 

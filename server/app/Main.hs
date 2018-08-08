@@ -87,6 +87,8 @@ module Main where
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrder
                   :<|> deleteOrder
+                  :<|> cancelHouseholdOrder
+                  :<|> uncancelHouseholdOrder
                   :<|> ensureHouseholdOrderItem
                   :<|> removeHouseholdOrderItem
     where
@@ -101,3 +103,9 @@ module Main where
 
     removeHouseholdOrderItem :: RemoveHouseholdOrderItem -> Handler ()
     removeHouseholdOrderItem command = liftIO $ D.removeHouseholdOrderItem conn (rhoiOrderId command) (rhoiHouseholdId command) (rhoiProductId command)
+
+    cancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    cancelHouseholdOrder command = liftIO $ D.cancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+
+    uncancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    uncancelHouseholdOrder command = liftIO $ D.uncancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)

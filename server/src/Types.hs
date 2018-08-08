@@ -33,17 +33,14 @@ module Types where
 
   data OrderSummary_Household = OrderSummary_Household { oshId :: Int
                                                        , oshName :: String
-                                                       , oshStatus :: HouseholdOrderStatus
+                                                       , oshCancelled :: Bool
                                                        , oshTotal :: Int
                                                        } deriving (Eq, Show, Generic)
   instance ToJSON OrderSummary_Household
 
-  data HouseholdOrderStatus = Paid | Unpaid | Cancelled  deriving (Eq, Show, Generic)
-  instance ToJSON HouseholdOrderStatus
-
   data HouseholdOrderSummary = HouseholdOrderSummary { hosOrderCreatedDate :: String
                                                      , hosHouseholdName :: String 
-                                                     , hosStatus :: HouseholdOrderStatus
+                                                     , hosCancelled :: Bool
                                                      , hosTotal :: Int
                                                      , hosItems :: [HouseholdOrderSummary_Item]
                                                      } deriving (Eq, Show, Generic)
@@ -70,3 +67,9 @@ module Types where
                                                            } deriving (Eq, Show, Generic)
   instance ToJSON RemoveHouseholdOrderItem
   instance FromJSON RemoveHouseholdOrderItem
+                                                                 
+  data CancelHouseholdOrder = CancelHouseholdOrder { choOrderId :: Int
+                                                   , choHouseholdId :: Int
+                                                   } deriving (Eq, Show, Generic)
+  instance ToJSON CancelHouseholdOrder
+  instance FromJSON CancelHouseholdOrder

@@ -13,12 +13,12 @@ export type OrderSummary = { createdDate: Date
 export type OrderSummary_Household = { id: number
                                      , name: string
                                      , total: number
-                                     , status: 'paid' | 'unpaid' | 'cancelled'
+                                     , cancelled: boolean
                                      }
 
 export type HouseholdOrderSummary = { orderCreatedDate: Date
                                     , householdName: string 
-                                    , status: 'paid' | 'unpaid' | 'cancelled'
+                                    , cancelled: boolean
                                     , total: number
                                     , items: HouseholdOrderSummary_Item[]
                                     }
