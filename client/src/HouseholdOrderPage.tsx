@@ -69,7 +69,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
                                      }))
   }
 
-  delete = (item: OrderSummary_Item) => {
+  removeItem = (item: OrderSummary_Item) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.orderId, this.props.householdId, item.productId))
       .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
       .then(summary => this.setState({ summary
@@ -188,7 +188,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               {!summary.orderComplete && !summary.cancelled &&
                 <span>
                   <Link disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Link>
-                  <Link disabled={!!this.state.addingProduct} action={() => this.delete(i)}>Delete</Link>
+                  <Link disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}>Remove</Link>
                 </span>
               }
             </div>

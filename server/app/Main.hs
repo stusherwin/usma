@@ -95,6 +95,8 @@ module Main where
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrder
                   :<|> deleteOrder
+                  :<|> addHouseholdOrder
+                  :<|> removeHouseholdOrder
                   :<|> cancelHouseholdOrder
                   :<|> uncancelHouseholdOrder
                   :<|> ensureHouseholdOrderItem
@@ -106,14 +108,20 @@ module Main where
     deleteOrder :: Int -> Handler ()
     deleteOrder = liftIO . (D.deleteOrder conn)
 
-    ensureHouseholdOrderItem :: EnsureHouseholdOrderItem -> Handler ()
-    ensureHouseholdOrderItem command = liftIO $ D.ensureHouseholdOrderItem conn (ehoiOrderId command) (ehoiHouseholdId command) (ehoiProductId command) (ehoiQuantity command)
+    addHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    addHouseholdOrder command = liftIO $ D.addHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
-    removeHouseholdOrderItem :: RemoveHouseholdOrderItem -> Handler ()
-    removeHouseholdOrderItem command = liftIO $ D.removeHouseholdOrderItem conn (rhoiOrderId command) (rhoiHouseholdId command) (rhoiProductId command)
+    removeHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    removeHouseholdOrder command = liftIO $ D.removeHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
     cancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     cancelHouseholdOrder command = liftIO $ D.cancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
     uncancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     uncancelHouseholdOrder command = liftIO $ D.uncancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+ 
+    ensureHouseholdOrderItem :: EnsureHouseholdOrderItem -> Handler ()
+    ensureHouseholdOrderItem command = liftIO $ D.ensureHouseholdOrderItem conn (ehoiOrderId command) (ehoiHouseholdId command) (ehoiProductId command) (ehoiQuantity command)
+
+    removeHouseholdOrderItem :: RemoveHouseholdOrderItem -> Handler ()
+    removeHouseholdOrderItem command = liftIO $ D.removeHouseholdOrderItem conn (rhoiOrderId command) (rhoiHouseholdId command) (rhoiProductId command)

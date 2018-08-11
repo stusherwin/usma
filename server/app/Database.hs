@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder) where
+module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, removeHouseholdOrder) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -226,6 +226,28 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     execute conn [sql|
       delete from household_order_item where order_id = ? and household_id = ? and product_id = ?
     |] (orderId, householdId, productId)
+    close conn
+    return ()
+
+  addHouseholdOrder :: ByteString -> Int -> Int -> IO ()
+  addHouseholdOrder connectionString orderId householdId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      insert into household_order (order_id, household_id, cancelled) values (?, ?, false)
+    |] (orderId, householdId)
+    close conn
+    return ()
+
+  removeHouseholdOrder :: ByteString -> Int -> Int -> IO ()
+  removeHouseholdOrder connectionString orderId householdId = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      execute conn [sql|
+        delete from household_order_item where order_id = ? and household_id = ?
+      |] (orderId, householdId)
+      execute conn [sql|
+        delete from household_order where order_id = ? and household_id = ?
+      |] (orderId, householdId)
     close conn
     return ()
 

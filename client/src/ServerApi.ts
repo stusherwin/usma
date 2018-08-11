@@ -43,6 +43,30 @@ let command = {
     return Http.post(`/api/command/delete-order/${id}`, {})
   },
 
+  addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/add-household-order`, { choOrderId: orderId
+                                                         , choHouseholdId: householdId
+                                                         })
+  },
+
+  removeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/remove-household-order`, { choOrderId: orderId
+                                                            , choHouseholdId: householdId
+                                                            })
+  },
+
+  cancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/cancel-household-order`, { choOrderId: orderId
+                                                            , choHouseholdId: householdId
+                                                            })
+  },
+
+  uncancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/uncancel-household-order`, { choOrderId: orderId
+                                                              , choHouseholdId: householdId
+                                                              })
+  },
+
   ensureHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
     return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: orderId
                                                                  , ehoiHouseholdId: householdId
@@ -56,18 +80,6 @@ let command = {
                                                                  , rhoiHouseholdId: householdId
                                                                  , rhoiProductId: productId
                                                                  })
-  },
-
-  cancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/cancel-household-order`, { choOrderId: orderId
-                                                            , choHouseholdId: householdId
-                                                            })
-  },
-
-  uncancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/uncancel-household-order`, { choOrderId: orderId
-                                                              , choHouseholdId: householdId
-                                                              })
   },
 }
 
