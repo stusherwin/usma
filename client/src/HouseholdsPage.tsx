@@ -44,7 +44,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                                      })
 
   confirmCreate = () => {
-    let validated = Validator.validate(this.state.form)
+    const validated = Validator.validate(this.state.form)
     this.setState({ form: validated })
     if(validated.valid) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
@@ -69,7 +69,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         {this.state.creating &&
           <div>
             <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
-            <Link action={this.confirmCreate}>Add</Link>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid}>Add</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }

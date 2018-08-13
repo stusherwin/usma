@@ -5,9 +5,9 @@ export class Util {
   }
 
   static dateString(date: Date): string {
-    let y = date.getUTCFullYear()
-    let m = date.getUTCMonth() + 1
-    let d = date.getUTCDate()
+    const y = date.getUTCFullYear()
+    const m = date.getUTCMonth() + 1
+    const d = date.getUTCDate()
     return `${y}-${(m < 10 ? '0' : '') + m}-${(d < 10 ? '0' : '') + d}`
   }
 

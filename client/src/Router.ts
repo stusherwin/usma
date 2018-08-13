@@ -10,19 +10,19 @@ export class Router {
   resolve(url: string): JSX.Element {
     let identifierParseFail = false
     for(let r of this.routes) {
-      let identifierRegExp = /\{([^\}]+)\}/gi
-      let routeRegExp = new RegExp('^' + r.route.replace(identifierRegExp, '([^/]+)'), "gi")
+      const identifierRegExp = /\{([^\}]+)\}/gi
+      const routeRegExp = new RegExp('^' + r.route.replace(identifierRegExp, '([^/]+)'), "gi")
       const routeMatches = routeRegExp.exec(url)
       if(!routeMatches) {
         continue;
       }
 
-      let identifierValues: {[key: string]: number} = {}
+      const identifierValues: {[key: string]: number} = {}
       let identifierMatches: any = null;
       
       for(let i = 1; i < routeMatches.length; i++) {
         identifierMatches = identifierRegExp.exec(r.route)
-        let value = parseInt(routeMatches[i])
+        const value = parseInt(routeMatches[i])
 
         if(isNaN(value)) {
           identifierParseFail = true

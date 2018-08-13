@@ -65,7 +65,7 @@ export class Validator {
   static updateField(field: Field, stringValue: string): Field {
     let error = null
     let valid = true
-    for(let v of field.validation) {
+    for(const v of field.validation) {
       if(!v.validate(stringValue)) {
         valid = false
         error = v.error
@@ -73,7 +73,7 @@ export class Validator {
       }
     }
 
-    let value = field.parse(stringValue)
+    const value = field.parse(stringValue)
 
     return { stringValue
            , value: value
@@ -92,7 +92,7 @@ export class Validator {
   }
 
   static reset(form: Form): Form {
-    let fields: {[key: string]: Field} = {}
+    const fields: {[key: string]: Field} = {}
     for(let f in form.fields) {
       fields[f] = this.resetField(form.fields[f])
     }
@@ -103,11 +103,11 @@ export class Validator {
   }
 
   static validate(form: Form): Form {
-    let fields: {[key: string]: Field} = {}
+    const fields: {[key: string]: Field} = {}
     let valid = true
     
     for(let f in form.fields) {
-      let field = this.validateField(form.fields[f])
+      const field = this.validateField(form.fields[f])
       valid = valid && field.valid
       fields[f] = field
     }
@@ -118,13 +118,13 @@ export class Validator {
   }
 
   static update(form: Form, fieldName: string, stringValue: string) {
-    let fields: {[key: string]: Field} = {}
+    const fields: {[key: string]: Field} = {}
     let valid = true
     
     for(let f in form.fields) {
       console.log(f)
       if(f == fieldName) {
-        let field = this.updateField(form.fields[f], stringValue)
+        const field = this.updateField(form.fields[f], stringValue)
         console.log(field.valid)
         valid = valid && field.valid
         fields[f] = field

@@ -73,7 +73,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
     if(!this.state.initialised) return <div>Initialising...</div>
     const order = this.state.order
     if(!order) return <div>Order not found.</div>
-    let unusedHouseholds = this.state.households.filter(h => !order.households.find(oh => oh.id == h.id))
+    const unusedHouseholds = this.state.households.filter(h => !order.households.find(oh => oh.id == h.id))
 
     return (
       <div>

@@ -47,7 +47,7 @@ export class Main extends React.Component<MainProps, MainState> {
     this.setState({ loading: true })
     p.then(_ => this.setState({ loading: false }))
      .catch(err => {
-       let apiError = err as ApiError
+       const apiError = err as ApiError
        console.log(err)
        this.setState({ loading: false
                      , error: apiError

@@ -77,7 +77,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
   }
 
   startEdit = (item: OrderSummary_Item) => {
-    let product = this.state.products.find(p => p.id == item.productId)
+    const product = this.state.products.find(p => p.id == item.productId)
     if(!product) return
 
     this.setState({ editingProduct: product
@@ -123,8 +123,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
     if(!this.state.initialised) return <div>Initialising...</div>
     if(!this.state.summary) return <div>Order not found.</div>
 
-    let summary = this.state.summary
-    let unusedProducts = this.state.products.filter(p => !summary.items.find(i => i.productId == p.id))
+    const summary = this.state.summary
+    const unusedProducts = this.state.products.filter(p => !summary.items.find(i => i.productId == p.id))
 
     return (
       <div>

@@ -6224,6 +6224,11 @@ table {
   background-color: #e3342f;
 }
 
+.disabled {
+  color: #b8c2cc;
+  cursor: default;
+}
+
 @media (min-width: 576px) {
   .sm\:list-reset {
     list-style: none;

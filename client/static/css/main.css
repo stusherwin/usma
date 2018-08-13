@@ -5,3 +5,7 @@
 .invalid {
   @apply bg-red;
 }
+
+.disabled {
+  @apply text-grey cursor-default;
+}

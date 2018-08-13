@@ -2,7 +2,7 @@ import { Order, OrderSummary, HouseholdOrderSummary, FullOrderSummary, Product, 
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
-let query = {
+const query = {
   orders(): Promise<Order[]> {
     return Http.get<ApiOrder[]>('/api/query/orders')
                .then(res => res.map(toOrder))
@@ -34,7 +34,7 @@ let query = {
   },
 }
 
-let command = {
+const command = {
   createOrder(date: Date): Promise<number> {
     return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
   },
@@ -93,7 +93,7 @@ let command = {
   },
 }
 
-export let ServerApi = {
+export const ServerApi = {
   query,
   command
 }
@@ -114,7 +114,7 @@ export class Http {
   private static queryString(query?: {[key: string]: string}): string {
     if(!query) return ''
 
-    let qs = []
+    const qs = []
     for(let key in query) {
       qs.push(key + '=' + encodeURIComponent(query[key]))
     }
@@ -130,7 +130,7 @@ export class Http {
           if(!res.ok) {
             return res.text().then(txt => { throw new ApiError(`${res.statusText} (${res.status})`, txt, res.status) })
           }
-          let contentType = res.headers.get('content-type')
+          const contentType = res.headers.get('content-type')
           if (contentType == null || !contentType.includes('application/json')) {
             throw new ApiError('Invalid server response', 'Expected response to have content-type application/json.', null);
           }

@@ -53,7 +53,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                                      })
 
   confirmCreate = () => {
-    let validated = Validator.validate(this.state.form)
+    const validated = Validator.validate(this.state.form)
     this.setState({ form: validated })
 
     if(validated.valid) {
@@ -80,7 +80,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
           <div>
             <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
             <input type="text" value={this.state.form.fields.price.stringValue} className={this.state.form.fields.price.valid? 'valid': 'invalid'} onChange={this.fieldChanged('price')} />
-            <Link action={this.confirmCreate}>Add</Link>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid}>Add</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
