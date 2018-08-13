@@ -35,7 +35,7 @@ let query = {
 }
 
 let command = {
-  newOrder(date: Date): Promise<number> {
+  createOrder(date: Date): Promise<number> {
     return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
   },
 
@@ -80,6 +80,10 @@ let command = {
                                                                  , rhoiHouseholdId: householdId
                                                                  , rhoiProductId: productId
                                                                  })
+  },
+
+  createHousehold(name: string): Promise<number> {
+    return Http.post(`/api/command/create-household/`, { chName: name })
   },
 }
 

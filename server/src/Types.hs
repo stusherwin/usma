@@ -80,3 +80,8 @@ module Types where
                                                    } deriving (Eq, Show, Generic)
   instance ToJSON CancelHouseholdOrder
   instance FromJSON CancelHouseholdOrder
+
+  data CreateHousehold = CreateHousehold { chName :: String
+                                         } deriving (Eq, Show, Generic)
+  instance ToJSON CreateHousehold
+  instance FromJSON CreateHousehold

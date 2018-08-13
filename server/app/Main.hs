@@ -101,6 +101,7 @@ module Main where
                   :<|> uncancelHouseholdOrder
                   :<|> ensureHouseholdOrderItem
                   :<|> removeHouseholdOrderItem
+                  :<|> createHousehold
     where
     createOrder :: Day -> Handler Int
     createOrder = liftIO . (D.createOrder conn)
@@ -125,3 +126,6 @@ module Main where
 
     removeHouseholdOrderItem :: RemoveHouseholdOrderItem -> Handler ()
     removeHouseholdOrderItem command = liftIO $ D.removeHouseholdOrderItem conn (rhoiOrderId command) (rhoiHouseholdId command) (rhoiProductId command)
+
+    createHousehold :: CreateHousehold -> Handler Int
+    createHousehold command = liftIO $ D.createHousehold conn (chName command)

@@ -30,7 +30,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, { orders: Order
 
   newOrder = () => {
     let date = new Date()
-    this.props.request(ServerApi.command.newOrder(date)).then(id => this.props.navigate(`/orders/${Util.dateString(date)}`))
+    this.props.request(ServerApi.command.createOrder(date)).then(id => this.props.navigate(`/orders/${Util.dateString(date)}`))
   }
 
   render() {

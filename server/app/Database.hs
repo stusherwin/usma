@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, removeHouseholdOrder) where
+module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, removeHouseholdOrder, createHousehold) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -268,3 +268,12 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     |] (orderId, householdId)
     close conn
     return ()
+  
+  createHousehold :: ByteString -> String -> IO Int
+  createHousehold connectionString name = do
+    conn <- connectPostgreSQL connectionString
+    [Only id] <- query conn [sql|
+      insert into household (name) values (?) returning id
+    |] (Only name)
+    close conn
+    return id

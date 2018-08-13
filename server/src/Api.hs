@@ -32,6 +32,7 @@ module Api where
     :<|> "uncancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "ensure-household-order-item" :> ReqBody '[JSON] EnsureHouseholdOrderItem :> Post '[JSON] ()
     :<|> "remove-household-order-item" :> ReqBody '[JSON] RemoveHouseholdOrderItem :> Post '[JSON] ()
+    :<|> "create-household" :> ReqBody '[JSON] CreateHousehold :> Post '[JSON] Int
 
   type FullAPI =
          AppAPI
