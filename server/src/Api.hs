@@ -33,6 +33,7 @@ module Api where
     :<|> "ensure-household-order-item" :> ReqBody '[JSON] EnsureHouseholdOrderItem :> Post '[JSON] ()
     :<|> "remove-household-order-item" :> ReqBody '[JSON] RemoveHouseholdOrderItem :> Post '[JSON] ()
     :<|> "create-household" :> ReqBody '[JSON] CreateHousehold :> Post '[JSON] Int
+    :<|> "create-product" :> ReqBody '[JSON] CreateProduct :> Post '[JSON] Int
 
   type FullAPI =
          AppAPI

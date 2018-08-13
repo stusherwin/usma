@@ -85,6 +85,12 @@ let command = {
   createHousehold(name: string): Promise<number> {
     return Http.post(`/api/command/create-household/`, { chName: name })
   },
+
+  createProduct(name: string, price: number): Promise<number> {
+    return Http.post(`/api/command/create-product/`, { cpName: name
+                                                     , cpPrice: price
+                                                     })
+  },
 }
 
 export let ServerApi = {

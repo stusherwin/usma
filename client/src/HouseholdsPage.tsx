@@ -23,7 +23,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     this.state = { households: []
                  , initialised: false
                  , creating: false
-                 , form: Validator.form({ name: Validator.field('', [{ validate: (v: string) => !!v.length, error: 'Name is required' }], (v: string) => v) })
+                 , form: Validator.form({ name: Validator.field('', (v: string) => v, [{ validate: (v: string) => !!v.length, error: 'Name is required' }]) })
                  }
   }
 
@@ -66,13 +66,13 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
       <div>
         <h1>Households</h1>
         <Link action={this.startCreate}>New household</Link>
-          {this.state.creating &&
-            <div>
-              <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
-              <Link action={this.confirmCreate}>Add</Link>
-              <Link action={this.cancelCreate}>Cancel</Link>
-            </div>
-          }
+        {this.state.creating &&
+          <div>
+            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
+            <Link action={this.confirmCreate}>Add</Link>
+            <Link action={this.cancelCreate}>Cancel</Link>
+          </div>
+        }
         {!this.state.households.length ? <div>No households created yet</div> : (
           <div>
             { this.state.households.map(h => (

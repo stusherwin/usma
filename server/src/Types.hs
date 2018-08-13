@@ -85,3 +85,9 @@ module Types where
                                          } deriving (Eq, Show, Generic)
   instance ToJSON CreateHousehold
   instance FromJSON CreateHousehold
+
+  data CreateProduct = CreateProduct { cpName :: String
+                                     , cpPrice :: Int
+                                     } deriving (Eq, Show, Generic)
+  instance ToJSON CreateProduct
+  instance FromJSON CreateProduct

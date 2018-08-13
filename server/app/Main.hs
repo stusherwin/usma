@@ -102,6 +102,7 @@ module Main where
                   :<|> ensureHouseholdOrderItem
                   :<|> removeHouseholdOrderItem
                   :<|> createHousehold
+                  :<|> createProduct
     where
     createOrder :: Day -> Handler Int
     createOrder = liftIO . (D.createOrder conn)
@@ -129,3 +130,6 @@ module Main where
 
     createHousehold :: CreateHousehold -> Handler Int
     createHousehold command = liftIO $ D.createHousehold conn (chName command)
+
+    createProduct :: CreateProduct -> Handler Int
+    createProduct command = liftIO $ D.createProduct conn (cpName command) (cpPrice command)

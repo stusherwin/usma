@@ -19,7 +19,7 @@ export interface Form {
 }
 
 export class Validator {
-  static field(defaultValue: any, validation: FieldValidation[], parse: (stringValue: string) => any): Field {
+  static field(defaultValue: any, parse: (stringValue: string) => any, validation: FieldValidation[]): Field {
     return { stringValue: ''
            , defaultValue
            , value: defaultValue
@@ -122,16 +122,23 @@ export class Validator {
     let valid = true
     
     for(let f in form.fields) {
+      console.log(f)
       if(f == fieldName) {
         let field = this.updateField(form.fields[f], stringValue)
+        console.log(field.valid)
         valid = valid && field.valid
         fields[f] = field
       } else {
         let field = this.validateField(form.fields[f])
+        console.log(field.valid)
         valid = valid && field.valid
         fields[f] = field
       }
     }
+
+    console.log('done')
+    console.log(stringValue)
+    console.log(valid)
 
     return { valid
            , fields
