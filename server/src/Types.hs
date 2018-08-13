@@ -9,6 +9,7 @@ module Types where
   data Order = Order { oId :: Int
                      , oCreatedDate :: String
                      , oComplete :: Bool
+                     , oCancelled :: Bool
                      , oTotal :: Int
                      } deriving (Eq, Show, Generic)
   instance ToJSON Order
@@ -26,6 +27,7 @@ module Types where
 
   data OrderSummary = OrderSummary { osCreatedDate :: String
                                    , osComplete :: Bool
+                                   , osCancelled :: Bool
                                    , osTotal :: Int
                                    , osHouseholds :: [OrderSummary_Household]
                                    } deriving (Eq, Show, Generic)
@@ -48,6 +50,8 @@ module Types where
   instance ToJSON HouseholdOrderSummary
 
   data FullOrderSummary = FullOrderSummary { fosOrderCreatedDate :: String
+                                           , fosComplete :: Bool
+                                           , fosCancelled :: Bool
                                            , fosTotal :: Int
                                            , fosItems :: [OrderSummary_Item]
                                            } deriving (Eq, Show, Generic)

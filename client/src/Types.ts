@@ -2,10 +2,12 @@ export type Order = { id: number
                     , createdDate: Date
                     , total: number
                     , complete: boolean
+                    , cancelled: boolean
                     }
 
 export type OrderSummary = { createdDate: Date
                            , complete: boolean
+                           , cancelled: boolean
                            , households: OrderSummary_Household[]
                            , total: number
                            }
@@ -25,6 +27,8 @@ export type HouseholdOrderSummary = { orderCreatedDate: Date
                                     }
 
 export type FullOrderSummary = { orderCreatedDate: Date
+                               , complete: boolean
+                               , cancelled: boolean
                                , total: number
                                , items: OrderSummary_Item[]
                                }

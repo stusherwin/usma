@@ -25,15 +25,17 @@ module Api where
  
   type CommandAPI =
          "create-order" :> Capture "date" Day :> Post '[JSON] Int
-    :<|> "delete-order" :> Capture "orderId" Int :> Post '[JSON] ()
+    :<|> "cancel-order" :> Capture "orderId" Int :> Post '[JSON] ()
+    :<|> "uncancel-order" :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "add-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
-    :<|> "remove-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "cancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "uncancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "ensure-household-order-item" :> ReqBody '[JSON] EnsureHouseholdOrderItem :> Post '[JSON] ()
     :<|> "remove-household-order-item" :> ReqBody '[JSON] RemoveHouseholdOrderItem :> Post '[JSON] ()
     :<|> "create-household" :> ReqBody '[JSON] CreateHousehold :> Post '[JSON] Int
+    :<|> "archive-household" :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "create-product" :> ReqBody '[JSON] CreateProduct :> Post '[JSON] Int
+    :<|> "archive-product" :> Capture "productId" Int :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

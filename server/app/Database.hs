@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, deleteOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, removeHouseholdOrder, createHousehold, createProduct) where
+module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, cancelOrder, uncancelOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold, createProduct, archiveProduct) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -36,18 +36,18 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   getAllOrders connectionString = do
     conn <- connectPostgreSQL connectionString
     rOrders <- query_ conn [sql|
-      select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total
+      select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
       from "order" o
       left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
       left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
       left join product p on p.id = hoi.product_id
-      group by o.id, o.created_date, o.complete
+      group by o.id, o.created_date, o.complete, o.cancelled
     |]
     close conn
     return $ rOrders <&> order
     where
-    order :: (Int, Day, Bool, Int) -> Order
-    order (id, createdDate, complete, total) = Order id (showGregorian createdDate) complete total
+    order :: (Int, Day, Bool, Bool, Int) -> Order
+    order (id, createdDate, complete, cancelled, total) = Order id (showGregorian createdDate) complete cancelled total
 
   getAllProducts :: ByteString -> IO [Product]
   getAllProducts connectionString = do
@@ -55,6 +55,7 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     rProducts <- query_ conn [sql|
       select p.id, p.name, p.price
       from product p
+      where p.archived = false
     |]
     close conn
     return $ rProducts <&> product
@@ -68,6 +69,7 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     rHouseholds <- query_ conn [sql|
       select h.id, h.name
       from household h
+      where h.archived = false
     |]
     close conn
     return $ rHouseholds <&> household
@@ -79,13 +81,13 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   getOrderSummary connectionString orderId = do
     conn <- connectPostgreSQL connectionString
     rOrders <- query conn [sql|
-      select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total
+      select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
       from "order" o
       left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
       left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
       left join product p on p.id = hoi.product_id
       where o.id = ?
-      group by o.id, o.created_date, o.complete
+      group by o.id, o.created_date, o.complete, o.cancelled
     |] (Only orderId)
     rHouseholds <- query conn [sql|
       select h.id, h.name, ho.order_id, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
@@ -99,10 +101,10 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     close conn
     return $ listToMaybe $ orderSummary rHouseholds <$> rOrders
     where    
-    orderSummary :: [ROrderSummary_Household] -> (Int, Day, Bool, Int) -> OrderSummary
-    orderSummary rHouseholds (id, createdDate, complete, total) = 
+    orderSummary :: [ROrderSummary_Household] -> (Int, Day, Bool, Bool, Int) -> OrderSummary
+    orderSummary rHouseholds (id, createdDate, complete, cancelled, total) = 
       let households = filter ((==) id . rHouseholdOrderId) rHouseholds <&> household
-      in OrderSummary (showGregorian createdDate) complete total households
+      in OrderSummary (showGregorian createdDate) complete cancelled total households
 
     household :: ROrderSummary_Household -> OrderSummary_Household
     household (id, name, _, cancelled, total) = OrderSummary_Household id name cancelled total
@@ -147,13 +149,13 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   getFullOrderSummary connectionString orderId = do
     conn <- connectPostgreSQL connectionString
     rOrders <- query conn [sql|
-      select o.id, o.created_date, coalesce(sum(p.price * hoi.quantity), 0) as total
+      select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
       from "order" o
       left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
       left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
       left join product p on p.id = hoi.product_id
       where o.id = ?
-      group by o.id, o.created_date, o.complete
+      group by o.id, o.created_date, o.complete, o.cancelled
     |] (Only orderId)
     rItems <- query conn [sql|
       select ho.order_id, p.id, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
@@ -166,10 +168,10 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
     close conn
     return $ listToMaybe $ fullOrderSummary rItems <$> rOrders
     where
-    fullOrderSummary :: [RFullOrderSummary_Item] -> (Int, Day, Int) -> FullOrderSummary
-    fullOrderSummary rItems (id, date, total) =
+    fullOrderSummary :: [RFullOrderSummary_Item] -> (Int, Day, Bool, Bool, Int) -> FullOrderSummary
+    fullOrderSummary rItems (id, date, complete, cancelled, total) =
       let items = filter ((==) id . rItemOrderId) rItems <&> item
-      in FullOrderSummary (showGregorian date) total items
+      in FullOrderSummary (showGregorian date) complete cancelled total items
 
     item :: RFullOrderSummary_Item -> OrderSummary_Item
     item (_, id, name, quantity, total) = OrderSummary_Item id name quantity total
@@ -181,26 +183,28 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   createOrder connectionString date = do
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
-      insert into "order" (created_date, complete) values (?, false) returning id
+      insert into "order" (created_date, complete, cancelled) values (?, false, false) returning id
     |] (Only date)
     close conn
     return id
 
-  deleteOrder :: ByteString -> Int -> IO ()
-  deleteOrder connectionString orderId = do
+  cancelOrder :: ByteString -> Int -> IO ()
+  cancelOrder connectionString orderId = do
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
-      execute conn [sql| 
-        delete from houseold_order_item hoi where order_id = ?
-      |] (Only orderId)
-      execute conn [sql| 
-        delete from houseold_order ho where order_id = ?
-      |] (Only orderId)
       execute conn [sql|
-        delete from "order" where id = ?
+        update "order" set cancelled = true where id = ?
       |] (Only orderId)
     close conn
-    return ()
+
+  uncancelOrder :: ByteString -> Int -> IO ()
+  uncancelOrder connectionString orderId = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      execute conn [sql|
+        update "order" set cancelled = false where id = ?
+      |] (Only orderId)
+    close conn
 
   ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> Int -> IO ()
   ensureHouseholdOrderItem connectionString orderId householdId productId quantity = do
@@ -218,7 +222,6 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
           update household_order_item set quantity = ? where order_id = ? and household_id = ? and product_id = ?
         |] (quantity, orderId, householdId, productId)  
     close conn
-    return ()
 
   removeHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> IO ()
   removeHouseholdOrderItem connectionString orderId householdId productId = do
@@ -227,7 +230,6 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
       delete from household_order_item where order_id = ? and household_id = ? and product_id = ?
     |] (orderId, householdId, productId)
     close conn
-    return ()
 
   addHouseholdOrder :: ByteString -> Int -> Int -> IO ()
   addHouseholdOrder connectionString orderId householdId = do
@@ -236,20 +238,6 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
       insert into household_order (order_id, household_id, cancelled) values (?, ?, false)
     |] (orderId, householdId)
     close conn
-    return ()
-
-  removeHouseholdOrder :: ByteString -> Int -> Int -> IO ()
-  removeHouseholdOrder connectionString orderId householdId = do
-    conn <- connectPostgreSQL connectionString
-    withTransaction conn $ do
-      execute conn [sql|
-        delete from household_order_item where order_id = ? and household_id = ?
-      |] (orderId, householdId)
-      execute conn [sql|
-        delete from household_order where order_id = ? and household_id = ?
-      |] (orderId, householdId)
-    close conn
-    return ()
 
   cancelHouseholdOrder :: ByteString -> Int -> Int -> IO ()
   cancelHouseholdOrder connectionString orderId householdId = do
@@ -258,7 +246,6 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
       update household_order set cancelled = true where order_id = ? and household_id = ?
     |] (orderId, householdId)
     close conn
-    return ()
 
   uncancelHouseholdOrder :: ByteString -> Int -> Int -> IO ()
   uncancelHouseholdOrder connectionString orderId householdId = do
@@ -267,22 +254,37 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
       update household_order set cancelled = false where order_id = ? and household_id = ?
     |] (orderId, householdId)
     close conn
-    return ()
   
   createHousehold :: ByteString -> String -> IO Int
   createHousehold connectionString name = do
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
-      insert into household (name) values (?) returning id
+      insert into household (name, archived) values (?, false) returning id
     |] (Only name)
     close conn
     return id
+  
+  archiveHousehold :: ByteString -> Int -> IO ()
+  archiveHousehold connectionString householdId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update household set archived = true where id = ?
+    |] (Only householdId)
+    close conn
 
   createProduct :: ByteString -> String -> Int -> IO Int
   createProduct connectionString name price = do
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
-      insert into product (name, price) values (?, ?) returning id
+      insert into product (name, price, archived) values (?, ?, false) returning id
     |] (name, price)
     close conn
     return id
+  
+  archiveProduct :: ByteString -> Int -> IO ()
+  archiveProduct connectionString productId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update product set archived = true where id = ?
+    |] (Only productId)
+    close conn

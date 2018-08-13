@@ -25,52 +25,55 @@ create table "order"
 ( id           serial  not null  primary key
 , created_date date    not null
 , complete     boolean not null
+, cancelled    boolean not null
 );
 
-insert into "order" (created_date, complete)
-values ('2018-01-01', false)
+insert into "order" (created_date, complete, cancelled)
+values ('2018-01-01', false, false)
 returning id
 into o1Id;
 
-insert into "order" (created_date, complete)
-values ('2018-01-02', true)
+insert into "order" (created_date, complete, cancelled)
+values ('2018-01-02', true, false)
 returning id
 into o2Id;
 
-insert into "order" (created_date, complete)
-values ('2018-01-03', true)
+insert into "order" (created_date, complete, cancelled)
+values ('2018-01-03', true, false)
 returning id
 into o3Id;
 
-insert into "order" (created_date, complete)
-values ('2018-01-04', true)
+insert into "order" (created_date, complete, cancelled)
+values ('2018-01-04', true, false)
 returning id
 into o4Id;
 
 ---
 
 create table household
-( id     serial not null primary key
-, "name" text
+( id       serial not null primary key
+, "name"   text
+, archived boolean not null
 );
 
-insert into household ("name") values ('123 Front Road')  returning id into h1Id;
-insert into household ("name") values ('1 Main Terrace')  returning id into h2Id;
-insert into household ("name") values ('24 The Street')   returning id into h3Id;
-insert into household ("name") values ('3 Bowling Alley') returning id into h4Id;
+insert into household ("name", archived) values ('123 Front Road', false)  returning id into h1Id;
+insert into household ("name", archived) values ('1 Main Terrace', false)  returning id into h2Id;
+insert into household ("name", archived) values ('24 The Street', false)   returning id into h3Id;
+insert into household ("name", archived) values ('3 Bowling Alley', false) returning id into h4Id;
 
 ---
 
 create table product
-( id     serial not null primary key
-, "name" text
-, price  int not null
+( id       serial not null primary key
+, "name"   text
+, price    int not null
+, archived boolean not null
 );
 
-insert into product ("name", price) values ('Jam', 1240)     returning id into p1Id;
-insert into product ("name", price) values ('Butter', 9523)  returning id into p2Id;
-insert into product ("name", price) values ('Milk', 5210)    returning id into p3Id;
-insert into product ("name", price) values ('Bananas', 1200) returning id into p4Id;
+insert into product ("name", price, archived) values ('Jam', 1240, false)     returning id into p1Id;
+insert into product ("name", price, archived) values ('Butter', 9523, false)  returning id into p2Id;
+insert into product ("name", price, archived) values ('Milk', 5210, false)    returning id into p3Id;
+insert into product ("name", price, archived) values ('Bananas', 1200, false) returning id into p4Id;
 
 ---
 

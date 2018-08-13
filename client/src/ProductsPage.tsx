@@ -68,6 +68,12 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
 
   fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
     this.setState({ form: Validator.update(this.state.form, fieldName, event.target.value) })
+  
+  delete = (p: Product) => 
+    this.props.request(ServerApi.command.archiveProduct(p.id))
+      .then(() => this.props.request(ServerApi.query.products()))
+      .then(products => this.setState({ products
+                                      }))
 
   render() {
     if(!this.state.initialised) return <div>Initialising...</div>
@@ -78,9 +84,9 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         <Link action={this.startCreate}>New product</Link>
         {this.state.creating &&
           <div>
-            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
-            <input type="text" value={this.state.form.fields.price.stringValue} className={this.state.form.fields.price.valid? 'valid': 'invalid'} onChange={this.fieldChanged('price')} />
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid}>Add</Link>
+            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.validating && !this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
+            <input type="text" value={this.state.form.fields.price.stringValue} className={this.state.form.validating && !this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
+            <Link action={this.confirmCreate} disabled={this.state.form.validating && !this.state.form.valid}>Add</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
@@ -90,6 +96,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
               <div key={p.id}>
                 <span>{p.name}</span>
                 <Money amount={p.price} />
+                <Link action={() => this.delete(p)}>Delete</Link>
               </div>
             )) }
           </div>

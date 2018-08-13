@@ -39,8 +39,12 @@ const command = {
     return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
   },
 
-  deleteOrder(id: number): Promise<{}> {
-    return Http.post(`/api/command/delete-order/${id}`, {})
+  cancelOrder(id: number): Promise<{}> {
+    return Http.post(`/api/command/cancel-order/${id}`, {})
+  },
+
+  uncancelOrder(id: number): Promise<{}> {
+    return Http.post(`/api/command/uncancel-order/${id}`, {})
   },
 
   addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
@@ -90,6 +94,14 @@ const command = {
     return Http.post(`/api/command/create-product/`, { cpName: name
                                                      , cpPrice: price
                                                      })
+  },
+
+  archiveProduct(id: number): Promise<{}> {
+    return Http.post(`/api/command/archive-product/${id}`, {})
+  },
+
+  archiveHousehold(id: number): Promise<{}> {
+    return Http.post(`/api/command/archive-household/${id}`, {})
   },
 }
 
@@ -147,6 +159,7 @@ export class Http {
 type ApiOrder = { oId: number
                 , oCreatedDate: string
                 , oComplete: boolean
+                , oCancelled: boolean
                 , oTotal: number
                 }
 
@@ -161,6 +174,7 @@ type ApiHousehold = { hId: number
 
 type ApiOrderSummary = { osCreatedDate: string
                        , osComplete: boolean
+                       , osCancelled: boolean
                        , osTotal: number
                        , osHouseholds: ApiOrderSummary_Household[]
                        }
@@ -180,6 +194,8 @@ type ApiHouseholdOrderSummary = { hosOrderCreatedDate: string
                                 }
 
 type ApiFullOrderSummary = { fosOrderCreatedDate: string
+                           , fosComplete: boolean
+                           , fosCancelled: boolean
                            , fosTotal: number
                            , fosItems: ApiOrderSummary_Item[]
                            }
@@ -207,6 +223,7 @@ function toOrder(o: ApiOrder): Order {
     id: o.oId,
     createdDate: new Date(o.oCreatedDate),
     complete: o.oComplete,
+    cancelled: o.oCancelled,
     total: o.oTotal,
   }
 }
@@ -230,6 +247,7 @@ function toOrderSummary(o: ApiOrderSummary): OrderSummary {
   return {
     createdDate: new Date(o.osCreatedDate),
     complete: o.osComplete,
+    cancelled: o.osCancelled,
     total: o.osTotal,
     households: o.osHouseholds.map(toOrderSummary_Household)
   }
@@ -258,6 +276,8 @@ function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSum
 function toFullOrderSummary(o: ApiFullOrderSummary): FullOrderSummary {
   return {
     orderCreatedDate: new Date(o.fosOrderCreatedDate),
+    complete: o.fosComplete,
+    cancelled: o.fosCancelled,
     total: o.fosTotal,
     items: o.fosItems.map(toOrderSummary_Item)
   }

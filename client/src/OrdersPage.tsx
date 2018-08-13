@@ -30,14 +30,14 @@ export class OrdersPage extends React.Component<OrdersPageProps, { orders: Order
 
   newOrder = () => {
     const date = new Date()
-    this.props.request(ServerApi.command.createOrder(date)).then(id => this.props.navigate(`/orders/${Util.dateString(date)}`))
+    this.props.request(ServerApi.command.createOrder(date)).then(id => this.props.navigate(`/orders/${id}`))
   }
 
   render() {
     if(!this.state.initialised) return <div>Initialising...</div>
     
-    const currentOrder = this.state.orders.filter(o => !o.complete)[0]
-    const pastOrders = this.state.orders.filter(o => o.complete)
+    const currentOrder = this.state.orders.filter(o => !o.complete && !o.cancelled)[0]
+    const pastOrders = this.state.orders.filter(o => o.complete || o.cancelled)
     return (
       <div>
         <h1>Orders</h1>
@@ -59,6 +59,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, { orders: Order
             { pastOrders.map(o => (
               <div key={o.id}>
                 <span>{ Util.formatDate(o.createdDate) }</span>
+                <span>{o.cancelled && 'cancelled'}</span>
                 <Money amount={o.total} />
                 <Link action={_ => this.props.navigate('/orders/' + o.id)}>View</Link>
               </div>

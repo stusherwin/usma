@@ -14,6 +14,7 @@ export interface Field {
 }
 
 export interface Form {
+  validating: boolean
   valid: boolean 
   fields: {[key: string]: Field}
 }
@@ -85,8 +86,20 @@ export class Validator {
            }
   }
 
+  static cloneField(field: Field): Field {
+    return { stringValue: field.stringValue
+           , value: field.value
+           , defaultValue: field.defaultValue
+           , validation: field.validation
+           , parse: field.parse
+           , valid: field.valid
+           , error: field.error
+           }
+  }
+
   static form(fields: {[key: string]: Field}): Form {
-    return { valid: true
+    return { validating: false
+           , valid: true
            , fields: fields
            }
   }
@@ -97,50 +110,44 @@ export class Validator {
       fields[f] = this.resetField(form.fields[f])
     }
 
-    return { valid: true
+    return { validating: false
+           , valid: true
            , fields
            }
   }
 
-  static validate(form: Form): Form {
-    const fields: {[key: string]: Field} = {}
-    let valid = true
-    
-    for(let f in form.fields) {
-      const field = this.validateField(form.fields[f])
-      valid = valid && field.valid
-      fields[f] = field
+  static all(fields: {[key: string]: Field}, predicate: (f: Field) => boolean): boolean {
+    let result = true
+    for(let f in fields) {
+      result = result && predicate(fields[f])
     }
+    
+    return result
+  }
 
-    return { valid
+  static map(fields: {[key: string]: Field}, fn: (f: Field) => Field): {[key: string]: Field} {
+    let result: {[key: string]: Field} = {}
+    for(let f in fields) {
+      result[f] = fn(fields[f])
+    }
+    return result
+  }
+
+  static validate(form: Form): Form {
+    const fields = this.map(form.fields, this.validateField)
+
+    return { validating: true
+           , valid: this.all(fields, f => f.valid)
            , fields
            }
   }
 
   static update(form: Form, fieldName: string, stringValue: string) {
-    const fields: {[key: string]: Field} = {}
-    let valid = true
+    const fields = this.map(form.fields, this.cloneField)
+    fields[fieldName] = this.updateField(form.fields[fieldName], stringValue)
     
-    for(let f in form.fields) {
-      console.log(f)
-      if(f == fieldName) {
-        const field = this.updateField(form.fields[f], stringValue)
-        console.log(field.valid)
-        valid = valid && field.valid
-        fields[f] = field
-      } else {
-        let field = this.validateField(form.fields[f])
-        console.log(field.valid)
-        valid = valid && field.valid
-        fields[f] = field
-      }
-    }
-
-    console.log('done')
-    console.log(stringValue)
-    console.log(valid)
-
-    return { valid
+    return { validating: form.validating
+           , valid: this.all(fields, f => f.valid)
            , fields
            }
     

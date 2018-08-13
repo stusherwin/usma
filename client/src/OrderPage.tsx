@@ -37,8 +37,16 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
       .catch(_ => this.setState({ initialised: true }))
   }
 
-  delete = () => {
-    this.props.request(ServerApi.command.deleteOrder(this.props.id)).then(_ => this.props.navigate('/orders'))
+  cancel = () => {
+    this.props.request(ServerApi.command.cancelOrder(this.props.id))
+      .then(_ => this.props.request(ServerApi.query.orderSummary(this.props.id)))
+      .then(order => this.setState({ order }))
+  }
+
+  uncancel = () => {
+    this.props.request(ServerApi.command.uncancelOrder(this.props.id))
+      .then(_ => this.props.request(ServerApi.query.orderSummary(this.props.id)))
+      .then(order => this.setState({ order }))
   }
 
   startAddHousehold = (h: Household) => this.setState({ addingHousehold: h })
@@ -78,8 +86,12 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
     return (
       <div>
         <div><Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)}</h1>
-        {!order.complete && !order.households.length ? <Link action={this.delete}>Delete</Link> : null}
+        <h1>{Util.formatDate(order.createdDate)} {order.cancelled && ' (cancelled)'}</h1>
+        {!order.complete && (
+          order.cancelled
+          ? <Link action={this.uncancel}>Uncancel order</Link>
+          : <Link action={this.cancel}>Cancel order</Link>
+        )}
         <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/full')}>View full order</Link>
         {!order.complete && !!unusedHouseholds.length &&
           <Link action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Link>

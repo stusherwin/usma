@@ -94,27 +94,29 @@ module Main where
   
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrder
-                  :<|> deleteOrder
+                  :<|> cancelOrder
+                  :<|> uncancelOrder
                   :<|> addHouseholdOrder
-                  :<|> removeHouseholdOrder
                   :<|> cancelHouseholdOrder
                   :<|> uncancelHouseholdOrder
                   :<|> ensureHouseholdOrderItem
                   :<|> removeHouseholdOrderItem
                   :<|> createHousehold
+                  :<|> archiveHousehold
                   :<|> createProduct
+                  :<|> archiveProduct
     where
     createOrder :: Day -> Handler Int
     createOrder = liftIO . (D.createOrder conn)
 
-    deleteOrder :: Int -> Handler ()
-    deleteOrder = liftIO . (D.deleteOrder conn)
+    cancelOrder :: Int -> Handler ()
+    cancelOrder = liftIO . (D.cancelOrder conn)
+
+    uncancelOrder :: Int -> Handler ()
+    uncancelOrder = liftIO . (D.uncancelOrder conn)
 
     addHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     addHouseholdOrder command = liftIO $ D.addHouseholdOrder conn (choOrderId command) (choHouseholdId command)
-
-    removeHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    removeHouseholdOrder command = liftIO $ D.removeHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
     cancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     cancelHouseholdOrder command = liftIO $ D.cancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
@@ -131,5 +133,11 @@ module Main where
     createHousehold :: CreateHousehold -> Handler Int
     createHousehold command = liftIO $ D.createHousehold conn (chName command)
 
+    archiveHousehold :: Int -> Handler ()
+    archiveHousehold = liftIO . (D.archiveHousehold conn)
+
     createProduct :: CreateProduct -> Handler Int
     createProduct command = liftIO $ D.createProduct conn (cpName command) (cpPrice command)
+
+    archiveProduct :: Int -> Handler ()
+    archiveProduct = liftIO . (D.archiveProduct conn)

@@ -59,6 +59,12 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
   fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
     this.setState({ form: Validator.update(this.state.form, fieldName, event.target.value) })
 
+  delete = (h: Household) => 
+    this.props.request(ServerApi.command.archiveHousehold(h.id))
+      .then(() => this.props.request(ServerApi.query.households()))
+      .then(households => this.setState({ households
+                                        }))
+
   render() {
     if(!this.state.initialised) return <div>Initialising...</div>
     
@@ -68,8 +74,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         <Link action={this.startCreate}>New household</Link>
         {this.state.creating &&
           <div>
-            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid}>Add</Link>
+            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.validating && !this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
+            <Link action={this.confirmCreate} disabled={this.state.form.validating && !this.state.form.valid}>Add</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
@@ -78,6 +84,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             { this.state.households.map(h => (
               <div key={h.id}>
                 <span>{h.name}</span>
+                <Link action={() => this.delete(h)}>Delete</Link>
               </div>
             )) }
           </div>
