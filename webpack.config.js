@@ -7,6 +7,8 @@ const webpack = require('webpack');
 const isWebpackDevServer = process.argv.filter(a => path.basename(a).indexOf('webpack-dev-server') >= 0).length;
 const isWatch = process.argv.filter(a => a === '--watch').length
 
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
 var plugins =
   isWebpackDevServer || !isWatch ? [] : [
     function(){
@@ -16,6 +18,20 @@ var plugins =
     }
   ]
 ;
+
+var lessUse = [];
+if(isWebpackDevServer) {
+  lessUse = [
+    { loader: "style-loader" },
+    { loader: "css-loader" }
+  ];
+} else {
+  plugins.push(new ExtractTextPlugin("./css/bundle.css"));
+  lessUse = ExtractTextPlugin.extract({
+    fallback: "style-loader",
+    use: [ "css-loader" /*, "less-loader"*/ ]
+  })
+}
 
 module.exports = {
     entry: "./client/src/index.tsx",
@@ -39,13 +55,14 @@ module.exports = {
 
     resolve: {
         modules: [ 'node_modules', 'bower_components' ],
-        extensions: [".ts", ".tsx", ".js", ".json"]
+        extensions: [".ts", ".tsx", ".js", ".json", ".css"]
     },
 
     module: {
         rules: [
             { test: /\.tsx?$/, loader: "awesome-typescript-loader" },
             { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
+            { test: /\.css$/, use: lessUse },
             { test: /\.(png|woff|woff2|eot|ttf|svg)$/, loader: 'url-loader?limit=100000' },
         ]
     },

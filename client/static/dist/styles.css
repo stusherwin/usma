@@ -6220,6 +6220,10 @@ table {
   z-index: auto;
 }
 
+.invalid {
+  background-color: #e3342f;
+}
+
 @media (min-width: 576px) {
   .sm\:list-reset {
     list-style: none;

@@ -4,6 +4,7 @@ import { Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
+import { Validator, Form } from './Validator'
 
 export interface HouseholdsPageProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
                                      , navigate: (location: string) => void
@@ -11,7 +12,8 @@ export interface HouseholdsPageProps { request: <T extends {}>(p: Promise<T>) =>
 
 export interface HouseholdsPageState { households: Household[]
                                      , initialised: boolean
-                                     , newHouseholdName: string | null
+                                     , creating: boolean
+                                     , form: Form
                                      }
 
 export class HouseholdsPage extends React.Component<HouseholdsPageProps, HouseholdsPageState> {
@@ -20,7 +22,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
 
     this.state = { households: []
                  , initialised: false
-                 , newHouseholdName: null
+                 , creating: false
+                 , form: Validator.form({ name: Validator.field('', [{ validate: (v: string) => !!v.length, error: 'Name is required' }], (v: string) => v) })
                  }
   }
 
@@ -33,23 +36,28 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
       })
   }
 
-  startCreate = () => this.setState({ newHouseholdName: '' })
+  startCreate = () => this.setState({ creating: true
+                                    })
 
-  cancelCreate = () =>
-    this.setState({ newHouseholdName: null })
+  cancelCreate = () => this.setState({ creating: false
+                                     , form: Validator.reset(this.state.form)
+                                     })
 
   confirmCreate = () => {
-    if(this.state.newHouseholdName == null) return
-
-    this.props.request(ServerApi.command.createHousehold(this.state.newHouseholdName))
-      .then(() => this.props.request(ServerApi.query.households()))
-      .then(households => this.setState({ households
-                                        , newHouseholdName: null
-                                        }))
+    let validated = Validator.validate(this.state.form)
+    this.setState({ form: validated })
+    if(validated.valid) {
+      this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
+        .then(() => this.props.request(ServerApi.query.households()))
+        .then(households => this.setState({ households
+                                          , creating: false
+                                          , form: Validator.reset(this.state.form)
+                                          }))
+    }
   }
 
-  newHouseholdNameChanged = (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ newHouseholdName: event.target.value })
+  fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
+    this.setState({ form: Validator.update(this.state.form, fieldName, event.target.value) })
 
   render() {
     if(!this.state.initialised) return <div>Initialising...</div>
@@ -58,9 +66,9 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
       <div>
         <h1>Households</h1>
         <Link action={this.startCreate}>New household</Link>
-          {this.state.newHouseholdName != null &&
+          {this.state.creating &&
             <div>
-              <input type="text" value={this.state.newHouseholdName} onChange={this.newHouseholdNameChanged} />
+              <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.fields.name.valid? 'valid': 'invalid'} onChange={this.fieldChanged('name')} />
               <Link action={this.confirmCreate}>Add</Link>
               <Link action={this.cancelCreate}>Cancel</Link>
             </div>

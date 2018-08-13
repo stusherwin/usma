@@ -1,3 +1,7 @@
 @tailwind preflight;
 @tailwind components;
 @tailwind utilities;
+
+.invalid {
+  @apply bg-red;
+}
