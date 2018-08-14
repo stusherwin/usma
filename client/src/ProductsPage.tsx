@@ -5,7 +5,7 @@ import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
-import { Validator, Form } from './Validator'
+import { Form, Field, Validate } from './Validation'
 
 export interface ProductsPageProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , navigate: (location: string) => void
@@ -24,15 +24,16 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     this.state = { products: []
                  , initialised: false
                  , creating: false
-                 , form: Validator.form({ name: Validator.field('', (v: string) => v,
-                                          [ { validate: (v: string) => !!v.length, error: 'Name is required' }
-                                          ])
-                                        , price: Validator.field('0.00', (v: string) => (parseFloat(v) || 0) * 100,
-                                          [ { validate: (v: string) => !!v.length, error: 'Price is required' }
-                                          , { validate: (v: string) => parseFloat(v) !== NaN, error: 'Price must be a decimal value' }
-                                          , { validate: (v: string) => parseFloat(v) > 0, error: 'Price must be greater than zero' }
-                                          ])
-                                        })
+                 , form: Form.create({ name: Field.create('', (v: string) => v,
+                                         [ Validate.required('Name is required')
+                                         ])
+                                     , price: Field.create(0, (v: string) => (parseFloat(v) || 0) * 100,
+                                         [ Validate.required('Price is required')
+                                         , Validate.decimal('Price must be a number')
+                                         , Validate.twoDP('Price can\'t have more than 2 decimal places')
+                                         , Validate.greaterThanZero('Price must be more than zero')
+                                         ])
+                                     })
                  }
   }
 
@@ -49,25 +50,25 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                                     })
 
   cancelCreate = () => this.setState({ creating: false
-                                     , form: Validator.reset(this.state.form)
+                                     , form: this.state.form.reset()
                                      })
 
   confirmCreate = () => {
-    const validated = Validator.validate(this.state.form)
+    const validated = this.state.form.validate()
     this.setState({ form: validated })
 
-    if(validated.valid) {
+    if(validated.valid()) {
       this.props.request(ServerApi.command.createProduct(validated.fields.name.value, validated.fields.price.value))
         .then(() => this.props.request(ServerApi.query.products()))
         .then(products => this.setState({ products
                                         , creating: false
-                                        , form: Validator.reset(this.state.form)
+                                        , form: this.state.form.reset()
                                         }))
     }
   }
 
   fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ form: Validator.update(this.state.form, fieldName, event.target.value) })
+    this.setState({ form: this.state.form.update(fieldName, event.target.value) })
   
   delete = (p: Product) => 
     this.props.request(ServerApi.command.archiveProduct(p.id))
@@ -84,9 +85,15 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         <Link action={this.startCreate}>New product</Link>
         {this.state.creating &&
           <div>
-            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.validating && !this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
-            <input type="text" value={this.state.form.fields.price.stringValue} className={this.state.form.validating && !this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
-            <Link action={this.confirmCreate} disabled={this.state.form.validating && !this.state.form.valid}>Add</Link>
+            <span>
+              <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
+              {this.state.form.fields.name.error}
+            </span>
+            <span>
+              <input type="text" value={this.state.form.fields.price.stringValue} className={!this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
+              {this.state.form.fields.price.error}
+            </span>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Add</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }

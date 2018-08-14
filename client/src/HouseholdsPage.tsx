@@ -4,7 +4,7 @@ import { Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
-import { Validator, Form } from './Validator'
+import { Form, Field, Validate } from './Validation'
 
 export interface HouseholdsPageProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
                                      , navigate: (location: string) => void
@@ -23,7 +23,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     this.state = { households: []
                  , initialised: false
                  , creating: false
-                 , form: Validator.form({ name: Validator.field('', (v: string) => v, [{ validate: (v: string) => !!v.length, error: 'Name is required' }]) })
+                 , form: Form.create({ name: Field.create('', (v: string) => v, [Validate.required('Name is required')]) })
                  }
   }
 
@@ -40,24 +40,25 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                                     })
 
   cancelCreate = () => this.setState({ creating: false
-                                     , form: Validator.reset(this.state.form)
+                                     , form: this.state.form.reset()
                                      })
 
   confirmCreate = () => {
-    const validated = Validator.validate(this.state.form)
+    const validated = this.state.form.validate()
+    console.log(validated)
     this.setState({ form: validated })
-    if(validated.valid) {
+    if(validated.valid()) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
         .then(() => this.props.request(ServerApi.query.households()))
         .then(households => this.setState({ households
                                           , creating: false
-                                          , form: Validator.reset(this.state.form)
+                                          , form: this.state.form.reset()
                                           }))
     }
   }
 
   fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ form: Validator.update(this.state.form, fieldName, event.target.value) })
+    this.setState({ form: this.state.form.update(fieldName, event.target.value) })
 
   delete = (h: Household) => 
     this.props.request(ServerApi.command.archiveHousehold(h.id))
@@ -74,8 +75,11 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         <Link action={this.startCreate}>New household</Link>
         {this.state.creating &&
           <div>
-            <input type="text" value={this.state.form.fields.name.stringValue} className={this.state.form.validating && !this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
-            <Link action={this.confirmCreate} disabled={this.state.form.validating && !this.state.form.valid}>Add</Link>
+            <span>
+              <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
+              {this.state.form.fields.name.error}
+            </span>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Add</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
