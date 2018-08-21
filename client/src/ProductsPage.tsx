@@ -7,13 +7,13 @@ import { Link } from './Link'
 import { Money } from './Money'
 import { Form, Field, Validate } from './Validation'
 
-export interface ProductsPageProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
+export interface ProductsPageProps { products: Product[]
+                                   , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , navigate: (location: string) => void
+                                   , reload: () => void
                                    }
 
-export interface ProductsPageState { products: Product[]
-                                   , initialised: boolean
-                                   , creating: boolean
+export interface ProductsPageState { creating: boolean
                                    , form: Form
 }
 
@@ -21,9 +21,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   constructor(props: ProductsPageProps) {
     super(props)
 
-    this.state = { products: []
-                 , initialised: false
-                 , creating: false
+    this.state = { creating: false
                  , form: Form.create({ name: Field.create('', (v: string) => v,
                                          [ Validate.required('Name is required')
                                          ])
@@ -35,15 +33,6 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                                          ])
                                      })
                  }
-  }
-
-  componentDidMount() {
-    this.props.request(ServerApi.query.products())
-      .then(products => {
-        this.setState({ products
-                      , initialised: true
-                      })
-      })
   }
 
   startCreate = () => this.setState({ creating: true
@@ -59,11 +48,12 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
 
     if(validated.valid()) {
       this.props.request(ServerApi.command.createProduct(validated.fields.name.value, validated.fields.price.value))
-        .then(() => this.props.request(ServerApi.query.products()))
-        .then(products => this.setState({ products
-                                        , creating: false
-                                        , form: this.state.form.reset()
-                                        }))
+        .then(products => {
+          this.setState({ creating: false
+                        , form: this.state.form.reset()
+                        })
+          this.props.reload()
+        })
     }
   }
 
@@ -72,13 +62,9 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   
   delete = (p: Product) => 
     this.props.request(ServerApi.command.archiveProduct(p.id))
-      .then(() => this.props.request(ServerApi.query.products()))
-      .then(products => this.setState({ products
-                                      }))
+      .then(this.props.reload)
 
   render() {
-    if(!this.state.initialised) return <div>Initialising...</div>
-    
     return (
       <div>
         <h1>Products</h1>
@@ -97,9 +83,9 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
-        {!this.state.products.length ? <div>No products</div> : (
+        {!this.props.products.length ? <div>No products</div> : (
           <div>
-            { this.state.products.map(p => (
+            { this.props.products.map(p => (
               <div key={p.id}>
                 <span>{p.name}</span>
                 <Money amount={p.price} />

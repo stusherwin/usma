@@ -1,58 +1,43 @@
 import * as React from 'react';
 
-import { OrderSummary, Household, OrderSummary_Household } from './Types'
+import { CollectiveOrder, Household, HouseholdOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
 
-export interface OrderPageProps { id: number
+export interface OrderPageProps { order: CollectiveOrder
+                                , households: Household[]
                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                 , navigate: (location: string) => void
+                                , reload: () => void
                                 }
 
-export interface OrderPageState { order: OrderSummary | null
-                                , households: Household[]
-                                , initialised: boolean
-                                , addingHousehold: Household | null
+export interface OrderPageState { addingHousehold: Household | null
                                 }
 
 export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
   constructor(props: OrderPageProps) {
     super(props)
 
-    this.state = { order: null
-                 , households: []
-                 , initialised: false
-                 , addingHousehold: null
+    this.state = { addingHousehold: null
                  }
   }
 
-  componentDidMount() {
-    this.props.request(Promise.all([ServerApi.query.orderSummary(this.props.id), ServerApi.query.households()]))
-      .then(results => this.setState({ order: results[0]
-                                     , households: results[1]
-                                     , initialised: true
-                                     }))
-      .catch(_ => this.setState({ initialised: true }))
-  }
-
   cancel = () => {
-    this.props.request(ServerApi.command.cancelOrder(this.props.id))
-      .then(_ => this.props.request(ServerApi.query.orderSummary(this.props.id)))
-      .then(order => this.setState({ order }))
+    this.props.request(ServerApi.command.cancelOrder(this.props.order.id))
+      .then(this.props.reload)
   }
 
   uncancel = () => {
-    this.props.request(ServerApi.command.uncancelOrder(this.props.id))
-      .then(_ => this.props.request(ServerApi.query.orderSummary(this.props.id)))
-      .then(order => this.setState({ order }))
+    this.props.request(ServerApi.command.uncancelOrder(this.props.order.id))
+      .then(this.props.reload)
   }
 
   startAddHousehold = (h: Household) => this.setState({ addingHousehold: h })
 
   addingHouseholdChanged = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    this.setState({ addingHousehold: this.state.households.find(h => '' + h.id == event.target.value) || null })
+    this.setState({ addingHousehold: this.props.households.find(h => '' + h.id == event.target.value) || null })
 
   cancelAddHousehold = () =>
     this.setState({ addingHousehold: null
@@ -61,27 +46,22 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
   confirmAddHousehold = () => {
     if(!this.state.addingHousehold) return
 
-    this.props.request(ServerApi.command.addHouseholdOrder(this.props.id, this.state.addingHousehold.id))
-      .then(() => this.props.request(Promise.all([ServerApi.query.orderSummary(this.props.id), ServerApi.query.households()])))
-      .then(results => this.setState({ order: results[0]
-                                     , households: results[1]
-                                     , addingHousehold: null
-                                     }))
+    this.props.request(ServerApi.command.addHouseholdOrder(this.props.order.id, this.state.addingHousehold.id))
+      .then(_ => {
+        this.setState({ addingHousehold: null
+                      })
+        this.props.reload()
+      })
   }
 
-  removeHousehold = (h: OrderSummary_Household) => {
-    this.props.request(ServerApi.command.removeHouseholdOrder(this.props.id, h.id))
-      .then(() => this.props.request(Promise.all([ServerApi.query.orderSummary(this.props.id), ServerApi.query.households()])))
-      .then(results => this.setState({ order: results[0]
-                                     , households: results[1]
-                                     }))
+  removeHousehold = (h: HouseholdOrder) => {
+    this.props.request(ServerApi.command.removeHouseholdOrder(h.orderId, h.householdId))
+      .then(this.props.reload)
   }
 
   render() {
-    if(!this.state.initialised) return <div>Initialising...</div>
-    const order = this.state.order
-    if(!order) return <div>Order not found.</div>
-    const unusedHouseholds = this.state.households.filter(h => !order.households.find(oh => oh.id == h.id))
+    const order = this.props.order
+    const unusedHouseholds = this.props.households.filter(h => !order.householdOrders.find(oh => oh.householdId == h.id))
 
     return (
       <div>
@@ -92,7 +72,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           ? <Link action={this.uncancel}>Uncancel order</Link>
           : <Link action={this.cancel}>Cancel order</Link>
         )}
-        <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/full')}>View full order</Link>
+        <Link action={_ => this.props.navigate('/orders/' + this.props.order.id + '/full')}>View full order</Link>
         {!order.complete && !!unusedHouseholds.length &&
           <Link action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Link>
         }
@@ -108,14 +88,14 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           </div>
         }
         <div>
-          {order.households.map(h => (
-            <div key={h.id}>
-              <span>{h.name}</span>
+          {order.householdOrders.map(h => (
+            <div key={h.householdId}>
+              <span>{h.householdName}</span>
               <Money amount={h.total} />
               <span>{h.cancelled && 'cancelled'}</span>
               {order.complete
-                ? <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>View</Link>
-                : <Link action={_ => this.props.navigate('/orders/' + this.props.id + '/households/' + h.id)}>Manage</Link>
+                ? <Link action={_ => this.props.navigate('/orders/' + h.orderId + '/households/' + h.householdId)}>View</Link>
+                : <Link action={_ => this.props.navigate('/orders/' + h.orderId + '/households/' + h.householdId)}>Manage</Link>
               }
               {!order.complete && !h.total &&
                 <span>

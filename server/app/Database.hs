@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary, getHouseholdOrderSummary, getFullOrderSummary, createOrder, cancelOrder, uncancelOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold, createProduct, archiveProduct) where
+module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, createOrder, cancelOrder, uncancelOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold, createProduct, archiveProduct) where
   import Control.Monad (mzero, when)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -20,6 +20,10 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   import Types
   import qualified Data.IntMap.Strict as IM (IntMap(..), fromList, elems, lookup, insert, size)
   import Data.Time.Calendar (Day, showGregorian)
+  import CollectiveOrder
+  import HouseholdOrder
+  import Product
+  import Household
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
@@ -32,25 +36,66 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
   (&) = flip ($)
   infixr 0 &
   
-  getAllOrders :: ByteString -> IO [Order]
-  getAllOrders connectionString = do
+  getCollectiveOrders :: ByteString -> IO [CollectiveOrder]
+  getCollectiveOrders connectionString = do
     conn <- connectPostgreSQL connectionString
-    rOrders <- query_ conn [sql|
-      select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
-      from "order" o
-      left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
-      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join product p on p.id = hoi.product_id
-      group by o.id, o.created_date, o.complete, o.cancelled
-    |]
+    (rOrders, rHouseholdIds, rItems) <- withTransaction conn $ do
+      os <- query_ conn [sql|
+        select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
+        from "order" o
+        left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
+        left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+        left join product p on p.id = hoi.product_id
+        group by o.id, o.created_date, o.complete, o.cancelled
+      |]
+      hs <- query_ conn [sql|
+        select order_id, household_id
+        from household_order
+      |]
+      is <- query_ conn [sql|
+        select hoi.order_id, p.id, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
+        from household_order_item hoi
+        inner join product p on p.id = hoi.product_id
+        group by hoi.order_id, p.id, p.name
+      |]
+      return (os :: [(Int, Day, Bool, Bool, Int)], hs :: [(Int, Int)], is :: [(Int, Int, String, Int, Int)])
     close conn
-    return $ rOrders <&> order
-    where
-    order :: (Int, Day, Bool, Bool, Int) -> Order
-    order (id, createdDate, complete, cancelled, total) = Order id (showGregorian createdDate) complete cancelled total
 
-  getAllProducts :: ByteString -> IO [Product]
-  getAllProducts connectionString = do
+    return $ rOrders <&> \(id, created, complete, cancelled, total) ->
+      let hids = map snd $ filter ((== id) . fst) rHouseholdIds
+          item (_, productId, name, quantity, total) = CollectiveOrderItem productId name quantity total
+          thisOrder (oId, _, _, _, _) = oId == id
+          items = map item $ filter thisOrder rItems
+      in  CollectiveOrder id created complete cancelled total hids items
+  
+  getHouseholdOrders :: ByteString -> IO [HouseholdOrder]
+  getHouseholdOrders connectionString = do
+    conn <- connectPostgreSQL connectionString
+    (rOrders, rItems) <- withTransaction conn $ do
+      os <- query_ conn [sql|
+        select o.id, o.created_date, o.complete, h.id, h.name, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0)
+        from household_order ho
+        inner join "order" o on o.id = ho.order_id
+        inner join household h on h.id = ho.household_id
+        left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+        left join product p on p.id = hoi.product_id
+        group by o.id, o.created_date, o.complete, h.id, h.name, ho.cancelled
+      |]
+      is <- query_ conn [sql|
+        select hoi.order_id, hoi.household_id, p.id, p.name, hoi.quantity, p.price * hoi.quantity as total
+        from household_order_item hoi
+        inner join product p on p.id = hoi.product_id
+      |]
+      return (os :: [(Int, Day, Bool, Int, String, Bool, Int)], is :: [(Int, Int, Int, String, Int, Int)])
+    close conn
+    return $ rOrders <&> \(orderId, created, complete, householdId, name, cancelled, total) ->
+      let item (_, _, productId, name, quantity, total) = HouseholdOrderItem productId name quantity total
+          thisOrder (oId, hId, _, _, _, _) = oId == orderId && hId == householdId
+          items = map item $ filter thisOrder rItems
+      in  HouseholdOrder orderId created complete householdId name cancelled total items
+
+  getProducts :: ByteString -> IO [Product]
+  getProducts connectionString = do
     conn <- connectPostgreSQL connectionString
     rProducts <- query_ conn [sql|
       select p.id, p.name, p.price
@@ -58,13 +103,10 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
       where p.archived = false
     |]
     close conn
-    return $ rProducts <&> product
-    where
-    product :: (Int, String, Int) -> Product
-    product (id, name, price) = Product id name price
+    return $ (rProducts :: [(Int, String, Int)]) <&> \(id, name, price) -> Product id name price
 
-  getAllHouseholds :: ByteString -> IO [Household]
-  getAllHouseholds connectionString = do
+  getHouseholds :: ByteString -> IO [Household]
+  getHouseholds connectionString = do
     conn <- connectPostgreSQL connectionString
     rHouseholds <- query_ conn [sql|
       select h.id, h.name
@@ -72,113 +114,8 @@ module Database (getAllOrders, getAllProducts, getAllHouseholds, getOrderSummary
       where h.archived = false
     |]
     close conn
-    return $ rHouseholds <&> household
-    where
-    household :: (Int, String) -> Household
-    household (id, name) = Household id name
+    return $ (rHouseholds :: [(Int, String)]) <&> \(id, name) -> Household id name
 
-  getOrderSummary :: ByteString -> Int -> IO (Maybe OrderSummary)
-  getOrderSummary connectionString orderId = do
-    conn <- connectPostgreSQL connectionString
-    rOrders <- query conn [sql|
-      select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
-      from "order" o
-      left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
-      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join product p on p.id = hoi.product_id
-      where o.id = ?
-      group by o.id, o.created_date, o.complete, o.cancelled
-    |] (Only orderId)
-    rHouseholds <- query conn [sql|
-      select h.id, h.name, ho.order_id, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
-      from household_order ho
-      inner join household h on h.id = ho.household_id
-      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join product p on p.id = hoi.product_id
-      where ho.order_id = ?
-      group by h.id, ho.order_id, h.name, ho.cancelled
-    |] (Only orderId)
-    close conn
-    return $ listToMaybe $ orderSummary rHouseholds <$> rOrders
-    where    
-    orderSummary :: [ROrderSummary_Household] -> (Int, Day, Bool, Bool, Int) -> OrderSummary
-    orderSummary rHouseholds (id, createdDate, complete, cancelled, total) = 
-      let households = filter ((==) id . rHouseholdOrderId) rHouseholds <&> household
-      in OrderSummary (showGregorian createdDate) complete cancelled total households
-
-    household :: ROrderSummary_Household -> OrderSummary_Household
-    household (id, name, _, cancelled, total) = OrderSummary_Household id name cancelled total
-  
-  type ROrderSummary_Household = (Int, String, Int, Bool, Int)
-  rHouseholdOrderId (_, _, x, _, _) = x
-
-  getHouseholdOrderSummary :: ByteString -> Int -> Int -> IO (Maybe HouseholdOrderSummary)
-  getHouseholdOrderSummary connectionString orderId householdId = do
-    conn <- connectPostgreSQL connectionString
-    rHouseholds <- query conn [sql|
-      select h.id, h.name, ho.cancelled, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0)
-      from household_order ho
-      inner join "order" o on o.id = ho.order_id
-      inner join household h on h.id = ho.household_id
-      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join product p on p.id = hoi.product_id
-      where ho.order_id = ? and ho.household_id = ?
-      group by h.id, h.name, ho.cancelled, o.created_date, o.complete
-    |] (orderId, householdId)
-    rItems <- query conn [sql|
-      select p.id, p.name, hoi.household_id, hoi.quantity, p.price * hoi.quantity as total
-      from household_order_item hoi
-      inner join product p on p.id = hoi.product_id
-      where hoi.order_id = ? and hoi.household_id = ?
-    |] (orderId, householdId)
-    close conn
-    return $ listToMaybe $ householdOrderSummary rItems <$> rHouseholds
-    where
-    householdOrderSummary :: [RHouseholdOrderSummary_Item] -> (Int, String, Bool, Day, Bool, Int) -> HouseholdOrderSummary
-    householdOrderSummary rItems (id, name, cancelled, date, complete, total) =
-      let items = filter ((==) id . rItemHouseholdId) rItems <&> item
-      in HouseholdOrderSummary (showGregorian date) complete name cancelled total items
-
-    item :: RHouseholdOrderSummary_Item -> OrderSummary_Item
-    item (id, name, _, quantity, total) = OrderSummary_Item id name quantity total
-
-  type RHouseholdOrderSummary_Item = (Int, String, Int, Int, Int)
-  rItemHouseholdId (_, _, x, _, _) = x
-
-  getFullOrderSummary :: ByteString -> Int -> IO (Maybe FullOrderSummary)
-  getFullOrderSummary connectionString orderId = do
-    conn <- connectPostgreSQL connectionString
-    rOrders <- query conn [sql|
-      select o.id, o.created_date, o.complete, o.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
-      from "order" o
-      left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
-      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join product p on p.id = hoi.product_id
-      where o.id = ?
-      group by o.id, o.created_date, o.complete, o.cancelled
-    |] (Only orderId)
-    rItems <- query conn [sql|
-      select ho.order_id, p.id, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
-      from household_order ho
-      inner join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      inner join product p on p.id = hoi.product_id
-      where ho.order_id = ? and ho.cancelled = false
-      group by ho.order_id, p.id, p.name
-    |] (Only orderId)
-    close conn
-    return $ listToMaybe $ fullOrderSummary rItems <$> rOrders
-    where
-    fullOrderSummary :: [RFullOrderSummary_Item] -> (Int, Day, Bool, Bool, Int) -> FullOrderSummary
-    fullOrderSummary rItems (id, date, complete, cancelled, total) =
-      let items = filter ((==) id . rItemOrderId) rItems <&> item
-      in FullOrderSummary (showGregorian date) complete cancelled total items
-
-    item :: RFullOrderSummary_Item -> OrderSummary_Item
-    item (_, id, name, quantity, total) = OrderSummary_Item id name quantity total
-
-  type RFullOrderSummary_Item = (Int, Int, String, Int, Int)
-  rItemOrderId (x, _, _, _, _) = x
-  
   createOrder :: ByteString -> Day -> IO Int
   createOrder connectionString date = do
     conn <- connectPostgreSQL connectionString

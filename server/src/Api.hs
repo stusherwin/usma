@@ -8,6 +8,10 @@ module Api where
   import Data.Time.Calendar (Day)
   import Servant
   import Types
+  import CollectiveOrder
+  import HouseholdOrder
+  import Product
+  import Household
  
   type AppAPI = 
          "api" :> (
@@ -16,12 +20,10 @@ module Api where
          )
 
   type QueryAPI =
-         "orders" :> Get '[JSON] [Order]
+         "collective-orders" :> Get '[JSON] [CollectiveOrder]
+    :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
     :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
-    :<|> "order-summary" :> Capture "orderId" Int :> Get '[JSON] OrderSummary
-    :<|> "household-order-summary" :> Capture "orderId" Int :> Capture "householdId" Int :> Get '[JSON] HouseholdOrderSummary
-    :<|> "full-order-summary" :> Capture "orderId" Int :> Get '[JSON] FullOrderSummary
  
   type CommandAPI =
          "create-order" :> Capture "date" Day :> Post '[JSON] Int

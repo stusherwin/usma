@@ -17,6 +17,10 @@ library
   hs-source-dirs:      server/src
   exposed-modules:     Types
                      , Api
+                     , CollectiveOrder
+                     , HouseholdOrder
+                     , Household
+                     , Product
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , servant

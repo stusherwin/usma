@@ -6,13 +6,13 @@ import { Util } from './Util'
 import { Link } from './Link'
 import { Form, Field, Validate } from './Validation'
 
-export interface HouseholdsPageProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
+export interface HouseholdsPageProps { households: Household[]
+                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                      , navigate: (location: string) => void
+                                     , reload: () => void
                                      }
 
-export interface HouseholdsPageState { households: Household[]
-                                     , initialised: boolean
-                                     , creating: boolean
+export interface HouseholdsPageState { creating: boolean
                                      , form: Form
                                      }
 
@@ -20,20 +20,9 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
   constructor(props: HouseholdsPageProps) {
     super(props)
 
-    this.state = { households: []
-                 , initialised: false
-                 , creating: false
+    this.state = { creating: false
                  , form: Form.create({ name: Field.create('', (v: string) => v, [Validate.required('Name is required')]) })
                  }
-  }
-
-  componentDidMount() {
-    this.props.request(ServerApi.query.households())
-      .then(households => {
-        this.setState({ households
-                      , initialised: true
-                      })
-      })
   }
 
   startCreate = () => this.setState({ creating: true
@@ -49,11 +38,12 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     this.setState({ form: validated })
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
-        .then(() => this.props.request(ServerApi.query.households()))
-        .then(households => this.setState({ households
-                                          , creating: false
-                                          , form: this.state.form.reset()
-                                          }))
+        .then(_ => {
+          this.setState({ creating: false
+                        , form: this.state.form.reset()
+                        })
+          this.props.reload()
+        })
     }
   }
 
@@ -62,13 +52,9 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
 
   delete = (h: Household) => 
     this.props.request(ServerApi.command.archiveHousehold(h.id))
-      .then(() => this.props.request(ServerApi.query.households()))
-      .then(households => this.setState({ households
-                                        }))
+      .then(this.props.reload)
 
   render() {
-    if(!this.state.initialised) return <div>Initialising...</div>
-    
     return (
       <div>
         <h1>Households</h1>
@@ -83,9 +69,9 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
-        {!this.state.households.length ? <div>No households created yet</div> : (
+        {!this.props.households.length ? <div>No households created yet</div> : (
           <div>
-            { this.state.households.map(h => (
+            { this.props.households.map(h => (
               <div key={h.id}>
                 <span>{h.name}</span>
                 <Link action={() => this.delete(h)}>Delete</Link>

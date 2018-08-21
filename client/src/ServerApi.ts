@@ -1,36 +1,24 @@
-import { Order, OrderSummary, HouseholdOrderSummary, FullOrderSummary, Product, Household, OrderSummary_Household, OrderSummary_Item } from './Types'
+import { Product, Household, CollectiveOrder, HouseholdOrder } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
 const query = {
-  orders(): Promise<Order[]> {
-    return Http.get<ApiOrder[]>('/api/query/orders')
-               .then(res => res.map(toOrder))
+  collectiveOrders(): Promise<CollectiveOrder[]> {
+    return Http.get<CollectiveOrder[]>('/api/query/collective-orders')
+      .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
   },
 
-  orderSummary(orderId: number): Promise<OrderSummary> {
-    return Http.get<ApiOrderSummary>(`/api/query/order-summary/${orderId}`)
-               .then(toOrderSummary)
-  },
-
-  householdOrderSummary(orderId: number, householdId: number): Promise<HouseholdOrderSummary> {
-    return Http.get<ApiHouseholdOrderSummary>(`/api/query/household-order-summary/${orderId}/${householdId}`)
-               .then(toHouseholdOrderSummary)
-  },
-
-  fullOrderSummary(orderId: number): Promise<FullOrderSummary> {
-    return Http.get<ApiFullOrderSummary>(`/api/query/full-order-summary/${orderId}`)
-               .then(toFullOrderSummary)
+  householdOrders(): Promise<HouseholdOrder[]> {
+    return Http.get<HouseholdOrder[]>('/api/query/household-orders')
+      .then(res => { res.forEach(o => o.orderCreatedDate = new Date(o.orderCreatedDate)); return res })
   },
 
   products(): Promise<Product[]> {
-    return Http.get<ApiProduct[]>('/api/query/products')
-               .then(res => res.map(toProduct))
+    return Http.get<Product[]>('/api/query/products')
   },
 
   households(): Promise<Household[]> {
-    return Http.get<ApiHousehold[]>('/api/query/households')
-               .then(res => res.map(toHousehold))
+    return Http.get<Household[]>('/api/query/households')
   },
 }
 
@@ -156,56 +144,6 @@ export class Http {
   }
 }
 
-type ApiOrder = { oId: number
-                , oCreatedDate: string
-                , oComplete: boolean
-                , oCancelled: boolean
-                , oTotal: number
-                }
-
-type ApiProduct = { pId: number
-                  , pName: string
-                  , pPrice: number
-                  }
-
-type ApiHousehold = { hId: number
-                    , hName: string
-                    }
-
-type ApiOrderSummary = { osCreatedDate: string
-                       , osComplete: boolean
-                       , osCancelled: boolean
-                       , osTotal: number
-                       , osHouseholds: ApiOrderSummary_Household[]
-                       }
-
-type ApiOrderSummary_Household = { oshId: number
-                                 , oshName: string
-                                 , oshCancelled: boolean
-                                 , oshTotal: number
-                                 }
-
-type ApiHouseholdOrderSummary = { hosOrderCreatedDate: string
-                                , hosOrderComplete: boolean
-                                , hosHouseholdName: string 
-                                , hosCancelled: boolean
-                                , hosTotal: number
-                                , hosItems: ApiOrderSummary_Item[]
-                                }
-
-type ApiFullOrderSummary = { fosOrderCreatedDate: string
-                           , fosComplete: boolean
-                           , fosCancelled: boolean
-                           , fosTotal: number
-                           , fosItems: ApiOrderSummary_Item[]
-                           }
-
-type ApiOrderSummary_Item = { osiProductId: number
-                            , osiProductName: string
-                            , osiQuantity: number
-                            , osiTotal: number
-                            }
-
 export class ApiError {
   constructor(error: string, message: string, status: number | null) {
     this.error = error
@@ -216,90 +154,4 @@ export class ApiError {
   error: string
   message: string
   status: number | null
-}
-
-function toOrder(o: ApiOrder): Order {
-  return {
-    id: o.oId,
-    createdDate: new Date(o.oCreatedDate),
-    complete: o.oComplete,
-    cancelled: o.oCancelled,
-    total: o.oTotal,
-  }
-}
-
-function toProduct(p: ApiProduct): Product {
-  return {
-    id: p.pId,
-    name: p.pName,
-    price: p.pPrice
-  }
-}
-
-function toHousehold(h: ApiHousehold): Household {
-  return {
-    id: h.hId,
-    name: h.hName,
-  }
-}
-
-function toOrderSummary(o: ApiOrderSummary): OrderSummary {
-  return {
-    createdDate: new Date(o.osCreatedDate),
-    complete: o.osComplete,
-    cancelled: o.osCancelled,
-    total: o.osTotal,
-    households: o.osHouseholds.map(toOrderSummary_Household)
-  }
-}
-
-function toOrderSummary_Household(o: ApiOrderSummary_Household): OrderSummary_Household {
-  return {
-    id: o.oshId, 
-    name: o.oshName,
-    total: o.oshTotal,
-    cancelled: o.oshCancelled
-  }
-}
-
-function toHouseholdOrderSummary(o: ApiHouseholdOrderSummary): HouseholdOrderSummary {
-  return {
-    orderCreatedDate: new Date(o.hosOrderCreatedDate),
-    orderComplete: o.hosOrderComplete,
-    householdName: o.hosHouseholdName, 
-    cancelled: o.hosCancelled,
-    total: o.hosTotal,
-    items: o.hosItems.map(toOrderSummary_Item)
-  }
-}
-
-function toFullOrderSummary(o: ApiFullOrderSummary): FullOrderSummary {
-  return {
-    orderCreatedDate: new Date(o.fosOrderCreatedDate),
-    complete: o.fosComplete,
-    cancelled: o.fosCancelled,
-    total: o.fosTotal,
-    items: o.fosItems.map(toOrderSummary_Item)
-  }
-}
-
-function toOrderSummary_Item(o: ApiOrderSummary_Item): OrderSummary_Item {
-  return {
-    productId: o.osiProductId, 
-    productName: o.osiProductName,
-    quantity: o.osiQuantity,
-    total: o.osiTotal
-  }
-}
-
-function respond<T>(data: T) {
-  return new Promise<T>((resolve, reject) => {
-    setTimeout(() => resolve(data), 1000)
-  })
-}
-
-function fail<T>(error: string) {
-  return new Promise<T>((resolve, reject) => {
-    setTimeout(() => reject(error), 1000)
-  })
 }

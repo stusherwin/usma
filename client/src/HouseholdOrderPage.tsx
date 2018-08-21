@@ -1,21 +1,19 @@
 import * as React from 'react';
 
-import { HouseholdOrderSummary, Product, OrderSummary_Item } from './Types'
+import { HouseholdOrder, Product, OrderItem } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
 
-export interface HouseholdOrderPageProps { orderId: number
-                                         , householdId: number
+export interface HouseholdOrderPageProps { order: HouseholdOrder
+                                         , products: Product[]
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                          , navigate: (location: string) => void
+                                         , reload: () => void
                                          }
 
-export interface HouseholdOrderPageState { summary: HouseholdOrderSummary | null
-                                         , products: Product[]
-                                         , initialised: boolean
-                                         , addingProduct: Product | null
+export interface HouseholdOrderPageState { addingProduct: Product | null
                                          , addingProductQuantity: number
                                          , editingProduct: Product | null
                                          , editingProductQuantity: number
@@ -25,29 +23,17 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
   constructor(props: HouseholdOrderPageProps) {
     super(props)
 
-    this.state = { summary: null
-                 , products: []
-                 , initialised: false
-                 , addingProduct: null
+    this.state = { addingProduct: null
                  , addingProductQuantity: 1
                  , editingProduct: null
                  , editingProductQuantity: 1
                  }
   }
 
-  componentDidMount() {
-    this.props.request(Promise.all([ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId), ServerApi.query.products()]))
-      .then(results => this.setState({ summary: results[0]
-                                     , products: results[1]
-                                     , initialised: true
-                                     }))
-      .catch(_ => this.setState({ initialised: true }))
-  }
-
   startAdd = (product: Product) => this.setState({ addingProduct: product })
 
   addingProductChanged = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    this.setState({ addingProduct: this.state.products.find(p => '' + p.id == event.target.value) || null })
+    this.setState({ addingProduct: this.props.products.find(p => '' + p.id == event.target.value) || null })
 
   addingQuantityChanged = (event: React.ChangeEvent<HTMLSelectElement>) =>
     this.setState({ addingProductQuantity: parseInt(event.target.value) || 1
@@ -61,27 +47,26 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
   confirmAdd = () => {
     if(!this.state.addingProduct) return
 
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
-      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
-      .then(summary => this.setState({ summary
-                                     , addingProduct: null
-                                     , addingProductQuantity: 1
-                                     }))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.order.orderId, this.props.order.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
+      .then(_ => {
+        this.setState({ addingProduct: null
+                      , addingProductQuantity: 1
+                      })
+        this.props.reload()
+      })
   }
 
-  removeItem = (item: OrderSummary_Item) => {
-    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.orderId, this.props.householdId, item.productId))
-      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
-      .then(summary => this.setState({ summary
-                                     }))
+  removeItem = (item: OrderItem) => {
+    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.order.orderId, this.props.order.householdId, item.productId))
+      .then(this.props.reload)
   }
 
-  startEdit = (item: OrderSummary_Item) => {
-    const product = this.state.products.find(p => p.id == item.productId)
+  startEdit = (item: OrderItem) => {
+    const product = this.props.products.find(p => p.id == item.productId)
     if(!product) return
 
     this.setState({ editingProduct: product
-                  , editingProductQuantity: item.quantity
+                  , editingProductQuantity: item.itemQuantity
                   })
   } 
 
@@ -92,12 +77,13 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
   confirmEdit = () => {
     if(!this.state.editingProduct) return
 
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.orderId, this.props.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
-      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
-      .then(summary => this.setState({ summary
-                                     , editingProduct: null
-                                     , editingProductQuantity: 1
-                                     }))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.order.orderId, this.props.order.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
+      .then(_ => {
+        this.setState({ editingProduct: null
+                      , editingProductQuantity: 1
+                      })
+        this.props.reload()
+      })
   }
 
   cancelEdit = () =>
@@ -106,45 +92,38 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
                   })
 
   cancelOrder = () => {
-    this.props.request(ServerApi.command.cancelHouseholdOrder(this.props.orderId, this.props.householdId))
-      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
-      .then(summary => this.setState({ summary
-                                     }))
+    this.props.request(ServerApi.command.cancelHouseholdOrder(this.props.order.orderId, this.props.order.householdId))
+      .then(this.props.reload)
   }
 
   uncancelOrder = () => {
-    this.props.request(ServerApi.command.uncancelHouseholdOrder(this.props.orderId, this.props.householdId))
-      .then(() => this.props.request(ServerApi.query.householdOrderSummary(this.props.orderId, this.props.householdId)))
-      .then(summary => this.setState({ summary
-                                     }))
+    this.props.request(ServerApi.command.uncancelHouseholdOrder(this.props.order.orderId, this.props.order.householdId))
+      .then(this.props.reload)
   }
 
   render() {
-    if(!this.state.initialised) return <div>Initialising...</div>
-    if(!this.state.summary) return <div>Order not found.</div>
-
-    const summary = this.state.summary
-    const unusedProducts = this.state.products.filter(p => !summary.items.find(i => i.productId == p.id))
+    const order = this.props.order
+    const unusedProducts = this.props.products.filter(p => !order.items.find(i => i.productId == p.id))
 
     return (
       <div>
         <div>
           <Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;
-          <Link action={_ => this.props.navigate('/orders/' + this.props.orderId)}>{Util.formatDate(summary.orderCreatedDate)}</Link> &gt;
+          <Link action={_ => this.props.navigate('/orders/' + order.orderId)}>{Util.formatDate(order.orderCreatedDate)}</Link> &gt;
         </div>
-        <h1>{summary.householdName} {summary.cancelled && ' (cancelled)'}</h1>
+        <h1>{order.householdName} {order.cancelled && ' (cancelled)'}</h1>
         <div>
-          {!summary.orderComplete && (
-            summary.cancelled
+          {!order.orderComplete && (
+            order.cancelled
               ? <Link disabled={!!this.state.addingProduct} action={this.uncancelOrder}>Uncancel</Link>
               : <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
           )}
-          {!summary.orderComplete && !summary.cancelled && 
+          {!order.orderComplete && !order.cancelled && 
             <Link disabled={!!this.state.addingProduct} action={_ => {}}>Record payment</Link>
           }
         </div>
         <div>
-        {!summary.orderComplete && !summary.cancelled && !!unusedProducts.length &&
+        {!order.orderComplete && !order.cancelled && !!unusedProducts.length &&
           <Link action={() => this.startAdd(unusedProducts[0])}>Add</Link>
         }
         </div>
@@ -166,7 +145,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <Link action={this.cancelAdd}>Cancel</Link>
             </div>
           }
-          {summary.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
+          {order.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
           ? (
             <div key={i.productId}>
               <span>{i.productName}</span>
@@ -183,9 +162,9 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           : (
             <div key={i.productId}>
               <span>{i.productName}</span>
-              <span>x {i.quantity}</span>
-              <Money amount={i.total} />
-              {!summary.orderComplete && !summary.cancelled &&
+              <span>x {i.itemQuantity}</span>
+              <Money amount={i.itemTotal} />
+              {!order.orderComplete && !order.cancelled &&
                 <span>
                   <Link disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Link>
                   <Link disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}>Remove</Link>
@@ -196,7 +175,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           <div>
             <span>Total:</span>
             <span></span>
-            <Money amount={summary.total} />
+            <Money amount={order.total} />
           </div>
         </div>
       </div>

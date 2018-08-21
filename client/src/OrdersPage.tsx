@@ -1,43 +1,26 @@
 import * as React from 'react';
 
-import { Order } from './Types'
+import { CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link } from './Link'
 import { Money } from './Money'
 
-export interface OrdersPageProps { request: <T extends {}>(p: Promise<T>) => Promise<T>
+export interface OrdersPageProps { orders: CollectiveOrder[]
+                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                  , navigate: (location: string) => void
+                                 , reload: () => void
                                  }
 
-export class OrdersPage extends React.Component<OrdersPageProps, { orders: Order[], initialised: boolean }> {
-  constructor(props: OrdersPageProps) {
-    super(props)
-
-    this.state = { orders: []
-                 , initialised: false
-                 }
-  }
-
-  componentDidMount() {
-    this.props.request(ServerApi.query.orders())
-      .then(orders => {
-        this.setState({ orders
-                      , initialised: true
-                      })
-      })
-  }
-
+export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   newOrder = () => {
     const date = new Date()
     this.props.request(ServerApi.command.createOrder(date)).then(id => this.props.navigate(`/orders/${id}`))
   }
 
   render() {
-    if(!this.state.initialised) return <div>Initialising...</div>
-    
-    const currentOrder = this.state.orders.filter(o => !o.complete && !o.cancelled)[0]
-    const pastOrders = this.state.orders.filter(o => o.complete || o.cancelled)
+    const currentOrder = this.props.orders.filter(o => !o.complete && !o.cancelled)[0]
+    const pastOrders = this.props.orders.filter(o => o.complete || o.cancelled)
     return (
       <div>
         <h1>Orders</h1>

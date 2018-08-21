@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 export class Router {
-  private routes: {route: string, component: (c: {[key: string]: number}) => JSX.Element}[] = []
+  private routes: {route: string, component: (c: {[key: string]: number}) => JSX.Element | undefined}[] = []
   
-  route(route: string, component: (c: {[key: string]: number}) => JSX.Element) {
+  route(route: string, component: (c: {[key: string]: number}) => JSX.Element | undefined) {
     this.routes.push({route, component})
   }
 
-  resolve(url: string): JSX.Element {
+  resolve(url: string): JSX.Element | undefined {
     let identifierParseFail = false
     for(let r of this.routes) {
       const identifierRegExp = /\{([^\}]+)\}/gi

@@ -31,6 +31,10 @@ module Main where
   import Types 
   import Api
   import qualified Database as D
+  import CollectiveOrder
+  import HouseholdOrder
+  import Product
+  import Household
 
   main :: IO ()
   main = do
@@ -55,43 +59,23 @@ module Main where
               :<|> commandServer conn 
   
   queryServer :: ByteString -> Server QueryAPI
-  queryServer conn = orders
+  queryServer conn = collectiveOrders
+                :<|> householdOrders
                 :<|> products
                 :<|> households
-                :<|> orderSummary 
-                :<|> householdOrderSummary 
-                :<|> fullOrderSummary 
     where
-    orders :: Handler [Order]
-    orders = liftIO $ D.getAllOrders conn
-
+    collectiveOrders :: Handler [CollectiveOrder]
+    collectiveOrders = liftIO $ D.getCollectiveOrders conn
+    
+    householdOrders :: Handler [HouseholdOrder]
+    householdOrders = liftIO $ D.getHouseholdOrders conn
+    
     products :: Handler [Product]
-    products = liftIO $ D.getAllProducts conn
+    products = liftIO $ D.getProducts conn
 
     households :: Handler [Household]
-    households = liftIO $ D.getAllHouseholds conn
+    households = liftIO $ D.getHouseholds conn
 
-    orderSummary :: Int -> Handler OrderSummary
-    orderSummary orderId = do
-      result <- liftIO $ D.getOrderSummary conn orderId
-      case result of
-        Just v -> return v
-        _ -> throwError err404
-
-    householdOrderSummary :: Int -> Int -> Handler HouseholdOrderSummary
-    householdOrderSummary orderId householdId = do
-      result <- liftIO $ D.getHouseholdOrderSummary conn orderId householdId
-      case result of
-        Just v -> return v
-        _ -> throwError err404
-
-    fullOrderSummary :: Int -> Handler FullOrderSummary
-    fullOrderSummary orderId = do
-      result <- liftIO $ D.getFullOrderSummary conn orderId
-      case result of
-        Just v -> return v
-        _ -> throwError err404
-  
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrder
                   :<|> cancelOrder
