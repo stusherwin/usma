@@ -74,6 +74,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             { this.props.households.map(h => (
               <div key={h.id}>
                 <span>{h.name}</span>
+                <Link action={_ => this.props.navigate(`/households/${h.id}`)}>View</Link>
                 <Link action={() => this.delete(h)}>Delete</Link>
               </div>
             )) }

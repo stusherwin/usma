@@ -9,20 +9,20 @@ export type Household = { id: number
 
 export type CollectiveOrder = { id: number
                               , createdDate: Date
-                              , complete: boolean
-                              , cancelled: boolean
+                              , isComplete: boolean
+                              , isCancelled: boolean
+                              , isPast: boolean
                               , total: number
-                              , householdIds: number[]
-                              , householdOrders: HouseholdOrder[]
                               , items: OrderItem[]
                               }
 
 export type HouseholdOrder = { orderId: number
                              , orderCreatedDate: Date
-                             , orderComplete: boolean
+                             , isOrderComplete: boolean
+                             , isOrderPast: boolean
                              , householdId: number
                              , householdName: string 
-                             , cancelled: boolean
+                             , isCancelled: boolean
                              , total: number
                              , items: OrderItem[]
                              }

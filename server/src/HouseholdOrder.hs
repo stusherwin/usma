@@ -8,10 +8,11 @@ module HouseholdOrder where
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
                                        , orderCreatedDate :: Day
-                                       , orderComplete :: Bool
+                                       , isOrderComplete :: Bool
+                                       , isOrderPast :: Bool
                                        , householdId :: Int
                                        , householdName :: String 
-                                       , cancelled :: Bool
+                                       , isCancelled :: Bool
                                        , total :: Int
                                        , items :: [HouseholdOrderItem]
                                        } deriving (Eq, Show, Generic)

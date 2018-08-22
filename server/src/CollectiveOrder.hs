@@ -8,10 +8,10 @@ module CollectiveOrder where
   
   data CollectiveOrder = CollectiveOrder { id :: Int
                                          , createdDate :: Day
-                                         , complete :: Bool
-                                         , cancelled :: Bool
+                                         , isComplete :: Bool
+                                         , isCancelled :: Bool
+                                         , isPast :: Bool
                                          , total :: Int
-                                         , householdIds :: [Int]
                                          , items :: [CollectiveOrderItem]
                                          } deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrder

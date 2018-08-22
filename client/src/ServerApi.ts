@@ -23,16 +23,8 @@ const query = {
 }
 
 const command = {
-  createOrder(date: Date): Promise<number> {
-    return Http.post(`/api/command/create-order/${Util.dateString(date)}`, {})
-  },
-
-  cancelOrder(id: number): Promise<{}> {
-    return Http.post(`/api/command/cancel-order/${id}`, {})
-  },
-
-  uncancelOrder(id: number): Promise<{}> {
-    return Http.post(`/api/command/uncancel-order/${id}`, {})
+  createOrder(householdId?: number): Promise<number> {
+    return Http.post(`/api/command/create-order/${householdId}`, {})
   },
 
   addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
@@ -99,28 +91,16 @@ export const ServerApi = {
 }
 
 export class Http {
-  static get<T>(url: string /*, query?: {[key: string]: string}*/): Promise<T> {
-    return this.fetchHttpRequest(new Request(url /*+ this.queryString(query)*/))
+  static get<T>(url: string): Promise<T> {
+    return this.fetchHttpRequest(new Request(url))
   }
   
-  static post<T>(url: string/*, query: {[key: string]: string}*/, body: {}): Promise<T> {
-    return this.fetchHttpRequest(new Request(url /*+ this.queryString(query)*/,
+  static post<T>(url: string, body: {}): Promise<T> {
+    return this.fetchHttpRequest(new Request(url,
       { method: 'POST'
       , headers: new Headers({'Content-Type' : 'application/json'})
       , body: JSON.stringify(body)
       }))
-  }
-
-  private static queryString(query?: {[key: string]: string}): string {
-    if(!query) return ''
-
-    const qs = []
-    for(let key in query) {
-      qs.push(key + '=' + encodeURIComponent(query[key]))
-    }
-    if(!qs.length) return ''
-
-    return '?' + qs.join('&')
   }
 
   private static fetchHttpRequest<T>(req: Request): Promise<T> {

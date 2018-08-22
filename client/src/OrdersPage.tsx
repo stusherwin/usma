@@ -14,13 +14,13 @@ export interface OrdersPageProps { orders: CollectiveOrder[]
 
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   newOrder = () => {
-    const date = new Date()
-    this.props.request(ServerApi.command.createOrder(date)).then(id => this.props.navigate(`/orders/${id}`))
+    this.props.request(ServerApi.command.createOrder())
+      .then(id => this.props.navigate(`/orders/${id}`))
   }
 
   render() {
-    const currentOrder = this.props.orders.filter(o => !o.complete && !o.cancelled)[0]
-    const pastOrders = this.props.orders.filter(o => o.complete || o.cancelled)
+    const currentOrder = this.props.orders.filter(o => !o.isPast && !o.isCancelled)[0]
+    const pastOrders = this.props.orders.filter(o => o.isPast || o.isCancelled)
     return (
       <div>
         <h1>Orders</h1>
@@ -31,7 +31,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
               <div>
                 <span>{ Util.formatDate(currentOrder.createdDate) }</span>
                 <Money amount={currentOrder.total} />
-                <Link action={_ => this.props.navigate('/orders/' + currentOrder.id)}>Manage</Link>
+                <Link action={_ => this.props.navigate(`/orders/${currentOrder.id}`)}>View</Link>
               </div>
             </div>
           </div>
@@ -42,9 +42,9 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             { pastOrders.map(o => (
               <div key={o.id}>
                 <span>{ Util.formatDate(o.createdDate) }</span>
-                <span>{o.cancelled && 'cancelled'}</span>
+                <span>{o.isCancelled && 'cancelled'}</span>
                 <Money amount={o.total} />
-                <Link action={_ => this.props.navigate('/orders/' + o.id)}>View</Link>
+                <Link action={_ => this.props.navigate(`/orders/${o.id}`)}>View</Link>
               </div>
             )) }
           </div>

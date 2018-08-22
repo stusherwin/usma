@@ -2,7 +2,7 @@ import * as React from 'react';
 
 export class Router {
   private routes: {route: string, component: (c: {[key: string]: number}) => JSX.Element | undefined}[] = []
-  
+
   route(route: string, component: (c: {[key: string]: number}) => JSX.Element | undefined) {
     this.routes.push({route, component})
   }
@@ -37,7 +37,7 @@ export class Router {
       
       return r.component(identifierValues)
     }
-    
+    console.log('Page not found for url: ' + url)
     return React.createElement('div', null, 'Page not found')
   }
 }

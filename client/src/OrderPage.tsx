@@ -7,6 +7,7 @@ import { Link } from './Link'
 import { Money } from './Money'
 
 export interface OrderPageProps { order: CollectiveOrder
+                                , householdOrders: HouseholdOrder[]
                                 , households: Household[]
                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                 , navigate: (location: string) => void
@@ -22,16 +23,6 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
 
     this.state = { addingHousehold: null
                  }
-  }
-
-  cancel = () => {
-    this.props.request(ServerApi.command.cancelOrder(this.props.order.id))
-      .then(this.props.reload)
-  }
-
-  uncancel = () => {
-    this.props.request(ServerApi.command.uncancelOrder(this.props.order.id))
-      .then(this.props.reload)
   }
 
   startAddHousehold = (h: Household) => this.setState({ addingHousehold: h })
@@ -61,19 +52,14 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
 
   render() {
     const order = this.props.order
-    const unusedHouseholds = this.props.households.filter(h => !order.householdOrders.find(oh => oh.householdId == h.id))
+    const unusedHouseholds = this.props.households.filter(h => !this.props.householdOrders.find(oh => oh.householdId == h.id))
 
     return (
       <div>
         <div><Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)} {order.cancelled && ' (cancelled)'}</h1>
-        {!order.complete && (
-          order.cancelled
-          ? <Link action={this.uncancel}>Uncancel order</Link>
-          : <Link action={this.cancel}>Cancel order</Link>
-        )}
-        <Link action={_ => this.props.navigate('/orders/' + this.props.order.id + '/full')}>View full order</Link>
-        {!order.complete && !!unusedHouseholds.length &&
+        <h1>{Util.formatDate(order.createdDate)} {order.isCancelled && ' (cancelled)'}</h1>
+        <Link action={_ => this.props.navigate(`/orders/${this.props.order.id}/full`)}>View full order</Link>
+        {!order.isComplete && !order.isCancelled && !!unusedHouseholds.length &&
           <Link action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Link>
         }
         {this.state.addingHousehold &&
@@ -88,16 +74,13 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           </div>
         }
         <div>
-          {order.householdOrders.map(h => (
+          {this.props.householdOrders.map(h => (
             <div key={h.householdId}>
               <span>{h.householdName}</span>
               <Money amount={h.total} />
-              <span>{h.cancelled && 'cancelled'}</span>
-              {order.complete
-                ? <Link action={_ => this.props.navigate('/orders/' + h.orderId + '/households/' + h.householdId)}>View</Link>
-                : <Link action={_ => this.props.navigate('/orders/' + h.orderId + '/households/' + h.householdId)}>Manage</Link>
-              }
-              {!order.complete && !h.total &&
+              <span>{h.isCancelled && 'cancelled'}</span>
+              <Link action={_ => this.props.navigate(`/orders/${h.orderId}/households/${h.householdId}`)}>View</Link>
+              {!order.isComplete && !order.isCancelled && !h.total &&
                 <span>
                   <Link disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(h)}>Remove</Link>
                 </span>

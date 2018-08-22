@@ -1,1 +1,4 @@
-* What happens if you uncancel a past order?
+* What happens if you uncancel a past order? (can't)
+* Rename Order to CollectiveOrder
+* CollectiveOrder only cancelled if all HouseholdOrders cancelled
+* If collective order exists household has chance to join it otherwise create a new one

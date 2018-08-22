@@ -78,8 +78,6 @@ module Main where
 
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrder
-                  :<|> cancelOrder
-                  :<|> uncancelOrder
                   :<|> addHouseholdOrder
                   :<|> cancelHouseholdOrder
                   :<|> uncancelHouseholdOrder
@@ -90,14 +88,10 @@ module Main where
                   :<|> createProduct
                   :<|> archiveProduct
     where
-    createOrder :: Day -> Handler Int
-    createOrder = liftIO . (D.createOrder conn)
-
-    cancelOrder :: Int -> Handler ()
-    cancelOrder = liftIO . (D.cancelOrder conn)
-
-    uncancelOrder :: Int -> Handler ()
-    uncancelOrder = liftIO . (D.uncancelOrder conn)
+    createOrder :: Maybe Int -> Handler Int
+    createOrder householdId = do
+      day <- liftIO $ getCurrentTime >>= return . utctDay      
+      liftIO $ D.createOrder conn day householdId
 
     addHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     addHouseholdOrder command = liftIO $ D.addHouseholdOrder conn (choOrderId command) (choHouseholdId command)

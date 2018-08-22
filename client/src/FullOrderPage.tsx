@@ -25,7 +25,7 @@ export class FullOrderPage extends React.Component<FullOrderPageProps, {}> {
       <div>
         <div>
           <Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;
-          <Link action={_ => this.props.navigate('/orders/' + this.props.order.id)}>{Util.formatDate(this.props.order.createdDate)}</Link> &gt;
+          <Link action={_ => this.props.navigate(`/orders/${this.props.order.id}`)}>{Util.formatDate(this.props.order.createdDate)}</Link> &gt;
         </div>
         <h1>Full order list</h1>
         <div>

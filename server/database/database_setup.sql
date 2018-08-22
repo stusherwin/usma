@@ -25,26 +25,25 @@ create table "order"
 ( id           serial  not null  primary key
 , created_date date    not null
 , complete     boolean not null
-, cancelled    boolean not null
 );
 
-insert into "order" (created_date, complete, cancelled)
-values ('2018-01-01', false, false)
+insert into "order" (created_date, complete)
+values ('2018-01-01', false)
 returning id
 into o1Id;
 
-insert into "order" (created_date, complete, cancelled)
-values ('2018-01-02', true, false)
+insert into "order" (created_date, complete)
+values ('2018-01-02', true)
 returning id
 into o2Id;
 
-insert into "order" (created_date, complete, cancelled)
-values ('2018-01-03', true, false)
+insert into "order" (created_date, complete)
+values ('2018-01-03', true)
 returning id
 into o3Id;
 
-insert into "order" (created_date, complete, cancelled)
-values ('2018-01-04', true, false)
+insert into "order" (created_date, complete)
+values ('2018-01-04', true)
 returning id
 into o4Id;
 
