@@ -3,14 +3,14 @@ import * as React from 'react';
 import { Household, HouseholdOrder, CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link } from './Link'
+import { Link, RouterLink } from './Link'
 import { Money } from './Money'
+import { Router } from './Router'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , householdOrders: HouseholdOrder[]
                                           , currentCollectiveOrder: CollectiveOrder | undefined
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                          , navigate: (location: string) => void
                                           , reload: () => void
                                           }
 
@@ -18,14 +18,19 @@ export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProp
   newOrder = () => {
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createOrder(householdId))
-      .then(id => this.props.navigate(`/orders/${id}/households/${householdId}`))
+      .then(id => {
+        this.props.reload()
+        return id
+      })
+      .then(id => Router.navigate(`/households/${householdId}/orders/${id}`))
   }
 
   joinOrder = (orderId: number) => {
     const date = new Date()
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.addHouseholdOrder(orderId, householdId))
-      .then(id => this.props.navigate(`/orders/${orderId}/households/${householdId}`))
+      .then(this.props.reload)
+      .then(_ => Router.navigate(`/households/${householdId}/orders/${orderId}`))
   }
 
   render() {
@@ -35,7 +40,8 @@ export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProp
 
     return (
       <div>
-        <h1>Orders</h1>
+        <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
+        <h1>{this.props.household.name}</h1>
         <h2>Current order</h2>
         {currentOrder
         ? (
@@ -43,7 +49,7 @@ export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProp
             <div>
               <span>{ Util.formatDate(currentOrder.orderCreatedDate) }</span>
               <Money amount={currentOrder.total} />
-              <Link action={_ => this.props.navigate(`/orders/${currentOrder.orderId}/households/${currentOrder.householdId}`)}>View</Link>
+              <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>View</RouterLink>
             </div>
           </div>
         )
@@ -59,7 +65,7 @@ export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProp
                 <span>{ Util.formatDate(ho.orderCreatedDate) }</span>
                 <span>{ho.isCancelled && 'cancelled'}</span>
                 <Money amount={ho.total} />
-                <Link action={_ => this.props.navigate(`/orders/${ho.orderId}/households/${ho.householdId}`)}>View</Link>
+                <RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>View</RouterLink>
               </div>
             )) }
           </div>

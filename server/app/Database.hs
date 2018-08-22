@@ -46,7 +46,7 @@ module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseh
                from "order" o
                left join household_order ho on ho.order_id = o.id
                group by o.id, o.created_date, o.complete
-               order by o.created_date desc
+               order by o.id desc
              ),
              orders_past as (
                (select id, created_date, complete, cancelled, false as past
@@ -63,7 +63,7 @@ module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseh
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
         group by o.id, o.created_date, o.complete, o.cancelled, o.past
-        order by o.created_date desc
+        order by o.id desc
       |]
       is <- query_ conn [sql|
         select hoi.order_id, p.id, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
@@ -88,7 +88,7 @@ module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseh
         with orders as (
                select o.id, o.created_date, o.complete
                from "order" o
-               order by o.created_date desc
+               order by o.id desc
              ),
              orders_past as (
                (select id, created_date, complete, false as past
@@ -106,7 +106,7 @@ module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseh
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
         group by o.id, o.created_date, o.complete, o.past, h.id, h.name, ho.cancelled
-        order by o.created_date desc, h.name asc
+        order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
         select hoi.order_id, hoi.household_id, p.id, p.name, hoi.quantity, p.price * hoi.quantity as total

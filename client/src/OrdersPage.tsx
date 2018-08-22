@@ -3,19 +3,23 @@ import * as React from 'react';
 import { CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link } from './Link'
+import { Link, RouterLink } from './Link'
 import { Money } from './Money'
+import { Router } from './Router'
 
 export interface OrdersPageProps { orders: CollectiveOrder[]
                                  , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                 , navigate: (location: string) => void
                                  , reload: () => void
                                  }
 
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   newOrder = () => {
     this.props.request(ServerApi.command.createOrder())
-      .then(id => this.props.navigate(`/orders/${id}`))
+      .then(id => {
+        this.props.reload()
+        return id
+      })
+      .then(id => Router.navigate(`/orders/${id}`))
   }
 
   render() {
@@ -31,7 +35,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
               <div>
                 <span>{ Util.formatDate(currentOrder.createdDate) }</span>
                 <Money amount={currentOrder.total} />
-                <Link action={_ => this.props.navigate(`/orders/${currentOrder.id}`)}>View</Link>
+                <RouterLink path={`/orders/${currentOrder.id}`}>View</RouterLink>
               </div>
             </div>
           </div>
@@ -44,7 +48,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
                 <span>{ Util.formatDate(o.createdDate) }</span>
                 <span>{o.isCancelled && 'cancelled'}</span>
                 <Money amount={o.total} />
-                <Link action={_ => this.props.navigate(`/orders/${o.id}`)}>View</Link>
+                <RouterLink path={`/orders/${o.id}`}>View</RouterLink>
               </div>
             )) }
           </div>

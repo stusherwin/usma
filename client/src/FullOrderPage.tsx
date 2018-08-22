@@ -3,12 +3,11 @@ import * as React from 'react';
 import { CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link } from './Link'
+import { Link, RouterLink } from './Link'
 import { Money } from './Money'
 
 export interface FullOrderPageProps { order: CollectiveOrder
                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                    , navigate: (location: string) => void
                                     }
 
 export class FullOrderPage extends React.Component<FullOrderPageProps, {}> {
@@ -24,8 +23,8 @@ export class FullOrderPage extends React.Component<FullOrderPageProps, {}> {
     return (
       <div>
         <div>
-          <Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;
-          <Link action={_ => this.props.navigate(`/orders/${this.props.order.id}`)}>{Util.formatDate(this.props.order.createdDate)}</Link> &gt;
+          <RouterLink path="/orders">Orders</RouterLink> &gt;
+          <RouterLink path={`/orders/${this.props.order.id}`}>{Util.formatDate(this.props.order.createdDate)}</RouterLink> &gt;
         </div>
         <h1>Full order list</h1>
         <div>

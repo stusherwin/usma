@@ -24,7 +24,7 @@ const query = {
 
 const command = {
   createOrder(householdId?: number): Promise<number> {
-    return Http.post(`/api/command/create-order/${householdId}`, {})
+    return Http.post(`/api/command/create-order/${householdId || ''}`, {})
   },
 
   addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {

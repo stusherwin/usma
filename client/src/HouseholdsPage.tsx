@@ -3,12 +3,11 @@ import * as React from 'react';
 import { Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link } from './Link'
+import { Link, RouterLink } from './Link'
 import { Form, Field, Validate } from './Validation'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                     , navigate: (location: string) => void
                                      , reload: () => void
                                      }
 
@@ -58,14 +57,16 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     return (
       <div>
         <h1>Households</h1>
-        <Link action={this.startCreate}>New household</Link>
+        {!this.state.creating && 
+          <Link action={this.startCreate}>New household</Link>
+        }
         {this.state.creating &&
           <div>
             <span>
               <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
               {this.state.form.fields.name.error}
             </span>
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Add</Link>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
@@ -74,7 +75,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             { this.props.households.map(h => (
               <div key={h.id}>
                 <span>{h.name}</span>
-                <Link action={_ => this.props.navigate(`/households/${h.id}`)}>View</Link>
+                <RouterLink path={`/households/${h.id}`}>View</RouterLink>
                 <Link action={() => this.delete(h)}>Delete</Link>
               </div>
             )) }

@@ -3,14 +3,14 @@ import * as React from 'react';
 import { HouseholdOrder, Product, OrderItem } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link } from './Link'
+import { Link, RouterLink } from './Link'
 import { Money } from './Money'
 
 export interface HouseholdOrderPageProps { householdOrder: HouseholdOrder
                                          , products: Product[]
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                         , navigate: (location: string) => void
                                          , reload: () => void
+                                         , referrer: 'order' | 'household'
                                          }
 
 export interface HouseholdOrderPageState { addingProduct: Product | null
@@ -107,11 +107,25 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
 
     return (
       <div>
-        <div>
-          <Link action={_ => this.props.navigate('/orders')}>Orders</Link> &gt;
-          <Link action={_ => this.props.navigate(`/orders/${householdOrder.orderId}`)}>{Util.formatDate(householdOrder.orderCreatedDate)}</Link> &gt;
-        </div>
-        <h1>{householdOrder.householdName} {householdOrder.isCancelled && ' (cancelled)'}</h1>
+        {this.props.referrer == 'order'
+        ? (
+          <div>
+            <div>
+              <RouterLink path="/orders">Orders</RouterLink> &gt;
+              <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
+            </div>
+            <h1>{householdOrder.householdName} {householdOrder.isCancelled && ' (cancelled)'}</h1>
+          </div>
+        )
+        : (
+          <div>
+            <div>
+              <RouterLink path="/households">Households</RouterLink> &gt;
+              <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
+            </div>
+            <h1>{Util.formatDate(householdOrder.orderCreatedDate)} {householdOrder.isCancelled && ' (cancelled)'}</h1>
+          </div>
+        )}
         <div>
           {!householdOrder.isOrderComplete && (
             householdOrder.isCancelled
@@ -119,12 +133,16 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               : <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
           )}
         </div>
+        <h2>Items</h2>
         <div>
-        {!householdOrder.isOrderComplete && !householdOrder.isCancelled && !!unusedProducts.length &&
-          <Link action={() => this.startAdd(unusedProducts[0])}>Add</Link>
-        }
-        </div>
-        <div>
+          {!householdOrder.items.length &&
+            <div>No items added to this order</div>
+          }
+          {!householdOrder.isOrderComplete && !householdOrder.isCancelled && !!unusedProducts.length && !this.state.addingProduct &&
+            <div>
+              <Link action={() => this.startAdd(unusedProducts[0])}>Add item</Link>
+            </div>
+          }
           {this.state.addingProduct &&
             <div>
               <span>
@@ -138,7 +156,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
                 </select>
               </span>
               <Money amount={this.state.addingProduct.price * this.state.addingProductQuantity} />
-              <Link action={this.confirmAdd}>Add</Link>
+              <Link action={this.confirmAdd}>Save</Link>
               <Link action={this.cancelAdd}>Cancel</Link>
             </div>
           }

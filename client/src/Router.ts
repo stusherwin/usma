@@ -40,4 +40,8 @@ export class Router {
     console.log('Page not found for url: ' + url)
     return React.createElement('div', null, 'Page not found')
   }
+
+  static navigate(url: string) {
+    window.history.pushState(url, url, url)
+  }
 }

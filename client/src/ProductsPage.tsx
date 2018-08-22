@@ -9,7 +9,6 @@ import { Form, Field, Validate } from './Validation'
 
 export interface ProductsPageProps { products: Product[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                   , navigate: (location: string) => void
                                    , reload: () => void
                                    }
 
@@ -68,7 +67,9 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     return (
       <div>
         <h1>Products</h1>
-        <Link action={this.startCreate}>New product</Link>
+        {!this.state.creating && 
+          <Link action={this.startCreate}>New product</Link>
+        }
         {this.state.creating &&
           <div>
             <span>
@@ -79,7 +80,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
               <input type="text" value={this.state.form.fields.price.stringValue} className={!this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
               {this.state.form.fields.price.error}
             </span>
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Add</Link>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
