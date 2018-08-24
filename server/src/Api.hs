@@ -12,6 +12,7 @@ module Api where
   import HouseholdOrder
   import Product
   import Household
+  import HouseholdPayment
  
   type AppAPI = 
          "api" :> (
@@ -24,6 +25,7 @@ module Api where
     :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
     :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
+    :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

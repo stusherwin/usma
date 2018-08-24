@@ -35,6 +35,7 @@ module Main where
   import HouseholdOrder
   import Product
   import Household
+  import HouseholdPayment
 
   main :: IO ()
   main = do
@@ -63,6 +64,7 @@ module Main where
                 :<|> householdOrders
                 :<|> products
                 :<|> households
+                :<|> householdPayments
     where
     collectiveOrders :: Handler [CollectiveOrder]
     collectiveOrders = liftIO $ D.getCollectiveOrders conn
@@ -75,6 +77,9 @@ module Main where
 
     households :: Handler [Household]
     households = liftIO $ D.getHouseholds conn
+
+    householdPayments :: Handler [HouseholdPayment]
+    householdPayments = liftIO $ D.getHouseholdPayments conn
 
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrderForHousehold

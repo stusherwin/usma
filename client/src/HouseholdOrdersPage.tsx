@@ -42,34 +42,39 @@ export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProp
       <div>
         <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
         <h1>{this.props.household.name}</h1>
-        <h2>Current order</h2>
-        {currentOrder
-        ? (
-          <div>
+        <div>
+          <div>Orders</div>
+          <RouterLink path={`/households/${this.props.household.id}/payments`}>Payments</RouterLink>
+
+          <h2>Current order</h2>
+          {currentOrder
+          ? (
             <div>
-              <span>{ Util.formatDate(currentOrder.orderCreatedDate) }</span>
-              <Money amount={currentOrder.total} />
-              <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>View</RouterLink>
-            </div>
-          </div>
-        )
-        : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
-          ? <Link action={_ => this.joinOrder(currentCollectiveOrder.id)}>Join existing order</Link>
-          : <Link action={this.newOrder}>Start new order</Link>
-        }
-        <h2>Past orders</h2>
-        {!pastOrders.length ? <div>No past orders</div> : (
-          <div>
-            { pastOrders.map(ho => (
-              <div key={ho.orderId}>
-                <span>{ Util.formatDate(ho.orderCreatedDate) }</span>
-                <span>{ho.isCancelled && 'cancelled'}</span>
-                <Money amount={ho.total} />
-                <RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>View</RouterLink>
+              <div>
+                <span>{ Util.formatDate(currentOrder.orderCreatedDate) }</span>
+                <Money amount={currentOrder.total} />
+                <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>View</RouterLink>
               </div>
-            )) }
-          </div>
-        )}
+            </div>
+          )
+          : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
+            ? <Link action={_ => this.joinOrder(currentCollectiveOrder.id)}>Join existing order</Link>
+            : <Link action={this.newOrder}>Start new order</Link>
+          }
+          <h2>Past orders</h2>
+          {!pastOrders.length ? <div>No past orders</div> : (
+            <div>
+              { pastOrders.map(ho => (
+                <div key={ho.orderId}>
+                  <span>{ Util.formatDate(ho.orderCreatedDate) }</span>
+                  <span>{ho.isCancelled && 'cancelled'}</span>
+                  <Money amount={ho.total} />
+                  <RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>View</RouterLink>
+                </div>
+              )) }
+            </div>
+          )}
+        </div>
       </div>
     )
   }

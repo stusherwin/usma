@@ -1,4 +1,4 @@
-import { Product, Household, CollectiveOrder, HouseholdOrder } from './Types'
+import { Product, Household, CollectiveOrder, HouseholdOrder, HouseholdPayment } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
@@ -10,7 +10,7 @@ const query = {
 
   householdOrders(): Promise<HouseholdOrder[]> {
     return Http.get<HouseholdOrder[]>('/api/query/household-orders')
-      .then(res => { res.forEach(o => o.orderCreatedDate = new Date(o.orderCreatedDate)); return res })
+      .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
   },
 
   products(): Promise<Product[]> {
@@ -19,6 +19,11 @@ const query = {
 
   households(): Promise<Household[]> {
     return Http.get<Household[]>('/api/query/households')
+  },
+
+  householdPayments(): Promise<HouseholdPayment[]> {
+    return Http.get<HouseholdPayment[]>('/api/query/household-payments')
+      .then(res => { res.forEach(hp => hp.date = new Date(hp.date)); return res })
   },
 }
 

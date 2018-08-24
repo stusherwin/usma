@@ -11,6 +11,10 @@ declare h1Id integer;
 declare h2Id integer;
 declare h3Id integer;
 declare h4Id integer;
+declare hp1Id integer;
+declare hp2Id integer;
+declare hp3Id integer;
+declare hp4Id integer;
 begin
 
 drop table if exists "household_order_item" cascade;
@@ -50,8 +54,8 @@ into o4Id;
 ---
 
 create table household
-( id       serial not null primary key
-, "name"   text
+( id       serial  not null primary key
+, "name"   text    not null
 , archived boolean not null
 );
 
@@ -64,8 +68,8 @@ insert into household ("name", archived) values ('3 Bowling Alley', false) retur
 
 create table product
 ( id       serial not null primary key
-, "name"   text
-, price    int not null
+, "name"   text   not null
+, price    int    not null
 , archived boolean not null
 );
 
@@ -106,5 +110,21 @@ insert into household_order_item (order_id, household_id, product_id, quantity) 
 insert into household_order_item (order_id, household_id, product_id, quantity) values (o1Id, h2Id, p2Id, 2);
 insert into household_order_item (order_id, household_id, product_id, quantity) values (o2Id, h3Id, p3Id, 1);
 insert into household_order_item (order_id, household_id, product_id, quantity) values (o2Id, h4Id, p4Id, 5);
+
+---
+
+create table household_payment
+( id           serial  not null primary key
+, household_id int     not null
+, "date"       date    not null
+, amount       int     not null
+, archived     boolean not null
+, foreign key (household_id) references household (id)
+);
+
+insert into household_payment (household_id, "date", amount, archived) values (1, '2018-01-01', 10000, false) returning id into hp1Id;
+insert into household_payment (household_id, "date", amount, archived) values (1, '2018-01-02', 20000, false) returning id into hp2Id;
+insert into household_payment (household_id, "date", amount, archived) values (3, '2018-01-01', 30000, false) returning id into hp3Id;
+insert into household_payment (household_id, "date", amount, archived) values (4, '2018-01-01', 40000, false) returning id into hp4Id;
 
 end $$

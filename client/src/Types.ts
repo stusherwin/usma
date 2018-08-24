@@ -32,3 +32,9 @@ export type OrderItem = { productId: number
                         , itemQuantity: number
                         , itemTotal: number
                         }
+
+export type HouseholdPayment = { id: number 
+                               , householdId: number
+                               , date: Date
+                               , amount: number
+                               }

@@ -10,11 +10,12 @@ import { OrderPage } from './OrderPage'
 import { PastOrderPage } from './PastOrderPage'
 import { HouseholdOrderPage } from './HouseholdOrderPage'
 import { HouseholdOrdersPage } from './HouseholdOrdersPage'
+import { HouseholdPaymentsPage } from './HouseholdPaymentsPage'
 import { PastHouseholdOrderPage } from './PastHouseholdOrderPage'
 import { FullOrderPage } from './FullOrderPage'
 import { ProductsPage } from './ProductsPage'
 import { HouseholdsPage } from './HouseholdsPage'
-import { CollectiveOrder, HouseholdOrder, Product, Household } from './Types'
+import { CollectiveOrder, HouseholdOrder, Product, Household, HouseholdPayment } from './Types'
 
 export interface MainProps {}
 export interface MainState { loading: boolean
@@ -25,6 +26,7 @@ export interface MainState { loading: boolean
                            , householdOrders: HouseholdOrder[]
                            , products: Product[]
                            , households: Household[]
+                           , householdPayments: HouseholdPayment[]
                            , initialised: boolean
                            }
 
@@ -44,6 +46,7 @@ export class Main extends React.Component<MainProps, MainState> {
                  , householdOrders: []
                  , products: []
                  , households: []
+                 , householdPayments: []
                  , initialised: false
                  }
     
@@ -52,14 +55,6 @@ export class Main extends React.Component<MainProps, MainState> {
       return householdOrder && (householdOrder.isOrderPast
         ? <PastHouseholdOrderPage householdOrder={householdOrder} />
         : <HouseholdOrderPage referrer="order" householdOrder={householdOrder} products={this.state.products} reload={this.reload} request={this.request} />
-      )
-    })
-
-    this.router.route('/households/{householdId}/orders/{orderId}', c => {
-      const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
-      return householdOrder && (householdOrder.isOrderPast
-        ? <PastHouseholdOrderPage householdOrder={householdOrder} />
-        : <HouseholdOrderPage referrer="household" householdOrder={householdOrder} products={this.state.products} reload={this.reload} request={this.request} />
       )
     })
 
@@ -81,13 +76,27 @@ export class Main extends React.Component<MainProps, MainState> {
     
     this.router.route('/products', _ => <ProductsPage products={this.state.products} reload={this.reload} request={this.request} />)
     
-    this.router.route('/households/{householdId}', c => {
+    this.router.route('/households/{householdId}/orders/{orderId}', c => {
+      const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
+      return householdOrder && (householdOrder.isOrderPast
+        ? <PastHouseholdOrderPage householdOrder={householdOrder} />
+        : <HouseholdOrderPage referrer="household" householdOrder={householdOrder} products={this.state.products} reload={this.reload} request={this.request} />
+      )
+    })
+
+    this.router.route('/households/{householdId}/orders', c => {
       const household = this.state.households.find(h => h.id == c.householdId)
       const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
       const currentCollectiveOrder = this.state.collectiveOrders.find(o => !o.isPast)
       return household && <HouseholdOrdersPage household={household} currentCollectiveOrder={currentCollectiveOrder} householdOrders={householdOrders} reload={this.reload} request={this.request} />
     })
     
+    this.router.route('/households/{householdId}/payments', c => {
+      const household = this.state.households.find(h => h.id == c.householdId)
+      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
+      return household && <HouseholdPaymentsPage household={household} payments={householdPayments} reload={this.reload} request={this.request} />
+    })
+
     this.router.route('/households', _ => <HouseholdsPage households={this.state.households} reload={this.reload} request={this.request} />)
     
     this.router.route('/', _ => <div>Home page</div>)
@@ -112,12 +121,14 @@ export class Main extends React.Component<MainProps, MainState> {
                              , ServerApi.query.householdOrders()
                              , ServerApi.query.products()
                              , ServerApi.query.households()
+                             , ServerApi.query.householdPayments()
                              ]))
-    .then(([collectiveOrders, householdOrders, products, households]) => {
+    .then(([collectiveOrders, householdOrders, products, households, householdPayments]) => {
       this.setState({ collectiveOrders
                     , householdOrders
                     , products
                     , households
+                    , householdPayments
                     })
     })
 

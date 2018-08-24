@@ -3,7 +3,11 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, createOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold, createProduct, archiveProduct) where
+module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
+                , createOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder
+                , uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold
+                , createProduct, archiveProduct
+                ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -24,6 +28,7 @@ module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseh
   import HouseholdOrder
   import Product
   import Household
+  import HouseholdPayment
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
@@ -145,6 +150,18 @@ module Database (getCollectiveOrders, getHouseholdOrders, getProducts, getHouseh
     |]
     close conn
     return $ (rHouseholds :: [(Int, String)]) <&> \(id, name) -> Household id name
+
+  getHouseholdPayments :: ByteString -> IO [HouseholdPayment]
+  getHouseholdPayments connectionString = do
+    conn <- connectPostgreSQL connectionString
+    rPayments <- query_ conn [sql|
+      select p.id, p.household_id, p.date, p.amount
+      from household_payment p
+      where p.archived = false
+      order by p.id asc
+    |]
+    close conn
+    return $ (rPayments :: [(Int, Int, Day, Int)]) <&> \(id, householdId, date, amount) -> HouseholdPayment id householdId date amount
 
   createOrder :: ByteString -> Day -> Maybe Int -> IO Int
   createOrder connectionString date maybeHouseholdId = do
