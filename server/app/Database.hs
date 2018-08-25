@@ -5,7 +5,7 @@
 
 module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
                 , createOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder
-                , uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold
+                , uncancelHouseholdOrder, addHouseholdOrder, createHousehold, updateHousehold, archiveHousehold
                 , createProduct, updateProduct, archiveProduct, createHouseholdPayment, archiveHouseholdPayment
                 ) where
   import Control.Monad (mzero, when, void)
@@ -237,6 +237,14 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     close conn
     return id
   
+  updateHousehold :: ByteString -> Int -> String -> IO ()
+  updateHousehold connectionString householdId name = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update household set name = ? where id = ?
+    |] (name, householdId)
+    close conn
+
   archiveHousehold :: ByteString -> Int -> IO ()
   archiveHousehold connectionString householdId = do
     conn <- connectPostgreSQL connectionString

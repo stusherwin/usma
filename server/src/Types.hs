@@ -32,6 +32,12 @@ module Types where
   instance ToJSON CreateHousehold
   instance FromJSON CreateHousehold
 
+  data UpdateHousehold = UpdateHousehold { uhId :: Int
+                                         , uhName :: String
+                                         } deriving (Eq, Show, Generic)
+  instance ToJSON UpdateHousehold
+  instance FromJSON UpdateHousehold
+
   data CreateProduct = CreateProduct { cpName :: String
                                      , cpPrice :: Int
                                      } deriving (Eq, Show, Generic)

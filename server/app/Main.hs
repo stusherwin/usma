@@ -90,6 +90,7 @@ module Main where
                   :<|> ensureHouseholdOrderItem
                   :<|> removeHouseholdOrderItem
                   :<|> createHousehold
+                  :<|> updateHousehold
                   :<|> archiveHousehold
                   :<|> createProduct
                   :<|> updateProduct
@@ -124,6 +125,9 @@ module Main where
 
     createHousehold :: CreateHousehold -> Handler Int
     createHousehold command = liftIO $ D.createHousehold conn (chName command)
+
+    updateHousehold :: UpdateHousehold -> Handler ()
+    updateHousehold command = liftIO $ D.updateHousehold conn (uhId command) (uhName command)
 
     archiveHousehold :: Int -> Handler ()
     archiveHousehold = liftIO . (D.archiveHousehold conn)

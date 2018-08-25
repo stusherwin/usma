@@ -75,6 +75,12 @@ const command = {
     return Http.post(`/api/command/create-household/`, { chName: name })
   },
 
+  updateHousehold(id: number, name: string): Promise<number> {
+    return Http.post(`/api/command/update-household/`, { uhId: id
+                                                       , uhName: name 
+                                                       })
+  },
+
   archiveHousehold(id: number): Promise<{}> {
     return Http.post(`/api/command/archive-household/${id}`, {})
   },

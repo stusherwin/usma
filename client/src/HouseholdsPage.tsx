@@ -8,10 +8,11 @@ import { Form, Field, Validate } from './Validation'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                     , reload: () => void
+                                     , reload: () => Promise<void>
                                      }
 
 export interface HouseholdsPageState { creating: boolean
+                                     , editingHouseholdId: number | null
                                      , form: Form
                                      }
 
@@ -20,6 +21,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     super(props)
 
     this.state = { creating: false
+                 , editingHouseholdId: null
                  , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]) })
                  }
   }
@@ -37,12 +39,35 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     this.setState({ form: validated })
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
-        .then(_ => {
-          this.setState({ creating: false
-                        , form: this.state.form.reset({name: ''})
-                        })
-          this.props.reload()
-        })
+        .then(this.props.reload)
+        .then(_ => this.setState({ creating: false
+                                 , form: this.state.form.reset({name: ''})
+                                 })
+        )
+    }
+  }
+
+  startEdit = (household: Household) => this.setState({ editingHouseholdId: household.id
+                                                      , form: this.state.form.reset({name: household.name})
+                                                      })
+
+  cancelEdit = () => this.setState({ editingHouseholdId: null
+                                   , form: this.state.form.reset({name: ''})
+                                   })
+
+  confirmEdit = () => {
+    if(!this.state.editingHouseholdId) return
+    
+    const validated = this.state.form.validate()
+    console.log(validated)
+    this.setState({ form: validated })
+    if(validated.valid()) {
+      this.props.request(ServerApi.command.updateHousehold(this.state.editingHouseholdId, validated.fields.name.value))
+        .then(this.props.reload)
+        .then(_ => this.setState({ editingHouseholdId: null
+                                 , form: this.state.form.reset({name: ''})
+                                 })
+        )
     }
   }
 
@@ -70,12 +95,27 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             <Link action={this.cancelCreate}>Cancel</Link>
           </div>
         }
-        {!this.props.households.length ? <div>No households created yet</div> : (
+        {!this.props.households.length
+        ? <div>No households created yet</div>
+        : (
           <div>
-            { this.props.households.map(h => (
+            { this.props.households.map(h => 
+            this.state.editingHouseholdId == h.id
+            ? (
+              <div>
+                <span>
+                  <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
+                  {this.state.form.fields.name.error}
+                </span>
+                <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
+                <Link action={this.cancelEdit}>Cancel</Link>
+              </div>
+            )
+            : (
               <div key={h.id}>
                 <span>{h.name}</span>
                 <RouterLink path={`/households/${h.id}/orders`}>View</RouterLink>
+                <Link action={() => this.startEdit(h)}>Edit</Link>
                 <Link action={() => this.delete(h)}>Delete</Link>
               </div>
             )) }
