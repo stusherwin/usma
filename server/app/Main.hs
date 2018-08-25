@@ -96,6 +96,7 @@ module Main where
                   :<|> updateProduct
                   :<|> archiveProduct
                   :<|> createHouseholdPayment
+                  :<|> updateHouseholdPayment
                   :<|> archiveHouseholdPayment
     where
     createOrderForHousehold :: Int -> Handler Int
@@ -143,6 +144,9 @@ module Main where
   
     createHouseholdPayment :: CreateHouseholdPayment -> Handler Int
     createHouseholdPayment command = liftIO $ D.createHouseholdPayment conn (chpHouseholdId command) (chpDate command) (chpAmount command)
+
+    updateHouseholdPayment :: UpdateHouseholdPayment -> Handler ()
+    updateHouseholdPayment command = liftIO $ D.updateHouseholdPayment conn (uhpPaymentId command) (uhpDate command) (uhpAmount command)
 
     archiveHouseholdPayment :: Int -> Handler ()
     archiveHouseholdPayment = liftIO . (D.archiveHouseholdPayment conn)

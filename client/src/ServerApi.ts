@@ -109,6 +109,13 @@ const command = {
                                                                })
   },
 
+  updateHouseholdPayment(paymentId: number, date: Date, amount: number): Promise<number> {
+    return Http.post(`/api/command/update-household-payment/`, { uhpPaymentId: paymentId
+                                                               , uhpDate: Util.dateString(date)
+                                                               , uhpAmount: amount
+                                                               })
+  },
+
   archiveHouseholdPayment(id: number): Promise<{}> {
     return Http.post(`/api/command/archive-household-payment/${id}`, {})
   },

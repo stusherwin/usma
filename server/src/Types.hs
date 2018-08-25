@@ -57,3 +57,10 @@ module Types where
                                                        } deriving (Eq, Show, Generic)
   instance ToJSON CreateHouseholdPayment
   instance FromJSON CreateHouseholdPayment
+
+  data UpdateHouseholdPayment = UpdateHouseholdPayment { uhpPaymentId :: Int
+                                                       , uhpDate :: Day
+                                                       , uhpAmount :: Int
+                                                       } deriving (Eq, Show, Generic)
+  instance ToJSON UpdateHouseholdPayment
+  instance FromJSON UpdateHouseholdPayment

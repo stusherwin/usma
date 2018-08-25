@@ -11,10 +11,11 @@ import { Form, Field, Validate } from './Validation'
 export interface HouseholdPaymentsPageProps { household: Household
                                             , payments: HouseholdPayment[]
                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                            , reload: () => void
+                                            , reload: () => Promise<void>
                                             }
 
 export interface HouseholdPaymentsPageState { creating: boolean 
+                                            , editingId: number | null
                                             , form: Form
                                             }
 
@@ -23,6 +24,7 @@ export class HouseholdPaymentsPage extends React.Component<HouseholdPaymentsPage
     super(props)
 
     this.state = { creating: false
+                 , editingId: null
                  , form: Form.create({ date: Field.create((v: string) => new Date(Date.parse(v)), (v: Date) => Util.dateString(v),
                                          [ Validate.required('Date is required')
                                          , Validate.dateFormat('Date must be in the format YYYY-MM-DD')
@@ -51,12 +53,33 @@ export class HouseholdPaymentsPage extends React.Component<HouseholdPaymentsPage
 
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHouseholdPayment(this.props.household.id, validated.fields.date.value, validated.fields.amount.value))
-        .then(products => {
-          this.setState({ creating: false
-                        , form: this.state.form.reset({date: new Date(), amount: 0})
-                        })
-          this.props.reload()
-        })
+        .then(this.props.reload)
+        .then(_ => this.setState({ creating: false
+                                 , form: this.state.form.reset({date: new Date(), amount: 0})
+                                 }))
+    }
+  }
+  
+  startEdit = (payment: HouseholdPayment) => this.setState({ editingId: payment.id
+                                                           , form: this.state.form.reset({date: payment.date, amount: payment.amount})
+                                                           })
+
+  cancelEdit = () => this.setState({ editingId: null
+                                   , form: this.state.form.reset({date: new Date(), amount: 0})
+                                   })
+
+  confirmEdit = () => {
+    if(!this.state.editingId) return
+
+    const validated = this.state.form.validate()
+    this.setState({ form: validated })
+
+    if(validated.valid()) {
+      this.props.request(ServerApi.command.updateHouseholdPayment(this.state.editingId, validated.fields.date.value, validated.fields.amount.value))
+        .then(this.props.reload)
+        .then(_ => this.setState({ editingId: null
+                                 , form: this.state.form.reset({date: new Date(), amount: 0})
+                                 }))
     }
   }
 
@@ -101,10 +124,27 @@ export class HouseholdPaymentsPage extends React.Component<HouseholdPaymentsPage
           ? <div>No payments yet</div>
           : (
             <div>
-              { this.props.payments.map(p => (
+              { this.props.payments.map(p =>
+              this.state.editingId == p.id
+              ? (
+                <div>
+                  <span>
+                    <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
+                    {this.state.form.fields.date.error}
+                  </span>
+                  <span>
+                    <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
+                    {this.state.form.fields.amount.error}
+                  </span>
+                  <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
+                  <Link action={this.cancelEdit}>Cancel</Link>
+                </div>
+              )
+              : (
                 <div key={p.id}>
                   <span>{ Util.formatDate(p.date) }</span>
                   <Money amount={p.amount} />
+                  <Link action={() => this.startEdit(p)}>Edit</Link>
                   <Link action={() => this.delete(p)}>Delete</Link>
                 </div>
               )) }

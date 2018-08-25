@@ -12,7 +12,7 @@ export interface HouseholdsPageProps { households: Household[]
                                      }
 
 export interface HouseholdsPageState { creating: boolean
-                                     , editingHouseholdId: number | null
+                                     , editingId: number | null
                                      , form: Form
                                      }
 
@@ -21,7 +21,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     super(props)
 
     this.state = { creating: false
-                 , editingHouseholdId: null
+                 , editingId: null
                  , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]) })
                  }
   }
@@ -47,24 +47,24 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     }
   }
 
-  startEdit = (household: Household) => this.setState({ editingHouseholdId: household.id
+  startEdit = (household: Household) => this.setState({ editingId: household.id
                                                       , form: this.state.form.reset({name: household.name})
                                                       })
 
-  cancelEdit = () => this.setState({ editingHouseholdId: null
+  cancelEdit = () => this.setState({ editingId: null
                                    , form: this.state.form.reset({name: ''})
                                    })
 
   confirmEdit = () => {
-    if(!this.state.editingHouseholdId) return
-    
+    if(!this.state.editingId) return
+
     const validated = this.state.form.validate()
     console.log(validated)
     this.setState({ form: validated })
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateHousehold(this.state.editingHouseholdId, validated.fields.name.value))
+      this.props.request(ServerApi.command.updateHousehold(this.state.editingId, validated.fields.name.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ editingHouseholdId: null
+        .then(_ => this.setState({ editingId: null
                                  , form: this.state.form.reset({name: ''})
                                  })
         )
@@ -100,7 +100,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         : (
           <div>
             { this.props.households.map(h => 
-            this.state.editingHouseholdId == h.id
+            this.state.editingId == h.id
             ? (
               <div>
                 <span>

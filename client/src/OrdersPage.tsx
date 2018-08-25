@@ -9,17 +9,14 @@ import { Router } from './Router'
 
 export interface OrdersPageProps { orders: CollectiveOrder[]
                                  , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                 , reload: () => void
+                                 , reload: () => Promise<void>
                                  }
 
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   newOrder = () => {
     this.props.request(ServerApi.command.createOrder())
-      .then(id => {
-        this.props.reload()
-        return id
-      })
-      .then(id => Router.navigate(`/orders/${id}`))
+      .then(id => this.props.reload()
+                    .then(_ => Router.navigate(`/orders/${id}`)))
   }
 
   render() {

@@ -6,7 +6,7 @@
 module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
                 , createOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder
                 , uncancelHouseholdOrder, addHouseholdOrder, createHousehold, updateHousehold, archiveHousehold
-                , createProduct, updateProduct, archiveProduct, createHouseholdPayment, archiveHouseholdPayment
+                , createProduct, updateProduct, archiveProduct, createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
@@ -168,11 +168,11 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     conn <- connectPostgreSQL connectionString
     id <- withTransaction conn $ do
       [Only id] <- query conn [sql|
-        insert into "order" (created_date, complete, cancelled) values (?, false, false) returning id
+        insert into "order" (created_date, complete) values (?, false) returning id
       |] (Only date)
       case maybeHouseholdId of
         Just householdId -> void $ execute conn [sql|
-          insert into household_order (order_id, household_id, cancelled) values (?, ?, false)
+          insert into household_order (order_id, household_id) values (?, ?)
         |] (id, householdId)
         _ -> return ()
       return id
@@ -286,6 +286,14 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (householdId, date, amount)
     close conn
     return id
+
+  updateHouseholdPayment :: ByteString -> Int -> Day -> Int -> IO ()
+  updateHouseholdPayment connectionString paymentId date amount = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update household_payment set "date" = ?, amount = ? where id = ?
+    |] (date, amount, paymentId)
+    close conn
   
   archiveHouseholdPayment :: ByteString -> Int -> IO ()
   archiveHouseholdPayment connectionString id = do

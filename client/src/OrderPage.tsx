@@ -10,7 +10,7 @@ export interface OrderPageProps { order: CollectiveOrder
                                 , householdOrders: HouseholdOrder[]
                                 , households: Household[]
                                 , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                , reload: () => void
+                                , reload: () => Promise<void>
                                 }
 
 export interface OrderPageState { addingHousehold: Household | null
@@ -37,11 +37,9 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
     if(!this.state.addingHousehold) return
 
     this.props.request(ServerApi.command.addHouseholdOrder(this.props.order.id, this.state.addingHousehold.id))
-      .then(_ => {
-        this.setState({ addingHousehold: null
-                      })
-        this.props.reload()
-      })
+      .then(this.props.reload)
+      .then(_ => this.setState({ addingHousehold: null
+                               }))
   }
 
   removeHousehold = (h: HouseholdOrder) => {

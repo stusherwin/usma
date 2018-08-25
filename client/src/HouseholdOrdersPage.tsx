@@ -11,18 +11,15 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , householdOrders: HouseholdOrder[]
                                           , currentCollectiveOrder: CollectiveOrder | undefined
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                          , reload: () => void
+                                          , reload: () => Promise<void>
                                           }
 
 export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProps, {}> {
   newOrder = () => {
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createOrder(householdId))
-      .then(id => {
-        this.props.reload()
-        return id
-      })
-      .then(id => Router.navigate(`/households/${householdId}/orders/${id}`))
+      .then(id => this.props.reload()
+                    .then(_ => Router.navigate(`/households/${householdId}/orders/${id}`)))
   }
 
   joinOrder = (orderId: number) => {

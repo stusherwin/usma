@@ -9,7 +9,7 @@ import { Money } from './Money'
 export interface HouseholdOrderPageProps { householdOrder: HouseholdOrder
                                          , products: Product[]
                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                         , reload: () => void
+                                         , reload: () => Promise<void>
                                          , referrer: 'order' | 'household'
                                          }
 
@@ -48,12 +48,10 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
     if(!this.state.addingProduct) return
 
     this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, this.state.addingProduct.id, this.state.addingProductQuantity))
-      .then(_ => {
-        this.setState({ addingProduct: null
-                      , addingProductQuantity: 1
-                      })
-        this.props.reload()
-      })
+      .then(this.props.reload)
+      .then(_ => this.setState({ addingProduct: null
+                               , addingProductQuantity: 1
+                               }))
   }
 
   removeItem = (item: OrderItem) => {
@@ -78,12 +76,10 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
     if(!this.state.editingProduct) return
 
     this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, this.state.editingProduct.id, this.state.editingProductQuantity))
-      .then(_ => {
-        this.setState({ editingProduct: null
+      .then(this.props.reload)
+      .then(_ => this.setState({ editingProduct: null
                       , editingProductQuantity: 1
-                      })
-        this.props.reload()
-      })
+                      }))
   }
 
   cancelEdit = () =>

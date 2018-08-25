@@ -13,7 +13,7 @@ export interface ProductsPageProps { products: Product[]
                                    }
 
 export interface ProductsPageState { creating: boolean
-                                   , editingProductId: number | null
+                                   , editingId: number | null
                                    , form: Form
                                    }
 
@@ -22,7 +22,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     super(props)
 
     this.state = { creating: false
-                 , editingProductId: null
+                 , editingId: null
                  , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v,
                                          [ Validate.required('Name is required')
                                          ])
@@ -57,28 +57,26 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     }
   }
 
-  startEdit = (product: Product) => this.setState({ editingProductId: product.id
+  startEdit = (product: Product) => this.setState({ editingId: product.id
                                                   , form: this.state.form.reset({name: product.name, price: product.price})
                                                   })
 
   cancelEdit = () => {
-    if(!this.state.editingProductId) return
-
-    this.setState({ editingProductId: null
+    this.setState({ editingId: null
                   , form: this.state.form.reset({name: '', price: 0})
                   })
   }
 
   confirmEdit = () => {
-    if(!this.state.editingProductId) return
+    if(!this.state.editingId) return
 
     const validated = this.state.form.validate()
     this.setState({ form: validated })
 
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateProduct(this.state.editingProductId, validated.fields.name.value, validated.fields.price.value))
+      this.props.request(ServerApi.command.updateProduct(this.state.editingId, validated.fields.name.value, validated.fields.price.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ editingProductId: null
+        .then(_ => this.setState({ editingId: null
                                  , form: this.state.form.reset({name: '', price: 0})
                                  }))
     }
@@ -117,7 +115,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         : (
           <div>
             { this.props.products.map(p => 
-            this.state.editingProductId == p.id
+            this.state.editingId == p.id
             ? (
               <div>
                 <span>

@@ -17,6 +17,7 @@ declare hp3Id integer;
 declare hp4Id integer;
 begin
 
+drop table if exists "household_payment" cascade;
 drop table if exists "household_order_item" cascade;
 drop table if exists "household_order" cascade;
 drop table if exists "order" cascade;
@@ -32,7 +33,7 @@ create table "order"
 );
 
 insert into "order" (created_date, complete)
-values ('2018-01-01', false)
+values ('2018-01-01', true)
 returning id
 into o1Id;
 
@@ -47,7 +48,7 @@ returning id
 into o3Id;
 
 insert into "order" (created_date, complete)
-values ('2018-01-04', true)
+values ('2018-01-04', false)
 returning id
 into o4Id;
 
