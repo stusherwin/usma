@@ -75,9 +75,20 @@ const command = {
     return Http.post(`/api/command/create-household/`, { chName: name })
   },
 
+  archiveHousehold(id: number): Promise<{}> {
+    return Http.post(`/api/command/archive-household/${id}`, {})
+  },
+
   createProduct(name: string, price: number): Promise<number> {
     return Http.post(`/api/command/create-product/`, { cpName: name
                                                      , cpPrice: price
+                                                     })
+  },
+
+  updateProduct(id: number, name: string, price: number): Promise<number> {
+    return Http.post(`/api/command/update-product/`, { upId: id
+                                                     , upName: name
+                                                     , upPrice: price
                                                      })
   },
 
@@ -85,8 +96,15 @@ const command = {
     return Http.post(`/api/command/archive-product/${id}`, {})
   },
 
-  archiveHousehold(id: number): Promise<{}> {
-    return Http.post(`/api/command/archive-household/${id}`, {})
+  createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
+    return Http.post(`/api/command/create-household-payment/`, { chpHouseholdId: householdId
+                                                               , chpDate: Util.dateString(date)
+                                                               , chpAmount: amount
+                                                               })
+  },
+
+  archiveHouseholdPayment(id: number): Promise<{}> {
+    return Http.post(`/api/command/archive-household-payment/${id}`, {})
   },
 }
 

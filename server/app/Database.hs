@@ -6,7 +6,7 @@
 module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
                 , createOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder
                 , uncancelHouseholdOrder, addHouseholdOrder, createHousehold, archiveHousehold
-                , createProduct, archiveProduct
+                , createProduct, updateProduct, archiveProduct, createHouseholdPayment, archiveHouseholdPayment
                 ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
@@ -155,7 +155,7 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   getHouseholdPayments connectionString = do
     conn <- connectPostgreSQL connectionString
     rPayments <- query_ conn [sql|
-      select p.id, p.household_id, p.date, p.amount
+      select p.id, p.household_id, p."date", p.amount
       from household_payment p
       where p.archived = false
       order by p.id asc
@@ -254,10 +254,35 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     close conn
     return id
   
+  updateProduct :: ByteString -> Int -> String -> Int -> IO ()
+  updateProduct connectionString id name price = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update product set name = ?, price = ? where id = ?
+    |] (name, price, id)
+    close conn
+  
   archiveProduct :: ByteString -> Int -> IO ()
   archiveProduct connectionString productId = do
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
       update product set archived = true where id = ?
     |] (Only productId)
+    close conn
+
+  createHouseholdPayment :: ByteString -> Int -> Day -> Int -> IO Int
+  createHouseholdPayment connectionString householdId date amount = do
+    conn <- connectPostgreSQL connectionString
+    [Only id] <- query conn [sql|
+      insert into household_payment (household_id, "date", amount, archived) values (?, ?, ?, false) returning id
+    |] (householdId, date, amount)
+    close conn
+    return id
+  
+  archiveHouseholdPayment :: ByteString -> Int -> IO ()
+  archiveHouseholdPayment connectionString id = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update household_payment set archived = true where id = ?
+    |] (Only id)
     close conn

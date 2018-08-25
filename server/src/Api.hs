@@ -38,7 +38,10 @@ module Api where
     :<|> "create-household" :> ReqBody '[JSON] CreateHousehold :> Post '[JSON] Int
     :<|> "archive-household" :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "create-product" :> ReqBody '[JSON] CreateProduct :> Post '[JSON] Int
+    :<|> "update-product" :> ReqBody '[JSON] UpdateProduct :> Post '[JSON] ()
     :<|> "archive-product" :> Capture "productId" Int :> Post '[JSON] ()
+    :<|> "create-household-payment" :> ReqBody '[JSON] CreateHouseholdPayment :> Post '[JSON] Int
+    :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

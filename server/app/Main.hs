@@ -92,7 +92,10 @@ module Main where
                   :<|> createHousehold
                   :<|> archiveHousehold
                   :<|> createProduct
+                  :<|> updateProduct
                   :<|> archiveProduct
+                  :<|> createHouseholdPayment
+                  :<|> archiveHouseholdPayment
     where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = do
@@ -128,5 +131,14 @@ module Main where
     createProduct :: CreateProduct -> Handler Int
     createProduct command = liftIO $ D.createProduct conn (cpName command) (cpPrice command)
 
+    updateProduct :: UpdateProduct -> Handler ()
+    updateProduct command = liftIO $ D.updateProduct conn (upId command) (upName command) (upPrice command)
+
     archiveProduct :: Int -> Handler ()
     archiveProduct = liftIO . (D.archiveProduct conn)
+  
+    createHouseholdPayment :: CreateHouseholdPayment -> Handler Int
+    createHouseholdPayment command = liftIO $ D.createHouseholdPayment conn (chpHouseholdId command) (chpDate command) (chpAmount command)
+
+    archiveHouseholdPayment :: Int -> Handler ()
+    archiveHouseholdPayment = liftIO . (D.archiveHouseholdPayment conn)

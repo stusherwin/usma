@@ -20,7 +20,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     super(props)
 
     this.state = { creating: false
-                 , form: Form.create({ name: Field.create('', (v: string) => v, [Validate.required('Name is required')]) })
+                 , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]) })
                  }
   }
 
@@ -28,7 +28,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                                     })
 
   cancelCreate = () => this.setState({ creating: false
-                                     , form: this.state.form.reset()
+                                     , form: this.state.form.reset({name: ''})
                                      })
 
   confirmCreate = () => {
@@ -39,7 +39,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
         .then(_ => {
           this.setState({ creating: false
-                        , form: this.state.form.reset()
+                        , form: this.state.form.reset({name: ''})
                         })
           this.props.reload()
         })

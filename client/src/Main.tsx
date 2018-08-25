@@ -106,17 +106,13 @@ export class Main extends React.Component<MainProps, MainState> {
     window.onpopstate = e => this.setState({url: e.state || this.state.initialUrl});
     (window as any).history.onpushstate = (state: any, title: any, url: string) => this.setState({ url })
         
-    this.loadData().then(() => 
+    this.reload().then(() => 
       this.setState({ initialised: true
                     })
     )
   }
 
-  reload = () => {
-    this.loadData()
-  }
-
-  loadData = () =>
+  reload = () =>
     this.request(Promise.all([ ServerApi.query.collectiveOrders()
                              , ServerApi.query.householdOrders()
                              , ServerApi.query.products()

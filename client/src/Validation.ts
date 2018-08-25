@@ -22,20 +22,28 @@ export class Validate {
   static greaterThanZero(error: string) {
     return new Validate((v: string) => parseFloat(v) > 0, error)
   }
+
+  static dateFormat(error: string) {
+    return new Validate((v: string) => /^\d{4}\-\d{2}\-\d{2}$/.test(v), error)
+  }
+
+  static dateExists(error: string) {
+    return new Validate((v: string) => Date.parse(v) > 0, error)
+  }
 }
 
 export class Field {
-  private defaultValue: any
   stringValue: string
   value: any
   valid: boolean
   error: string | null
-  private validation: Validate[]
   private parse: (stringValue: string) => any
+  private toString: (value: any) => string
+  private validation: Validate[]
 
-  private constructor(defaultValue: any, parse: (stringValue: string) => any, validation: Validate[], stringValue: string = '', value: any = defaultValue, valid: boolean = true, error: string | null = null) {
-    this.defaultValue = defaultValue
+  private constructor(parse: (stringValue: string) => any, toString: (value: any) => string, validation: Validate[], stringValue: string = '', value: any = null, valid: boolean = true, error: string | null = null) {
     this.parse = parse
+    this.toString = toString
     this.validation = validation
     this.stringValue = stringValue
     this.value = value
@@ -43,19 +51,19 @@ export class Field {
     this.error = error
   }
 
-  static create(defaultValue: any, parse: (stringValue: string) => any, validation: Validate[]): Field {
-    return new Field(defaultValue, parse, validation)
+  static create(parse: (stringValue: string) => any, toString: (value: any) => string, validation: Validate[]): Field {
+    return new Field(parse, toString, validation)
   }
 
   clone(): Field {
-    return new Field(this.defaultValue, this.parse, this.validation, this.stringValue, this.value, this.valid, this.error)
+    return new Field(this.parse, this.toString, this.validation, this.stringValue, this.value, this.valid, this.error)
   }
 
-  reset(): Field {
+  reset(value: any): Field {
     let field = this.clone()
 
-    field.stringValue = ''
-    field.value = field.defaultValue
+    field.stringValue = this.toString(value)
+    field.value = value
     field.valid = true
     field.error = null
 
@@ -113,11 +121,11 @@ export class Form {
     return new Form(fields, this.validating, this.allFieldsValid)
   }
 
-  reset(): Form {
+  reset(values: {[key: string]: any}): Form {
     const fields: {[key: string]: Field} = {}
 
     for(let f in this.fields) {
-      fields[f] = this.fields[f].reset()
+      fields[f] = this.fields[f].reset(values[f])
     }
 
     return new Form(fields, false, true)
