@@ -5,6 +5,9 @@ export type Product = { id: number
 
 export type Household = { id: number
                         , name: string
+                        , totalOrders: number
+                        , totalPayments: number
+                        , balance: number
                         }
 
 export type CollectiveOrder = { id: number
@@ -13,7 +16,8 @@ export type CollectiveOrder = { id: number
                               , isCancelled: boolean
                               , isPlaced: boolean
                               , isPast: boolean
-                              , status: 'Open' | 'Complete' | 'Cancelled' | 'Placed'
+                              , isPaid: boolean
+                              , status: 'Open' | 'Complete' | 'Cancelled' | 'Paid' | 'Placed'
                               , canBeAmended: boolean
                               , total: number
                               , items: OrderItem[]
@@ -24,9 +28,11 @@ export type HouseholdOrder = { orderId: number
                              , isOrderPast: boolean
                              , householdId: number
                              , householdName: string 
+                             , householdBalance: number 
                              , isComplete: boolean
                              , isCancelled: boolean
                              , isOpen: boolean
+                             , isPaid: boolean
                              , canBeAmended: boolean
                              , total: number
                              , items: OrderItem[]

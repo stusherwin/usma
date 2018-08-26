@@ -38,7 +38,7 @@ export class HouseholdOrdersPage extends React.Component<HouseholdOrdersPageProp
     return (
       <div>
         <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
-        <h1>{this.props.household.name}</h1>
+        <h1>{this.props.household.name} (<Money amount={this.props.household.balance} />)</h1>
         <div>
           <div>Orders</div>
           <RouterLink path={`/households/${this.props.household.id}/payments`}>Payments</RouterLink>

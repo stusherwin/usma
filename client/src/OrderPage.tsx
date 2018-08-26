@@ -94,7 +94,8 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           {this.props.householdOrders.map(h => (
             <div key={h.householdId}>
               <span>{h.householdName}</span>
-              <Money amount={h.total} />
+              <Money amount={h.total} /> 
+              <span>{h.isPaid? 'paid' : 'unpaid'}</span>
               <span>{h.isCancelled && 'cancelled'}</span>
               <RouterLink path={`/orders/${h.orderId}/households/${h.householdId}`}>View</RouterLink>
               {order.canBeAmended && !h.items.length &&

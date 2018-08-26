@@ -46,20 +46,44 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        with orders as (
-               select o.id, o.created_date, o.placed, o.past, coalesce(bool_and(ho.complete), false) as complete, coalesce(bool_and(ho.cancelled), false) as cancelled
+        with household_total_orders as (
+               select h.id, coalesce(sum(p.price * hoi.quantity), 0) as total
+               from household h
+               left join household_order_item hoi on hoi.household_id = h.id
+               left join product p on p.id = hoi.product_id
+               group by h.id
+             ),
+             household_total_payments as (
+               select h.id, coalesce(sum(hp.amount), 0) as total
+               from household h
+               left join household_payment hp on hp.household_id = h.id
+               group by h.id
+             ),
+             households as (
+               select h.id, h.name, hto.total as total_orders, htp.total as total_payments, htp.total - hto.total as balance
+               from household h
+               inner join household_total_orders hto on hto.id = h.id
+               inner join household_total_payments htp on htp.id = h.id               
+             ),
+             household_orders as (
+               select ho.order_id, ho.household_id, ho.complete, ho.cancelled, (h.balance > 0) as paid
+               from household_order ho
+               inner join households h on h.id = ho.household_id
+             ),
+             orders as (
+               select o.id, o.created_date, o.placed, o.past, coalesce(bool_and(ho.complete), false) as complete, coalesce(bool_and(ho.cancelled), false) as cancelled, coalesce(bool_and(ho.paid), false) as paid
                from "order" o
-               left join household_order ho on ho.order_id = o.id
+               left join household_orders ho on ho.order_id = o.id
                where o.archived = false
                group by o.id, o.created_date
                order by o.id desc
              )
-        select o.id, o.created_date, o.complete, o.cancelled, o.placed, o.past, coalesce(sum(p.price * hoi.quantity), 0) as total
+        select o.id, o.created_date, o.complete, o.cancelled, o.placed, o.past, o.paid, coalesce(sum(p.price * hoi.quantity), 0) as total
         from orders o
         left join household_order ho on ho.order_id = o.id and ho.cancelled = false
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
-        group by o.id, o.created_date, o.complete, o.cancelled, o.placed, o.past
+        group by o.id, o.created_date, o.complete, o.cancelled, o.placed, o.past, o.paid
         order by o.id desc
       |]
       is <- query_ conn [sql|
@@ -69,13 +93,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         group by hoi.order_id, p.id, p.name
         order by p.name asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, Int, Int)])
     close conn
-    return $ rOrders <&> \(id, created, complete, cancelled, placed, past, total) ->
+    return $ rOrders <&> \(id, created, complete, cancelled, placed, past, paid, total) ->
       let item (_, productId, name, quantity, total) = CollectiveOrderItem productId name quantity total
           thisOrder (oId, _, _, _, _) = oId == id
           items = map item $ filter thisOrder rItems
-      in  collectiveOrder id created complete cancelled placed past total items
+      in  collectiveOrder id created complete cancelled placed past paid total items
   
   getHouseholdOrders :: ByteString -> IO [HouseholdOrder]
   getHouseholdOrders connectionString = do
@@ -87,14 +111,33 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                from "order" o
                where o.archived = false
                order by o.id desc
+             ),
+             household_total_orders as (
+               select h.id, coalesce(sum(p.price * hoi.quantity), 0) as total
+               from household h
+               left join household_order_item hoi on hoi.household_id = h.id
+               left join product p on p.id = hoi.product_id
+               group by h.id
+             ),
+             household_total_payments as (
+               select h.id, coalesce(sum(hp.amount), 0) as total
+               from household h
+               left join household_payment hp on hp.household_id = h.id
+               group by h.id
+             ),
+             households as (
+               select h.id, h.name, hto.total as total_orders, htp.total as total_payments, htp.total - hto.total as balance
+               from household h
+               inner join household_total_orders hto on hto.id = h.id
+               inner join household_total_payments htp on htp.id = h.id               
              )
-        select o.id, o.created_date, o.placed, o.past, h.id, h.name, ho.complete, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
+        select o.id, o.created_date, o.placed, o.past, h.id, h.name, h.balance, ho.complete, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
         from household_order ho
         inner join orders o on o.id = ho.order_id
-        inner join household h on h.id = ho.household_id
+        inner join households h on h.id = ho.household_id
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
-        group by o.id, o.created_date, o.placed, o.past, h.id, h.name, ho.complete, ho.cancelled
+        group by o.id, o.created_date, o.placed, o.past, h.id, h.name, h.balance, ho.complete, ho.cancelled
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
@@ -103,13 +146,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         inner join product p on p.id = hoi.product_id
         order by p.name asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Int, String, Int, Bool, Bool, Int)], is :: [(Int, Int, Int, String, Int, Int)])
     close conn
-    return $ rOrders <&> \(orderId, orderCreated, orderPlaced, orderPast, householdId, name, complete, cancelled, total) ->
+    return $ rOrders <&> \(orderId, orderCreated, orderPlaced, orderPast, householdId, householdName, householdBalance, complete, cancelled, total) ->
       let item (_, _, productId, name, quantity, total) = HouseholdOrderItem productId name quantity total
           thisOrder (oId, hId, _, _, _, _) = oId == orderId && hId == householdId
           items = map item $ filter thisOrder rItems
-      in  householdOrder orderId orderCreated orderPlaced orderPast householdId name complete cancelled total items
+      in  householdOrder orderId orderCreated orderPlaced orderPast householdId householdName householdBalance complete cancelled total items
 
   getProducts :: ByteString -> IO [Product]
   getProducts connectionString = do
@@ -127,13 +170,28 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   getHouseholds connectionString = do
     conn <- connectPostgreSQL connectionString
     rHouseholds <- query_ conn [sql|
-      select h.id, h.name
+        with household_total_orders as (
+               select h.id, coalesce(sum(p.price * hoi.quantity), 0) as total
+               from household h
+               left join household_order_item hoi on hoi.household_id = h.id
+               left join product p on p.id = hoi.product_id
+               group by h.id
+             ),
+             household_total_payments as (
+               select h.id, coalesce(sum(hp.amount), 0) as total
+               from household h
+               left join household_payment hp on hp.household_id = h.id
+               group by h.id
+             )
+      select h.id, h.name, hto.total as total_orders, htp.total as total_payments, htp.total - hto.total as balance
       from household h
+      inner join household_total_orders hto on hto.id = h.id
+      inner join household_total_payments htp on htp.id = h.id
       where h.archived = false
       order by h.name asc
     |]
     close conn
-    return $ (rHouseholds :: [(Int, String)]) <&> \(id, name) -> Household id name
+    return $ (rHouseholds :: [(Int, String, Int, Int, Int)]) <&> \(id, name, totalOrders, totalPayments, balance) -> Household id name totalOrders totalPayments balance
 
   getHouseholdPayments :: ByteString -> IO [HouseholdPayment]
   getHouseholdPayments connectionString = do

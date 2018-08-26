@@ -7,5 +7,8 @@ module Household where
 
   data Household = Household { id :: Int
                              , name :: String
+                             , totalOrders :: Int
+                             , totalPayments :: Int
+                             , balance :: Int
                              } deriving (Eq, Show, Generic)
   instance ToJSON Household

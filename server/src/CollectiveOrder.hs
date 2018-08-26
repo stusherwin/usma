@@ -12,6 +12,7 @@ module CollectiveOrder where
                                          , isCancelled :: Bool
                                          , isPlaced :: Bool
                                          , isPast :: Bool
+                                         , isPaid :: Bool
                                          , status :: CollectiveOrderStatus
                                          , canBeAmended :: Bool
                                          , total :: Int
@@ -26,16 +27,17 @@ module CollectiveOrder where
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrderItem
 
-  data CollectiveOrderStatus = Open | Complete | Cancelled | Placed deriving (Eq, Show, Generic)
+  data CollectiveOrderStatus = Open | Complete | Cancelled | Paid | Placed deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrderStatus
 
-  collectiveOrder :: Int -> Day -> Bool -> Bool -> Bool -> Bool -> Int -> [CollectiveOrderItem] -> CollectiveOrder
-  collectiveOrder id created complete cancelled placed past total items = 
-    CollectiveOrder id created complete cancelled placed past status canBeAmended total items
+  collectiveOrder :: Int -> Day -> Bool -> Bool -> Bool -> Bool -> Bool -> Int -> [CollectiveOrderItem] -> CollectiveOrder
+  collectiveOrder id created complete cancelled placed past paid total items = 
+    CollectiveOrder id created complete cancelled placed past paid status canBeAmended total items
     where
     canBeAmended = not placed && not past
-    status = case (complete, cancelled, placed) of
-               (_, _, True) -> Placed
-               (_, True, _) -> Cancelled
-               (True, _, _) -> Complete
+    status = case (complete, cancelled, placed, paid) of
+               (_, _, True, _) -> Placed
+               (_, _, _, True) -> Paid
+               (_, True, _, _) -> Cancelled
+               (True, _, _, _) -> Complete
                _ -> Open

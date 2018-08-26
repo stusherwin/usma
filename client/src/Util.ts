@@ -12,6 +12,6 @@ export class Util {
   }
 
   static formatMoney(pence: number): string {
-    return (pence / 100.0).toFixed(2)
+    return (Math.abs(pence) / 100.0).toFixed(2)
   }
 }
