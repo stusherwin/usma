@@ -85,6 +85,7 @@ module Main where
   commandServer conn = createOrderForHousehold
                   :<|> createOrder
                   :<|> archiveOrder
+                  :<|> placeOrder
                   :<|> addHouseholdOrder
                   :<|> cancelHouseholdOrder
                   :<|> completeHouseholdOrder
@@ -113,6 +114,9 @@ module Main where
 
     archiveOrder :: Int -> Handler ()
     archiveOrder = liftIO . (D.archiveOrder conn)
+
+    placeOrder :: Int -> Handler ()
+    placeOrder = liftIO . (D.placeOrder conn)
 
     addHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     addHouseholdOrder command = liftIO $ D.addHouseholdOrder conn (choOrderId command) (choHouseholdId command)

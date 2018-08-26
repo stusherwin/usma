@@ -36,6 +36,10 @@ const command = {
     return Http.post(`/api/command/archive-order/${orderId}`, {})
   },
 
+  placeOrder(orderId: number): Promise<number> {
+    return Http.post(`/api/command/place-order/${orderId}`, {})
+  },
+
   addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
     return Http.post(`/api/command/add-household-order`, { choOrderId: orderId
                                                          , choHouseholdId: householdId

@@ -54,9 +54,16 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
       .then(_ => Router.navigate(`/orders`))
   }
 
+  placeOrder = () => {
+    this.props.request(ServerApi.command.placeOrder(this.props.order.id))
+      .then(this.props.reload)
+  }
+
   render() {
     const order = this.props.order
     const unusedHouseholds = this.props.households.filter(h => !this.props.householdOrders.find(oh => oh.householdId == h.id))
+    const householdsInOrder = this.props.households.filter(h => !!this.props.householdOrders.find(oh => oh.householdId == h.id))
+    const allPaid = householdsInOrder.reduce((p, h) => p && h.balance > 0, true)
 
     return (
       <div>
@@ -72,6 +79,16 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
               <Link disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Link>
             </div>
           }
+          {order.canBeAmended && (
+            <div>
+              {allPaid
+              ? (
+                  <Link disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Link>
+              )
+              : 'Waiting for all households to pay...'
+              }
+            </div>
+          )}
           {!this.props.householdOrders.length &&
             <div>Waiting for households to join...</div>
           }
@@ -91,20 +108,38 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
               <Link action={this.cancelAddHousehold}>Cancel</Link>
             </div>
           }
-          {this.props.householdOrders.map(h => (
-            <div key={h.householdId}>
-              <span>{h.householdName}</span>
-              <Money amount={h.total} /> 
-              <span>{h.isPaid? 'paid' : 'unpaid'}</span>
-              <span>{h.isCancelled && 'cancelled'}</span>
-              <RouterLink path={`/orders/${h.orderId}/households/${h.householdId}`}>View</RouterLink>
-              {order.canBeAmended && !h.items.length &&
-                <span>
-                  <Link disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(h)}>Remove</Link>
-                </span>
-              }
-            </div>
-          ))}
+          {this.props.householdOrders.map(ho => {
+            let household = this.props.households.find(h => h.id == ho.householdId)
+            let status = (
+              <span>
+                {ho.isCancelled && 'cancelled'}
+                {ho.isComplete &&
+                  <span>
+                    complete
+                    {household && (
+                      household.balance > 0
+                      ? '(paid)'
+                      : (<span>(<Money amount={household.balance} /> to pay <RouterLink path={`/households/${ho.householdId}/payments`}>Make payment</RouterLink>)</span>)
+                    )}
+                  </span>
+                }
+                {ho.isOpen && 'open'}
+              </span>
+            )
+            return (
+              <div key={ho.householdId}>
+                <span>{ho.householdName}</span>
+                <Money amount={ho.total} />
+                {status}
+                <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>View</RouterLink>
+                {order.canBeAmended && !ho.items.length &&
+                  <span>
+                    <Link disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(ho)}>Remove</Link>
+                  </span>
+                }
+              </div>
+            )}
+          )}
           <div>
             <span>Total:</span>
             <Money amount={order.total} />

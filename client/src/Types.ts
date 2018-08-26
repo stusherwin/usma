@@ -16,8 +16,7 @@ export type CollectiveOrder = { id: number
                               , isCancelled: boolean
                               , isPlaced: boolean
                               , isPast: boolean
-                              , isPaid: boolean
-                              , status: 'Open' | 'Complete' | 'Cancelled' | 'Paid' | 'Placed'
+                              , status: 'Open' | 'Complete' | 'Cancelled' | 'Placed'
                               , canBeAmended: boolean
                               , total: number
                               , items: OrderItem[]
@@ -28,11 +27,9 @@ export type HouseholdOrder = { orderId: number
                              , isOrderPast: boolean
                              , householdId: number
                              , householdName: string 
-                             , householdBalance: number 
                              , isComplete: boolean
                              , isCancelled: boolean
                              , isOpen: boolean
-                             , isPaid: boolean
                              , canBeAmended: boolean
                              , total: number
                              , items: OrderItem[]

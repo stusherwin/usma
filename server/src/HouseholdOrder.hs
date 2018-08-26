@@ -11,11 +11,9 @@ module HouseholdOrder where
                                        , isOrderPast :: Bool
                                        , householdId :: Int
                                        , householdName :: String 
-                                       , householdBalance :: Int
                                        , isComplete :: Bool
                                        , isCancelled :: Bool
                                        , isOpen :: Bool
-                                       , isPaid :: Bool
                                        , canBeAmended :: Bool
                                        , total :: Int
                                        , items :: [HouseholdOrderItem]
@@ -29,10 +27,9 @@ module HouseholdOrder where
                                                } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderItem
 
-  householdOrder :: Int -> Day -> Bool -> Bool -> Int -> String -> Int -> Bool -> Bool -> Int -> [HouseholdOrderItem] -> HouseholdOrder
-  householdOrder orderId orderCreated orderPlaced orderPast householdId householdName householdBalance complete cancelled total items = 
-    HouseholdOrder orderId orderCreated orderPast householdId householdName householdBalance complete cancelled open paid canBeAmended total items 
+  householdOrder :: Int -> Day -> Bool -> Bool -> Int -> String -> Bool -> Bool -> Int -> [HouseholdOrderItem] -> HouseholdOrder
+  householdOrder orderId orderCreated orderPlaced orderPast householdId householdName complete cancelled total items = 
+    HouseholdOrder orderId orderCreated orderPast householdId householdName complete cancelled open canBeAmended total items 
     where
-    paid = householdBalance > 0
     open = not complete && not cancelled
     canBeAmended = not orderPlaced && not orderPast
