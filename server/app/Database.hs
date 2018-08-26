@@ -4,8 +4,8 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
-                , createOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder
-                , uncancelHouseholdOrder, addHouseholdOrder, createHousehold, updateHousehold, archiveHousehold
+                , createOrder, archiveOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, completeHouseholdOrder
+                , reopenHouseholdOrder, addHouseholdOrder, createHousehold, updateHousehold, archiveHousehold
                 , createProduct, updateProduct, archiveProduct, createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 ) where
   import Control.Monad (mzero, when, void)
@@ -47,27 +47,28 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
         with orders as (
-               select o.id, o.created_date, o.complete, coalesce(bool_and(ho.cancelled), false) as cancelled
+               select o.id, o.created_date, o.placed, coalesce(bool_and(ho.complete), false) as complete, coalesce(bool_and(ho.cancelled), false) as cancelled
                from "order" o
                left join household_order ho on ho.order_id = o.id
-               group by o.id, o.created_date, o.complete
+               where o.archived = false
+               group by o.id, o.created_date
                order by o.id desc
              ),
              orders_past as (
-               (select id, created_date, complete, cancelled, false as past
+               (select id, created_date, complete, cancelled, placed, false as past
                from orders
                limit 1)
                union
-               (select id, created_date, complete, cancelled, true as past
+               (select id, created_date, complete, cancelled, placed, true as past
                from orders
                offset 1)
              )
-        select o.id, o.created_date, o.complete, o.cancelled, o.past, coalesce(sum(p.price * hoi.quantity), 0) as total
+        select o.id, o.created_date, o.complete, o.cancelled, o.placed, o.past, coalesce(sum(p.price * hoi.quantity), 0) as total
         from orders_past o
-        left join household_order ho on ho.order_id = o.id and ho.cancelled = false 
+        left join household_order ho on ho.order_id = o.id and ho.cancelled = false
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
-        group by o.id, o.created_date, o.complete, o.cancelled, o.past
+        group by o.id, o.created_date, o.complete, o.cancelled, o.placed, o.past
         order by o.id desc
       |]
       is <- query_ conn [sql|
@@ -77,13 +78,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         group by hoi.order_id, p.id, p.name
         order by p.name asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, Int, Int)])
     close conn
-    return $ rOrders <&> \(id, created, complete, cancelled, past, total) ->
+    return $ rOrders <&> \(id, created, complete, cancelled, placed, past, total) ->
       let item (_, productId, name, quantity, total) = CollectiveOrderItem productId name quantity total
           thisOrder (oId, _, _, _, _) = oId == id
           items = map item $ filter thisOrder rItems
-      in  CollectiveOrder id created complete cancelled past total items
+      in  CollectiveOrder id created complete cancelled placed past (not complete && not cancelled) total items
   
   getHouseholdOrders :: ByteString -> IO [HouseholdOrder]
   getHouseholdOrders connectionString = do
@@ -91,26 +92,27 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
         with orders as (
-               select o.id, o.created_date, o.complete
+               select o.id, o.created_date, o.placed
                from "order" o
+               where o.archived = false
                order by o.id desc
              ),
              orders_past as (
-               (select id, created_date, complete, false as past
+               (select id, created_date, placed, false as past
                from orders
                limit 1)
                union
-               (select id, created_date, complete, true as past
+               (select id, created_date, placed, true as past
                from orders
                offset 1)
              )
-        select o.id, o.created_date, o.complete, o.past, h.id, h.name, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
+        select o.id, o.created_date, o.placed, o.past, h.id, h.name, ho.complete, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
         from household_order ho
         inner join orders_past o on o.id = ho.order_id
         inner join household h on h.id = ho.household_id
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
-        group by o.id, o.created_date, o.complete, o.past, h.id, h.name, ho.cancelled
+        group by o.id, o.created_date, o.placed, o.past, h.id, h.name, ho.complete, ho.cancelled
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
@@ -119,13 +121,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         inner join product p on p.id = hoi.product_id
         order by p.name asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Int)], is :: [(Int, Int, Int, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, Int, Int)])
     close conn
-    return $ rOrders <&> \(orderId, orderCreated, orderComplete, orderPast, householdId, name, cancelled, total) ->
+    return $ rOrders <&> \(orderId, orderCreated, orderPlaced, orderPast, householdId, name, complete, cancelled, total) ->
       let item (_, _, productId, name, quantity, total) = HouseholdOrderItem productId name quantity total
           thisOrder (oId, hId, _, _, _, _) = oId == orderId && hId == householdId
           items = map item $ filter thisOrder rItems
-      in  HouseholdOrder orderId orderCreated orderComplete orderPast householdId name cancelled total items
+      in  HouseholdOrder orderId orderCreated orderPlaced orderPast householdId name complete cancelled (not complete && not cancelled) total items
 
   getProducts :: ByteString -> IO [Product]
   getProducts connectionString = do
@@ -168,16 +170,24 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     conn <- connectPostgreSQL connectionString
     id <- withTransaction conn $ do
       [Only id] <- query conn [sql|
-        insert into "order" (created_date, complete) values (?, false) returning id
+        insert into "order" (created_date, placed, archived) values (?, false, false) returning id
       |] (Only date)
       case maybeHouseholdId of
         Just householdId -> void $ execute conn [sql|
-          insert into household_order (order_id, household_id) values (?, ?)
+          insert into household_order (order_id, household_id, complete, cancelled) values (?, ?, false, false)
         |] (id, householdId)
         _ -> return ()
       return id
     close conn
     return id
+
+  archiveOrder :: ByteString -> Int -> IO ()
+  archiveOrder connectionString orderId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update "order" set archived = true where id = ?
+    |] (Only orderId)
+    close conn
 
   ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> Int -> IO ()
   ensureHouseholdOrderItem connectionString orderId householdId productId quantity = do
@@ -208,7 +218,7 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   addHouseholdOrder connectionString orderId householdId = do
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
-      insert into household_order (order_id, household_id, cancelled) values (?, ?, false)
+      insert into household_order (order_id, household_id, complete, cancelled) values (?, ?, false, false)
     |] (orderId, householdId)
     close conn
 
@@ -220,11 +230,19 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (orderId, householdId)
     close conn
 
-  uncancelHouseholdOrder :: ByteString -> Int -> Int -> IO ()
-  uncancelHouseholdOrder connectionString orderId householdId = do
+  completeHouseholdOrder :: ByteString -> Int -> Int -> IO ()
+  completeHouseholdOrder connectionString orderId householdId = do
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
-      update household_order set cancelled = false where order_id = ? and household_id = ?
+      update household_order set complete = true where order_id = ? and household_id = ?
+    |] (orderId, householdId)
+    close conn
+
+  reopenHouseholdOrder :: ByteString -> Int -> Int -> IO ()
+  reopenHouseholdOrder connectionString orderId householdId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update household_order set cancelled = false, complete = false where order_id = ? and household_id = ?
     |] (orderId, householdId)
     close conn
   

@@ -32,6 +32,10 @@ const command = {
     return Http.post(`/api/command/create-order/${householdId || ''}`, {})
   },
 
+  deleteOrder(orderId: number): Promise<number> {
+    return Http.post(`/api/command/archive-order/${orderId}`, {})
+  },
+
   addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
     return Http.post(`/api/command/add-household-order`, { choOrderId: orderId
                                                          , choHouseholdId: householdId
@@ -50,10 +54,16 @@ const command = {
                                                             })
   },
 
-  uncancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/uncancel-household-order`, { choOrderId: orderId
+  completeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/complete-household-order`, { choOrderId: orderId
                                                               , choHouseholdId: householdId
                                                               })
+  },
+
+  reopenHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/reopen-household-order`, { choOrderId: orderId
+                                                            , choHouseholdId: householdId
+                                                            })
   },
 
   ensureHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {

@@ -11,6 +11,8 @@ export type CollectiveOrder = { id: number
                               , createdDate: Date
                               , isComplete: boolean
                               , isCancelled: boolean
+                              , isOpen: boolean
+                              , isPlaced: boolean
                               , isPast: boolean
                               , total: number
                               , items: OrderItem[]
@@ -18,11 +20,13 @@ export type CollectiveOrder = { id: number
 
 export type HouseholdOrder = { orderId: number
                              , orderCreatedDate: Date
-                             , isOrderComplete: boolean
+                             , isOrderPlaced: boolean
                              , isOrderPast: boolean
                              , householdId: number
                              , householdName: string 
+                             , isComplete: boolean
                              , isCancelled: boolean
+                             , isOpen: boolean
                              , total: number
                              , items: OrderItem[]
                              }

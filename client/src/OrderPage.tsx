@@ -5,6 +5,7 @@ import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { Link, RouterLink } from './Link'
 import { Money } from './Money'
+import { Router } from './Router'
 
 export interface OrderPageProps { order: CollectiveOrder
                                 , householdOrders: HouseholdOrder[]
@@ -47,6 +48,12 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
       .then(this.props.reload)
   }
 
+  deleteOrder = () => {
+    this.props.request(ServerApi.command.deleteOrder(this.props.order.id))
+      .then(this.props.reload)
+      .then(_ => Router.navigate(`/orders`))
+  }
+
   render() {
     const order = this.props.order
     const unusedHouseholds = this.props.households.filter(h => !this.props.householdOrders.find(oh => oh.householdId == h.id))
@@ -54,16 +61,21 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
     return (
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)} {order.isCancelled && ' (cancelled)'}</h1>
+        <h1>{Util.formatDate(order.createdDate)} {order.isCancelled && ' (cancelled)'} {order.isComplete && ' (complete)'}</h1>
         {!!this.props.order.items.length &&
           <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
         }
         <h2>Households</h2>
         <div>
-          {!this.props.householdOrders.length &&
-            <div>No households added to this order</div>
+          {order.isOpen && !this.props.householdOrders.length &&
+            <div>
+              <Link disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Link>
+            </div>
           }
-          {!order.isComplete && !order.isCancelled && !!unusedHouseholds.length && !this.state.addingHousehold &&
+          {!this.props.householdOrders.length &&
+            <div>Waiting for households to join...</div>
+          }
+          {order.isOpen && !!unusedHouseholds.length && !this.state.addingHousehold &&
             <div>
               <Link action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Link>
             </div>

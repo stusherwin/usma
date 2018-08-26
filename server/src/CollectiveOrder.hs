@@ -10,7 +10,9 @@ module CollectiveOrder where
                                          , createdDate :: Day
                                          , isComplete :: Bool
                                          , isCancelled :: Bool
+                                         , isPlaced :: Bool
                                          , isPast :: Bool
+                                         , isOpen :: Bool
                                          , total :: Int
                                          , items :: [CollectiveOrderItem]
                                          } deriving (Eq, Show, Generic)

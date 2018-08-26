@@ -30,9 +30,11 @@ module Api where
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
     :<|> "create-order" :> Post '[JSON] Int
+    :<|> "archive-order" :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "add-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "cancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
-    :<|> "uncancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
+    :<|> "complete-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
+    :<|> "reopen-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "ensure-household-order-item" :> ReqBody '[JSON] EnsureHouseholdOrderItem :> Post '[JSON] ()
     :<|> "remove-household-order-item" :> ReqBody '[JSON] RemoveHouseholdOrderItem :> Post '[JSON] ()
     :<|> "create-household" :> ReqBody '[JSON] CreateHousehold :> Post '[JSON] Int

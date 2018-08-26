@@ -92,8 +92,13 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
       .then(this.props.reload)
   }
 
-  uncancelOrder = () => {
-    this.props.request(ServerApi.command.uncancelHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+  completeOrder = () => {
+    this.props.request(ServerApi.command.completeHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+      .then(this.props.reload)
+  }
+
+  reopenOrder = () => {
+    this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
       .then(this.props.reload)
   }
 
@@ -123,10 +128,14 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           </div>
         )}
         <div>
-          {!householdOrder.isOrderComplete && (
-            householdOrder.isCancelled
-              ? <Link disabled={!!this.state.addingProduct} action={this.uncancelOrder}>Uncancel</Link>
-              : <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
+          {!householdOrder.isOpen &&
+            <Link disabled={!!this.state.addingProduct} action={this.reopenOrder}>Reopen order</Link>
+          }
+          {householdOrder.isOpen && (
+            <span>
+              <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
+              <Link disabled={!!this.state.addingProduct} action={this.completeOrder}>Complete order</Link>
+            </span>
           )}
         </div>
         <h2>Items</h2>
@@ -134,7 +143,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           {!householdOrder.items.length &&
             <div>No items added to this order</div>
           }
-          {!householdOrder.isOrderComplete && !householdOrder.isCancelled && !!unusedProducts.length && !this.state.addingProduct &&
+          {householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
             <div>
               <Link action={() => this.startAdd(unusedProducts[0])}>Add item</Link>
             </div>
@@ -175,7 +184,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <span>{i.productName}</span>
               <span>x {i.itemQuantity}</span>
               <Money amount={i.itemTotal} />
-              {!householdOrder.isOrderComplete && !householdOrder.isCancelled &&
+              {householdOrder.isOpen &&
                 <span>
                   <Link disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Link>
                   <Link disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}>Remove</Link>

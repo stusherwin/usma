@@ -29,26 +29,27 @@ drop table if exists "product" cascade;
 create table "order"
 ( id           serial  not null  primary key
 , created_date date    not null
-, complete     boolean not null
+, placed       boolean not null
+, archived     boolean not null
 );
 
-insert into "order" (created_date, complete)
-values ('2018-01-01', true)
+insert into "order" (created_date, placed, archived)
+values ('2018-01-01', true, false)
 returning id
 into o1Id;
 
-insert into "order" (created_date, complete)
-values ('2018-01-02', true)
+insert into "order" (created_date, placed, archived)
+values ('2018-01-02', true, false)
 returning id
 into o2Id;
 
-insert into "order" (created_date, complete)
-values ('2018-01-03', true)
+insert into "order" (created_date, placed, archived)
+values ('2018-01-03', true, false)
 returning id
 into o3Id;
 
-insert into "order" (created_date, complete)
-values ('2018-01-04', false)
+insert into "order" (created_date, placed, archived)
+values ('2018-01-04', false, false)
 returning id
 into o4Id;
 
@@ -84,16 +85,17 @@ insert into product ("name", price, archived) values ('Bananas', 1200, false) re
 create table household_order
 ( order_id     int     not null
 , household_id int     not null
+, complete     boolean not null
 , cancelled    boolean not null
 , primary key (order_id, household_id)
 , foreign key (order_id) references "order" (id)
 , foreign key (household_id) references household (id)
 );
 
-insert into household_order (order_id, household_id, cancelled) values (o1Id, h1Id, false);
-insert into household_order (order_id, household_id, cancelled) values (o1Id, h2Id, false);
-insert into household_order (order_id, household_id, cancelled) values (o2Id, h3Id, false);
-insert into household_order (order_id, household_id, cancelled) values (o2Id, h4Id, true);
+insert into household_order (order_id, household_id, complete, cancelled) values (o1Id, h1Id, true, false);
+insert into household_order (order_id, household_id, complete, cancelled) values (o1Id, h2Id, true, false);
+insert into household_order (order_id, household_id, complete, cancelled) values (o2Id, h3Id, false, true);
+insert into household_order (order_id, household_id, complete, cancelled) values (o2Id, h4Id, false, true);
 
 ---
 

@@ -84,9 +84,11 @@ module Main where
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrderForHousehold
                   :<|> createOrder
+                  :<|> archiveOrder
                   :<|> addHouseholdOrder
                   :<|> cancelHouseholdOrder
-                  :<|> uncancelHouseholdOrder
+                  :<|> completeHouseholdOrder
+                  :<|> reopenHouseholdOrder
                   :<|> ensureHouseholdOrderItem
                   :<|> removeHouseholdOrderItem
                   :<|> createHousehold
@@ -109,14 +111,20 @@ module Main where
       day <- liftIO $ getCurrentTime >>= return . utctDay      
       liftIO $ D.createOrder conn day Nothing
 
+    archiveOrder :: Int -> Handler ()
+    archiveOrder = liftIO . (D.archiveOrder conn)
+
     addHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     addHouseholdOrder command = liftIO $ D.addHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
     cancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     cancelHouseholdOrder command = liftIO $ D.cancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
-    uncancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    uncancelHouseholdOrder command = liftIO $ D.uncancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    completeHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    completeHouseholdOrder command = liftIO $ D.completeHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+
+    reopenHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    reopenHouseholdOrder command = liftIO $ D.reopenHouseholdOrder conn (choOrderId command) (choHouseholdId command)
  
     ensureHouseholdOrderItem :: EnsureHouseholdOrderItem -> Handler ()
     ensureHouseholdOrderItem command = liftIO $ D.ensureHouseholdOrderItem conn (ehoiOrderId command) (ehoiHouseholdId command) (ehoiProductId command) (ehoiQuantity command)
