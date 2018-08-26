@@ -8,13 +8,13 @@ module HouseholdOrder where
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
                                        , orderCreatedDate :: Day
-                                       , isOrderPlaced :: Bool
                                        , isOrderPast :: Bool
                                        , householdId :: Int
                                        , householdName :: String 
                                        , isComplete :: Bool
                                        , isCancelled :: Bool
                                        , isOpen :: Bool
+                                       , canBeAmended :: Bool
                                        , total :: Int
                                        , items :: [HouseholdOrderItem]
                                        } deriving (Eq, Show, Generic)
@@ -26,3 +26,9 @@ module HouseholdOrder where
                                                , itemTotal :: Int
                                                } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderItem
+
+  householdOrder orderId orderCreated orderPlaced orderPast householdId name complete cancelled total items = 
+    HouseholdOrder orderId orderCreated orderPast householdId name complete cancelled open canBeAmended total items 
+    where
+    open = not complete && not cancelled
+    canBeAmended = not orderPlaced && not orderPast

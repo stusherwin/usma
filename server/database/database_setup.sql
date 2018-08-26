@@ -30,26 +30,27 @@ create table "order"
 ( id           serial  not null  primary key
 , created_date date    not null
 , placed       boolean not null
+, past         boolean not null
 , archived     boolean not null
 );
 
-insert into "order" (created_date, placed, archived)
-values ('2018-01-01', true, false)
+insert into "order" (created_date, placed, past, archived)
+values ('2018-01-01', true, true, false)
 returning id
 into o1Id;
 
-insert into "order" (created_date, placed, archived)
-values ('2018-01-02', true, false)
+insert into "order" (created_date, placed, past, archived)
+values ('2018-01-02', false, true, false)
 returning id
 into o2Id;
 
-insert into "order" (created_date, placed, archived)
-values ('2018-01-03', true, false)
+insert into "order" (created_date, placed, past, archived)
+values ('2018-01-03', true, true, false)
 returning id
 into o3Id;
 
-insert into "order" (created_date, placed, archived)
-values ('2018-01-04', false, false)
+insert into "order" (created_date, placed, past, archived)
+values ('2018-01-04', false, false, false)
 returning id
 into o4Id;
 
@@ -96,6 +97,8 @@ insert into household_order (order_id, household_id, complete, cancelled) values
 insert into household_order (order_id, household_id, complete, cancelled) values (o1Id, h2Id, true, false);
 insert into household_order (order_id, household_id, complete, cancelled) values (o2Id, h3Id, false, true);
 insert into household_order (order_id, household_id, complete, cancelled) values (o2Id, h4Id, false, true);
+insert into household_order (order_id, household_id, complete, cancelled) values (o3Id, h1Id, true, false);
+insert into household_order (order_id, household_id, complete, cancelled) values (o3Id, h4Id, true, false);
 
 ---
 

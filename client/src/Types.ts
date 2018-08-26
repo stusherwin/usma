@@ -11,22 +11,23 @@ export type CollectiveOrder = { id: number
                               , createdDate: Date
                               , isComplete: boolean
                               , isCancelled: boolean
-                              , isOpen: boolean
                               , isPlaced: boolean
                               , isPast: boolean
+                              , status: 'Open' | 'Complete' | 'Cancelled' | 'Placed'
+                              , canBeAmended: boolean
                               , total: number
                               , items: OrderItem[]
                               }
 
 export type HouseholdOrder = { orderId: number
                              , orderCreatedDate: Date
-                             , isOrderPlaced: boolean
                              , isOrderPast: boolean
                              , householdId: number
                              , householdName: string 
                              , isComplete: boolean
                              , isCancelled: boolean
                              , isOpen: boolean
+                             , canBeAmended: boolean
                              , total: number
                              , items: OrderItem[]
                              }

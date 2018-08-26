@@ -61,13 +61,13 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
     return (
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)} {order.isCancelled && ' (cancelled)'} {order.isComplete && ' (complete)'}</h1>
+        <h1>{Util.formatDate(order.createdDate)} ({order.status})</h1>
         {!!this.props.order.items.length &&
           <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
         }
         <h2>Households</h2>
         <div>
-          {order.isOpen && !this.props.householdOrders.length &&
+          {order.canBeAmended && !this.props.householdOrders.length &&
             <div>
               <Link disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Link>
             </div>
@@ -75,7 +75,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           {!this.props.householdOrders.length &&
             <div>Waiting for households to join...</div>
           }
-          {order.isOpen && !!unusedHouseholds.length && !this.state.addingHousehold &&
+          {order.canBeAmended && !!unusedHouseholds.length && !this.state.addingHousehold &&
             <div>
               <Link action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Link>
             </div>
@@ -97,7 +97,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
               <Money amount={h.total} />
               <span>{h.isCancelled && 'cancelled'}</span>
               <RouterLink path={`/orders/${h.orderId}/households/${h.householdId}`}>View</RouterLink>
-              {!order.isComplete && !order.isCancelled && !h.total &&
+              {order.canBeAmended && !h.items.length &&
                 <span>
                   <Link disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(h)}>Remove</Link>
                 </span>

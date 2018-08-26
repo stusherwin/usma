@@ -128,10 +128,10 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           </div>
         )}
         <div>
-          {!householdOrder.isOpen &&
+          {householdOrder.canBeAmended && !householdOrder.isOpen &&
             <Link disabled={!!this.state.addingProduct} action={this.reopenOrder}>Reopen order</Link>
           }
-          {householdOrder.isOpen && (
+          {householdOrder.canBeAmended && householdOrder.isOpen && (
             <span>
               <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
               <Link disabled={!!this.state.addingProduct} action={this.completeOrder}>Complete order</Link>
@@ -143,7 +143,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           {!householdOrder.items.length &&
             <div>No items added to this order</div>
           }
-          {householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
+          {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
             <div>
               <Link action={() => this.startAdd(unusedProducts[0])}>Add item</Link>
             </div>
@@ -184,7 +184,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <span>{i.productName}</span>
               <span>x {i.itemQuantity}</span>
               <Money amount={i.itemTotal} />
-              {householdOrder.isOpen &&
+              {householdOrder.canBeAmended && householdOrder.isOpen &&
                 <span>
                   <Link disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Link>
                   <Link disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}>Remove</Link>

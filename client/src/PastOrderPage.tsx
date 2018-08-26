@@ -17,7 +17,7 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
     return (
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)} {order.isCancelled && ' (cancelled)'}</h1>
+        <h1>{Util.formatDate(order.createdDate)} ({order.status})</h1>
         <h2>Households</h2>
         <div>
           {this.props.householdOrders.map(h => (
