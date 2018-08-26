@@ -69,28 +69,25 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
         <h1>{Util.formatDate(order.createdDate)} ({order.status})</h1>
-        {!!this.props.order.items.length &&
-          <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
-        }
-        <h2>Households</h2>
         <div>
+          {!!this.props.order.items.length &&
+            <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
+          }
           {order.canBeAmended && !this.props.householdOrders.length &&
-            <div>
-              <Link disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Link>
-            </div>
+            <Link disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Link>
           }
           {order.canBeAmended && (
-            <div>
-              {allPaid
-              ? (
-                  <Link disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Link>
-              )
-              : 'Waiting for all households to pay...'
-              }
-            </div>
+            allPaid
+            ? (
+                <Link disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Link>
+            )
+            : 'Waiting for all households to pay...'
           )}
+        </div>
+        <h2>Households</h2>
+        <div>
           {!this.props.householdOrders.length &&
-            <div>Waiting for households to join...</div>
+            'Waiting for households to join...'
           }
           {order.canBeAmended && !!unusedHouseholds.length && !this.state.addingHousehold &&
             <div>
