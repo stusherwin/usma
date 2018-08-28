@@ -53,7 +53,8 @@ export class Main extends React.Component<MainProps, MainState> {
       const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
       
       return householdOrder && (householdOrder.isOrderPast
-        ? <PastHouseholdOrderPage householdOrder={householdOrder} />
+        ? <PastHouseholdOrderPage referrer="order"
+                                  householdOrder={householdOrder} />
         
         : <HouseholdOrderPage referrer="order"
                               householdOrder={householdOrder}
@@ -99,7 +100,8 @@ export class Main extends React.Component<MainProps, MainState> {
       const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
       
       return householdOrder && (householdOrder.isOrderPast
-        ? <PastHouseholdOrderPage householdOrder={householdOrder} />
+        ? <PastHouseholdOrderPage referrer="household"
+                                  householdOrder={householdOrder} />
 
         : <HouseholdOrderPage referrer="household"
                               householdOrder={householdOrder}

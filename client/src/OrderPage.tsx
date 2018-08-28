@@ -68,7 +68,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
     return (
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)} ({order.status})</h1>
+        <h1>{Util.formatDate(order.createdDate)}</h1>
           <div>Status: {order.status}</div>
           <div>
           {!!this.props.order.items.length &&

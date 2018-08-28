@@ -117,6 +117,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
             </div>
             <h1>{householdOrder.householdName}</h1>
             <div>Status: {householdOrder.status}</div>
+            <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
           </div>
         )
         : (
@@ -127,6 +128,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
             </div>
             <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
             <div>Status: {householdOrder.status}</div>
+            <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
           </div>
         )}
         <div>

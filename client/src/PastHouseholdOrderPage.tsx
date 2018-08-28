@@ -7,6 +7,7 @@ import { Link, RouterLink } from './Link'
 import { Money } from './Money'
 
 export interface PastHouseholdOrderPageProps { householdOrder: HouseholdOrder
+                                             , referrer: 'order' | 'household'
                                              }
 
 export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPageProps, {}> {
@@ -15,12 +16,29 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
 
     return (
       <div>
-        <div>
-          <RouterLink path="/orders">Orders</RouterLink> &gt;
-          <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
-        </div>
-        <h1>{householdOrder.householdName}</h1>
-        <div>Status: {householdOrder.status}</div>
+        {this.props.referrer == 'order'
+        ? (
+          <div>
+            <div>
+              <RouterLink path="/orders">Orders</RouterLink> &gt;
+              <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
+            </div>
+            <h1>{householdOrder.householdName}</h1>
+            <div>Status: {householdOrder.status}</div>
+            <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
+          </div>
+        )
+        : (
+          <div>
+            <div>
+              <RouterLink path="/households">Households</RouterLink> &gt;
+              <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
+            </div>
+            <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
+            <div>Status: {householdOrder.status}</div>
+            <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
+          </div>
+        )}
         <h2>Items</h2>
         <div>
           {householdOrder.items.map(i => (
