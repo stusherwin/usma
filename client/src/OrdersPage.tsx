@@ -31,7 +31,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             <div>
               <div>
                 <span>{ Util.formatDate(currentOrder.createdDate) }</span>
-                <span>{currentOrder.status}</span>
+                <span>Status: {currentOrder.status}</span>
                 <Money amount={currentOrder.total} />
                 <RouterLink path={`/orders/${currentOrder.id}`}>View</RouterLink>
               </div>

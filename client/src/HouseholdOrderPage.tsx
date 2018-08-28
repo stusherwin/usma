@@ -115,7 +115,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <RouterLink path="/orders">Orders</RouterLink> &gt;
               <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
             </div>
-            <h1>{householdOrder.householdName} {householdOrder.isCancelled && ' (cancelled)'}</h1>
+            <h1>{householdOrder.householdName}</h1>
+            <div>Status: {householdOrder.status}</div>
           </div>
         )
         : (
@@ -124,7 +125,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <RouterLink path="/households">Households</RouterLink> &gt;
               <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
             </div>
-            <h1>{Util.formatDate(householdOrder.orderCreatedDate)} {householdOrder.isCancelled && ' (cancelled)'}</h1>
+            <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
+            <div>Status: {householdOrder.status}</div>
           </div>
         )}
         <div>

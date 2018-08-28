@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { Util } from './Util'
 
-export class Money extends React.Component<{amount: number}, {}> {
-  render() {
-    return <span>&pound;{ Util.formatMoney(this.props.amount) }</span>
-  }
+export const Money = (props: {amount: number, absolute?: boolean}) => {
+  const absolute = props.absolute || false
+
+  return <span>{!absolute && props.amount < 0 && '-'} &pound;{ Util.formatMoney(props.amount, true) }</span>
 }

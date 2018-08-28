@@ -114,7 +114,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             : (
               <div key={h.id}>
                 <span>{h.name}</span>
-                <RouterLink path={`/households/${h.id}/orders`}>View</RouterLink>
+                <RouterLink path={`/households/${h.id}`}>View</RouterLink>
                 <Link action={() => this.startEdit(h)}>Edit</Link>
                 <Link action={() => this.delete(h)}>Delete</Link>
               </div>

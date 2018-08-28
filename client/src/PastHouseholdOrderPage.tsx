@@ -19,7 +19,8 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
           <RouterLink path="/orders">Orders</RouterLink> &gt;
           <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
         </div>
-        <h1>{householdOrder.householdName} {householdOrder.isCancelled && ' (cancelled)'}</h1>
+        <h1>{householdOrder.householdName}</h1>
+        <div>Status: {householdOrder.status}</div>
         <h2>Items</h2>
         <div>
           {householdOrder.items.map(i => (

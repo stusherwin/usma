@@ -30,6 +30,7 @@ export type HouseholdOrder = { orderId: number
                              , isComplete: boolean
                              , isCancelled: boolean
                              , isOpen: boolean
+                             , status: 'Open' | 'Complete' | 'Cancelled' | 'Placed'
                              , canBeAmended: boolean
                              , total: number
                              , items: OrderItem[]

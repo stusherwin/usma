@@ -8,19 +8,19 @@ import { Money } from './Money'
 import { Router } from './Router'
 import { Form, Field, Validate } from './Validation'
 
-export interface HouseholdPaymentsPageProps { household: Household
-                                            , payments: HouseholdPayment[]
-                                            , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                            , reload: () => Promise<void>
-                                            }
+export interface HouseholdPaymentsProps { household: Household
+                                        , payments: HouseholdPayment[]
+                                        , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                        , reload: () => Promise<void>
+                                        }
 
-export interface HouseholdPaymentsPageState { creating: boolean 
-                                            , editingId: number | null
-                                            , form: Form
-                                            }
+export interface HouseholdPaymentsState { creating: boolean 
+                                        , editingId: number | null
+                                        , form: Form
+                                        }
 
-export class HouseholdPaymentsPage extends React.Component<HouseholdPaymentsPageProps, HouseholdPaymentsPageState> {
-  constructor(props: HouseholdPaymentsPageProps) {
+export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, HouseholdPaymentsState> {
+  constructor(props: HouseholdPaymentsProps) {
     super(props)
 
     this.state = { creating: false
@@ -96,65 +96,60 @@ export class HouseholdPaymentsPage extends React.Component<HouseholdPaymentsPage
 
     return (
       <div>
-        <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
-        <h1>{this.props.household.name}</h1>
-        <div>
-          <RouterLink path={`/households/${this.props.household.id}/orders`}>Orders</RouterLink>
-          <div>Payments</div>
-          
-          {!this.state.creating && 
-            <Link action={this.startCreate}>New payment</Link>
-          }
-          {this.state.creating &&
-            <div>
-              <span>
-                <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
-                {this.state.form.fields.date.error}
-              </span>
-              <span>
-                <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
-                {this.state.form.fields.amount.error}
-              </span>
-              <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
-              <Link action={this.cancelCreate}>Cancel</Link>
-            </div>
-          }
-
-          {!this.props.payments.length 
-          ? <div>No payments yet</div>
-          : (
-            <div>
-              { this.props.payments.map(p =>
-              this.state.editingId == p.id
-              ? (
-                <div>
-                  <span>
-                    <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
-                    {this.state.form.fields.date.error}
-                  </span>
-                  <span>
-                    <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
-                    {this.state.form.fields.amount.error}
-                  </span>
-                  <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
-                  <Link action={this.cancelEdit}>Cancel</Link>
-                </div>
-              )
-              : (
-                <div key={p.id}>
-                  <span>{ Util.formatDate(p.date) }</span>
-                  <Money amount={p.amount} />
-                  <Link action={() => this.startEdit(p)}>Edit</Link>
-                  <Link action={() => this.delete(p)}>Delete</Link>
-                </div>
-              )) }
-            </div>
-          )}
-
+        <h1>Payments</h1>
+        
+        {!this.state.creating && 
+          <Link action={this.startCreate}>New payment</Link>
+        }
+        {this.state.creating &&
           <div>
-            <span>Total:</span>
-            <Money amount={total} />
+            <span>
+              <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
+              {this.state.form.fields.date.error}
+            </span>
+            <span>
+              <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
+              {this.state.form.fields.amount.error}
+            </span>
+            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
+            <Link action={this.cancelCreate}>Cancel</Link>
           </div>
+        }
+
+        {!this.props.payments.length 
+        ? <div>No payments yet</div>
+        : (
+          <div>
+            { this.props.payments.map(p =>
+            this.state.editingId == p.id
+            ? (
+              <div>
+                <span>
+                  <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
+                  {this.state.form.fields.date.error}
+                </span>
+                <span>
+                  <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
+                  {this.state.form.fields.amount.error}
+                </span>
+                <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
+                <Link action={this.cancelEdit}>Cancel</Link>
+              </div>
+            )
+            : (
+              <div key={p.id}>
+                <span>{ Util.formatDate(p.date) }</span>
+                <Money amount={p.amount} />
+                <Link action={() => this.startEdit(p)}>Edit</Link>
+                <Link action={() => this.delete(p)}>Delete</Link>
+              </div>
+            )) }
+          </div>
+        )}
+
+        <div>
+          <span>Total:</span>
+          <Money amount={total} />
         </div>
       </div>
     )

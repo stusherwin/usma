@@ -9,8 +9,7 @@ import { OrdersPage } from './OrdersPage'
 import { OrderPage } from './OrderPage'
 import { PastOrderPage } from './PastOrderPage'
 import { HouseholdOrderPage } from './HouseholdOrderPage'
-import { HouseholdOrdersPage } from './HouseholdOrdersPage'
-import { HouseholdPaymentsPage } from './HouseholdPaymentsPage'
+import { HouseholdPage } from './HouseholdPage'
 import { PastHouseholdOrderPage } from './PastHouseholdOrderPage'
 import { FullOrderPage } from './FullOrderPage'
 import { ProductsPage } from './ProductsPage'
@@ -110,30 +109,21 @@ export class Main extends React.Component<MainProps, MainState> {
       )
     })
 
-    this.router.route('/households/{householdId}/orders', c => {
+    this.router.route('/households/{householdId}', c => {
       const household = this.state.households.find(h => h.id == c.householdId)
       const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
       const currentCollectiveOrder = this.state.collectiveOrders.find(o => !o.isPast)
-      
-      return household && 
-        <HouseholdOrdersPage household={household}
-                             currentCollectiveOrder={currentCollectiveOrder}
-                             householdOrders={householdOrders}
-                             reload={this.reload}
-                             request={this.request} />
-    })
-    
-    this.router.route('/households/{householdId}/payments', c => {
-      const household = this.state.households.find(h => h.id == c.householdId)
       const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
       
-      return household &&
-        <HouseholdPaymentsPage household={household}
-                               payments={householdPayments}
-                               reload={this.reload}
-                               request={this.request} />
+      return household && 
+        <HouseholdPage household={household}
+                       currentCollectiveOrder={currentCollectiveOrder}
+                       householdOrders={householdOrders}
+                       payments={householdPayments}
+                       reload={this.reload}
+                       request={this.request} />
     })
-
+    
     this.router.route('/households', _ => <HouseholdsPage households={this.state.households}
                                                           reload={this.reload}
                                                           request={this.request} />)

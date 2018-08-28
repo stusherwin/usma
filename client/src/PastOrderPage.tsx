@@ -17,15 +17,16 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
     return (
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)} ({order.status})</h1>
+        <h1>{Util.formatDate(order.createdDate)}</h1>
+        <div>Status: {order.status}</div>
         <h2>Households</h2>
         <div>
-          {this.props.householdOrders.map(h => (
-            <div key={h.householdId}>
-              <span>{h.householdName}</span>
-              <Money amount={h.total} />
-              <span>{h.isCancelled && 'cancelled'}</span>
-              <RouterLink path={`/orders/${h.orderId}/households/${h.householdId}`}>View</RouterLink>
+          {this.props.householdOrders.map(ho => (
+            <div key={ho.householdId}>
+              <span>{ho.householdName}</span>
+              <Money amount={ho.total} />
+              <span>{ho.status}</span>
+              <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>View</RouterLink>
             </div>
           ))}
           <div>

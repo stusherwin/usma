@@ -11,7 +11,9 @@ export class Util {
     return `${y}-${(m < 10 ? '0' : '') + m}-${(d < 10 ? '0' : '') + d}`
   }
 
-  static formatMoney(pence: number): string {
-    return (Math.abs(pence) / 100.0).toFixed(2)
+  static formatMoney(pence: number, absolute: boolean): string {
+    const amount = (absolute? Math.abs(pence) : pence) / 100.0
+    
+    return amount.toFixed(2)
   }
 }

@@ -2,3 +2,5 @@
 * Rename Order to CollectiveOrder
 * CollectiveOrder only cancelled if all HouseholdOrders cancelled
 * If collective order exists household has chance to join it otherwise create a new one
+* Add product code
+* Add no. of people to household (+ total per person to household order)

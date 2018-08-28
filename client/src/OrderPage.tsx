@@ -69,7 +69,8 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
       <div>
         <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
         <h1>{Util.formatDate(order.createdDate)} ({order.status})</h1>
-        <div>
+          <div>Status: {order.status}</div>
+          <div>
           {!!this.props.order.items.length &&
             <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
           }
@@ -109,18 +110,16 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
             let household = this.props.households.find(h => h.id == ho.householdId)
             let status = (
               <span>
-                {ho.isCancelled && 'cancelled'}
+                {ho.status}
                 {ho.isComplete &&
                   <span>
-                    complete
                     {household && (
                       household.balance > 0
                       ? '(paid)'
-                      : (<span>(<Money amount={household.balance} /> to pay <RouterLink path={`/households/${ho.householdId}/payments`}>Make payment</RouterLink>)</span>)
+                      : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
                     )}
                   </span>
                 }
-                {ho.isOpen && 'open'}
               </span>
             )
             return (
