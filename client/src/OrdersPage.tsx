@@ -15,6 +15,8 @@ export interface OrdersPageProps { currentOrder: CollectiveOrder | undefined
                                  , households: Household[]
                                  , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                  , reload: () => Promise<void>
+                                 , loading: boolean
+                                 , error: ApiError | null
                                  }
 
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
@@ -29,7 +31,16 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
 
     return (
       <div>
+        <div hidden={!this.props.loading}>Loading...</div>
+        {!!this.props.error && (
+          <div>{this.props.error.error}: {this.props.error.message}</div>
+        )}
         <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
+          <div>
+            <RouterLink path="/orders">Orders</RouterLink>
+            <RouterLink path="/products">Products</RouterLink>
+            <RouterLink path="/households">Households</RouterLink>
+          </div>
           <h1>Orders</h1>
         </div>
         <div>

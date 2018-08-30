@@ -18,6 +18,8 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , products: Product[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
+                                          , loading: boolean
+                                          , error: ApiError | null
                                           }
 
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}> {
@@ -43,7 +45,16 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
 
     return (
       <div>
+        <div hidden={!this.props.loading}>Loading...</div>
+        {!!this.props.error && (
+          <div>{this.props.error.error}: {this.props.error.message}</div>
+        )}
         <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16">
+          <div>
+            <RouterLink path="/orders">Orders</RouterLink>
+            <RouterLink path="/products">Products</RouterLink>
+            <RouterLink path="/households">Households</RouterLink>
+          </div>
           <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
           <h1>{this.props.household.name}</h1>
           <div>Total orders: <Money amount={this.props.household.totalOrders} /></div>

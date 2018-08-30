@@ -53,7 +53,9 @@ export class Main extends React.Component<MainProps, MainState> {
       
       return householdOrder && 
         <PastHouseholdOrderPage referrer="order"
-                                householdOrder={householdOrder} />
+                                householdOrder={householdOrder}
+                                loading={this.state.loading}
+                                error={this.state.error} />
     })
 
     this.router.route('/orders/{orderId}/full', c => {
@@ -61,7 +63,9 @@ export class Main extends React.Component<MainProps, MainState> {
       
       return order &&
         <FullOrderPage order={order}
-                       request={this.request} />
+                       request={this.request}
+                       loading={this.state.loading}
+                       error={this.state.error} />
     })
 
     this.router.route('/orders/{orderId}', c => {
@@ -70,7 +74,9 @@ export class Main extends React.Component<MainProps, MainState> {
 
       return order &&
         <PastOrderPage order={order}
-                       householdOrders={householdOrders} />
+                       householdOrders={householdOrders}
+                       loading={this.state.loading}
+                       error={this.state.error} />
     })
 
     this.router.route('/orders', c => {
@@ -83,19 +89,25 @@ export class Main extends React.Component<MainProps, MainState> {
                          households={this.state.households}
                          pastOrders={pastOrders}
                          reload={this.reload}
-                         request={this.request} />
+                         request={this.request}
+                         loading={this.state.loading}
+                         error={this.state.error} />
     })
     
     this.router.route('/products', _ => <ProductsPage products={this.state.products}
                                                       reload={this.reload}
-                                                      request={this.request} />)
+                                                      request={this.request}
+                                                      loading={this.state.loading}
+                                                      error={this.state.error} />)
     
     this.router.route('/households/{householdId}/orders/{orderId}', c => {
       const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
       
       return householdOrder && 
         <PastHouseholdOrderPage referrer="household"
-                                  householdOrder={householdOrder} />
+                                householdOrder={householdOrder}
+                                loading={this.state.loading}
+                                error={this.state.error} />
     })
 
     this.router.route('/households/{householdId}', c => {
@@ -111,12 +123,16 @@ export class Main extends React.Component<MainProps, MainState> {
                        payments={householdPayments}
                        products={this.state.products}
                        reload={this.reload}
-                       request={this.request} />
+                       request={this.request}
+                       loading={this.state.loading}
+                       error={this.state.error} />
     })
     
     this.router.route('/households', _ => <HouseholdsPage households={this.state.households}
                                                           reload={this.reload}
-                                                          request={this.request} />)
+                                                          request={this.request}
+                                                          loading={this.state.loading}
+                                                          error={this.state.error} />)
     
     this.router.route('/', _ => <div>Home page</div>)
   }
@@ -165,13 +181,6 @@ export class Main extends React.Component<MainProps, MainState> {
   render() {
     return (
       <div>
-        {this.state.initialised && (
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
-        )}
         <div hidden={!this.state.loading}>Loading...</div>
         {!!this.state.error && (
           <div>{this.state.error.error}: {this.state.error.message}</div>

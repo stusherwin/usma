@@ -10,6 +10,8 @@ import { Form, Field, Validate } from './Validation'
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                      , reload: () => Promise<void>
+                                     , loading: boolean
+                                     , error: ApiError | null
                                      }
 
 export interface HouseholdsPageState { creating: boolean
@@ -82,7 +84,16 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
   render() {
     return (
       <div>
+        <div hidden={!this.props.loading}>Loading...</div>
+        {!!this.props.error && (
+          <div>{this.props.error.error}: {this.props.error.message}</div>
+        )}
         <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
+          <div>
+            <RouterLink path="/orders">Orders</RouterLink>
+            <RouterLink path="/products">Products</RouterLink>
+            <RouterLink path="/households">Households</RouterLink>
+          </div>
           <h1>Households</h1>
           {!this.state.creating && 
             <Button action={this.startCreate}>New household</Button>

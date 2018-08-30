@@ -9,6 +9,8 @@ import { Money } from './Money'
 
 export interface PastHouseholdOrderPageProps { householdOrder: HouseholdOrder
                                              , referrer: 'order' | 'household'
+                                             , loading: boolean
+                                             , error: ApiError | null
                                              }
 
 export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPageProps, {}> {
@@ -17,7 +19,16 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
 
     return (
       <div>
+        <div hidden={!this.props.loading}>Loading...</div>
+        {!!this.props.error && (
+          <div>{this.props.error.error}: {this.props.error.message}</div>
+        )}
         <div className="bg-img-household-order bg-no-repeat bg-16 pl-16 min-h-16">
+          <div>
+            <RouterLink path="/orders">Orders</RouterLink>
+            <RouterLink path="/products">Products</RouterLink>
+            <RouterLink path="/households">Households</RouterLink>
+          </div>
           {this.props.referrer == 'order'
           ? (
             <div>

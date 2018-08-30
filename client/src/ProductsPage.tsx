@@ -6,10 +6,13 @@ import { Util } from './Util'
 import { Button } from './Button'
 import { Money } from './Money'
 import { Form, Field, Validate } from './Validation'
+import { RouterLink } from './RouterLink'
 
 export interface ProductsPageProps { products: Product[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
+                                   , loading: boolean
+                                   , error: ApiError | null
                                    }
 
 export interface ProductsPageState { creating: boolean
@@ -92,7 +95,16 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   render() {
     return (
       <div>
+        <div hidden={!this.props.loading}>Loading...</div>
+        {!!this.props.error && (
+          <div>{this.props.error.error}: {this.props.error.message}</div>
+        )}
         <div className="bg-img-product bg-no-repeat bg-16 pl-16 min-h-16">
+          <div>
+            <RouterLink path="/orders">Orders</RouterLink>
+            <RouterLink path="/products">Products</RouterLink>
+            <RouterLink path="/households">Households</RouterLink>
+          </div>
           <h1>Products</h1>
           {!this.state.creating && 
             <Button action={this.startCreate}>New product</Button>
