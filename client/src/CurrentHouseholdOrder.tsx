@@ -124,6 +124,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           {!householdOrder.items.length &&
             <div>No order items added yet.</div>
           }
+          {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
+            <div>
+              <Button action={() => this.startAdd(unusedProducts[0])}>Add item</Button>
+            </div>
+          }
           {this.state.addingProduct &&
             <div>
               <span>
@@ -168,11 +173,6 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               }
             </div>
           ))}
-          {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
-            <div>
-              <Button action={() => this.startAdd(unusedProducts[0])}>Add item</Button>
-            </div>
-          }
           <div>
             <span>Total:</span>
             <span></span>

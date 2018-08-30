@@ -89,6 +89,22 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           {!this.props.householdOrders.length &&
             'Waiting for households to join...'
           }
+          {order.canBeAmended && !!unusedHouseholds.length && !this.state.addingHousehold &&
+            <div>
+              <Button action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Button>
+            </div>
+          }
+          {this.state.addingHousehold &&
+            <div>
+              <span>
+                <select value={this.state.addingHousehold.id} onChange={this.addingHouseholdChanged}>
+                  {unusedHouseholds.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                </select>
+              </span>
+              <Button action={this.confirmAddHousehold}>Save</Button>
+              <Button action={this.cancelAddHousehold}>Cancel</Button>
+            </div>
+          }
           {this.props.householdOrders.map(ho => {
             let household = this.props.households.find(h => h.id == ho.householdId)
             let status = (
@@ -118,22 +134,6 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               </div>
             )}
           )}
-          {order.canBeAmended && !!unusedHouseholds.length && !this.state.addingHousehold &&
-            <div>
-              <Button action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Button>
-            </div>
-          }
-          {this.state.addingHousehold &&
-            <div>
-              <span>
-                <select value={this.state.addingHousehold.id} onChange={this.addingHouseholdChanged}>
-                  {unusedHouseholds.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                </select>
-              </span>
-              <Button action={this.confirmAddHousehold}>Save</Button>
-              <Button action={this.cancelAddHousehold}>Cancel</Button>
-            </div>
-          }
           <div>
             <span>Total:</span>
             <Money amount={order.total} />
