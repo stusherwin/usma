@@ -31,26 +31,25 @@ create table "order"
 , created_date date    not null
 , placed       boolean not null
 , past         boolean not null
-, archived     boolean not null
 );
 
-insert into "order" (created_date, placed, past, archived)
-values ('2018-01-01', true, true, false)
+insert into "order" (created_date, placed, past)
+values ('2018-01-01', true, true)
 returning id
 into o1Id;
 
-insert into "order" (created_date, placed, past, archived)
-values ('2018-01-02', false, true, false)
+insert into "order" (created_date, placed, past)
+values ('2018-01-02', false, true)
 returning id
 into o2Id;
 
-insert into "order" (created_date, placed, past, archived)
-values ('2018-01-03', true, true, false)
+insert into "order" (created_date, placed, past)
+values ('2018-01-03', true, true)
 returning id
 into o3Id;
 
-insert into "order" (created_date, placed, past, archived)
-values ('2018-01-04', false, false, false)
+insert into "order" (created_date, placed, past)
+values ('2018-01-04', false, false)
 returning id
 into o4Id;
 

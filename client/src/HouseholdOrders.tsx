@@ -26,7 +26,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
   joinOrder = (orderId: number) => {
     const date = new Date()
     const householdId = this.props.household.id
-    this.props.request(ServerApi.command.addHouseholdOrder(orderId, householdId))
+    this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
       .then(_ => Router.navigate(`/households/${householdId}/orders/${orderId}`))
   }

@@ -1,14 +1,18 @@
 import * as React from 'react';
 
-import { CollectiveOrder } from './Types'
+import { CollectiveOrder, HouseholdOrder, Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
 import { Button } from './Button'
 import { Money } from './Money'
 import { Router } from './Router'
+import { CurrentOrder } from './CurrentOrder'
 
-export interface OrdersPageProps { orders: CollectiveOrder[]
+export interface OrdersPageProps { currentOrder: CollectiveOrder | undefined
+                                 , currentHouseholdOrders: HouseholdOrder[]
+                                 , pastOrders: CollectiveOrder[]
+                                 , households: Household[]
                                  , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                  , reload: () => Promise<void>
                                  }
@@ -16,30 +20,38 @@ export interface OrdersPageProps { orders: CollectiveOrder[]
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   newOrder = () => {
     this.props.request(ServerApi.command.createOrder())
-      .then(id => this.props.reload()
-                    .then(_ => Router.navigate(`/orders/${id}`)))
+      .then(this.props.reload)
   }
 
   render() {
-    const currentOrder = this.props.orders.filter(o => !o.isPast && !o.isCancelled)[0]
-    const pastOrders = this.props.orders.filter(o => o.isPast || o.isCancelled)
+    const currentOrder = this.props.currentOrder
+    const pastOrders = this.props.pastOrders
+
     return (
       <div>
         <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
           <h1>Orders</h1>
         </div>
-        {!currentOrder? <Button action={this.newOrder}>New order</Button> : (
-          <div>
-            <h2>Current order</h2>
+        <div>
+          {currentOrder
+          ? (
             <div>
-              <div>
-                <RouterLink path={`/orders/${currentOrder.id}`}>{Util.formatDate(currentOrder.createdDate)}</RouterLink>
-                <span>{currentOrder.status}</span>
-                <Money amount={currentOrder.total} />
-              </div>
+              <h2>Current order: {Util.formatDate(currentOrder.createdDate)}</h2>
+              <CurrentOrder order={currentOrder}
+                            householdOrders={this.props.currentHouseholdOrders}
+                            households={this.props.households}
+                            reload={this.props.reload}
+                            request={this.props.request} />
             </div>
-          </div>
-        )}
+          )
+          : ( 
+            <div>
+              <h2>Current order</h2>
+              <p>There's no order currently in progress.</p>
+              <Button action={this.newOrder}>Start a new one</Button>
+            </div>
+          )}
+        </div>
         <h2>Past orders</h2>
         {!pastOrders.length ? <div>No past orders</div> : (
           <div>

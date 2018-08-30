@@ -84,9 +84,10 @@ module Main where
   commandServer :: ByteString -> Server CommandAPI
   commandServer conn = createOrderForHousehold
                   :<|> createOrder
-                  :<|> archiveOrder
+                  :<|> deleteOrder
                   :<|> placeOrder
-                  :<|> addHouseholdOrder
+                  :<|> createHouseholdOrder
+                  :<|> deleteHouseholdOrder
                   :<|> cancelHouseholdOrder
                   :<|> completeHouseholdOrder
                   :<|> reopenHouseholdOrder
@@ -112,14 +113,17 @@ module Main where
       day <- liftIO $ getCurrentTime >>= return . utctDay      
       liftIO $ D.createOrder conn day Nothing
 
-    archiveOrder :: Int -> Handler ()
-    archiveOrder = liftIO . (D.archiveOrder conn)
+    deleteOrder :: Int -> Handler ()
+    deleteOrder = liftIO . (D.deleteOrder conn)
 
     placeOrder :: Int -> Handler ()
     placeOrder = liftIO . (D.placeOrder conn)
 
-    addHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    addHouseholdOrder command = liftIO $ D.addHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    createHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    createHouseholdOrder command = liftIO $ D.createHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+
+    deleteHouseholdOrder :: CancelHouseholdOrder -> Handler ()
+    deleteHouseholdOrder command = liftIO $ D.deleteHouseholdOrder conn (choOrderId command) (choHouseholdId command)
 
     cancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     cancelHouseholdOrder command = liftIO $ D.cancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)

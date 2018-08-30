@@ -4,9 +4,12 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
-                , createOrder, archiveOrder, placeOrder, ensureHouseholdOrderItem, removeHouseholdOrderItem, cancelHouseholdOrder, completeHouseholdOrder
-                , reopenHouseholdOrder, addHouseholdOrder, createHousehold, updateHousehold, archiveHousehold
-                , createProduct, updateProduct, archiveProduct, createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
+                , createOrder, deleteOrder, placeOrder
+                , createHouseholdOrder, deleteHouseholdOrder, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
+                , ensureHouseholdOrderItem, removeHouseholdOrderItem
+                , createHousehold, updateHousehold, archiveHousehold
+                , createProduct, updateProduct, archiveProduct
+                , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
@@ -50,7 +53,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                select o.id, o.created_date, o.placed, o.past, coalesce(bool_and(ho.complete), false) as complete, coalesce(bool_and(ho.cancelled), false) as cancelled
                from "order" o
                left join household_order ho on ho.order_id = o.id
-               where o.archived = false
                group by o.id, o.created_date
                order by o.id desc
              )
@@ -85,7 +87,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         with orders as (
                select o.id, o.created_date, o.placed, o.past
                from "order" o
-               where o.archived = false
                order by o.id desc
              )
         select o.id, o.created_date, o.placed, o.past, h.id, h.name, ho.complete, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
@@ -171,7 +172,7 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         update "order" set past = true
       |]
       [Only id] <- query conn [sql|
-        insert into "order" (created_date, placed, archived) values (?, false, false) returning id
+        insert into "order" (created_date, placed, past) values (?, false, false) returning id
       |] (Only date)
       case maybeHouseholdId of
         Just householdId -> void $ execute conn [sql|
@@ -182,11 +183,11 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     close conn
     return id
 
-  archiveOrder :: ByteString -> Int -> IO ()
-  archiveOrder connectionString orderId = do
+  deleteOrder :: ByteString -> Int -> IO ()
+  deleteOrder connectionString orderId = do
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
-      update "order" set archived = true where id = ?
+      delete from "order" where id = ?
     |] (Only orderId)
     close conn
 
@@ -223,11 +224,19 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (orderId, householdId, productId)
     close conn
 
-  addHouseholdOrder :: ByteString -> Int -> Int -> IO ()
-  addHouseholdOrder connectionString orderId householdId = do
+  createHouseholdOrder :: ByteString -> Int -> Int -> IO ()
+  createHouseholdOrder connectionString orderId householdId = do
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
       insert into household_order (order_id, household_id, complete, cancelled) values (?, ?, false, false)
+    |] (orderId, householdId)
+    close conn
+
+  deleteHouseholdOrder :: ByteString -> Int -> Int -> IO ()
+  deleteHouseholdOrder connectionString orderId householdId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      delete from household_order where order_id = ? and household_id = ?
     |] (orderId, householdId)
     close conn
 

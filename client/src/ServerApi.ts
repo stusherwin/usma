@@ -33,23 +33,23 @@ const command = {
   },
 
   deleteOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/command/archive-order/${orderId}`, {})
+    return Http.post(`/api/command/delete-order/${orderId}`, {})
   },
 
   placeOrder(orderId: number): Promise<number> {
     return Http.post(`/api/command/place-order/${orderId}`, {})
   },
 
-  addHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/add-household-order`, { choOrderId: orderId
-                                                         , choHouseholdId: householdId
-                                                         })
+  createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/create-household-order`, { choOrderId: orderId
+                                                          , choHouseholdId: householdId
+                                                          })
   },
 
-  removeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/remove-household-order`, { choOrderId: orderId
-                                                            , choHouseholdId: householdId
-                                                            })
+  deleteHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/delete-household-order`, { choOrderId: orderId
+                                                             , choHouseholdId: householdId
+                                                             })
   },
 
   cancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {

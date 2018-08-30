@@ -8,18 +8,18 @@ import { Button } from './Button'
 import { Money } from './Money'
 import { Router } from './Router'
 
-export interface OrderPageProps { order: CollectiveOrder
-                                , householdOrders: HouseholdOrder[]
-                                , households: Household[]
-                                , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                , reload: () => Promise<void>
+export interface CurrentOrderProps { order: CollectiveOrder
+                                   , householdOrders: HouseholdOrder[]
+                                   , households: Household[]
+                                   , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                   , reload: () => Promise<void>
+                                   }
+
+export interface CurrentOrderState { addingHousehold: Household | null
                                 }
 
-export interface OrderPageState { addingHousehold: Household | null
-                                }
-
-export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
-  constructor(props: OrderPageProps) {
+export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrderState> {
+  constructor(props: CurrentOrderProps) {
     super(props)
 
     this.state = { addingHousehold: null
@@ -38,14 +38,14 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
   confirmAddHousehold = () => {
     if(!this.state.addingHousehold) return
 
-    this.props.request(ServerApi.command.addHouseholdOrder(this.props.order.id, this.state.addingHousehold.id))
+    this.props.request(ServerApi.command.createHouseholdOrder(this.props.order.id, this.state.addingHousehold.id))
       .then(this.props.reload)
       .then(_ => this.setState({ addingHousehold: null
                                }))
   }
 
-  removeHousehold = (h: HouseholdOrder) => {
-    this.props.request(ServerApi.command.removeHouseholdOrder(h.orderId, h.householdId))
+  deleteHouseholdOrder = (h: HouseholdOrder) => {
+    this.props.request(ServerApi.command.deleteHouseholdOrder(h.orderId, h.householdId))
       .then(this.props.reload)
   }
 
@@ -63,32 +63,28 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
   render() {
     const order = this.props.order
     const unusedHouseholds = this.props.households.filter(h => !this.props.householdOrders.find(oh => oh.householdId == h.id))
+    const allComplete = this.props.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
     const householdsInOrder = this.props.households.filter(h => !!this.props.householdOrders.find(oh => oh.householdId == h.id))
-    const allPaid = householdsInOrder.reduce((p, h) => p && h.balance > 0, true)
+    const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
 
     return (
       <div>
-        <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
-          <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-          <h1>{Util.formatDate(order.createdDate)}</h1>
+        <div>
           <div>Status: {order.status}</div>
-          <div>
-            {!!this.props.order.items.length &&
-              <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
-            }
-            {order.canBeAmended && !this.props.householdOrders.length &&
-              <Button disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Button>
-            }
-            {order.canBeAmended && (
-              allPaid
-              ? (
-                  <Button disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Button>
-              )
-              : <div>Waiting for all households to pay</div>
-            )}
-          </div>
+          {!!this.props.order.items.length &&
+            <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
+          }
+          {order.canBeAmended && !this.props.householdOrders.length &&
+            <Button disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Button>
+          }
+          {order.canBeAmended && !!this.props.householdOrders.length && (
+            !allComplete
+            ? <div>Waiting for everyone to complete their orders...</div>
+            : !allPaid
+            ? <div>Waiting for everyone to pay up...</div>
+            : <Button disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Button>
+          )}
         </div>
-        <h2>Households</h2>
         <div>
           {!this.props.householdOrders.length &&
             'Waiting for households to join...'
@@ -132,7 +128,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
                 {status}
                 {order.canBeAmended && !ho.items.length &&
                   <span>
-                    <Button disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(ho)}>Remove</Button>
+                    <Button disabled={!!this.state.addingHousehold} action={() => this.deleteHouseholdOrder(ho)}>Delete</Button>
                   </span>
                 }
               </div>

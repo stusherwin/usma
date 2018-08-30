@@ -7,7 +7,6 @@ import { Button } from './Button'
 import { Router } from './Router'
 
 import { OrdersPage } from './OrdersPage'
-import { OrderPage } from './OrderPage'
 import { PastOrderPage } from './PastOrderPage'
 import { HouseholdOrderPage } from './HouseholdOrderPage'
 import { HouseholdPage } from './HouseholdPage'
@@ -77,21 +76,23 @@ export class Main extends React.Component<MainProps, MainState> {
       const order = this.state.collectiveOrders.find(o => o.id == c.orderId)
       const householdOrders = this.state.householdOrders.filter(o => o.orderId == c.orderId)
 
-      return order && (order.isPast
-        ? <PastOrderPage order={order}
-                         householdOrders={householdOrders} />
-
-        : <OrderPage order={order}
-                     householdOrders={householdOrders}
-                     households={this.state.households}
-                     reload={this.reload}
-                     request={this.request} />
-      )
+      return order &&
+        <PastOrderPage order={order}
+                       householdOrders={householdOrders} />
     })
 
-    this.router.route('/orders', _ => <OrdersPage orders={this.state.collectiveOrders}
-                                                  reload={this.reload}
-                                                  request={this.request} />)
+    this.router.route('/orders', c => {
+      const currentOrder = this.state.collectiveOrders.filter(o => !o.isPast && !o.isCancelled)[0]
+      const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
+      const pastOrders = this.state.collectiveOrders.filter(o => o.isPast || o.isCancelled)
+
+      return <OrdersPage currentOrder={currentOrder}
+                         currentHouseholdOrders={currentHouseholdOrders}
+                         households={this.state.households}
+                         pastOrders={pastOrders}
+                         reload={this.reload}
+                         request={this.request} />
+    })
     
     this.router.route('/products', _ => <ProductsPage products={this.state.products}
                                                       reload={this.reload}
