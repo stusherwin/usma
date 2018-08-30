@@ -45,10 +45,9 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
         ? (
           <div>
             <div>
-              <span>{ Util.formatDate(currentOrder.orderCreatedDate) }</span>
+              <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>{Util.formatDate(currentOrder.orderCreatedDate)}</RouterLink>
               <span>{currentOrder.status}</span>
               <Money amount={currentOrder.total} />
-              <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>View</RouterLink>
             </div>
           </div>
         )
@@ -61,10 +60,9 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
           <div>
             { pastOrders.map(ho => (
               <div key={ho.orderId}>
-                <span>{ Util.formatDate(ho.orderCreatedDate) }</span>
+                <RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink>
                 <span>{ho.status}</span>
                 <Money amount={ho.total} />
-                <RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>View</RouterLink>
               </div>
             )) }
           </div>

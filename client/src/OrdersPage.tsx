@@ -33,10 +33,9 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             <h2>Current order</h2>
             <div>
               <div>
-                <span>{ Util.formatDate(currentOrder.createdDate) }</span>
+                <RouterLink path={`/orders/${currentOrder.id}`}>{Util.formatDate(currentOrder.createdDate)}</RouterLink>
                 <span>{currentOrder.status}</span>
                 <Money amount={currentOrder.total} />
-                <RouterLink path={`/orders/${currentOrder.id}`}>View</RouterLink>
               </div>
             </div>
           </div>
@@ -46,10 +45,9 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           <div>
             { pastOrders.map(o => (
               <div key={o.id}>
-                <span>{ Util.formatDate(o.createdDate) }</span>
+                <RouterLink path={`/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink>
                 <span>{o.status}</span>
                 <Money amount={o.total} />
-                <RouterLink path={`/orders/${o.id}`}>View</RouterLink>
               </div>
             )) }
           </div>

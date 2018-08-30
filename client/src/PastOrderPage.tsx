@@ -26,10 +26,9 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
         <div>
           {this.props.householdOrders.map(ho => (
             <div key={ho.householdId}>
-              <span>{ho.householdName}</span>
+              <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink>
               <Money amount={ho.total} />
               <span>{ho.status}</span>
-              <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>View</RouterLink>
             </div>
           ))}
           <div>

@@ -127,10 +127,9 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
             )
             return (
               <div key={ho.householdId}>
-                <span>{ho.householdName}</span>
+                <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink>
                 <Money amount={ho.total} />
                 {status}
-                <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>View</RouterLink>
                 {order.canBeAmended && !ho.items.length &&
                   <span>
                     <Button disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(ho)}>Remove</Button>
