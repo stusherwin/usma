@@ -97,7 +97,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
 
     return (
       <div>
-        <h1>Payments</h1>
+        <h2>Payments</h2>
         
         {!this.state.creating && 
           <Button action={this.startCreate}>New payment</Button>

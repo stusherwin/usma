@@ -39,7 +39,6 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
 
     return (
       <div>
-        <h1>Orders</h1>
         <h2>Current order</h2>
         {currentOrder
         ? (
