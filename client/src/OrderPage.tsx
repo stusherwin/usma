@@ -3,7 +3,8 @@ import * as React from 'react';
 import { CollectiveOrder, Household, HouseholdOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 import { Router } from './Router'
 
@@ -67,23 +68,25 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
 
     return (
       <div>
-        <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)}</h1>
+        <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
+          <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
+          <h1>{Util.formatDate(order.createdDate)}</h1>
           <div>Status: {order.status}</div>
           <div>
-          {!!this.props.order.items.length &&
-            <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
-          }
-          {order.canBeAmended && !this.props.householdOrders.length &&
-            <Link disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Link>
-          }
-          {order.canBeAmended && (
-            allPaid
-            ? (
-                <Link disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Link>
-            )
-            : 'Waiting for all households to pay...'
-          )}
+            {!!this.props.order.items.length &&
+              <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
+            }
+            {order.canBeAmended && !this.props.householdOrders.length &&
+              <Button disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}>Delete order</Button>
+            }
+            {order.canBeAmended && (
+              allPaid
+              ? (
+                  <Button disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}>Place order</Button>
+              )
+              : <div>Waiting for all households to pay</div>
+            )}
+          </div>
         </div>
         <h2>Households</h2>
         <div>
@@ -92,7 +95,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
           }
           {order.canBeAmended && !!unusedHouseholds.length && !this.state.addingHousehold &&
             <div>
-              <Link action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Link>
+              <Button action={() => this.startAddHousehold(unusedHouseholds[0])}>Add household</Button>
             </div>
           }
           {this.state.addingHousehold &&
@@ -102,8 +105,8 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
                   {unusedHouseholds.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
                 </select>
               </span>
-              <Link action={this.confirmAddHousehold}>Save</Link>
-              <Link action={this.cancelAddHousehold}>Cancel</Link>
+              <Button action={this.confirmAddHousehold}>Save</Button>
+              <Button action={this.cancelAddHousehold}>Cancel</Button>
             </div>
           }
           {this.props.householdOrders.map(ho => {
@@ -130,7 +133,7 @@ export class OrderPage extends React.Component<OrderPageProps, OrderPageState> {
                 <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>View</RouterLink>
                 {order.canBeAmended && !ho.items.length &&
                   <span>
-                    <Link disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(ho)}>Remove</Link>
+                    <Button disabled={!!this.state.addingHousehold} action={() => this.removeHousehold(ho)}>Remove</Button>
                   </span>
                 }
               </div>

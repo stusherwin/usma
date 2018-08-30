@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Router } from './Router'
 
 import { OrdersPage } from './OrdersPage'

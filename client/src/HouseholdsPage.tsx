@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Household } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Form, Field, Validate } from './Validation'
 
 export interface HouseholdsPageProps { households: Household[]
@@ -81,18 +82,20 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
   render() {
     return (
       <div>
-        <h1>Households</h1>
-        {!this.state.creating && 
-          <Link action={this.startCreate}>New household</Link>
-        }
+        <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
+          <h1>Households</h1>
+          {!this.state.creating && 
+            <Button action={this.startCreate}>New household</Button>
+          }
+        </div>
         {this.state.creating &&
           <div>
             <span>
               <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
               {this.state.form.fields.name.error}
             </span>
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
-            <Link action={this.cancelCreate}>Cancel</Link>
+            <Button action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
+            <Button action={this.cancelCreate}>Cancel</Button>
           </div>
         }
         {!this.props.households.length
@@ -107,16 +110,16 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                   <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
                   {this.state.form.fields.name.error}
                 </span>
-                <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
-                <Link action={this.cancelEdit}>Cancel</Link>
+                <Button action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
+                <Button action={this.cancelEdit}>Cancel</Button>
               </div>
             )
             : (
               <div key={h.id}>
                 <span>{h.name}</span>
                 <RouterLink path={`/households/${h.id}`}>View</RouterLink>
-                <Link action={() => this.startEdit(h)}>Edit</Link>
-                <Link action={() => this.delete(h)}>Delete</Link>
+                <Button action={() => this.startEdit(h)}>Edit</Button>
+                <Button action={() => this.delete(h)}>Delete</Button>
               </div>
             )) }
           </div>

@@ -45,6 +45,9 @@ View the full documentation at https://tailwindcss.com.
 
 let colors = {
   'transparent': 'transparent',
+  
+  'household': '#34a8c0',
+  'household-light': '#75c8d5',
 
   'black': '#22292f',
   'grey-darkest': '#3d4852',
@@ -194,6 +197,7 @@ module.exports = {
 
   fonts: {
     'sans': [
+      'Lato',
       'system-ui',
       'BlinkMacSystemFont',
       '-apple-system',
@@ -377,6 +381,7 @@ module.exports = {
     'auto': 'auto',
     'cover': 'cover',
     'contain': 'contain',
+    '16': '4rem',
   },
 
 
@@ -574,7 +579,8 @@ module.exports = {
   minHeight: {
     '0': '0',
     'full': '100%',
-    'screen': '100vh'
+    'screen': '100vh',
+    '16': '4rem',
   },
 
 

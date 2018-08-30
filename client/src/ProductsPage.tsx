@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Product } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link } from './Link'
+import { Button } from './Button'
 import { Money } from './Money'
 import { Form, Field, Validate } from './Validation'
 
@@ -92,10 +92,12 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   render() {
     return (
       <div>
-        <h1>Products</h1>
-        {!this.state.creating && 
-          <Link action={this.startCreate}>New product</Link>
-        }
+        <div className="bg-img-product bg-no-repeat bg-16 pl-16 min-h-16">
+          <h1>Products</h1>
+          {!this.state.creating && 
+            <Button action={this.startCreate}>New product</Button>
+          }
+        </div>
         {this.state.creating &&
           <div>
             <span>
@@ -106,8 +108,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
               <input type="text" value={this.state.form.fields.price.stringValue} className={!this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
               {this.state.form.fields.price.error}
             </span>
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
-            <Link action={this.cancelCreate}>Cancel</Link>
+            <Button action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
+            <Button action={this.cancelCreate}>Cancel</Button>
           </div>
         }
         {!this.props.products.length
@@ -126,16 +128,16 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                   <input type="text" value={this.state.form.fields.price.stringValue} className={!this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
                   {this.state.form.fields.price.error}
                 </span>
-                <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
-                <Link action={this.cancelEdit}>Cancel</Link>
+                <Button action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
+                <Button action={this.cancelEdit}>Cancel</Button>
               </div>
             )
             : (
               <div key={p.id}>
                 <span>{p.name}</span>
                 <Money amount={p.price} />
-                <Link action={() => this.startEdit(p)}>Edit</Link>
-                <Link action={() => this.delete(p)}>Delete</Link>
+                <Button action={() => this.startEdit(p)}>Edit</Button>
+                <Button action={() => this.delete(p)}>Delete</Button>
               </div>
             )) }
           </div>

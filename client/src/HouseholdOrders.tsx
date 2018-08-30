@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Household, HouseholdOrder, CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 import { Router } from './Router'
 
@@ -45,14 +46,15 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
           <div>
             <div>
               <span>{ Util.formatDate(currentOrder.orderCreatedDate) }</span>
+              <span>{currentOrder.status}</span>
               <Money amount={currentOrder.total} />
               <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>View</RouterLink>
             </div>
           </div>
         )
         : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
-          ? <Link action={_ => this.joinOrder(currentCollectiveOrder.id)}>Join existing order</Link>
-          : <Link action={this.newOrder}>Start new order</Link>
+          ? <Button action={_ => this.joinOrder(currentCollectiveOrder.id)}>Join existing order</Button>
+          : <Button action={this.newOrder}>Start new order</Button>
         }
         <h2>Past orders</h2>
         {!pastOrders.length ? <div>No past orders</div> : (

@@ -3,7 +3,8 @@ import * as React from 'react';
 import { CollectiveOrder, Household, HouseholdOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 
 export interface PastOrderPageProps { order: CollectiveOrder
@@ -16,9 +17,11 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
 
     return (
       <div>
-        <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
-        <h1>{Util.formatDate(order.createdDate)}</h1>
-        <div>Status: {order.status}</div>
+        <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
+          <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
+          <h1>{Util.formatDate(order.createdDate)}</h1>
+          <div>Status: {order.status}</div>
+        </div>
         <h2>Households</h2>
         <div>
           {this.props.householdOrders.map(ho => (

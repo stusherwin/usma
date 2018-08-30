@@ -1,4 +1,4 @@
-/*! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css */
+@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin);/*! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css */
 
 /* Document
    ========================================================================== */
@@ -658,6 +658,14 @@ table {
   background-color: transparent;
 }
 
+.bg-household {
+  background-color: #34a8c0;
+}
+
+.bg-household-light {
+  background-color: #75c8d5;
+}
+
 .bg-black {
   background-color: #22292f;
 }
@@ -950,6 +958,14 @@ table {
   background-color: transparent;
 }
 
+.hover\:bg-household:hover {
+  background-color: #34a8c0;
+}
+
+.hover\:bg-household-light:hover {
+  background-color: #75c8d5;
+}
+
 .hover\:bg-black:hover {
   background-color: #22292f;
 }
@@ -1240,6 +1256,14 @@ table {
 
 .focus\:bg-transparent:focus {
   background-color: transparent;
+}
+
+.focus\:bg-household:focus {
+  background-color: #34a8c0;
+}
+
+.focus\:bg-household-light:focus {
+  background-color: #75c8d5;
 }
 
 .focus\:bg-black:focus {
@@ -1582,6 +1606,10 @@ table {
   background-repeat: repeat-y;
 }
 
+.bg-16 {
+  background-size: 4rem;
+}
+
 .bg-auto {
   background-size: auto;
 }
@@ -1604,6 +1632,14 @@ table {
 
 .border-transparent {
   border-color: transparent;
+}
+
+.border-household {
+  border-color: #34a8c0;
+}
+
+.border-household-light {
+  border-color: #75c8d5;
 }
 
 .border-black {
@@ -1898,6 +1934,14 @@ table {
   border-color: transparent;
 }
 
+.hover\:border-household:hover {
+  border-color: #34a8c0;
+}
+
+.hover\:border-household-light:hover {
+  border-color: #75c8d5;
+}
+
 .hover\:border-black:hover {
   border-color: #22292f;
 }
@@ -2188,6 +2232,14 @@ table {
 
 .focus\:border-transparent:focus {
   border-color: transparent;
+}
+
+.focus\:border-household:focus {
+  border-color: #34a8c0;
+}
+
+.focus\:border-household-light:focus {
+  border-color: #75c8d5;
 }
 
 .focus\:border-black:focus {
@@ -3013,7 +3065,7 @@ table {
 }
 
 .font-sans {
-  font-family: system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-family: Lato, system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 
 .font-serif {
@@ -3750,6 +3802,10 @@ table {
 
 .min-h-0 {
   min-height: 0;
+}
+
+.min-h-16 {
+  min-height: 4rem;
 }
 
 .min-h-full {
@@ -4944,6 +5000,14 @@ table {
   color: transparent;
 }
 
+.text-household {
+  color: #34a8c0;
+}
+
+.text-household-light {
+  color: #75c8d5;
+}
+
 .text-black {
   color: #22292f;
 }
@@ -5236,6 +5300,14 @@ table {
   color: transparent;
 }
 
+.hover\:text-household:hover {
+  color: #34a8c0;
+}
+
+.hover\:text-household-light:hover {
+  color: #75c8d5;
+}
+
 .hover\:text-black:hover {
   color: #22292f;
 }
@@ -5526,6 +5598,14 @@ table {
 
 .focus\:text-transparent:focus {
   color: transparent;
+}
+
+.focus\:text-household:focus {
+  color: #34a8c0;
+}
+
+.focus\:text-household-light:focus {
+  color: #75c8d5;
 }
 
 .focus\:text-black:focus {
@@ -6229,6 +6309,27 @@ table {
   cursor: default;
 }
 
+button {
+  border-width: 1px;
+  border-color: #22292f;
+}
+
+.bg-img-household {
+  background-image: url(/img/house.svg);
+}
+
+.bg-img-product {
+  background-image: url(/img/bottle.svg);
+}
+
+.bg-img-order {
+  background-image: url(/img/cart.svg);
+}
+
+.bg-img-household-order {
+  background-image: url(/img/list.svg);
+}
+
 @media (min-width: 576px) {
   .sm\:list-reset {
     list-style: none;
@@ -6253,6 +6354,14 @@ table {
 
   .sm\:bg-transparent {
     background-color: transparent;
+  }
+
+  .sm\:bg-household {
+    background-color: #34a8c0;
+  }
+
+  .sm\:bg-household-light {
+    background-color: #75c8d5;
   }
 
   .sm\:bg-black {
@@ -6547,6 +6656,14 @@ table {
     background-color: transparent;
   }
 
+  .sm\:hover\:bg-household:hover {
+    background-color: #34a8c0;
+  }
+
+  .sm\:hover\:bg-household-light:hover {
+    background-color: #75c8d5;
+  }
+
   .sm\:hover\:bg-black:hover {
     background-color: #22292f;
   }
@@ -6837,6 +6954,14 @@ table {
 
   .sm\:focus\:bg-transparent:focus {
     background-color: transparent;
+  }
+
+  .sm\:focus\:bg-household:focus {
+    background-color: #34a8c0;
+  }
+
+  .sm\:focus\:bg-household-light:focus {
+    background-color: #75c8d5;
   }
 
   .sm\:focus\:bg-black:focus {
@@ -7179,6 +7304,10 @@ table {
     background-repeat: repeat-y;
   }
 
+  .sm\:bg-16 {
+    background-size: 4rem;
+  }
+
   .sm\:bg-auto {
     background-size: auto;
   }
@@ -7193,6 +7322,14 @@ table {
 
   .sm\:border-transparent {
     border-color: transparent;
+  }
+
+  .sm\:border-household {
+    border-color: #34a8c0;
+  }
+
+  .sm\:border-household-light {
+    border-color: #75c8d5;
   }
 
   .sm\:border-black {
@@ -7487,6 +7624,14 @@ table {
     border-color: transparent;
   }
 
+  .sm\:hover\:border-household:hover {
+    border-color: #34a8c0;
+  }
+
+  .sm\:hover\:border-household-light:hover {
+    border-color: #75c8d5;
+  }
+
   .sm\:hover\:border-black:hover {
     border-color: #22292f;
   }
@@ -7777,6 +7922,14 @@ table {
 
   .sm\:focus\:border-transparent:focus {
     border-color: transparent;
+  }
+
+  .sm\:focus\:border-household:focus {
+    border-color: #34a8c0;
+  }
+
+  .sm\:focus\:border-household-light:focus {
+    border-color: #75c8d5;
   }
 
   .sm\:focus\:border-black:focus {
@@ -8602,7 +8755,7 @@ table {
   }
 
   .sm\:font-sans {
-    font-family: system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    font-family: Lato, system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   }
 
   .sm\:font-serif {
@@ -9339,6 +9492,10 @@ table {
 
   .sm\:min-h-0 {
     min-height: 0;
+  }
+
+  .sm\:min-h-16 {
+    min-height: 4rem;
   }
 
   .sm\:min-h-full {
@@ -10517,6 +10674,14 @@ table {
     color: transparent;
   }
 
+  .sm\:text-household {
+    color: #34a8c0;
+  }
+
+  .sm\:text-household-light {
+    color: #75c8d5;
+  }
+
   .sm\:text-black {
     color: #22292f;
   }
@@ -10809,6 +10974,14 @@ table {
     color: transparent;
   }
 
+  .sm\:hover\:text-household:hover {
+    color: #34a8c0;
+  }
+
+  .sm\:hover\:text-household-light:hover {
+    color: #75c8d5;
+  }
+
   .sm\:hover\:text-black:hover {
     color: #22292f;
   }
@@ -11099,6 +11272,14 @@ table {
 
   .sm\:focus\:text-transparent:focus {
     color: transparent;
+  }
+
+  .sm\:focus\:text-household:focus {
+    color: #34a8c0;
+  }
+
+  .sm\:focus\:text-household-light:focus {
+    color: #75c8d5;
   }
 
   .sm\:focus\:text-black:focus {
@@ -11820,6 +12001,14 @@ table {
     background-color: transparent;
   }
 
+  .md\:bg-household {
+    background-color: #34a8c0;
+  }
+
+  .md\:bg-household-light {
+    background-color: #75c8d5;
+  }
+
   .md\:bg-black {
     background-color: #22292f;
   }
@@ -12112,6 +12301,14 @@ table {
     background-color: transparent;
   }
 
+  .md\:hover\:bg-household:hover {
+    background-color: #34a8c0;
+  }
+
+  .md\:hover\:bg-household-light:hover {
+    background-color: #75c8d5;
+  }
+
   .md\:hover\:bg-black:hover {
     background-color: #22292f;
   }
@@ -12402,6 +12599,14 @@ table {
 
   .md\:focus\:bg-transparent:focus {
     background-color: transparent;
+  }
+
+  .md\:focus\:bg-household:focus {
+    background-color: #34a8c0;
+  }
+
+  .md\:focus\:bg-household-light:focus {
+    background-color: #75c8d5;
   }
 
   .md\:focus\:bg-black:focus {
@@ -12744,6 +12949,10 @@ table {
     background-repeat: repeat-y;
   }
 
+  .md\:bg-16 {
+    background-size: 4rem;
+  }
+
   .md\:bg-auto {
     background-size: auto;
   }
@@ -12758,6 +12967,14 @@ table {
 
   .md\:border-transparent {
     border-color: transparent;
+  }
+
+  .md\:border-household {
+    border-color: #34a8c0;
+  }
+
+  .md\:border-household-light {
+    border-color: #75c8d5;
   }
 
   .md\:border-black {
@@ -13052,6 +13269,14 @@ table {
     border-color: transparent;
   }
 
+  .md\:hover\:border-household:hover {
+    border-color: #34a8c0;
+  }
+
+  .md\:hover\:border-household-light:hover {
+    border-color: #75c8d5;
+  }
+
   .md\:hover\:border-black:hover {
     border-color: #22292f;
   }
@@ -13342,6 +13567,14 @@ table {
 
   .md\:focus\:border-transparent:focus {
     border-color: transparent;
+  }
+
+  .md\:focus\:border-household:focus {
+    border-color: #34a8c0;
+  }
+
+  .md\:focus\:border-household-light:focus {
+    border-color: #75c8d5;
   }
 
   .md\:focus\:border-black:focus {
@@ -14167,7 +14400,7 @@ table {
   }
 
   .md\:font-sans {
-    font-family: system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    font-family: Lato, system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   }
 
   .md\:font-serif {
@@ -14904,6 +15137,10 @@ table {
 
   .md\:min-h-0 {
     min-height: 0;
+  }
+
+  .md\:min-h-16 {
+    min-height: 4rem;
   }
 
   .md\:min-h-full {
@@ -16082,6 +16319,14 @@ table {
     color: transparent;
   }
 
+  .md\:text-household {
+    color: #34a8c0;
+  }
+
+  .md\:text-household-light {
+    color: #75c8d5;
+  }
+
   .md\:text-black {
     color: #22292f;
   }
@@ -16374,6 +16619,14 @@ table {
     color: transparent;
   }
 
+  .md\:hover\:text-household:hover {
+    color: #34a8c0;
+  }
+
+  .md\:hover\:text-household-light:hover {
+    color: #75c8d5;
+  }
+
   .md\:hover\:text-black:hover {
     color: #22292f;
   }
@@ -16664,6 +16917,14 @@ table {
 
   .md\:focus\:text-transparent:focus {
     color: transparent;
+  }
+
+  .md\:focus\:text-household:focus {
+    color: #34a8c0;
+  }
+
+  .md\:focus\:text-household-light:focus {
+    color: #75c8d5;
   }
 
   .md\:focus\:text-black:focus {
@@ -17385,6 +17646,14 @@ table {
     background-color: transparent;
   }
 
+  .lg\:bg-household {
+    background-color: #34a8c0;
+  }
+
+  .lg\:bg-household-light {
+    background-color: #75c8d5;
+  }
+
   .lg\:bg-black {
     background-color: #22292f;
   }
@@ -17677,6 +17946,14 @@ table {
     background-color: transparent;
   }
 
+  .lg\:hover\:bg-household:hover {
+    background-color: #34a8c0;
+  }
+
+  .lg\:hover\:bg-household-light:hover {
+    background-color: #75c8d5;
+  }
+
   .lg\:hover\:bg-black:hover {
     background-color: #22292f;
   }
@@ -17967,6 +18244,14 @@ table {
 
   .lg\:focus\:bg-transparent:focus {
     background-color: transparent;
+  }
+
+  .lg\:focus\:bg-household:focus {
+    background-color: #34a8c0;
+  }
+
+  .lg\:focus\:bg-household-light:focus {
+    background-color: #75c8d5;
   }
 
   .lg\:focus\:bg-black:focus {
@@ -18309,6 +18594,10 @@ table {
     background-repeat: repeat-y;
   }
 
+  .lg\:bg-16 {
+    background-size: 4rem;
+  }
+
   .lg\:bg-auto {
     background-size: auto;
   }
@@ -18323,6 +18612,14 @@ table {
 
   .lg\:border-transparent {
     border-color: transparent;
+  }
+
+  .lg\:border-household {
+    border-color: #34a8c0;
+  }
+
+  .lg\:border-household-light {
+    border-color: #75c8d5;
   }
 
   .lg\:border-black {
@@ -18617,6 +18914,14 @@ table {
     border-color: transparent;
   }
 
+  .lg\:hover\:border-household:hover {
+    border-color: #34a8c0;
+  }
+
+  .lg\:hover\:border-household-light:hover {
+    border-color: #75c8d5;
+  }
+
   .lg\:hover\:border-black:hover {
     border-color: #22292f;
   }
@@ -18907,6 +19212,14 @@ table {
 
   .lg\:focus\:border-transparent:focus {
     border-color: transparent;
+  }
+
+  .lg\:focus\:border-household:focus {
+    border-color: #34a8c0;
+  }
+
+  .lg\:focus\:border-household-light:focus {
+    border-color: #75c8d5;
   }
 
   .lg\:focus\:border-black:focus {
@@ -19732,7 +20045,7 @@ table {
   }
 
   .lg\:font-sans {
-    font-family: system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    font-family: Lato, system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   }
 
   .lg\:font-serif {
@@ -20469,6 +20782,10 @@ table {
 
   .lg\:min-h-0 {
     min-height: 0;
+  }
+
+  .lg\:min-h-16 {
+    min-height: 4rem;
   }
 
   .lg\:min-h-full {
@@ -21647,6 +21964,14 @@ table {
     color: transparent;
   }
 
+  .lg\:text-household {
+    color: #34a8c0;
+  }
+
+  .lg\:text-household-light {
+    color: #75c8d5;
+  }
+
   .lg\:text-black {
     color: #22292f;
   }
@@ -21939,6 +22264,14 @@ table {
     color: transparent;
   }
 
+  .lg\:hover\:text-household:hover {
+    color: #34a8c0;
+  }
+
+  .lg\:hover\:text-household-light:hover {
+    color: #75c8d5;
+  }
+
   .lg\:hover\:text-black:hover {
     color: #22292f;
   }
@@ -22229,6 +22562,14 @@ table {
 
   .lg\:focus\:text-transparent:focus {
     color: transparent;
+  }
+
+  .lg\:focus\:text-household:focus {
+    color: #34a8c0;
+  }
+
+  .lg\:focus\:text-household-light:focus {
+    color: #75c8d5;
   }
 
   .lg\:focus\:text-black:focus {
@@ -22950,6 +23291,14 @@ table {
     background-color: transparent;
   }
 
+  .xl\:bg-household {
+    background-color: #34a8c0;
+  }
+
+  .xl\:bg-household-light {
+    background-color: #75c8d5;
+  }
+
   .xl\:bg-black {
     background-color: #22292f;
   }
@@ -23242,6 +23591,14 @@ table {
     background-color: transparent;
   }
 
+  .xl\:hover\:bg-household:hover {
+    background-color: #34a8c0;
+  }
+
+  .xl\:hover\:bg-household-light:hover {
+    background-color: #75c8d5;
+  }
+
   .xl\:hover\:bg-black:hover {
     background-color: #22292f;
   }
@@ -23532,6 +23889,14 @@ table {
 
   .xl\:focus\:bg-transparent:focus {
     background-color: transparent;
+  }
+
+  .xl\:focus\:bg-household:focus {
+    background-color: #34a8c0;
+  }
+
+  .xl\:focus\:bg-household-light:focus {
+    background-color: #75c8d5;
   }
 
   .xl\:focus\:bg-black:focus {
@@ -23874,6 +24239,10 @@ table {
     background-repeat: repeat-y;
   }
 
+  .xl\:bg-16 {
+    background-size: 4rem;
+  }
+
   .xl\:bg-auto {
     background-size: auto;
   }
@@ -23888,6 +24257,14 @@ table {
 
   .xl\:border-transparent {
     border-color: transparent;
+  }
+
+  .xl\:border-household {
+    border-color: #34a8c0;
+  }
+
+  .xl\:border-household-light {
+    border-color: #75c8d5;
   }
 
   .xl\:border-black {
@@ -24182,6 +24559,14 @@ table {
     border-color: transparent;
   }
 
+  .xl\:hover\:border-household:hover {
+    border-color: #34a8c0;
+  }
+
+  .xl\:hover\:border-household-light:hover {
+    border-color: #75c8d5;
+  }
+
   .xl\:hover\:border-black:hover {
     border-color: #22292f;
   }
@@ -24472,6 +24857,14 @@ table {
 
   .xl\:focus\:border-transparent:focus {
     border-color: transparent;
+  }
+
+  .xl\:focus\:border-household:focus {
+    border-color: #34a8c0;
+  }
+
+  .xl\:focus\:border-household-light:focus {
+    border-color: #75c8d5;
   }
 
   .xl\:focus\:border-black:focus {
@@ -25297,7 +25690,7 @@ table {
   }
 
   .xl\:font-sans {
-    font-family: system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    font-family: Lato, system-ui, BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   }
 
   .xl\:font-serif {
@@ -26034,6 +26427,10 @@ table {
 
   .xl\:min-h-0 {
     min-height: 0;
+  }
+
+  .xl\:min-h-16 {
+    min-height: 4rem;
   }
 
   .xl\:min-h-full {
@@ -27212,6 +27609,14 @@ table {
     color: transparent;
   }
 
+  .xl\:text-household {
+    color: #34a8c0;
+  }
+
+  .xl\:text-household-light {
+    color: #75c8d5;
+  }
+
   .xl\:text-black {
     color: #22292f;
   }
@@ -27504,6 +27909,14 @@ table {
     color: transparent;
   }
 
+  .xl\:hover\:text-household:hover {
+    color: #34a8c0;
+  }
+
+  .xl\:hover\:text-household-light:hover {
+    color: #75c8d5;
+  }
+
   .xl\:hover\:text-black:hover {
     color: #22292f;
   }
@@ -27794,6 +28207,14 @@ table {
 
   .xl\:focus\:text-transparent:focus {
     color: transparent;
+  }
+
+  .xl\:focus\:text-household:focus {
+    color: #34a8c0;
+  }
+
+  .xl\:focus\:text-household-light:focus {
+    color: #75c8d5;
   }
 
   .xl\:focus\:text-black:focus {

@@ -3,7 +3,8 @@ import * as React from 'react';
 import { HouseholdOrder, Product, OrderItem } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 
 export interface HouseholdOrderPageProps { householdOrder: HouseholdOrder
@@ -108,37 +109,37 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
 
     return (
       <div>
-        {this.props.referrer == 'order'
-        ? (
-          <div>
+        <div className="bg-img-household-order bg-no-repeat bg-16 pl-16 min-h-16">
+          {this.props.referrer == 'order'
+          ? (
             <div>
-              <RouterLink path="/orders">Orders</RouterLink> &gt;
-              <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
+              <div>
+                <RouterLink path="/orders">Orders</RouterLink> &gt;
+                <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
+              </div>
+              <h1>{householdOrder.householdName}</h1>
+              <div>Status: {householdOrder.status}</div>
+              <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
             </div>
-            <h1>{householdOrder.householdName}</h1>
-            <div>Status: {householdOrder.status}</div>
-            <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
-          </div>
-        )
-        : (
-          <div>
+          )
+          : (
             <div>
-              <RouterLink path="/households">Households</RouterLink> &gt;
-              <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
+              <div>
+                <RouterLink path="/households">Households</RouterLink> &gt;
+                <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
+              </div>
+              <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
+              <div>Status: {householdOrder.status}</div>
+              <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
             </div>
-            <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
-            <div>Status: {householdOrder.status}</div>
-            <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
-          </div>
-        )}
-        <div>
+          )}
           {householdOrder.canBeAmended && !householdOrder.isOpen &&
-            <Link disabled={!!this.state.addingProduct} action={this.reopenOrder}>Reopen order</Link>
+            <Button disabled={!!this.state.addingProduct} action={this.reopenOrder}>Reopen order</Button>
           }
           {householdOrder.canBeAmended && householdOrder.isOpen && (
             <span>
-              <Link disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Link>
-              <Link disabled={!!this.state.addingProduct} action={this.completeOrder}>Complete order</Link>
+              <Button disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Button>
+              <Button disabled={!!this.state.addingProduct} action={this.completeOrder}>Complete order</Button>
             </span>
           )}
         </div>
@@ -149,7 +150,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
           }
           {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
             <div>
-              <Link action={() => this.startAdd(unusedProducts[0])}>Add item</Link>
+              <Button action={() => this.startAdd(unusedProducts[0])}>Add item</Button>
             </div>
           }
           {this.state.addingProduct &&
@@ -165,8 +166,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
                 </select>
               </span>
               <Money amount={this.state.addingProduct.price * this.state.addingProductQuantity} />
-              <Link action={this.confirmAdd}>Save</Link>
-              <Link action={this.cancelAdd}>Cancel</Link>
+              <Button action={this.confirmAdd}>Save</Button>
+              <Button action={this.cancelAdd}>Cancel</Button>
             </div>
           }
           {householdOrder.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
@@ -179,8 +180,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
                 </select>
               </span>
               <Money amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
-              <Link action={this.confirmEdit}>Save</Link>
-              <Link action={this.cancelEdit}>Cancel</Link>
+              <Button action={this.confirmEdit}>Save</Button>
+              <Button action={this.cancelEdit}>Cancel</Button>
             </div>
           )
           : (
@@ -190,8 +191,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               <Money amount={i.itemTotal} />
               {householdOrder.canBeAmended && householdOrder.isOpen &&
                 <span>
-                  <Link disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Link>
-                  <Link disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}>Remove</Link>
+                  <Button disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}>Edit</Button>
+                  <Button disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}>Remove</Button>
                 </span>
               }
             </div>

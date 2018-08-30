@@ -3,7 +3,8 @@ import * as React from 'react';
 import { CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 import { Router } from './Router'
 
@@ -24,8 +25,10 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
     const pastOrders = this.props.orders.filter(o => o.isPast || o.isCancelled)
     return (
       <div>
-        <h1>Orders</h1>
-        {!currentOrder? <Link action={this.newOrder}>New order</Link> : (
+        <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
+          <h1>Orders</h1>
+        </div>
+        {!currentOrder? <Button action={this.newOrder}>New order</Button> : (
           <div>
             <h2>Current order</h2>
             <div>

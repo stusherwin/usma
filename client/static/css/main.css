@@ -1,6 +1,7 @@
 @tailwind preflight;
 @tailwind components;
 @tailwind utilities;
+@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin);
 
 .invalid {
   @apply bg-red;
@@ -8,4 +9,24 @@
 
 .disabled {
   @apply text-grey cursor-default;
+}
+
+button {
+  @apply border border-black;
+}
+
+.bg-img-household {
+  background-image: url(/img/house.svg);
+}
+
+.bg-img-product {
+  background-image: url(/img/bottle.svg);
+}
+
+.bg-img-order {
+  background-image: url(/img/cart.svg);
+}
+
+.bg-img-household-order {
+  background-image: url(/img/list.svg);
 }

@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Household, HouseholdPayment, CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 import { Router } from './Router'
 import { Form, Field, Validate } from './Validation'
@@ -99,7 +100,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
         <h1>Payments</h1>
         
         {!this.state.creating && 
-          <Link action={this.startCreate}>New payment</Link>
+          <Button action={this.startCreate}>New payment</Button>
         }
         {this.state.creating &&
           <div>
@@ -111,8 +112,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
               <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
               {this.state.form.fields.amount.error}
             </span>
-            <Link action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Link>
-            <Link action={this.cancelCreate}>Cancel</Link>
+            <Button action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
+            <Button action={this.cancelCreate}>Cancel</Button>
           </div>
         }
 
@@ -132,16 +133,16 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
                   {this.state.form.fields.amount.error}
                 </span>
-                <Link action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Link>
-                <Link action={this.cancelEdit}>Cancel</Link>
+                <Button action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
+                <Button action={this.cancelEdit}>Cancel</Button>
               </div>
             )
             : (
               <div key={p.id}>
                 <span>{ Util.formatDate(p.date) }</span>
                 <Money amount={p.amount} />
-                <Link action={() => this.startEdit(p)}>Edit</Link>
-                <Link action={() => this.delete(p)}>Delete</Link>
+                <Button action={() => this.startEdit(p)}>Edit</Button>
+                <Button action={() => this.delete(p)}>Delete</Button>
               </div>
             )) }
           </div>

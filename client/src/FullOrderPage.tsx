@@ -3,7 +3,8 @@ import * as React from 'react';
 import { CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
-import { Link, RouterLink } from './Link'
+import { RouterLink } from './RouterLink'
+import { Button } from './Button'
 import { Money } from './Money'
 
 export interface FullOrderPageProps { order: CollectiveOrder
@@ -22,11 +23,13 @@ export class FullOrderPage extends React.Component<FullOrderPageProps, {}> {
   render() {
     return (
       <div>
-        <div>
-          <RouterLink path="/orders">Orders</RouterLink> &gt;
-          <RouterLink path={`/orders/${this.props.order.id}`}>{Util.formatDate(this.props.order.createdDate)}</RouterLink> &gt;
+        <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16">
+          <div>
+            <RouterLink path="/orders">Orders</RouterLink> &gt;
+            <RouterLink path={`/orders/${this.props.order.id}`}>{Util.formatDate(this.props.order.createdDate)}</RouterLink> &gt;
+          </div>
+          <h1>Full order list</h1>
         </div>
-        <h1>Full order list</h1>
         <div>
           {this.props.order.items.map(i => (
             <div key={i.productId}>
