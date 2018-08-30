@@ -16,21 +16,6 @@ export interface HouseholdOrdersProps { household: Household
                                       }
 
 export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
-  newOrder = () => {
-    const householdId = this.props.household.id
-    this.props.request(ServerApi.command.createOrder(householdId))
-      .then(id => this.props.reload()
-                    .then(_ => Router.navigate(`/households/${householdId}/orders/${id}`)))
-  }
-
-  joinOrder = (orderId: number) => {
-    const date = new Date()
-    const householdId = this.props.household.id
-    this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
-      .then(this.props.reload)
-      .then(_ => Router.navigate(`/households/${householdId}/orders/${orderId}`))
-  }
-
   render() {
     const currentOrder = this.props.householdOrders.filter(ho => !ho.isOrderPast && !ho.isCancelled)[0]
     const pastOrders = this.props.householdOrders.filter(ho => ho.isOrderPast || ho.isCancelled)
@@ -39,21 +24,6 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
 
     return (
       <div>
-        <h2>Current order</h2>
-        {currentOrder
-        ? (
-          <div>
-            <div>
-              <RouterLink path={`/households/${currentOrder.householdId}/orders/${currentOrder.orderId}`}>{Util.formatDate(currentOrder.orderCreatedDate)}</RouterLink>
-              <span>{currentOrder.status}</span>
-              <Money amount={currentOrder.total} />
-            </div>
-          </div>
-        )
-        : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
-          ? <Button action={_ => this.joinOrder(currentCollectiveOrder.id)}>Join existing order</Button>
-          : <Button action={this.newOrder}>Start new order</Button>
-        }
         <h2>Past orders</h2>
         {!pastOrders.length ? <div>No past orders</div> : (
           <div>

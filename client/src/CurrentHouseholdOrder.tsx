@@ -7,21 +7,20 @@ import { RouterLink } from './RouterLink'
 import { Button } from './Button'
 import { Money } from './Money'
 
-export interface HouseholdOrderPageProps { householdOrder: HouseholdOrder
-                                         , products: Product[]
-                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                         , reload: () => Promise<void>
-                                         , referrer: 'order' | 'household'
-                                         }
+export interface CurrentHouseholdOrderProps { householdOrder: HouseholdOrder
+                                            , products: Product[]
+                                            , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                            , reload: () => Promise<void>
+                                            }
 
-export interface HouseholdOrderPageState { addingProduct: Product | null
-                                         , addingProductQuantity: number
-                                         , editingProduct: Product | null
-                                         , editingProductQuantity: number
-                                         }
+export interface CurrentHouseholdOrderState { addingProduct: Product | null
+                                            , addingProductQuantity: number
+                                            , editingProduct: Product | null
+                                            , editingProductQuantity: number
+                                            }
 
-export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps, HouseholdOrderPageState> {
-  constructor(props: HouseholdOrderPageProps) {
+export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, CurrentHouseholdOrderState> {
+  constructor(props: CurrentHouseholdOrderProps) {
     super(props)
 
     this.state = { addingProduct: null
@@ -109,29 +108,8 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
 
     return (
       <div>
-        <div className="bg-img-household-order bg-no-repeat bg-16 pl-16 min-h-16">
-          {this.props.referrer == 'order'
-          ? (
-            <div>
-              <div>
-                <RouterLink path="/orders">Orders</RouterLink> &gt;
-                {Util.formatDate(householdOrder.orderCreatedDate)} &gt;
-              </div>
-              <h1>{householdOrder.householdName}</h1>
-              <div>Status: {householdOrder.status}</div>
-              <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
-            </div>
-          )
-          : (
-            <div>
-              <div>
-                <RouterLink path="/households">Households</RouterLink> &gt;
-                <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
-              </div>
-              <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
-              <div>Status: {householdOrder.status}</div>
-            </div>
-          )}
+        <div>
+          <div>Status: {householdOrder.status}</div>
           {householdOrder.canBeAmended && !householdOrder.isOpen &&
             <Button disabled={!!this.state.addingProduct} action={this.reopenOrder}>Reopen order</Button>
           }
@@ -142,15 +120,9 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
             </span>
           )}
         </div>
-        <h2>Items</h2>
         <div>
           {!householdOrder.items.length &&
-            <div>No items added to this order</div>
-          }
-          {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
-            <div>
-              <Button action={() => this.startAdd(unusedProducts[0])}>Add item</Button>
-            </div>
+            <div>No order items added yet.</div>
           }
           {this.state.addingProduct &&
             <div>
@@ -196,6 +168,11 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               }
             </div>
           ))}
+          {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
+            <div>
+              <Button action={() => this.startAdd(unusedProducts[0])}>Add item</Button>
+            </div>
+          }
           <div>
             <span>Total:</span>
             <span></span>

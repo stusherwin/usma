@@ -107,7 +107,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             )
             return (
               <div key={ho.householdId}>
-                <RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink>
+                <RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink>
                 {status}
                 <Money amount={ho.total} />
                 {order.canBeAmended && !ho.items.length &&
