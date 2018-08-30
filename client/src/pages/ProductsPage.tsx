@@ -99,7 +99,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-img-product bg-no-repeat bg-16 pl-16 min-h-16">
+        <div className="bg-img-product bg-no-repeat bg-16 pl-16 min-h-16 bg-product-light">
           <div>
             <RouterLink path="/orders">Orders</RouterLink>
             <RouterLink path="/products">Products</RouterLink>

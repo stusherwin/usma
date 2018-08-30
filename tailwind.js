@@ -49,6 +49,12 @@ let colors = {
   'household': '#34a8c0',
   'household-light': '#75c8d5',
 
+  'order': '#f0faa0',
+  'order-dark': '#ffe85c',
+
+  'product': '#b1529e',
+  'product-light': '#ca72b8',
+
   'black': '#22292f',
   'grey-darkest': '#3d4852',
   'grey-darker': '#606f7b',

@@ -23,37 +23,21 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-img-household-order bg-no-repeat bg-16 pl-16 min-h-16">
+        <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
           <div>
             <RouterLink path="/orders">Orders</RouterLink>
             <RouterLink path="/products">Products</RouterLink>
             <RouterLink path="/households">Households</RouterLink>
           </div>
-          {this.props.referrer == 'order'
-          ? (
+          <div>
             <div>
-              <div>
-                <RouterLink path="/orders">Orders</RouterLink> &gt;
-                <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
-              </div>
-              <h1>{householdOrder.householdName}</h1>
-              <div>Status: {householdOrder.status}</div>
-              <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
+              <RouterLink path="/households">Households</RouterLink> &gt;
+              <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
             </div>
-          )
-          : (
-            <div>
-              <div>
-                <RouterLink path="/households">Households</RouterLink> &gt;
-                <RouterLink path={`/households/${householdOrder.householdId}`}>{householdOrder.householdName}</RouterLink> &gt;
-              </div>
-              <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
-              <div>Status: {householdOrder.status}</div>
-              <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
-            </div>
-          )}
+            <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
+            <div>Status: {householdOrder.status}</div>
+          </div>
         </div>
-        <h2>Items</h2>
         <div>
           {householdOrder.items.map(i => (
             <div key={i.productId}>
