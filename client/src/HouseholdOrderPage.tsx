@@ -115,7 +115,7 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
             <div>
               <div>
                 <RouterLink path="/orders">Orders</RouterLink> &gt;
-                <RouterLink path={`/orders/${householdOrder.orderId}`}>{Util.formatDate(householdOrder.orderCreatedDate)}</RouterLink> &gt;
+                {Util.formatDate(householdOrder.orderCreatedDate)} &gt;
               </div>
               <h1>{householdOrder.householdName}</h1>
               <div>Status: {householdOrder.status}</div>
@@ -130,7 +130,6 @@ export class HouseholdOrderPage extends React.Component<HouseholdOrderPageProps,
               </div>
               <h1>{Util.formatDate(householdOrder.orderCreatedDate)}</h1>
               <div>Status: {householdOrder.status}</div>
-              <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
             </div>
           )}
           {householdOrder.canBeAmended && !householdOrder.isOpen &&
