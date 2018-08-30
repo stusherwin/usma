@@ -6,6 +6,7 @@ import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
 import { Button } from '../Button'
 import { Money } from '../Money'
+import { TopNav } from '../TopNav'
 
 export interface PastHouseholdOrderPageProps { householdOrder: HouseholdOrder
                                              , referrer: 'order' | 'household'
@@ -24,11 +25,7 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
+          <TopNav />
           <div>
             <div>
               <RouterLink path="/households">Households</RouterLink> &gt;

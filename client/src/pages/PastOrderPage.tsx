@@ -6,6 +6,7 @@ import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
 import { Button } from '../Button'
 import { Money } from '../Money'
+import { TopNav } from '../TopNav'
 
 export interface PastOrderPageProps { order: CollectiveOrder
                                     , householdOrders: HouseholdOrder[]
@@ -24,11 +25,7 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16 bg-order-dark">
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
+          <TopNav />
           <div><RouterLink path="/orders">Orders</RouterLink> &gt;</div>
           <h1>{Util.formatDate(order.createdDate)}</h1>
           <div>Status: {order.status}</div>

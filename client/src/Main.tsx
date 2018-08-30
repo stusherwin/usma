@@ -179,14 +179,15 @@ export class Main extends React.Component<MainProps, MainState> {
   }
 
   render() {
-    return (
-      <div>
-        <div hidden={!this.state.loading}>Loading...</div>
-        {!!this.state.error && (
-          <div>{this.state.error.error}: {this.state.error.message}</div>
-        )}
-        {this.state.initialised && this.body()}
-      </div>
+    return this.state.initialised
+      ? this.body()
+      : (
+        <div>
+          <div hidden={!this.state.loading}>Loading...</div>
+          {!!this.state.error && (
+            <div>{this.state.error.error}: {this.state.error.message}</div>
+          )}
+        </div>
     )
   }
 

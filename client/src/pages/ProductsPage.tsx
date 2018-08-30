@@ -7,6 +7,7 @@ import { Button } from '../Button'
 import { Money } from '../Money'
 import { Form, Field, Validate } from '../Validation'
 import { RouterLink } from '../RouterLink'
+import { TopNav } from '../TopNav'
 
 export interface ProductsPageProps { products: Product[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -100,11 +101,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-img-product bg-no-repeat bg-16 pl-16 min-h-16 bg-product-light">
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
+          <TopNav />
           <h1>Products</h1>
           {!this.state.creating && 
             <Button action={this.startCreate}>New product</Button>

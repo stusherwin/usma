@@ -102,6 +102,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       .then(this.props.reload)
   }
 
+  leaveOrder = () => {
+    this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+      .then(this.props.reload)
+  }
+
   render() {
     const householdOrder = this.props.householdOrder
     const unusedProducts = this.props.products.filter(p => !householdOrder.items.find(i => i.productId == p.id))
@@ -110,10 +115,13 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       <div>
         <div>
           <div>Status: {householdOrder.status}</div>
-          {householdOrder.canBeAmended && !householdOrder.isOpen &&
+          {!householdOrder.items.length && 
+            <Button disabled={!!this.state.addingProduct} action={this.leaveOrder}>Leave order</Button>
+          }
+          {householdOrder.canBeAmended && !!householdOrder.items.length && !householdOrder.isOpen &&
             <Button disabled={!!this.state.addingProduct} action={this.reopenOrder}>Reopen order</Button>
           }
-          {householdOrder.canBeAmended && householdOrder.isOpen && (
+          {householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen && (
             <span>
               <Button disabled={!!this.state.addingProduct} action={this.cancelOrder}>Cancel order</Button>
               <Button disabled={!!this.state.addingProduct} action={this.completeOrder}>Complete order</Button>

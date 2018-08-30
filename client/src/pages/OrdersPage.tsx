@@ -8,6 +8,7 @@ import { Button } from '../Button'
 import { Money } from '../Money'
 import { Router } from '../Router'
 import { CurrentOrder } from '../CurrentOrder'
+import { TopNav } from '../TopNav'
 
 export interface OrdersPageProps { currentOrder: CollectiveOrder | undefined
                                  , currentHouseholdOrders: HouseholdOrder[]
@@ -36,11 +37,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16 bg-order-dark">
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
+          <TopNav />
           <h1>Orders</h1>
         </div>
         <div>

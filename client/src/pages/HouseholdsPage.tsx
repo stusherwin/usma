@@ -6,6 +6,7 @@ import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
 import { Button } from '../Button'
 import { Form, Field, Validate } from '../Validation'
+import { TopNav } from '../TopNav'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -89,11 +90,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
+          <TopNav />
           <h1>Households</h1>
           {!this.state.creating && 
             <Button action={this.startCreate}>New household</Button>

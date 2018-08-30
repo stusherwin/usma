@@ -10,6 +10,7 @@ import { Router } from '../Router'
 import { CurrentHouseholdOrder } from '../CurrentHouseholdOrder'
 import { HouseholdOrders } from '../HouseholdOrders'
 import { HouseholdPayments } from '../HouseholdPayments'
+import { TopNav } from '../TopNav'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , householdOrders: HouseholdOrder[]
@@ -26,8 +27,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   newOrder = () => {
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createOrder(householdId))
-      .then(id => this.props.reload()
-                    .then(_ => Router.navigate(`/households/${householdId}/orders/${id}`)))
+      .then(this.props.reload)
   }
 
   joinOrder = (orderId: number) => {
@@ -35,9 +35,8 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
-      .then(_ => Router.navigate(`/households/${householdId}/orders/${orderId}`))
   }
-
+  
   render() {
     const currentOrder = this.props.householdOrders.filter(ho => !ho.isOrderPast && !ho.isCancelled)[0]
     const pastOrders = this.props.householdOrders.filter(ho => ho.isOrderPast || ho.isCancelled)
@@ -50,11 +49,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
-          <div>
-            <RouterLink path="/orders">Orders</RouterLink>
-            <RouterLink path="/products">Products</RouterLink>
-            <RouterLink path="/households">Households</RouterLink>
-          </div>
+          <TopNav />
           <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
           <h1>{this.props.household.name}</h1>
           <div>Total orders: <Money amount={this.props.household.totalOrders} /></div>
