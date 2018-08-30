@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { HouseholdOrder, Product, OrderItem } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Button } from './Button'
-import { Money } from './Money'
+import { HouseholdOrder, Product, OrderItem } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Util } from '../Util'
+import { RouterLink } from '../RouterLink'
+import { Button } from '../Button'
+import { Money } from '../Money'
 
 export interface PastHouseholdOrderPageProps { householdOrder: HouseholdOrder
                                              , referrer: 'order' | 'household'

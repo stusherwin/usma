@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { Household } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Button } from './Button'
-import { Form, Field, Validate } from './Validation'
+import { Household } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Util } from '../Util'
+import { RouterLink } from '../RouterLink'
+import { Button } from '../Button'
+import { Form, Field, Validate } from '../Validation'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>

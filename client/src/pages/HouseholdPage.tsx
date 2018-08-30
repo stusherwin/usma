@@ -1,15 +1,15 @@
 import * as React from 'react';
 
-import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, Product } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Button } from './Button'
-import { Money } from './Money'
-import { Router } from './Router'
-import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { HouseholdOrders } from './HouseholdOrders'
-import { HouseholdPayments } from './HouseholdPayments'
+import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, Product } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Util } from '../Util'
+import { RouterLink } from '../RouterLink'
+import { Button } from '../Button'
+import { Money } from '../Money'
+import { Router } from '../Router'
+import { CurrentHouseholdOrder } from '../CurrentHouseholdOrder'
+import { HouseholdOrders } from '../HouseholdOrders'
+import { HouseholdPayments } from '../HouseholdPayments'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , householdOrders: HouseholdOrder[]

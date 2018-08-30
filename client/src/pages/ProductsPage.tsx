@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { Product } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { Button } from './Button'
-import { Money } from './Money'
-import { Form, Field, Validate } from './Validation'
-import { RouterLink } from './RouterLink'
+import { Product } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Util } from '../Util'
+import { Button } from '../Button'
+import { Money } from '../Money'
+import { Form, Field, Validate } from '../Validation'
+import { RouterLink } from '../RouterLink'
 
 export interface ProductsPageProps { products: Product[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>

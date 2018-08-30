@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { CollectiveOrder } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Button } from './Button'
-import { Money } from './Money'
+import { CollectiveOrder } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Util } from '../Util'
+import { RouterLink } from '../RouterLink'
+import { Button } from '../Button'
+import { Money } from '../Money'
 
 export interface FullOrderPageProps { order: CollectiveOrder
                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>
