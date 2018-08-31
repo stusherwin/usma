@@ -1654,6 +1654,14 @@ table {
   background-repeat: repeat-y;
 }
 
+.bg-4 {
+  background-size: 1rem;
+}
+
+.bg-6 {
+  background-size: 1.5rem;
+}
+
 .bg-16 {
   background-size: 4rem;
 }
@@ -6453,9 +6461,58 @@ table {
   cursor: default;
 }
 
+a {
+  color: #3490dc;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #2779bd;
+  text-decoration: underline;
+}
+
 button {
   border-width: 1px;
-  border-color: #22292f;
+  background-color: #dae1e7;
+  border-color: #b8c2cc;
+  border-radius: .125rem;
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+  padding-left: .5rem;
+  padding-right: .5rem;
+  color: #3d4852;
+}
+
+button img {
+  margin-right: .5rem;
+}
+
+button.button-sm {
+  padding: 0 2px;
+  border-radius: 0;
+}
+
+button.button-icon {
+  padding-left: .5rem;
+  padding-right: .5rem;
+}
+
+button.button-icon img {
+  /* background: red; */
+  position: relative;
+  top: 1px;
+  margin-right: 0;
+}
+
+button:hover {
+  background-color: #b8c2cc;
+  border-color: #8795a1;
+  color: #22292f;
+}
+
+input[type="text"] {
+  border-width: 1px;
+  border-color: #b8c2cc;
 }
 
 .bg-img-household {
@@ -6472,6 +6529,10 @@ button {
 
 .bg-img-household-order {
   background-image: url(/img/list.svg);
+}
+
+.bg-img-edit {
+  background-image: url(/img/edit.svg);
 }
 
 @media (min-width: 576px) {
@@ -7494,6 +7555,14 @@ button {
 
   .sm\:bg-repeat-y {
     background-repeat: repeat-y;
+  }
+
+  .sm\:bg-4 {
+    background-size: 1rem;
+  }
+
+  .sm\:bg-6 {
+    background-size: 1.5rem;
   }
 
   .sm\:bg-16 {
@@ -13285,6 +13354,14 @@ button {
     background-repeat: repeat-y;
   }
 
+  .md\:bg-4 {
+    background-size: 1rem;
+  }
+
+  .md\:bg-6 {
+    background-size: 1.5rem;
+  }
+
   .md\:bg-16 {
     background-size: 4rem;
   }
@@ -19074,6 +19151,14 @@ button {
     background-repeat: repeat-y;
   }
 
+  .lg\:bg-4 {
+    background-size: 1rem;
+  }
+
+  .lg\:bg-6 {
+    background-size: 1.5rem;
+  }
+
   .lg\:bg-16 {
     background-size: 4rem;
   }
@@ -24861,6 +24946,14 @@ button {
 
   .xl\:bg-repeat-y {
     background-repeat: repeat-y;
+  }
+
+  .xl\:bg-4 {
+    background-size: 1rem;
+  }
+
+  .xl\:bg-6 {
+    background-size: 1.5rem;
   }
 
   .xl\:bg-16 {

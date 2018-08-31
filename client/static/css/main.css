@@ -11,8 +11,44 @@
   @apply text-grey cursor-default;
 }
 
+a {
+  @apply text-blue underline;
+}
+
+a:hover {
+  @apply text-blue-dark underline;
+}
+
 button {
-  @apply border border-black;
+  @apply border bg-grey-light border-grey rounded-sm py-1 px-2 text-grey-darkest;
+}
+
+button img {
+  @apply mr-2;
+}
+
+button.button-sm {
+  padding: 0px 2px;
+  @apply rounded-none;
+}
+
+button.button-icon {
+  @apply px-2;
+}
+
+button.button-icon img {
+  /* background: red; */
+  position: relative;
+  top: 1px;
+  @apply mr-0;
+}
+
+button:hover {
+  @apply bg-grey border-grey-dark text-black;
+}
+
+input[type="text"] {
+  @apply border border-grey;
 }
 
 .bg-img-household {
@@ -29,4 +65,8 @@ button {
 
 .bg-img-household-order {
   background-image: url(/img/list.svg);
+}
+
+.bg-img-edit {
+  background-image: url(/img/edit.svg);
 }

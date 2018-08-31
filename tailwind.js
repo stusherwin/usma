@@ -388,6 +388,8 @@ module.exports = {
     'cover': 'cover',
     'contain': 'contain',
     '16': '4rem',
+    '4': '1rem',
+    '6': '1.5rem',
   },
 
 

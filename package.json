@@ -21,8 +21,10 @@
     "prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js"
   },
   "dependencies": {
+    "@types/classnames": "^2.2.6",
     "@types/react": "^16.0.35",
     "@types/react-dom": "^16.0.3",
+    "classnames": "^2.2.6",
     "css-loader": "^0.28.7",
     "file-loader": "^1.1.6",
     "lodash.difference": "^4.5.0",
@@ -46,5 +48,5 @@
     "postcss": "^6.0.14",
     "postcss-loader": "^2.0.8",
     "style-loader": "^0.19.0"
-   }
+  }
 }

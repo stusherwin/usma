@@ -4,3 +4,4 @@
 * If collective order exists household has chance to join it otherwise create a new one
 * Add product code
 * Add no. of people to household (+ total per person to household order)
+* Products VAT included in price?
