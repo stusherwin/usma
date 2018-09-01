@@ -6452,15 +6452,6 @@ table {
   z-index: auto;
 }
 
-.invalid {
-  background-color: #e3342f;
-}
-
-.disabled {
-  color: #b8c2cc;
-  cursor: default;
-}
-
 a {
   color: #3490dc;
   text-decoration: underline;
@@ -6498,7 +6489,6 @@ button.button-icon {
 }
 
 button.button-icon img {
-  /* background: red; */
   position: relative;
   top: 1px;
   margin-right: 0;
@@ -6513,6 +6503,19 @@ button:hover {
 input[type="text"] {
   border-width: 1px;
   border-color: #b8c2cc;
+}
+
+.field label:after {
+  content: ':';
+}
+
+.field.invalid label {
+  color: #e3342f;
+}
+
+.field.invalid input[type="text"] {
+  border-color: #e3342f;
+  border-width: 2px;
 }
 
 .bg-img-household {

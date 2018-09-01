@@ -94,7 +94,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-household-light p-2">
+        <div className="bg-household-light p-2 border-b border-household">
           <TopNav />
           <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative">
             <h1 className="leading-none mb-2">Households</h1>
@@ -107,19 +107,21 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             </div>
           }
           {this.state.editMode == 'create' &&
-            <div className="bg-purple-lightest p-2 mb-2">
-              <div className="flex justify-between">
-                <label className="flex-no-grow flex-no-shrink mr-2"
-                       htmlFor="create-name">Name</label>
-                <input type="text"
-                       id="create-name" 
-                       className={classNames('flex-grow flex-no-shrink', {'invalid': !this.state.form.fields.name.valid})}
-                       autoFocus 
-                       value={this.state.form.fields.name.stringValue} 
-                       onChange={this.fieldChanged('name')} />
-              </div>
-              <div hidden={!this.state.form.fields.name.error}>
-                {this.state.form.fields.name.error}
+            <div className="bg-purple-lightest p-2 mb-2 border-t border-b border-purple-lighter">
+              <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
+                <div className="flex justify-between">
+                  <label className="flex-no-grow flex-no-shrink mr-2"
+                         htmlFor="create-name">Name</label>
+                  <input type="text"
+                         id="create-name" 
+                         className="flex-grow flex-no-shrink"
+                         autoFocus 
+                         value={this.state.form.fields.name.stringValue} 
+                         onChange={this.fieldChanged('name')} />
+                </div>
+                <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
+                  {this.state.form.fields.name.error}
+                </div>
               </div>
               <div className="mt-2 flex justify-end">
                 <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
@@ -134,7 +136,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               { this.props.households.map(h => 
               this.state.editMode == 'edit' && this.state.editingId == h.id
               ? (
-                <div className="bg-purple-lightest p-2 mb-2">
+                <div className="bg-purple-lightest p-2 mb-2 border-t border-b border-purple-lighter">
                   <div className="flex justify-between">
                     <label className="flex-no-grow flex-no-shrink mr-2"
                            htmlFor="edit-name">Name</label>
@@ -150,8 +152,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                     {this.state.form.fields.name.error}
                   </div>
                   <div className="mt-2 flex justify-end">
-                    <Button icon="ok" className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}></Button>
-                    <Button icon="cancel-circle" className="ml-2" action={this.cancelEdit}></Button>
+                    <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
+                    <Button className="ml-2" action={this.cancelEdit}>Cancel</Button>
                   </div>
                 </div>
               )

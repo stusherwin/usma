@@ -3,14 +3,6 @@
 @tailwind utilities;
 @import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin);
 
-.invalid {
-  @apply bg-red;
-}
-
-.disabled {
-  @apply text-grey cursor-default;
-}
-
 a {
   @apply text-blue underline;
 }
@@ -37,7 +29,6 @@ button.button-icon {
 }
 
 button.button-icon img {
-  /* background: red; */
   position: relative;
   top: 1px;
   @apply mr-0;
@@ -49,6 +40,18 @@ button:hover {
 
 input[type="text"] {
   @apply border border-grey;
+}
+
+.field label:after {
+  content: ':';
+}
+
+.field.invalid label {
+  @apply text-red;
+}
+
+.field.invalid input[type="text"] {
+  @apply border-red border-2;
 }
 
 .bg-img-household {
