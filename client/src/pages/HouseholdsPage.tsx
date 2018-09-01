@@ -31,6 +31,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                  }
   }
 
+  readOnly = () => this.state.editMode != 'view'
+
   startCreate = () => this.setState({ editMode: 'create'
                                     , form: this.state.form.reset({name: ''})
                                     })
@@ -94,20 +96,18 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-household-light p-2 border-b border-household">
-          <TopNav />
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative">
-            <h1 className="leading-none mb-2">Households</h1>
+        <div className="bg-household-light p-2">
+          <TopNav className="text-household-dark hover:text-household-darker" />
+          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
+            <h1 className="leading-none mb-2 -mt-1 text-household-darker">Households</h1>
+            <div className="flex justify-start">
+              <Button action={this.startCreate} disabled={this.readOnly()}>New household</Button>
+            </div>
           </div>
         </div>
         <div>
-          {this.state.editMode != 'create' && 
-            <div className="flex justify-end px-2 my-2">
-              <Button action={this.startCreate}>New household</Button>
-            </div>
-          }
           {this.state.editMode == 'create' &&
-            <div className="bg-purple-lightest p-2 mb-2 border-t border-b border-purple-lighter">
+            <div className="bg-purple-lightest p-2 pt-4 border-t border-b">
               <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
                 <div className="flex justify-between">
                   <label className="flex-no-grow flex-no-shrink mr-2"
@@ -123,7 +123,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                   {this.state.form.fields.name.error}
                 </div>
               </div>
-              <div className="mt-2 flex justify-end">
+              <div className="mt-4 flex justify-end">
                 <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
                 <Button className="ml-2" action={this.cancelCreate}>Cancel</Button>
               </div>
@@ -133,36 +133,37 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
           ? <div>No households created yet</div>
           : (
             <div>
-              { this.props.households.map(h => 
+              { this.props.households.map((h, i) => 
               this.state.editMode == 'edit' && this.state.editingId == h.id
               ? (
-                <div className="bg-purple-lightest p-2 mb-2 border-t border-b border-purple-lighter">
-                  <div className="flex justify-between">
-                    <label className="flex-no-grow flex-no-shrink mr-2"
-                           htmlFor="edit-name">Name</label>
-                    <input type="text"
-                           id="edit-name" 
-                           className={classNames('flex-grow flex-no-shrink', {'invalid': !this.state.form.fields.name.valid})} 
-                           autoFocus 
-                           value={this.state.form.fields.name.stringValue} 
-                           onChange={this.fieldChanged('name')} />
-                    {this.state.form.fields.name.error}
+                <div className={classNames('bg-purple-lightest p-2 pt-4 border-t border-b', {'mt-2': i > 0})}>
+                  <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
+                    <div className="flex justify-between">
+                      <label className="flex-no-grow flex-no-shrink mr-2"
+                             htmlFor="edit-name">Name</label>
+                      <input type="text"
+                             id="edit-name" 
+                             className={classNames('flex-grow flex-no-shrink', {'invalid': !this.state.form.fields.name.valid})} 
+                             autoFocus 
+                             value={this.state.form.fields.name.stringValue} 
+                             onChange={this.fieldChanged('name')} />
+                    </div>
+                    <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
+                      {this.state.form.fields.name.error}
+                    </div>
                   </div>
-                  <div hidden={!this.state.form.fields.name.error}>
-                    {this.state.form.fields.name.error}
-                  </div>
-                  <div className="mt-2 flex justify-end">
+                  <div className="mt-4 flex justify-end">
                     <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
                     <Button className="ml-2" action={this.cancelEdit}>Cancel</Button>
                   </div>
                 </div>
               )
               : (
-                <div key={h.id} className="flex justify-between items-baseline px-2 mb-2">
+                <div key={h.id} className="flex justify-between items-baseline px-2 mt-2">
                   <RouterLink className="flex-grow" path={`/households/${h.id}`}>{h.name}</RouterLink>
                   <span className="flex-no-shrink flex-no-grow">
-                    <Button icon="edit" action={() => this.startEdit(h)}></Button>
-                    <Button icon="trash" className="ml-2" action={() => this.delete(h)}></Button>
+                    <Button icon="edit" action={() => this.startEdit(h)} disabled={this.readOnly()}></Button>
+                    <Button icon="delete" className="ml-2" action={() => this.delete(h)} disabled={this.readOnly()}></Button>
                   </span>
                 </div>
               )) }

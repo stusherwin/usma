@@ -15,27 +15,31 @@ button {
   @apply border bg-grey-light border-grey rounded-sm py-1 px-2 text-grey-darkest;
 }
 
-button img {
-  @apply mr-2;
+button svg {
+  position: relative;
+  top: 1px;
+  fill: currentColor;
+  @apply w-4 h-4 mr-2;
 }
 
-button.button-sm {
-  padding: 0px 2px;
-  @apply rounded-none;
+button:hover {
+  @apply bg-grey border-grey-dark text-black;
+}
+
+button:active {
+  /* @apply shadow-inner; */
 }
 
 button.button-icon {
   @apply px-2;
 }
 
-button.button-icon img {
-  position: relative;
-  top: 1px;
+button.button-icon svg {
   @apply mr-0;
 }
 
-button:hover {
-  @apply bg-grey border-grey-dark text-black;
+button[disabled], button[disabled]:hover {
+  @apply bg-grey-light-2 text-grey-dark border-grey-light cursor-default;
 }
 
 input[type="text"] {
