@@ -6621,13 +6621,16 @@ button[disabled]:hover {
 input[type="text"] {
   border-width: 1px;
   border-color: #b8c2cc;
+  padding-left: .25rem;
+  padding-right: .25rem;
 }
 
 .field label:after {
   content: ':';
 }
 
-.field.invalid label {
+.field.invalid label,
+.field.invalid .money-input {
   color: #e3342f;
 }
 

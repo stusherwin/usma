@@ -5,3 +5,4 @@
 * Add product code
 * Add no. of people to household (+ total per person to household order)
 * Products VAT included in price?
+* add/edit box lighter colour of section

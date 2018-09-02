@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { Product } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
@@ -16,8 +17,7 @@ export interface ProductsPageProps { products: Product[]
                                    , error: ApiError | null
                                    }
 
-export interface ProductsPageState { creating: boolean
-                                   , editingId: number | null
+export interface ProductsPageState { editing: 'new' | number | null
                                    , form: Form
                                    }
 
@@ -25,12 +25,11 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   constructor(props: ProductsPageProps) {
     super(props)
 
-    this.state = { creating: false
-                 , editingId: null
+    this.state = { editing: null
                  , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v,
                                          [ Validate.required('Name is required')
                                          ])
-                                     , price: Field.create((v: string) => (parseFloat(v) || 0) * 100, (v: number) => (v / 100.0).toFixed(2),
+                                     , price: Field.create((v: string) => (parseFloat(v) || 0) * 100, (v: number | null) => !v? '' : (v / 100.0).toFixed(2),
                                          [ Validate.required('Price is required')
                                          , Validate.decimal('Price must be a number')
                                          , Validate.twoDP('Price can\'t have more than 2 decimal places')
@@ -40,11 +39,12 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                  }
   }
 
-  startCreate = () => this.setState({ creating: true
+  startCreate = () => this.setState({ editing: 'new'
+                                    , form: this.state.form.reset({name: '', price: ''})
                                     })
 
-  cancelCreate = () => this.setState({ creating: false
-                                     , form: this.state.form.reset({name: '', price: 0})
+  cancelCreate = () => this.setState({ editing: null
+                                     , form: this.state.form.reset({name: '', price: ''})
                                      })
 
   confirmCreate = () => {
@@ -54,34 +54,34 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     if(validated.valid()) {
       this.props.request(ServerApi.command.createProduct(validated.fields.name.value, validated.fields.price.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ creating: false
-                                 , form: this.state.form.reset({name: '', price: 0})
+        .then(_ => this.setState({ editing: null
+                                 , form: this.state.form.reset({name: '', price: ''})
                                  })
         )
     }
   }
 
-  startEdit = (product: Product) => this.setState({ editingId: product.id
+  startEdit = (product: Product) => this.setState({ editing: product.id
                                                   , form: this.state.form.reset({name: product.name, price: product.price})
                                                   })
 
   cancelEdit = () => {
-    this.setState({ editingId: null
-                  , form: this.state.form.reset({name: '', price: 0})
+    this.setState({ editing: null
+                  , form: this.state.form.reset({name: '', price: ''})
                   })
   }
 
   confirmEdit = () => {
-    if(!this.state.editingId) return
+    if(typeof this.state.editing !== 'number') return
 
     const validated = this.state.form.validate()
     this.setState({ form: validated })
 
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateProduct(this.state.editingId, validated.fields.name.value, validated.fields.price.value))
+      this.props.request(ServerApi.command.updateProduct(this.state.editing, validated.fields.name.value, validated.fields.price.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ editingId: null
-                                 , form: this.state.form.reset({name: '', price: 0})
+        .then(_ => this.setState({ editing: null
+                                 , form: this.state.form.reset({name: '', price: ''})
                                  }))
     }
   }
@@ -100,53 +100,109 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-img-product bg-no-repeat bg-16 pl-16 min-h-16 bg-product-light">
-          <TopNav />
-          <h1>Products</h1>
-          {!this.state.creating && 
-            <Button action={this.startCreate}>New product</Button>
-          }
+        <div className="bg-product-light p-2">
+          <TopNav className="text-white hover:text-white" />
+          <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
+            <h1 className="text-white leading-none mb-2 -mt-1 text-household-darker">Products</h1>
+            <div className="flex justify-start">
+              <Button action={this.startCreate} disabled={!!this.state.editing}>New product</Button>
+            </div>
+          </div>
         </div>
-        {this.state.creating &&
-          <div>
-            <span>
-              <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
-              {this.state.form.fields.name.error}
-            </span>
-            <span>
-              <input type="text" value={this.state.form.fields.price.stringValue} className={!this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
-              {this.state.form.fields.price.error}
-            </span>
-            <Button action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
-            <Button action={this.cancelCreate}>Cancel</Button>
+        {this.state.editing == 'new' &&
+          <div className="bg-purple-lightest p-2 border-t border-b">
+            <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
+              <div className="flex justify-between items-baseline">
+                <label className="flex-no-grow flex-no-shrink mr-2"
+                       htmlFor="create-name">Name</label>
+                <input type="text" 
+                       id="create-name" 
+                       autoFocus
+                       className="flex-grow flex-no-shrink"
+                       value={this.state.form.fields.name.stringValue} 
+                       onChange={this.fieldChanged('name')} />
+              </div>
+              <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
+                {this.state.form.fields.name.error}
+              </div>
+            </div>
+            <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.price.valid})}>
+              <div className="flex justify-between items-baseline">
+                <label className="flex-no-grow flex-no-shrink mr-2"
+                       htmlFor="create-price">Price</label>
+                <span className="money-input flex-grow flex-no-shrink flex items-baseline">
+                  <span className="flex-no-grow flex-no-shrink mr-1">&pound;</span>
+                  <input type="text"
+                         id="create-price"
+                         className="flex-grow flex-no-shrink"
+                         value={this.state.form.fields.price.stringValue}
+                         onChange={this.fieldChanged('price')} />
+                </span>
+              </div>
+              <div className="text-red mt-2" hidden={!this.state.form.fields.price.error}>
+                {this.state.form.fields.price.error}
+              </div>
+            </div>
+              <div className="mt-4 flex justify-end items-baseline">
+                <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
+                <Button className="ml-2" action={this.cancelCreate}>Cancel</Button>
+              </div>
           </div>
         }
         {!this.props.products.length
-        ? <div>No products</div>
+        ? <div>No products created yet</div>
         : (
           <div>
-            { this.props.products.map(p => 
-            this.state.editingId == p.id
+            { this.props.products.map((p, i) => 
+            this.state.editing == p.id
             ? (
-              <div>
-                <span>
-                  <input type="text" value={this.state.form.fields.name.stringValue} className={!this.state.form.fields.name.valid? 'invalid': 'valid'} onChange={this.fieldChanged('name')} />
-                  {this.state.form.fields.name.error}
-                </span>
-                <span>
-                  <input type="text" value={this.state.form.fields.price.stringValue} className={!this.state.form.fields.price.valid? 'invalid': 'valid'} onChange={this.fieldChanged('price')} />
-                  {this.state.form.fields.price.error}
-                </span>
-                <Button action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
-                <Button action={this.cancelEdit}>Cancel</Button>
+              <div className={classNames('bg-purple-lightest p-2 border-t border-b', {'mt-2': i > 0})}>
+                <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
+                  <div className="flex justify-between items-baseline">
+                    <label className="flex-no-grow flex-no-shrink mr-2"
+                           htmlFor="edit-name">Name</label>
+                    <input type="text" 
+                           id="edit-name" 
+                           className="flex-grow flex-no-shrink"
+                           autoFocus 
+                           value={this.state.form.fields.name.stringValue} 
+                           onChange={this.fieldChanged('name')} />
+                  </div>
+                  <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
+                    {this.state.form.fields.name.error}
+                  </div>
+                </div>
+                <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.price.valid})}>
+                  <div className="flex justify-between items-baseline">
+                    <label className="flex-no-grow flex-no-shrink mr-2"
+                           htmlFor="edit-price">Price</label>
+                    <span className="money-input flex-grow flex-no-shrink flex items-baseline">
+                      <span className="flex-no-grow flex-no-shrink mr-1">&pound;</span>
+                      <input type="text" 
+                             id="edit-price" 
+                             className="flex-grow flex-no-shrink"
+                             value={this.state.form.fields.price.stringValue} 
+                             onChange={this.fieldChanged('price')} />
+                    </span>
+                  </div>
+                  <div className="text-red mt-2" hidden={!this.state.form.fields.price.error}>
+                    {this.state.form.fields.price.error}
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
+                  <Button className="ml-2" action={this.cancelEdit}>Cancel</Button>
+                </div>
               </div>
             )
             : (
-              <div key={p.id}>
-                <span>{p.name}</span>
-                <Money amount={p.price} />
-                <Button action={() => this.startEdit(p)}>Edit</Button>
-                <Button action={() => this.delete(p)}>Delete</Button>
+              <div key={p.id} className="flex justify-between items-baseline px-2 mt-2">
+                <span className="flex-grow">{p.name}</span>
+                <Money className="flex-no-shrink flex-no-grow" amount={p.price} />
+                <span className="flex-no-shrink flex-no-grow">
+                  <Button icon="edit" className="ml-2" action={() => this.startEdit(p)} disabled={!!this.state.editing}></Button>
+                  <Button icon="delete" className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}></Button>
+                </span>
               </div>
             )) }
           </div>

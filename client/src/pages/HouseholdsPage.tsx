@@ -16,8 +16,7 @@ export interface HouseholdsPageProps { households: Household[]
                                      , error: ApiError | null
                                      }
 
-export interface HouseholdsPageState { editMode: 'create' | 'edit' | 'view'
-                                     , editingId: number | null
+export interface HouseholdsPageState { editing: 'new' | number | null
                                      , form: Form
                                      }
 
@@ -25,19 +24,16 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
   constructor(props: HouseholdsPageProps) {
     super(props)
 
-    this.state = { editMode: 'view'
-                 , editingId: null
+    this.state = { editing: null
                  , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]) })
                  }
   }
 
-  readOnly = () => this.state.editMode != 'view'
-
-  startCreate = () => this.setState({ editMode: 'create'
+  startCreate = () => this.setState({ editing: 'new'
                                     , form: this.state.form.reset({name: ''})
                                     })
 
-  cancelCreate = () => this.setState({ editMode: 'view'
+  cancelCreate = () => this.setState({ editing: null
                                      , form: this.state.form.reset({name: ''})
                                      })
 
@@ -48,34 +44,31 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ editMode: 'view'
+        .then(_ => this.setState({ editing: null
                                  , form: this.state.form.reset({name: ''})
                                  })
         )
     }
   }
 
-  startEdit = (household: Household) => this.setState({ editMode: 'edit'
-                                                      , editingId: household.id
+  startEdit = (household: Household) => this.setState({ editing: household.id
                                                       , form: this.state.form.reset({name: household.name})
                                                       })
 
-  cancelEdit = () => this.setState({ editMode: 'view'
-                                   , editingId: null
+  cancelEdit = () => this.setState({ editing: null
                                    , form: this.state.form.reset({name: ''})
                                    })
 
   confirmEdit = () => {
-    if(!this.state.editingId) return
+    if(typeof this.state.editing !== 'number') return
 
     const validated = this.state.form.validate()
     console.log(validated)
     this.setState({ form: validated })
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateHousehold(this.state.editingId, validated.fields.name.value))
+      this.props.request(ServerApi.command.updateHousehold(this.state.editing, validated.fields.name.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ editMode: 'view'
-                                 , editingId: null
+        .then(_ => this.setState({ editing: null
                                  , form: this.state.form.reset({name: ''})
                                  })
         )
@@ -101,15 +94,15 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
           <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
             <h1 className="leading-none mb-2 -mt-1 text-household-darker">Households</h1>
             <div className="flex justify-start">
-              <Button action={this.startCreate} disabled={this.readOnly()}>New household</Button>
+              <Button action={this.startCreate} disabled={!!this.state.editing}>New household</Button>
             </div>
           </div>
         </div>
         <div>
-          {this.state.editMode == 'create' &&
+          {this.state.editing == 'new' &&
             <div className="bg-purple-lightest p-2 pt-4 border-t border-b">
               <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <label className="flex-no-grow flex-no-shrink mr-2"
                          htmlFor="create-name">Name</label>
                   <input type="text"
@@ -134,16 +127,16 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
           : (
             <div>
               { this.props.households.map((h, i) => 
-              this.state.editMode == 'edit' && this.state.editingId == h.id
+              this.state.editing == h.id
               ? (
                 <div className={classNames('bg-purple-lightest p-2 pt-4 border-t border-b', {'mt-2': i > 0})}>
                   <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-baseline">
                       <label className="flex-no-grow flex-no-shrink mr-2"
                              htmlFor="edit-name">Name</label>
                       <input type="text"
                              id="edit-name" 
-                             className={classNames('flex-grow flex-no-shrink', {'invalid': !this.state.form.fields.name.valid})} 
+                             className="flex-grow flex-no-shrink"
                              autoFocus 
                              value={this.state.form.fields.name.stringValue} 
                              onChange={this.fieldChanged('name')} />
@@ -162,8 +155,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                 <div key={h.id} className="flex justify-between items-baseline px-2 mt-2">
                   <RouterLink className="flex-grow" path={`/households/${h.id}`}>{h.name}</RouterLink>
                   <span className="flex-no-shrink flex-no-grow">
-                    <Button icon="edit" action={() => this.startEdit(h)} disabled={this.readOnly()}></Button>
-                    <Button icon="delete" className="ml-2" action={() => this.delete(h)} disabled={this.readOnly()}></Button>
+                    <Button icon="edit" className="ml-2" action={() => this.startEdit(h)} disabled={!!this.state.editing}></Button>
+                    <Button icon="delete" className="ml-2" action={() => this.delete(h)} disabled={!!this.state.editing}></Button>
                   </span>
                 </div>
               )) }

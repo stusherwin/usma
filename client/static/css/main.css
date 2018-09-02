@@ -43,14 +43,14 @@ button[disabled], button[disabled]:hover {
 }
 
 input[type="text"] {
-  @apply border border-grey;
+  @apply border border-grey px-1;
 }
 
 .field label:after {
   content: ':';
 }
 
-.field.invalid label {
+.field.invalid label, .field.invalid .money-input {
   @apply text-red;
 }
 
