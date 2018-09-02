@@ -6,6 +6,7 @@ import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
 import { Button } from '../Button'
+import { Icon } from '../Icon'
 import { Form, Field, Validate } from '../Validation'
 import { TopNav } from '../TopNav'
 
@@ -85,23 +86,23 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
   render() {
     return (
       <div>
-        <div hidden={!this.props.loading}>Loading...</div>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-household-light p-2">
           <TopNav className="text-household-dark hover:text-household-darker" />
           <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
-            <h1 className="leading-none mb-2 -mt-1 text-household-darker">Households</h1>
+            <h1 className="leading-none mb-2 -mt-1 text-household-darker">Households{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
             <div className="flex justify-start">
-              <Button action={this.startCreate} disabled={!!this.state.editing}>New household</Button>
+              <Button action={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New household</Button>
             </div>
           </div>
         </div>
         <div>
           {this.state.editing == 'new' &&
-            <div className="bg-purple-lightest p-2 pt-4 border-t border-b">
-              <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
+            <div className="bg-household-lightest p-2">
+              <h3>Create new household</h3>
+              <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
                 <div className="flex justify-between items-baseline">
                   <label className="flex-no-grow flex-no-shrink mr-2"
                          htmlFor="create-name">Name</label>
@@ -117,8 +118,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
-                <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
-                <Button className="ml-2" action={this.cancelCreate}>Cancel</Button>
+                <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
               </div>
             </div>
           }
@@ -129,8 +130,9 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               { this.props.households.map((h, i) => 
               this.state.editing == h.id
               ? (
-                <div className={classNames('bg-purple-lightest p-2 pt-4 border-t border-b', {'mt-2': i > 0})}>
-                  <div className={classNames('field', {'invalid': !this.state.form.fields.name.valid})}>
+                <div key={h.id} className={classNames('bg-household-lightest p-2', {'mt-2': i > 0})}>
+                  <h3>Edit household</h3>
+                  <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
                     <div className="flex justify-between items-baseline">
                       <label className="flex-no-grow flex-no-shrink mr-2"
                              htmlFor="edit-name">Name</label>
@@ -146,8 +148,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                     </div>
                   </div>
                   <div className="mt-4 flex justify-end">
-                    <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
-                    <Button className="ml-2" action={this.cancelEdit}>Cancel</Button>
+                    <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                    <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
                   </div>
                 </div>
               )
@@ -155,8 +157,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                 <div key={h.id} className="flex justify-between items-baseline px-2 mt-2">
                   <RouterLink className="flex-grow" path={`/households/${h.id}`}>{h.name}</RouterLink>
                   <span className="flex-no-shrink flex-no-grow">
-                    <Button icon="edit" className="ml-2" action={() => this.startEdit(h)} disabled={!!this.state.editing}></Button>
-                    <Button icon="delete" className="ml-2" action={() => this.delete(h)} disabled={!!this.state.editing}></Button>
+                    <Button className="ml-2" action={() => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                    <Button className="ml-2" action={() => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
                   </span>
                 </div>
               )) }

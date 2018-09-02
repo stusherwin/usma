@@ -5,6 +5,7 @@ import { Product } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { Button } from '../Button'
+import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Form, Field, Validate } from '../Validation'
 import { RouterLink } from '../RouterLink'
@@ -96,21 +97,21 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   render() {
     return (
       <div>
-        <div hidden={!this.props.loading}>Loading...</div>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-product-light p-2">
           <TopNav className="text-white hover:text-white" />
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
-            <h1 className="text-white leading-none mb-2 -mt-1 text-household-darker">Products</h1>
+            <h1 className="text-white leading-none mb-2 -mt-1 text-household-darker">Products{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
             <div className="flex justify-start">
-              <Button action={this.startCreate} disabled={!!this.state.editing}>New product</Button>
+              <Button action={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New product</Button>
             </div>
           </div>
         </div>
         {this.state.editing == 'new' &&
-          <div className="bg-purple-lightest p-2 border-t border-b">
+          <div className="bg-product-lightest p-2">
+            <h3>Create new product</h3>
             <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
               <div className="flex justify-between items-baseline">
                 <label className="flex-no-grow flex-no-shrink mr-2"
@@ -144,8 +145,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
               </div>
             </div>
               <div className="mt-4 flex justify-end items-baseline">
-                <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
-                <Button className="ml-2" action={this.cancelCreate}>Cancel</Button>
+                <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
               </div>
           </div>
         }
@@ -156,7 +157,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             { this.props.products.map((p, i) => 
             this.state.editing == p.id
             ? (
-              <div className={classNames('bg-purple-lightest p-2 border-t border-b', {'mt-2': i > 0})}>
+              <div key={p.id} className={classNames('bg-product-lightest p-2', {'mt-2': i > 0})}>
+               <h3>Edit product</h3>
                 <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
                   <div className="flex justify-between items-baseline">
                     <label className="flex-no-grow flex-no-shrink mr-2"
@@ -190,8 +192,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                   </div>
                 </div>
                 <div className="mt-4 flex justify-end">
-                  <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
-                  <Button className="ml-2" action={this.cancelEdit}>Cancel</Button>
+                  <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                  <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
                 </div>
               </div>
             )
@@ -200,8 +202,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                 <span className="flex-grow">{p.name}</span>
                 <Money className="flex-no-shrink flex-no-grow" amount={p.price} />
                 <span className="flex-no-shrink flex-no-grow">
-                  <Button icon="edit" className="ml-2" action={() => this.startEdit(p)} disabled={!!this.state.editing}></Button>
-                  <Button icon="delete" className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}></Button>
+                  <Button className="ml-2" action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                  <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
                 </span>
               </div>
             )) }

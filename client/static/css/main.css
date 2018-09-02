@@ -15,11 +15,14 @@ button {
   @apply border bg-grey-light border-grey rounded-sm py-1 px-2 text-grey-darkest;
 }
 
-button svg {
+.nudge-d-1 {
   position: relative;
   top: 1px;
-  fill: currentColor;
-  @apply w-4 h-4 mr-2;
+}
+
+.nudge-d-2 {
+  position: relative;
+  top: 2px;
 }
 
 button:hover {
@@ -30,12 +33,12 @@ button:active {
   /* @apply shadow-inner; */
 }
 
-button.button-icon {
+/* button.button-icon {
   @apply px-2;
-}
+} */
 
 button.button-icon svg {
-  @apply mr-0;
+  /* @apply mr-0; */
 }
 
 button[disabled], button[disabled]:hover {
@@ -77,3 +80,11 @@ input[type="text"] {
 .bg-img-edit {
   background-image: url(/img/edit.svg);
 }
+
+.rotating {
+  -webkit-animation: rotate 1.5s linear infinite; 
+          animation: rotate 1.5s linear infinite; 
+}
+
+@-webkit-keyframes rotate{ to{-webkit-transform: rotate(360deg); } }
+@keyframes         rotate{ to{        transform: rotate(360deg); } }
