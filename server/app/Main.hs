@@ -8,6 +8,8 @@ module Main where
   
   import Control.Monad.IO.Class (liftIO)
   import Network.Wai.Handler.Warp (run)
+  import Network.Wai (responseFile)
+  import Network.HTTP.Types (hContentType, status200)
   import qualified Data.IntMap.Strict as IM (IntMap(..), fromList, elems, lookup, insert, size)
   import Data.IORef (IORef, newIORef, readIORef, atomicModifyIORef')
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
@@ -23,6 +25,7 @@ module Main where
   import Network.Wai.Middleware.Cors (cors, simpleCorsResourcePolicy, corsRequestHeaders, corsMethods, simpleMethods, corsOrigins)
   import Network.Wai.Middleware.Servant.Options (provideOptions)
   import Network.Wai.Middleware.RequestLogger (logStdoutDev)
+  import Network.Wai.Middleware.Static (staticPolicy, addBase)
   import System.Environment (getEnv, getArgs)
   import Web.Cookie (parseCookiesText)
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
@@ -53,7 +56,15 @@ module Main where
            
   server :: ByteString -> Server FullAPI
   server conn = appServer conn
-           :<|> serveDirectoryFileServer "client/static"
+           :<|> Tagged (staticPolicy (addBase "client/static") staticOrDefault)
+
+  staticOrDefault :: Application
+  staticOrDefault req respond = respond $ 
+    responseFile
+    status200
+    [(hContentType, "text/html")]
+    "client/static/index.html"
+    Nothing
 
   appServer :: ByteString -> Server AppAPI
   appServer conn = queryServer conn

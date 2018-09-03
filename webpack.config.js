@@ -29,7 +29,7 @@ if(isWebpackDevServer) {
   plugins.push(new ExtractTextPlugin("./css/bundle.css"));
   lessUse = ExtractTextPlugin.extract({
     fallback: "style-loader",
-    use: [ "css-loader" /*, "less-loader"*/ ]
+    use: [ "css-loader" ]
   })
 }
 
@@ -37,8 +37,8 @@ module.exports = {
     entry: "./client/src/index.tsx",
 
     output: {
-        filename: "./dist/app.js",
-        path: __dirname + "/dist"
+        filename: "./app.js",
+        path: path.resolve(__dirname, 'client/static/dist')
     },
 
     devServer: {

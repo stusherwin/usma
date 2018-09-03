@@ -7,3 +7,4 @@
 npm-debug.log
 run-server
 /dist/
+/client/static/dist/
