@@ -27,7 +27,7 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
         )}
         <div className="bg-grey-light p-2">
           <TopNav className="text-grey-darkest hover:text-black" />
-          <div className="bg-img-household-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
+          <div className="bg-img-household-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">{householdOrder.householdName}{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <div className="mt-6">
               <RouterLink path={`/households/${householdOrder.householdId}`}>View household</RouterLink>
@@ -35,7 +35,7 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
           </div>
         </div>
         <div className="bg-grey-lighter p-2">
-          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2 overflow-auto">
+          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past order</h2>
             <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(householdOrder.orderCreatedDate)}</span><span><Money amount={householdOrder.total} /></span></h3>
             <h3 className="font-normal">{householdOrder.status}</h3>

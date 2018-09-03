@@ -26,7 +26,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
     return (
       <div>
         <div className="bg-grey-lighter p-2">
-          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2 overflow-auto">
+          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past orders</h2>
           </div>
         </div>

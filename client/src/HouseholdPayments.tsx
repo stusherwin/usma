@@ -98,7 +98,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     return (
       <div>
         <div className="bg-payment-light p-2 mt-4">
-          <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2 overflow-auto">
+          <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-payment-dark leading-none mb-2 -mt-1">Payments</h2>
             <div className="flex justify-start">
               <Button action={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</Button>

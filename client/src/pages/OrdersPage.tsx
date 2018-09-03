@@ -40,7 +40,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
         )}
         <div className="bg-order-dark p-2">
           <TopNav className="text-grey-darkest hover:text-black" />
-          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
+          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="leading-none mb-2 -mt-1">Current order{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             {currentOrder
             ? (
@@ -67,7 +67,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
                         request={this.props.request} />
         }
         <div className="bg-grey-lighter p-2">
-          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2 overflow-auto">
+          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past orders</h2>
           </div>
         </div>

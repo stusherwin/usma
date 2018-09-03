@@ -51,7 +51,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
         )}
         <div className="bg-household-light p-2">
           <TopNav className="text-household-dark hover:text-household-darker" />
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-hidden">
+          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="leading-none mb-2 -mt-1 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <table className="border-collapse w-full text-household-darker">
               <tr>
@@ -74,7 +74,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
           ? (
             <div>
               <div className="bg-order-dark p-2">
-                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-auto">
+                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
                   <h2>Current order</h2>
                   <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.total} /></span></h3>
                   <h3 className="font-normal">{currentOrder.status}</h3>
@@ -89,20 +89,20 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
           : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
           ? (
             <div className="bg-order-dark p-2">
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-hidden mb-1">
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                 <h2>Current order</h2>
                 <p>There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
+                <Button className="mt-2" action={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Join this order</Button>
               </div>
-              <Button className="mt-2" action={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Join this order</Button>
             </div>
           )
           : (
             <div className="bg-order-dark p-2">
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-hidden mb-1">
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                 <h2>Current order</h2>
                 <p>There's no order currently in progress.</p>
+                <Button className="mt-2" action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</Button>
               </div>
-              <Button className="mt-2" action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</Button>
             </div>
           )}
           <HouseholdOrders household={this.props.household}
