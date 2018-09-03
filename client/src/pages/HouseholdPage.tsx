@@ -75,8 +75,9 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
             <div>
               <div className="bg-order-dark p-2">
                 <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-auto">
-                  <h2>Current: {Util.formatDate(currentOrder.orderCreatedDate)}</h2>
-                  <h3 className="mt-0 flex justify-between"><span>{currentOrder.status}</span><span><Money amount={currentOrder.total} /></span></h3>
+                  <h2>Current order</h2>
+                  <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.total} /></span></h3>
+                  <h3 className="font-normal">{currentOrder.status}</h3>
                 </div>
               </div>
               <CurrentHouseholdOrder householdOrder={currentOrder}

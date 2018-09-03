@@ -78,9 +78,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     return (
       <div>
-        <div className="bg-order-dark p-2 pt-0">
-          <h3 className="mt-0 flex justify-between"><span>{order.status}</span><span><Money amount={order.total} /></span></h3>
-          <div className="mt-2">
+        <div className="bg-order-dark p-2">
+          <div className="">
             {order.canBeAmended && (
               !this.props.householdOrders.length
               ? <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for households to join</span>

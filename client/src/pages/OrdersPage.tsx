@@ -41,16 +41,20 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
         <div className="bg-order-dark p-2">
           <TopNav className="text-grey-darkest hover:text-black" />
           <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
-            <h1 className="leading-none mb-2 -mt-1">Orders{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
+            <h2 className="leading-none mb-2 -mt-1">Current order{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             {currentOrder
             ? (
               <div>
-                <h2>Current: {Util.formatDate(currentOrder.createdDate)}</h2>
+                <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.createdDate)}</span><span><Money amount={currentOrder.total} /></span></h3>
+                <h3 className="font-normal">{currentOrder.status}</h3>
               </div>
             )
             : (
-              <div className="flex justify-start">
-                <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
+              <div>
+                <div className="mx-2 my-4">No order currently in progress</div>
+                <div className="flex justify-start">
+                  <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
+                </div>
               </div>
             )}
           </div>
@@ -61,9 +65,6 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
                         households={this.props.households}
                         reload={this.props.reload}
                         request={this.props.request} />
-        }
-        {!currentOrder && 
-          <div className="mx-2 my-4">No order currently in progress</div>
         }
         <div className="bg-grey-light p-2">
           <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2 overflow-auto">
