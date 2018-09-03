@@ -42,11 +42,17 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           <TopNav className="text-grey-darkest hover:text-black" />
           <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
             <h1 className="leading-none mb-2 -mt-1">Orders{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
-            {!currentOrder && 
+            {currentOrder
+            ? (
+              <div>
+                <h2>{Util.formatDate(currentOrder.createdDate)}: <Money amount={currentOrder.total} /></h2>
+              </div>
+            )
+            : (
               <div className="flex justify-start">
                 <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
               </div>
-            }
+            )}
           </div>
         </div>
         {!!currentOrder &&

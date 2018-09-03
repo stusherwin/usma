@@ -78,9 +78,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     return (
       <div>
-        <div className="bg-order-lighter p-2">
-          <h2>{this.props.order.status}: {Util.formatDate(this.props.order.createdDate)}</h2>
-          <h3 className="mt-2"><Money amount={order.total} /></h3>
+        <div className="bg-order-dark p-2 pt-0">
+          <h3 className="mt-0">{order.status}</h3>
           <div className="mt-2">
             {order.canBeAmended && (
               !this.props.householdOrders.length
