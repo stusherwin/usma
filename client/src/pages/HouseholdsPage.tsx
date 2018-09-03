@@ -101,8 +101,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         <div>
           {this.state.editing == 'new' &&
             <div className="bg-household-lightest p-2">
-              <h3>Create new household</h3>
-              <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
+              <h3 className="mb-4">Create new household</h3>
+              <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
                 <div className="flex justify-between items-baseline">
                   <label className="flex-no-grow flex-no-shrink mr-2"
                          htmlFor="create-name">Name</label>
@@ -117,7 +117,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                   {this.state.form.fields.name.error}
                 </div>
               </div>
-              <div className="mt-4 flex justify-end">
+              <div className="flex justify-end">
                 <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                 <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
               </div>
@@ -131,8 +131,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               this.state.editing == h.id
               ? (
                 <div key={h.id} className={classNames('bg-household-lightest p-2', {'mt-2': i > 0})}>
-                  <h3>Edit household</h3>
-                  <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
+                  <h3 className="mb-4">Edit household</h3>
+                  <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
                     <div className="flex justify-between items-baseline">
                       <label className="flex-no-grow flex-no-shrink mr-2"
                              htmlFor="edit-name">Name</label>
@@ -147,7 +147,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                       {this.state.form.fields.name.error}
                     </div>
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="flex justify-end">
                     <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                     <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
                   </div>

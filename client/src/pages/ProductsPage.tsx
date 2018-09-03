@@ -111,8 +111,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         </div>
         {this.state.editing == 'new' &&
           <div className="bg-product-lightest p-2">
-            <h3>Create new product</h3>
-            <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
+            <h3 className="mb-4">Create new product</h3>
+            <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
               <div className="flex justify-between items-baseline">
                 <label className="flex-no-grow flex-no-shrink mr-2"
                        htmlFor="create-name">Name</label>
@@ -127,7 +127,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                 {this.state.form.fields.name.error}
               </div>
             </div>
-            <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.price.valid})}>
+            <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.price.valid})}>
               <div className="flex justify-between items-baseline">
                 <label className="flex-no-grow flex-no-shrink mr-2"
                        htmlFor="create-price">Price</label>
@@ -144,7 +144,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                 {this.state.form.fields.price.error}
               </div>
             </div>
-              <div className="mt-4 flex justify-end items-baseline">
+              <div className="flex justify-end items-baseline">
                 <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                 <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
               </div>
@@ -158,8 +158,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             this.state.editing == p.id
             ? (
               <div key={p.id} className={classNames('bg-product-lightest p-2', {'mt-2': i > 0})}>
-               <h3>Edit product</h3>
-                <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.name.valid})}>
+                <h3 className="mb-4">Edit product</h3>
+                <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
                   <div className="flex justify-between items-baseline">
                     <label className="flex-no-grow flex-no-shrink mr-2"
                            htmlFor="edit-name">Name</label>
@@ -174,7 +174,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                     {this.state.form.fields.name.error}
                   </div>
                 </div>
-                <div className={classNames('field mt-4', {'invalid': !this.state.form.fields.price.valid})}>
+                <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.price.valid})}>
                   <div className="flex justify-between items-baseline">
                     <label className="flex-no-grow flex-no-shrink mr-2"
                            htmlFor="edit-price">Price</label>
@@ -191,7 +191,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                     {this.state.form.fields.price.error}
                   </div>
                 </div>
-                <div className="mt-4 flex justify-end">
+                <div className="flex justify-end">
                   <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                   <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
                 </div>

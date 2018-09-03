@@ -49,6 +49,10 @@ input[type="text"] {
   @apply border border-grey px-1;
 }
 
+select {
+  @apply border border-grey px-1;
+}
+
 .field label:after {
   content: ':';
 }
@@ -88,3 +92,16 @@ input[type="text"] {
 
 @-webkit-keyframes rotate{ to{-webkit-transform: rotate(360deg); } }
 @keyframes         rotate{ to{        transform: rotate(360deg); } }
+
+.crossed-out {
+  position: relative;
+}
+
+.crossed-out::after {
+  position: absolute;
+  content: '.';
+  color: transparent;
+  left: 0.25rem;
+  right: 0.25rem;
+  @apply border-grey-dark border-b;
+}

@@ -1,10 +1,12 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { CollectiveOrder, HouseholdOrder, Household } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
 import { Button } from '../Button'
+import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Router } from '../Router'
 import { CurrentOrder } from '../CurrentOrder'
@@ -29,48 +31,45 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   render() {
     const currentOrder = this.props.currentOrder
     const pastOrders = this.props.pastOrders
+    const deletableHousehold = !!this.props.currentHouseholdOrders.length && !!this.props.currentHouseholdOrders.find(ho => !ho.items.length)
 
     return (
       <div>
-        <div hidden={!this.props.loading}>Loading...</div>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-img-order bg-no-repeat bg-16 pl-16 min-h-16 bg-order-dark">
-          <TopNav />
-          <h1>Orders</h1>
-        </div>
-        <div>
-          {currentOrder
-          ? (
-            <div>
-              <h2>Current order: {Util.formatDate(currentOrder.createdDate)}</h2>
-              <CurrentOrder order={currentOrder}
-                            householdOrders={this.props.currentHouseholdOrders}
-                            households={this.props.households}
-                            reload={this.props.reload}
-                            request={this.props.request} />
-            </div>
-          )
-          : ( 
-            <div>
-              <h2>Current order</h2>
-              <p>There's no order currently in progress.</p>
-              <Button action={this.newOrder}>Start a new one</Button>
-            </div>
-          )}
-        </div>
-        <h2>Past orders</h2>
-        {!pastOrders.length ? <div>No past orders</div> : (
-          <div>
-            { pastOrders.map(o => (
-              <div key={o.id}>
-                <RouterLink path={`/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink>
-                <span>{o.status}</span>
-                <Money amount={o.total} />
+        <div className="bg-order-dark p-2">
+          <TopNav className="text-grey-darkest hover:text-black" />
+          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
+            <h1 className="leading-none mb-2 -mt-1">Orders{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
+            {!currentOrder && 
+              <div className="flex justify-start">
+                <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
               </div>
-            )) }
+            }
           </div>
+        </div>
+        {!!currentOrder &&
+          <CurrentOrder order={currentOrder}
+                        householdOrders={this.props.currentHouseholdOrders}
+                        households={this.props.households}
+                        reload={this.props.reload}
+                        request={this.props.request} />
+        }
+        {!currentOrder && 
+          <div className="mx-2 mt-4">No order currently in progress</div>
+        }
+        <h2 className="mx-2 mt-4">Past orders</h2>
+        {!pastOrders.length ? <div className="p-2">No past orders</div> : (
+          <table className="border-collapse w-full mb-4">
+            { pastOrders.map(o => (
+              <tr key={o.id} className={classNames({'crossed-out': o.status == 'Cancelled'})}>
+                <td className="pt-2 pl-2"><RouterLink path={`/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
+                <td className="pt-2">{o.status}</td>
+                <td className="pt-2 pr-2 text-right"><Money amount={o.total} /></td>
+              </tr>
+            )) }
+          </table>
         )}
       </div>
     )

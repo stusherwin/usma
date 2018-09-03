@@ -55,6 +55,8 @@ let colors = {
 
   'order': '#f0faa0',
   'order-dark': '#ffe85c',
+  'order-lighter': '#fef6a3',
+  'order-lightest': '#fffebb',
 
   'product': '#b1529e',
   'product-light': '#ca72b8',
