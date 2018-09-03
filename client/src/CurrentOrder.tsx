@@ -79,7 +79,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     return (
       <div>
         <div className="bg-order-dark p-2 pt-0">
-          <div className="mb-4">
+          <div className="">
             {order.canBeAmended && (
               !this.props.householdOrders.length
               ? <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for households to join</span>
@@ -98,12 +98,12 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                 <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
               } */}
               {canDeleteOrder &&
-                <Button className="mr-2" disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</Button>
+                <Button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} action={() => this.deleteOrder()}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</Button>
               }
               {canAddHousehold &&
-                <Button className="mr-2" disabled={!!this.state.addingHousehold} action={() => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</Button>
+                <Button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} action={() => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</Button>
               }
-              <Button disabled={!!this.state.addingHousehold || !canPlaceOrder} action={() => this.placeOrder()}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</Button>
+              <Button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !canPlaceOrder} action={() => this.placeOrder()}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</Button>
             </div>
           }
         </div>
@@ -119,39 +119,39 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             </div>
           </div>
         }
-        <table className="border-collapse w-full mb-4">
-          {this.props.householdOrders.map(ho => {
-            let household = this.props.households.find(h => h.id == ho.householdId)
-            let status = (
-              <span>
-                {ho.status}
-                {ho.isComplete &&
-                  <span>
-                    {household && (
-                      household.balance > 0
-                      ? '(paid)'
-                      : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
-                    )}
-                  </span>
-                }
-              </span>
-            )
-            return (
-              <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
-                <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
-                <td className="pt-2 pr-2">{status}</td>
-                <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
-                {deletableHousehold && 
-                  <td className="pt-2 pr-2 w-1">
-                    {order.canBeAmended && !ho.items.length &&
-                      <Button disabled={!!this.state.addingHousehold} action={() => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                    }
-                  </td>
-                }
-              </tr>
+        {!!this.props.householdOrders.length &&
+          <table className="border-collapse w-full mb-4">
+            {this.props.householdOrders.map(ho => {
+              let household = this.props.households.find(h => h.id == ho.householdId)
+              let status = (
+                <span>
+                  {ho.status}
+                  {ho.isComplete &&
+                    <span>
+                      {household && (
+                        household.balance > 0
+                        ? '(paid)'
+                        : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
+                      )}
+                    </span>
+                  }
+                </span>
+              )
+              return (
+                <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
+                  <td className="pt-2 pr-2">{status}</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+                  {deletableHousehold && 
+                    <td className="pt-2 pr-2 w-1">
+                      {order.canBeAmended && !ho.items.length &&
+                        <Button disabled={!!this.state.addingHousehold} action={() => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                      }
+                    </td>
+                  }
+                </tr>
+              )}
             )}
-          )}
-          {!!this.props.householdOrders.length &&
             <tr>
               <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
               <td className="pt-2 pr-2"></td>
@@ -160,8 +160,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                 <td className="pt-2 pr-2 w-1"><div className="bg-transparent w-9 h-6"></div></td>
               }
             </tr>
-          }
-        </table>
+          </table>
+        }
       </div>
     )
   }

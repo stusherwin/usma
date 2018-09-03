@@ -40,8 +40,8 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   }
   
   render() {
-    const currentOrder = this.props.householdOrders.filter(ho => !ho.isOrderPast && !ho.isCancelled)[0]
-    const pastOrders = this.props.householdOrders.filter(ho => ho.isOrderPast || ho.isCancelled)
+    const currentOrder = this.props.householdOrders.filter(ho => !ho.isOrderPast)[0]
+    const pastOrders = this.props.householdOrders.filter(ho => ho.isOrderPast)
     const currentCollectiveOrder = this.props.currentCollectiveOrder
 
     return (

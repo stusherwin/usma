@@ -80,9 +80,9 @@ export class Main extends React.Component<MainProps, MainState> {
     })
 
     this.router.route('/orders', c => {
-      const currentOrder = this.state.collectiveOrders.filter(o => !o.isPast && !o.isCancelled)[0]
+      const currentOrder = this.state.collectiveOrders.filter(o => !o.isPast)[0]
       const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
-      const pastOrders = this.state.collectiveOrders.filter(o => o.isPast || o.isCancelled)
+      const pastOrders = this.state.collectiveOrders.filter(o => o.isPast)
 
       return <OrdersPage currentOrder={currentOrder}
                          currentHouseholdOrders={currentHouseholdOrders}

@@ -243,9 +243,18 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   cancelHouseholdOrder :: ByteString -> Int -> Int -> IO ()
   cancelHouseholdOrder connectionString orderId householdId = do
     conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      update household_order set cancelled = true where order_id = ? and household_id = ?
-    |] (orderId, householdId)
+    withTransaction conn $ do
+      execute conn [sql|
+        update household_order set cancelled = true where order_id = ? and household_id = ?
+      |] (orderId, householdId)
+      exists <- query conn [sql|
+        select 1 from household_order where order_id = ? and cancelled = false
+      |] (Only orderId)
+      if null (exists :: [Only Int]) then
+        void $ execute conn [sql|
+          update "order" set past = true where id = ?
+        |] (Only orderId)
+      else return ()
     close conn
 
   completeHouseholdOrder :: ByteString -> Int -> Int -> IO ()

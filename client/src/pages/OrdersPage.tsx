@@ -51,7 +51,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             )
             : (
               <div>
-                <div className="mx-2 my-4">No order currently in progress</div>
+                <div className="my-2">No order currently in progress</div>
                 <div className="flex justify-start">
                   <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
                 </div>
