@@ -6957,6 +6957,10 @@ select {
   background-image: url(/img/house.svg);
 }
 
+.bg-img-household-bw {
+  background-image: url(/img/house-bw.svg);
+}
+
 .bg-img-product {
   background-image: url(/img/bottle.svg);
 }
