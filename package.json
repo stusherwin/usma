@@ -15,10 +15,10 @@
     "webpack:watch": "PATH=$PATH:../releases/psc-package DEBUG=purs-loader DEBUG_DEPTH=100 webpack --progress --display-error-details --watch",
     "webpack:server": "webpack-dev-server --progress --inline --hot",
     "webpack:server:debug": "DEBUG=purs-loader* DEBUG_DEPTH=100 webpack-dev-server --progress --inline --hot",
-    "heroku-postbuild": "webpack",
     "dev": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=webpack.config.js",
     "watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=tailwind.webpack.config.js",
-    "prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js"
+    "prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js",
+    "heroku-postbuild": "webpack && cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js"
   },
   "dependencies": {
     "@types/classnames": "^2.2.6",
