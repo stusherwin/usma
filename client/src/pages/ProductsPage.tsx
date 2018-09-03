@@ -104,7 +104,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         <div className="bg-product-light p-2">
           <TopNav className="text-white hover:text-white" />
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-auto">
-            <h1 className="text-white leading-none mb-2 -mt-1 text-household-darker">Products{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
+            <h1 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h1>
             <div className="flex justify-start">
               <Button action={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New product</Button>
             </div>

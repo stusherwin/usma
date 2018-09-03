@@ -155,7 +155,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               </div>
             </div>
           }
-          <table className="border-collapse w-full">
+          <table className="border-collapse w-full mb-4">
             {householdOrder.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
             ? (
               <tr key={i.productId}>

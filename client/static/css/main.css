@@ -29,18 +29,6 @@ button:hover {
   @apply bg-grey border-grey-dark text-black;
 }
 
-button:active {
-  /* @apply shadow-inner; */
-}
-
-/* button.button-icon {
-  @apply px-2;
-} */
-
-button.button-icon svg {
-  /* @apply mr-0; */
-}
-
 button[disabled], button[disabled]:hover {
   @apply bg-grey-light-2 text-grey-dark border-grey-light cursor-default;
 }
@@ -73,12 +61,16 @@ select {
   background-image: url(/img/cart.svg);
 }
 
+.bg-img-order-bw {
+  background-image: url(/img/cart-bw.svg);
+}
+
 .bg-img-household-order {
   background-image: url(/img/list.svg);
 }
 
-.bg-img-edit {
-  background-image: url(/img/edit.svg);
+.bg-img-payment {
+  background-image: url(/img/wallet.svg);
 }
 
 .rotating {

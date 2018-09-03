@@ -120,7 +120,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             </div>
           </div>
         }
-        <table className="border-collapse w-full">
+        <table className="border-collapse w-full mb-4">
           {this.props.householdOrders.map(ho => {
             let household = this.props.households.find(h => h.id == ho.householdId)
             let status = (

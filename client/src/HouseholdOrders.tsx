@@ -25,7 +25,11 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
 
     return (
       <div>
-        <h2 className="m-2 mt-4 mb-0">Past orders</h2>
+        <div className="bg-grey-light p-2">
+          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2 overflow-auto">
+            <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past orders</h2>
+          </div>
+        </div>
         {!pastOrders.length
         ? <div className="p-2">No past orders</div>
         : (
