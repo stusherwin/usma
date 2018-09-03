@@ -66,6 +66,7 @@ let colors = {
   'payment-dark': '#086469',
   'payment': '#31a7ab',
   'payment-light': '#7dc9cd',
+  'payment-lightest': '#e6f2f3',
 
   'black': '#22292f',
   'grey-darkest': '#3d4852',

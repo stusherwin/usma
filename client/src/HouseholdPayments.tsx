@@ -106,7 +106,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           </div>
         </div>
         {this.state.editing == 'new' &&
-          <div className="bg-product-lightest p-2">
+          <div className="bg-payment-lightest p-2">
             <h3 className="mb-4">Create new payment</h3>
             <TextField id="create-date"
                        label="Date"
@@ -131,7 +131,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
             this.state.editing == p.id
             ? (
               <tr key={p.id}>
-                <td colSpan={3} className="bg-product-lightest p-2">
+                <td colSpan={3} className="bg-payment-lightest p-2">
                   <h3 className="mb-4">Edit payment</h3>
                   <TextField id="edit-date"
                              label="Date"
