@@ -103,5 +103,6 @@ select {
   color: transparent;
   left: 0.25rem;
   right: 0.25rem;
+  z-index: -1;
   @apply border-grey-dark border-b;
 }

@@ -60,7 +60,9 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           <div className="mx-2 mt-4">No order currently in progress</div>
         }
         <h2 className="mx-2 mt-4">Past orders</h2>
-        {!pastOrders.length ? <div className="p-2">No past orders</div> : (
+        {!pastOrders.length
+        ? <div className="p-2">No past orders</div> 
+        : (
           <table className="border-collapse w-full mb-4">
             { pastOrders.map(o => (
               <tr key={o.id} className={classNames({'crossed-out': o.status == 'Cancelled'})}>
