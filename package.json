@@ -19,7 +19,7 @@
     "watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=tailwind.webpack.config.js",
     "prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js",
     "heroku-postbuild": "webpack && cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js"
-  },
+  }, 
   "dependencies": {
     "@types/classnames": "^2.2.6",
     "@types/react": "^16.0.35",
