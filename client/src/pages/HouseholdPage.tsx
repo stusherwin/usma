@@ -1,10 +1,12 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, Product } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
 import { Button } from '../Button'
+import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Router } from '../Router'
 import { CurrentHouseholdOrder } from '../CurrentHouseholdOrder'
@@ -44,23 +46,39 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
 
     return (
       <div>
-        <div hidden={!this.props.loading}>Loading...</div>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-img-household bg-no-repeat bg-16 pl-16 min-h-16 bg-household-light">
-          <TopNav />
-          <div><RouterLink path="/households">Households</RouterLink> &gt;</div>
-          <h1>{this.props.household.name}</h1>
-          <div>Total orders: <Money amount={this.props.household.totalOrders} /></div>
-          <div>Total payments: <Money amount={this.props.household.totalPayments} /></div>
-          <div>Balance: <Money amount={this.props.household.balance} /></div>
+        <div className="bg-household-light p-2">
+          <TopNav className="text-household-dark hover:text-household-darker" />
+          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4 overflow-hidden">
+            <h2 className="leading-none mb-2 -mt-1 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
+            <table className="border-collapse w-full text-household-darker">
+              <tr>
+                <td>Total orders:</td>
+                <td className="text-right"><Money amount={this.props.household.totalOrders} /></td>
+              </tr>
+              <tr>
+                <td>Total payments:</td>
+                <td className="text-right"><Money amount={this.props.household.totalPayments} /></td>
+              </tr>
+              <tr>
+                <td>Balance:</td>
+                <td className={classNames('text-right', {'text-red-dark': this.props.household.balance < 0})}><Money amount={this.props.household.balance} /></td>
+              </tr>
+            </table>
+          </div>
         </div>
         <div>
           {currentOrder
           ? (
             <div>
-              <h2>Current order: {Util.formatDate(currentOrder.orderCreatedDate)}</h2>
+              <div className="bg-order-dark p-2">
+                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-auto">
+                  <h2>Current: {Util.formatDate(currentOrder.orderCreatedDate)}</h2>
+                  <h3 className="mt-0 flex justify-between"><span>{currentOrder.status}</span><span><Money amount={currentOrder.total} /></span></h3>
+                </div>
+              </div>
               <CurrentHouseholdOrder householdOrder={currentOrder}
                                      products={this.props.products}
                                      reload={this.props.reload}
@@ -69,17 +87,21 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
           )
           : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
           ? (
-            <div>
-              <h2>Current order: {Util.formatDate(currentCollectiveOrder.createdDate)}</h2>
-              <p>There's already an order currently in progress.</p>
-              <Button action={_ => this.joinOrder(currentCollectiveOrder.id)}>Join it</Button>
+            <div className="bg-order-dark p-2">
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-hidden mb-1">
+                <h2>Current order</h2>
+                <p>There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
+              </div>
+              <Button className="mt-2" action={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Join this order</Button>
             </div>
           )
           : (
-            <div>
-              <h2>Current order</h2>
-              <p>There's no order currently in progress.</p>
-              <Button action={this.newOrder}>Start a new one</Button>
+            <div className="bg-order-dark p-2">
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative overflow-hidden mb-1">
+                <h2>Current order</h2>
+                <p>There's no order currently in progress.</p>
+              </div>
+              <Button className="mt-2" action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</Button>
             </div>
           )}
           <HouseholdOrders household={this.props.household}

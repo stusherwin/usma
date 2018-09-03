@@ -23,7 +23,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
     const total = this.props.householdOrders.filter(ho => !ho.isCancelled).reduce((tot, ho) => tot + ho.total, 0)
 
     return (
-      <div>
+      <div  className="m-2 mt-4">
         <h2>Past orders</h2>
         {!pastOrders.length ? <div>No past orders</div> : (
           <div>

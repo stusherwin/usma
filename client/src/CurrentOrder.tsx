@@ -79,7 +79,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     return (
       <div>
         <div className="bg-order-dark p-2 pt-0">
-          <h3 className="mt-0">{order.status}</h3>
+          <h3 className="mt-0 flex justify-between"><span>{order.status}</span><span><Money amount={order.total} /></span></h3>
           <div className="mt-2">
             {order.canBeAmended && (
               !this.props.householdOrders.length
@@ -140,7 +140,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               </span>
             )
             return (
-              <tr key={ho.householdId}>
+              <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
                 <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
                 <td className="pt-2 pr-2">{status}</td>
                 <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>

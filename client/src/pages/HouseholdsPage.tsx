@@ -123,7 +123,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               </div>
             </div>
           }
-          {!this.props.households.length
+          {!this.props.households.length && !this.state.editing
           ? <div>No households created yet</div>
           : (
             <div>

@@ -45,7 +45,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             {currentOrder
             ? (
               <div>
-                <h2>{Util.formatDate(currentOrder.createdDate)}: <Money amount={currentOrder.total} /></h2>
+                <h2>Current: {Util.formatDate(currentOrder.createdDate)}</h2>
               </div>
             )
             : (

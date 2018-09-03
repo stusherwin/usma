@@ -144,13 +144,13 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                 {this.state.form.fields.price.error}
               </div>
             </div>
-              <div className="flex justify-end items-baseline">
-                <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-                <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
-              </div>
+            <div className="flex justify-end items-baseline">
+              <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+              <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+            </div>
           </div>
         }
-        {!this.props.products.length
+        {!this.props.products.length && !this.state.editing
         ? <div>No products created yet</div>
         : (
           <div>
