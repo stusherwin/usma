@@ -10,6 +10,7 @@ import { Money } from '../Money'
 import { Form, Field, Validate } from '../Validation'
 import { RouterLink } from '../RouterLink'
 import { TopNav } from '../TopNav'
+import { TextField, MoneyField } from '../Field'
 
 export interface ProductsPageProps { products: Product[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -30,7 +31,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                  , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v,
                                          [ Validate.required('Name is required')
                                          ])
-                                     , price: Field.create((v: string) => (parseFloat(v) || 0) * 100, (v: number | null) => !v? '' : (v / 100.0).toFixed(2),
+                                     , price: Field.create((v: string) => Math.floor((parseFloat(v) || 0) * 100), (v: number | null) => !v? '' : (v / 100.0).toFixed(2),
                                          [ Validate.required('Price is required')
                                          , Validate.decimal('Price must be a number')
                                          , Validate.twoDP('Price can\'t have more than 2 decimal places')
@@ -112,38 +113,14 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         {this.state.editing == 'new' &&
           <div className="bg-product-lightest p-2">
             <h3 className="mb-4">Create new product</h3>
-            <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
-              <div className="flex justify-between items-baseline">
-                <label className="flex-no-grow flex-no-shrink mr-2"
-                       htmlFor="create-name">Name</label>
-                <input type="text" 
-                       id="create-name" 
-                       autoFocus
-                       className="flex-grow flex-no-shrink"
-                       value={this.state.form.fields.name.stringValue} 
-                       onChange={this.fieldChanged('name')} />
-              </div>
-              <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
-                {this.state.form.fields.name.error}
-              </div>
-            </div>
-            <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.price.valid})}>
-              <div className="flex justify-between items-baseline">
-                <label className="flex-no-grow flex-no-shrink mr-2"
-                       htmlFor="create-price">Price</label>
-                <span className="money-input flex-grow flex-no-shrink flex items-baseline">
-                  <span className="flex-no-grow flex-no-shrink mr-1">&pound;</span>
-                  <input type="text"
-                         id="create-price"
-                         className="flex-grow flex-no-shrink"
-                         value={this.state.form.fields.price.stringValue}
-                         onChange={this.fieldChanged('price')} />
-                </span>
-              </div>
-              <div className="text-red mt-2" hidden={!this.state.form.fields.price.error}>
-                {this.state.form.fields.price.error}
-              </div>
-            </div>
+            <TextField id="create-name"
+                       label="Name"
+                       field={this.state.form.fields.name}
+                       valueOnChange={this.fieldChanged('name')} />
+            <MoneyField id="create-price"
+                        label="Price"
+                        field={this.state.form.fields.price}
+                        valueOnChange={this.fieldChanged('price')} />
             <div className="flex justify-end items-baseline">
               <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
               <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
@@ -159,38 +136,14 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             ? (
               <div key={p.id} className={classNames('bg-product-lightest p-2', {'mt-2': i > 0})}>
                 <h3 className="mb-4">Edit product</h3>
-                <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
-                  <div className="flex justify-between items-baseline">
-                    <label className="flex-no-grow flex-no-shrink mr-2"
-                           htmlFor="edit-name">Name</label>
-                    <input type="text" 
-                           id="edit-name" 
-                           className="flex-grow flex-no-shrink"
-                           autoFocus 
-                           value={this.state.form.fields.name.stringValue} 
-                           onChange={this.fieldChanged('name')} />
-                  </div>
-                  <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
-                    {this.state.form.fields.name.error}
-                  </div>
-                </div>
-                <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.price.valid})}>
-                  <div className="flex justify-between items-baseline">
-                    <label className="flex-no-grow flex-no-shrink mr-2"
-                           htmlFor="edit-price">Price</label>
-                    <span className="money-input flex-grow flex-no-shrink flex items-baseline">
-                      <span className="flex-no-grow flex-no-shrink mr-1">&pound;</span>
-                      <input type="text" 
-                             id="edit-price" 
-                             className="flex-grow flex-no-shrink"
-                             value={this.state.form.fields.price.stringValue} 
-                             onChange={this.fieldChanged('price')} />
-                    </span>
-                  </div>
-                  <div className="text-red mt-2" hidden={!this.state.form.fields.price.error}>
-                    {this.state.form.fields.price.error}
-                  </div>
-                </div>
+                <TextField id="edit-name"
+                           label="Name"
+                           field={this.state.form.fields.name}
+                           valueOnChange={this.fieldChanged('name')} />
+                <MoneyField id="edit-price"
+                            label="Price"
+                            field={this.state.form.fields.price}
+                            valueOnChange={this.fieldChanged('price')} />
                 <div className="flex justify-end">
                   <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                   <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>

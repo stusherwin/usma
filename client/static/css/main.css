@@ -53,11 +53,7 @@ select {
   @apply border border-grey px-1;
 }
 
-.field label:after {
-  content: ':';
-}
-
-.field.invalid label, .field.invalid .money-input {
+.field.invalid label {
   @apply text-red;
 }
 
@@ -95,6 +91,11 @@ select {
 
 .crossed-out {
   position: relative;
+  /* @apply text-grey-dark !important; */
+}
+
+.crossed-out a {
+  /* @apply text-blue-darker !important; */
 }
 
 .crossed-out::after {

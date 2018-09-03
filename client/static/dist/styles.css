@@ -6848,12 +6848,7 @@ select {
   padding-right: .25rem;
 }
 
-.field label:after {
-  content: ':';
-}
-
-.field.invalid label,
-.field.invalid .money-input {
+.field.invalid label {
   color: #e3342f;
 }
 
@@ -6901,6 +6896,11 @@ select {
 
 .crossed-out {
   position: relative;
+  /* @apply text-grey-dark !important; */
+}
+
+.crossed-out a {
+  /* @apply text-blue-darker !important; */
 }
 
 .crossed-out::after {

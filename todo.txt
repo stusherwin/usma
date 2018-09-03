@@ -6,3 +6,5 @@
 * Add no. of people to household (+ total per person to household order)
 * Products VAT included in price?
 * Cancel household order -> asks you to join existing order -> server error
+* Scrape prices from website?
+* After placing order copy order summary & parse it to update prices?

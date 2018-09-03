@@ -9,6 +9,7 @@ import { Icon } from './Icon'
 import { Money } from './Money'
 import { Router } from './Router'
 import { Form, Field, Validate } from './Validation'
+import { TextField, MoneyField } from './Field'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]
@@ -16,8 +17,7 @@ export interface HouseholdPaymentsProps { household: Household
                                         , reload: () => Promise<void>
                                         }
 
-export interface HouseholdPaymentsState { creating: boolean 
-                                        , editingId: number | null
+export interface HouseholdPaymentsState { editing: 'new' | number | null
                                         , form: Form
                                         }
 
@@ -25,14 +25,13 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
   constructor(props: HouseholdPaymentsProps) {
     super(props)
 
-    this.state = { creating: false
-                 , editingId: null
+    this.state = { editing: null
                  , form: Form.create({ date: Field.create((v: string) => new Date(Date.parse(v)), (v: Date) => Util.dateString(v),
                                          [ Validate.required('Date is required')
                                          , Validate.dateFormat('Date must be in the format YYYY-MM-DD')
                                          , Validate.dateExists('Date must actually exist')
                                          ])
-                                     , amount: Field.create((v: string) => (parseFloat(v) || 0) * 100, (v: number) => (v / 100.0).toFixed(2),
+                                     , amount: Field.create((v: string) => Math.floor((parseFloat(v) || 0) * 100), (v: number) => (v / 100.0).toFixed(2),
                                          [ Validate.required('Amount is required')
                                          , Validate.decimal('Amount must be a number')
                                          , Validate.twoDP('Amount can\'t have more than 2 decimal places')
@@ -42,10 +41,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                  }
   }
   
-  startCreate = () => this.setState({ creating: true
+  startCreate = () => this.setState({ editing: 'new'
                                     })
 
-  cancelCreate = () => this.setState({ creating: false
+  cancelCreate = () => this.setState({ editing: null
                                      , form: this.state.form.reset({date: new Date(), amount: 0})
                                      })
 
@@ -56,30 +55,30 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHouseholdPayment(this.props.household.id, validated.fields.date.value, validated.fields.amount.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ creating: false
+        .then(_ => this.setState({ editing: null
                                  , form: this.state.form.reset({date: new Date(), amount: 0})
                                  }))
     }
   }
   
-  startEdit = (payment: HouseholdPayment) => this.setState({ editingId: payment.id
+  startEdit = (payment: HouseholdPayment) => this.setState({ editing: payment.id
                                                            , form: this.state.form.reset({date: payment.date, amount: payment.amount})
                                                            })
 
-  cancelEdit = () => this.setState({ editingId: null
+  cancelEdit = () => this.setState({ editing: null
                                    , form: this.state.form.reset({date: new Date(), amount: 0})
                                    })
 
   confirmEdit = () => {
-    if(!this.state.editingId) return
+    if(typeof this.state.editing !== 'number') return
 
     const validated = this.state.form.validate()
     this.setState({ form: validated })
 
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateHouseholdPayment(this.state.editingId, validated.fields.date.value, validated.fields.amount.value))
+      this.props.request(ServerApi.command.updateHouseholdPayment(this.state.editing, validated.fields.date.value, validated.fields.amount.value))
         .then(this.props.reload)
-        .then(_ => this.setState({ editingId: null
+        .then(_ => this.setState({ editing: null
                                  , form: this.state.form.reset({date: new Date(), amount: 0})
                                  }))
     }
@@ -99,52 +98,57 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     return (
       <div>
         <h2 className="m-2 mt-4">Payments</h2>
-        
-        {!this.state.creating && 
-          <Button className="ml-2" action={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</Button>
-        }
-        {this.state.creating &&
-          <div>
-            <span>
-              <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
-              {this.state.form.fields.date.error}
-            </span>
-            <span>
-              <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
-              {this.state.form.fields.amount.error}
-            </span>
-            <Button action={this.confirmCreate} disabled={!this.state.form.valid()}>Save</Button>
-            <Button action={this.cancelCreate}>Cancel</Button>
+        <Button className="ml-2 mb-2" action={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</Button>
+        {this.state.editing == 'new' &&
+          <div className="bg-product-lightest p-2">
+            <h3 className="mb-4">Create new payment</h3>
+            <TextField id="create-date"
+                       label="Date"
+                       field={this.state.form.fields.date}
+                       valueOnChange={this.fieldChanged('date')} />
+            <MoneyField id="create-amount"
+                        label="Amount"
+                        field={this.state.form.fields.amount}
+                        valueOnChange={this.fieldChanged('amount')} />
+            <div className="flex justify-end">
+              <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+              <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+            </div>
           </div>
         }
 
-        {!this.props.payments.length 
+        {!this.props.payments.length && !this.state.editing
         ? <div className="p-2">No payments yet</div>
         : (
-          <table>
+          <table className="border-collapse w-full mb-4">
             { this.props.payments.map(p =>
-            this.state.editingId == p.id
+            this.state.editing == p.id
             ? (
-              <div>
-                <span>
-                  <input type="text" value={this.state.form.fields.date.stringValue} className={!this.state.form.fields.date.valid? 'invalid': 'valid'} onChange={this.fieldChanged('date')} />
-                  {this.state.form.fields.date.error}
-                </span>
-                <span>
-                  <input type="text" value={this.state.form.fields.amount.stringValue} className={!this.state.form.fields.amount.valid? 'invalid': 'valid'} onChange={this.fieldChanged('amount')} />
-                  {this.state.form.fields.amount.error}
-                </span>
-                <Button action={this.confirmEdit} disabled={!this.state.form.valid()}>Save</Button>
-                <Button action={this.cancelEdit}>Cancel</Button>
-              </div>
+              <tr key={p.id}>
+                <td colSpan={3} className="bg-product-lightest p-2">
+                  <h3 className="mb-4">Edit payment</h3>
+                  <TextField id="edit-date"
+                             label="Date"
+                             field={this.state.form.fields.date}
+                             valueOnChange={this.fieldChanged('date')} />
+                  <MoneyField id="edit-amount"
+                              label="Amount"
+                              field={this.state.form.fields.amount}
+                              valueOnChange={this.fieldChanged('amount')} />
+                  <div className="flex justify-end">
+                    <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                    <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+                  </div>
+                </td>
+              </tr>
             )
             : (
               <tr key={p.id}>
                 <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
                 <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
                 <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
-                  <Button action={() => this.startEdit(p)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                  <Button className="ml-2" action={() => this.delete(p)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                  <Button action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                  <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
                 </td>
               </tr>
             )) }

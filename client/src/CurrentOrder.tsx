@@ -93,7 +93,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
             )}
           </div>
-          {order.canBeAmended && (canDeleteOrder || canAddHousehold || canPlaceOrder) &&
+          {order.canBeAmended && (canDeleteOrder || canAddHousehold) &&
             <div className="mt-2">
               {/* {!!this.props.order.items.length &&
                 <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
@@ -104,9 +104,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               {canAddHousehold &&
                 <Button className="mr-2" disabled={!!this.state.addingHousehold} action={() => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</Button>
               }
-              {canPlaceOrder &&
-                <Button disabled={!!this.state.addingHousehold} action={() => this.placeOrder()}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</Button>
-              }
+              <Button disabled={!!this.state.addingHousehold || !canPlaceOrder} action={() => this.placeOrder()}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</Button>
             </div>
           }
         </div>

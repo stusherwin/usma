@@ -9,6 +9,7 @@ import { Button } from '../Button'
 import { Icon } from '../Icon'
 import { Form, Field, Validate } from '../Validation'
 import { TopNav } from '../TopNav'
+import { TextField } from '../Field'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -102,21 +103,10 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
           {this.state.editing == 'new' &&
             <div className="bg-household-lightest p-2">
               <h3 className="mb-4">Create new household</h3>
-              <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
-                <div className="flex justify-between items-baseline">
-                  <label className="flex-no-grow flex-no-shrink mr-2"
-                         htmlFor="create-name">Name</label>
-                  <input type="text"
-                         id="create-name" 
-                         className="flex-grow flex-no-shrink"
-                         autoFocus 
-                         value={this.state.form.fields.name.stringValue} 
-                         onChange={this.fieldChanged('name')} />
-                </div>
-                <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
-                  {this.state.form.fields.name.error}
-                </div>
-              </div>
+              <TextField id="create-name"
+                         label="Name"
+                         field={this.state.form.fields.name}
+                         valueOnChange={this.fieldChanged('name')} />
               <div className="flex justify-end">
                 <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                 <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
@@ -132,21 +122,10 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               ? (
                 <div key={h.id} className={classNames('bg-household-lightest p-2', {'mt-2': i > 0})}>
                   <h3 className="mb-4">Edit household</h3>
-                  <div className={classNames('field mb-4', {'invalid': !this.state.form.fields.name.valid})}>
-                    <div className="flex justify-between items-baseline">
-                      <label className="flex-no-grow flex-no-shrink mr-2"
-                             htmlFor="edit-name">Name</label>
-                      <input type="text"
-                             id="edit-name" 
-                             className="flex-grow flex-no-shrink"
-                             autoFocus 
-                             value={this.state.form.fields.name.stringValue} 
-                             onChange={this.fieldChanged('name')} />
-                    </div>
-                    <div className="text-red mt-2" hidden={!this.state.form.fields.name.error}>
-                      {this.state.form.fields.name.error}
-                    </div>
-                  </div>
+                  <TextField id="edit-name"
+                             label="Name"
+                             field={this.state.form.fields.name}
+                             valueOnChange={this.fieldChanged('name')} />
                   <div className="flex justify-end">
                     <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                     <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
