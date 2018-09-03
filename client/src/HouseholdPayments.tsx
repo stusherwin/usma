@@ -5,6 +5,7 @@ import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
 import { Button } from './Button'
+import { Icon } from './Icon'
 import { Money } from './Money'
 import { Router } from './Router'
 import { Form, Field, Validate } from './Validation'
@@ -97,10 +98,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
 
     return (
       <div>
-        <h2>Payments</h2>
+        <h2 className="m-2 mt-4">Payments</h2>
         
         {!this.state.creating && 
-          <Button action={this.startCreate}>New payment</Button>
+          <Button className="ml-2" action={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</Button>
         }
         {this.state.creating &&
           <div>
@@ -118,9 +119,9 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
         }
 
         {!this.props.payments.length 
-        ? <div>No payments yet</div>
+        ? <div className="p-2">No payments yet</div>
         : (
-          <div>
+          <table>
             { this.props.payments.map(p =>
             this.state.editingId == p.id
             ? (
@@ -138,20 +139,24 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
               </div>
             )
             : (
-              <div key={p.id}>
-                <span>{ Util.formatDate(p.date) }</span>
-                <Money amount={p.amount} />
-                <Button action={() => this.startEdit(p)}>Edit</Button>
-                <Button action={() => this.delete(p)}>Delete</Button>
-              </div>
+              <tr key={p.id}>
+                <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
+                <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
+                <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
+                  <Button action={() => this.startEdit(p)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                  <Button className="ml-2" action={() => this.delete(p)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                </td>
+              </tr>
             )) }
-          </div>
+            {!!this.props.payments.length && 
+              <tr>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
+                <td className="pt-2 pr-2"></td>
+              </tr>
+            }
+          </table>
         )}
-
-        <div>
-          <span>Total:</span>
-          <Money amount={total} />
-        </div>
       </div>
     )
   }

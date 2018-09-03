@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { Household, HouseholdOrder, CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
@@ -23,23 +24,28 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
     const total = this.props.householdOrders.filter(ho => !ho.isCancelled).reduce((tot, ho) => tot + ho.total, 0)
 
     return (
-      <div  className="m-2 mt-4">
-        <h2>Past orders</h2>
-        {!pastOrders.length ? <div>No past orders</div> : (
-          <div>
+      <div>
+        <h2 className="m-2 mt-4 mb-0">Past orders</h2>
+        {!pastOrders.length
+        ? <div className="p-2">No past orders</div>
+        : (
+          <table className="border-collapse w-full mb-4">
             { pastOrders.map(ho => (
-              <div key={ho.orderId}>
-                <RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink>
-                <span>{ho.status}</span>
-                <Money amount={ho.total} />
-              </div>
+              <tr key={ho.orderId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
+                <td className="pt-2 pr-2">{ho.status}</td>
+                <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+              </tr>
             )) }
-          </div>
+            {!!pastOrders.length &&
+              <tr>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2"></td>
+                <td className="pt-2 pr-2 text-right font-bold"><Money amount={total} /></td>
+              </tr>
+            }
+          </table>
         )}
-        <div>
-          <span>Total:</span>
-          <Money amount={total} />
-        </div>
       </div>
     )
   }
