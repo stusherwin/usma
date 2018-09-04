@@ -13,6 +13,7 @@ import { PastHouseholdOrderPage } from './pages/PastHouseholdOrderPage'
 import { FullOrderPage } from './pages/FullOrderPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { HouseholdsPage } from './pages/HouseholdsPage'
+import { HomePage } from './pages/HomePage'
 import { CollectiveOrder, HouseholdOrder, Product, Household, HouseholdPayment } from './Types'
 
 export interface MainProps {}
@@ -134,7 +135,7 @@ export class Main extends React.Component<MainProps, MainState> {
                                                           loading={this.state.loading}
                                                           error={this.state.error} />)
     
-    this.router.route('/', _ => <div>Home page</div>)
+    this.router.route('/', _ => <HomePage />)
   }
 
   componentDidMount() {

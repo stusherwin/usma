@@ -103,3 +103,17 @@ select {
   z-index: -1;
   @apply border-grey-dark border-b;
 }
+
+.collective-orders-header {
+  @apply absolute text-white p-2 z-10;
+  background: rgba(0, 0, 0, 0.25) none repeat scroll 0% 0%;
+  transform: rotate(90deg);
+  width: 100vh;
+  transform-origin: left top;
+  left: 100vw;
+  top: 0;
+  text-align: center;
+  letter-spacing: 0.2em;
+  font-size: 1.3rem;
+  height: 4.5rem;
+}

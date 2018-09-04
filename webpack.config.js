@@ -37,8 +37,8 @@ module.exports = {
     entry: "./client/src/index.tsx",
 
     output: {
-        filename: "./app.js",
-        path: path.resolve(__dirname, 'client/static/dist')
+        filename: "./dist/app.js",
+        path: path.resolve(__dirname, 'client/static')
     },
 
     devServer: {
