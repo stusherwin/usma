@@ -4,6 +4,7 @@ import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
 import { Button } from './Button'
+import { Icon } from './Icon'
 import { Router } from './Router'
 
 import { OrdersPage } from './pages/OrdersPage'
@@ -184,7 +185,11 @@ export class Main extends React.Component<MainProps, MainState> {
       ? this.body()
       : (
         <div>
-          <div hidden={!this.state.loading}>Loading...</div>
+          {!!this.state.loading && 
+            <div className="h-screen flex items-center justify-center text-grey-light">
+              <Icon type="refresh" className="w-16 h-16 -mt-4 rotating fill-current" />
+            </div>
+          }
           {!!this.state.error && (
             <div>{this.state.error.error}: {this.state.error.message}</div>
           )}
