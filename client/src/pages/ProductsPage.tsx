@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Product } from '../Types'
+import { Product, VatRate } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { Button } from '../Button'
@@ -10,7 +10,7 @@ import { Money } from '../Money'
 import { Form, Field, Validate } from '../Validation'
 import { RouterLink } from '../RouterLink'
 import { TopNav } from '../TopNav'
-import { TextField, MoneyField } from '../Field'
+import { TextField, MoneyField, DropDownField } from '../Field'
 
 export interface ProductsPageProps { products: Product[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -28,7 +28,10 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     super(props)
 
     this.state = { editing: null
-                 , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v,
+                 , form: Form.create({ code: Field.create((v: string) => v, (v: string) => v,
+                                         [ Validate.required('Code is required')
+                                         ])
+                                     , name: Field.create((v: string) => v, (v: string) => v,
                                          [ Validate.required('Name is required')
                                          ])
                                      , price: Field.create((v: string) => Math.floor((parseFloat(v) || 0) * 100), (v: number | null) => !v? '' : (v / 100.0).toFixed(2),
@@ -37,16 +40,19 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                                          , Validate.twoDP('Price can\'t have more than 2 decimal places')
                                          , Validate.greaterThanZero('Price must be more than zero')
                                          ])
+                                     , vatRate: Field.create((v: string) => v as VatRate, (v: VatRate) => v,
+                                         [ Validate.required('VatRate is required')
+                                         ])
                                      })
                  }
   }
 
   startCreate = () => this.setState({ editing: 'new'
-                                    , form: this.state.form.reset({name: '', price: ''})
+                                    , form: this.state.form.reset({code: '', name: '', price: '', vatRate: 'Zero'})
                                     })
 
   cancelCreate = () => this.setState({ editing: null
-                                     , form: this.state.form.reset({name: '', price: ''})
+                                     , form: this.state.form.reset({code: '', name: '', price: '', vatRate: 'Zero'})
                                      })
 
   confirmCreate = () => {
@@ -54,22 +60,26 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     this.setState({ form: validated })
 
     if(validated.valid()) {
-      this.props.request(ServerApi.command.createProduct(validated.fields.name.value, validated.fields.price.value))
+      this.props.request(ServerApi.command.createProduct(validated.fields.code.value, validated.fields.name.value, validated.fields.price.value, validated.fields.vatRate.value))
         .then(this.props.reload)
         .then(_ => this.setState({ editing: null
-                                 , form: this.state.form.reset({name: '', price: ''})
+                                 , form: this.state.form.reset({code: '', name: '', price: '', vatRate: 'Zero'})
                                  })
         )
     }
   }
 
   startEdit = (product: Product) => this.setState({ editing: product.id
-                                                  , form: this.state.form.reset({name: product.name, price: product.price})
+                                                  , form: this.state.form.reset({ code: product.code
+                                                                                , name: product.name
+                                                                                , price: product.price
+                                                                                , vatRate: product.vatRate
+                                                                                })
                                                   })
 
   cancelEdit = () => {
     this.setState({ editing: null
-                  , form: this.state.form.reset({name: '', price: ''})
+                  , form: this.state.form.reset({code: '', name: '', price: '', vatRate: 'Zero'})
                   })
   }
 
@@ -80,7 +90,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     this.setState({ form: validated })
 
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateProduct(this.state.editing, validated.fields.name.value, validated.fields.price.value))
+      this.props.request(ServerApi.command.updateProduct(this.state.editing, validated.fields.code.value, validated.fields.name.value, validated.fields.price.value, validated.fields.vatRate.value))
         .then(this.props.reload)
         .then(_ => this.setState({ editing: null
                                  , form: this.state.form.reset({name: '', price: ''})
@@ -88,8 +98,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     }
   }
 
-  fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ form: this.state.form.update(fieldName, event.target.value) })
+  fieldChanged = (fieldName: string) => (value: string) =>
+    this.setState({ form: this.state.form.update(fieldName, value) })
   
   delete = (p: Product) => 
     this.props.request(ServerApi.command.archiveProduct(p.id))
@@ -113,6 +123,10 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         {this.state.editing == 'new' &&
           <div className="bg-product-lightest p-2">
             <h3 className="mb-4">Create new product</h3>
+            <TextField id="create-code"
+                       label="Code"
+                       field={this.state.form.fields.code}
+                       valueOnChange={this.fieldChanged('code')} />
             <TextField id="create-name"
                        label="Name"
                        field={this.state.form.fields.name}
@@ -121,6 +135,11 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                         label="Price"
                         field={this.state.form.fields.price}
                         valueOnChange={this.fieldChanged('price')} />
+            <DropDownField id="create-vat-rate"
+                           label="VAT rate"
+                           field={this.state.form.fields.vatRate}
+                           valueOnChange={this.fieldChanged('vatRate')}
+                           options={['Zero', 'Standard', 'Reduced']} />
             <div className="flex justify-end items-baseline">
               <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
               <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
@@ -136,6 +155,10 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             ? (
               <div key={p.id} className={classNames('bg-product-lightest p-2', {'mt-2': i > 0})}>
                 <h3 className="mb-4">Edit product</h3>
+                <TextField id="edit-code"
+                           label="Code"
+                           field={this.state.form.fields.code}
+                           valueOnChange={this.fieldChanged('code')} />
                 <TextField id="edit-name"
                            label="Name"
                            field={this.state.form.fields.name}
@@ -144,6 +167,11 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                             label="Price"
                             field={this.state.form.fields.price}
                             valueOnChange={this.fieldChanged('price')} />
+                <DropDownField id="edit-vat-rate"
+                               label="VAT rate"
+                               field={this.state.form.fields.vatRate}
+                               valueOnChange={this.fieldChanged('vatRate')}
+                               options={['Zero', 'Standard', 'Reduced']} />
                 <div className="flex justify-end">
                   <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
                   <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>

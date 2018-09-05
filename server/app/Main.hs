@@ -161,10 +161,10 @@ module Main where
     archiveHousehold = liftIO . (D.archiveHousehold conn)
 
     createProduct :: CreateProduct -> Handler Int
-    createProduct command = liftIO $ D.createProduct conn (cpName command) (cpPrice command)
+    createProduct command = liftIO $ D.createProduct conn (cpCode command) (cpName command) (cpPrice command) (cpVatRate command)
 
     updateProduct :: UpdateProduct -> Handler ()
-    updateProduct command = liftIO $ D.updateProduct conn (upId command) (upName command) (upPrice command)
+    updateProduct command = liftIO $ D.updateProduct conn (upId command) (upCode command) (upName command) (upPrice command) (upVatRate command)
 
     archiveProduct :: Int -> Handler ()
     archiveProduct = liftIO . (D.archiveProduct conn)

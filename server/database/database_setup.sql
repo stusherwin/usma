@@ -70,15 +70,17 @@ insert into household ("name", archived) values ('3 Bowling Alley', false) retur
 
 create table product
 ( id       serial not null primary key
+, "code"   text   not null
 , "name"   text   not null
 , price    int    not null
+, vat_rate      char   not null
 , archived boolean not null
 );
 
-insert into product ("name", price, archived) values ('Jam', 1240, false)     returning id into p1Id;
-insert into product ("name", price, archived) values ('Butter', 9523, false)  returning id into p2Id;
-insert into product ("name", price, archived) values ('Milk', 5210, false)    returning id into p3Id;
-insert into product ("name", price, archived) values ('Bananas', 1200, false) returning id into p4Id;
+insert into product (code, "name", price, vat_rate, archived) values ('J0123', 'Jam', 1240, 'Z', false)     returning id into p1Id;
+insert into product (code, "name", price, vat_rate, archived) values ('B129', 'Butter', 9523, 'S', false)  returning id into p2Id;
+insert into product (code, "name", price, vat_rate, archived) values ('M0043', 'Milk', 5210, 'R', false)    returning id into p3Id;
+insert into product (code, "name", price, vat_rate, archived) values ('BN995', 'Bananas', 1200, 'Z', false) returning id into p4Id;
 
 ---
 

@@ -77,8 +77,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     }
   }
 
-  fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ form: this.state.form.update(fieldName, event.target.value) })
+  fieldChanged = (fieldName: string) => (value: string) =>
+    this.setState({ form: this.state.form.update(fieldName, value) })
 
   delete = (h: Household) => 
     this.props.request(ServerApi.command.archiveHousehold(h.id))

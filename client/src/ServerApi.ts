@@ -1,4 +1,4 @@
-import { Product, Household, CollectiveOrder, HouseholdOrder, HouseholdPayment } from './Types'
+import { Product, VatRate, Household, CollectiveOrder, HouseholdOrder, HouseholdPayment } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
@@ -99,16 +99,20 @@ const command = {
     return Http.post(`/api/command/archive-household/${id}`, {})
   },
 
-  createProduct(name: string, price: number): Promise<number> {
-    return Http.post(`/api/command/create-product/`, { cpName: name
+  createProduct(code: string, name: string, price: number, vatRate: VatRate): Promise<number> {
+    return Http.post(`/api/command/create-product/`, { cpCode: code
+                                                     , cpName: name
                                                      , cpPrice: price
+                                                     , cpVatRate: vatRate
                                                      })
   },
 
-  updateProduct(id: number, name: string, price: number): Promise<number> {
+  updateProduct(id: number, code: string, name: string, price: number, vatRate: VatRate): Promise<number> {
     return Http.post(`/api/command/update-product/`, { upId: id
+                                                     , upCode: code
                                                      , upName: name
                                                      , upPrice: price
+                                                     , upVatRate: vatRate
                                                      })
   },
 

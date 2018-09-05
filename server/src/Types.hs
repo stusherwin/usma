@@ -5,6 +5,7 @@ module Types where
   import Data.Aeson
   import GHC.Generics
   import Data.Time.Calendar (Day)
+  import Product
   
   data EnsureHouseholdOrderItem = EnsureHouseholdOrderItem { ehoiOrderId :: Int
                                                            , ehoiHouseholdId :: Int
@@ -38,15 +39,19 @@ module Types where
   instance ToJSON UpdateHousehold
   instance FromJSON UpdateHousehold
 
-  data CreateProduct = CreateProduct { cpName :: String
+  data CreateProduct = CreateProduct { cpCode :: String
+                                     , cpName :: String
                                      , cpPrice :: Int
+                                     , cpVatRate :: VatRate
                                      } deriving (Eq, Show, Generic)
   instance ToJSON CreateProduct
   instance FromJSON CreateProduct
 
   data UpdateProduct = UpdateProduct { upId :: Int
+                                     , upCode :: String
                                      , upName :: String
                                      , upPrice :: Int
+                                     , upVatRate :: VatRate
                                      } deriving (Eq, Show, Generic)
   instance ToJSON UpdateProduct
   instance FromJSON UpdateProduct

@@ -84,8 +84,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     }
   }
 
-  fieldChanged = (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ form: this.state.form.update(fieldName, event.target.value) })
+  fieldChanged = (fieldName: string) => (value: string) =>
+    this.setState({ form: this.state.form.update(fieldName, value) })
   
   delete = (p: HouseholdPayment) => {
     this.props.request(ServerApi.command.archiveHouseholdPayment(p.id))

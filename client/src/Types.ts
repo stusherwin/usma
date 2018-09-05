@@ -1,6 +1,10 @@
+export type VatRate = 'Zero' | 'Standard' | 'Reduced'
+
 export type Product = { id: number
+                      , code: string
                       , name: string
                       , price: number
+                      , vatRate: VatRate
                       }
 
 export type Household = { id: number

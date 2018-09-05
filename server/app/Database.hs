@@ -36,6 +36,20 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
 
+  instance ToField VatRate where
+    toField Zero = toDatabaseChar 'Z'
+    toField Standard = toDatabaseChar 'S'
+    toField Reduced = toDatabaseChar 'R'
+
+  instance FromField VatRate where
+    fromField f char = do
+      c <- fromField f char
+      case c of
+        Just 'Z' -> return Zero
+        Just 'S' -> return Standard
+        Just 'R' -> return Reduced
+        _ -> mzero
+
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
   infixl 4 <&>
@@ -116,13 +130,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   getProducts connectionString = do
     conn <- connectPostgreSQL connectionString
     rProducts <- query_ conn [sql|
-      select p.id, p.name, p.price
+      select p.id, p.code, p.name, p.price, p.vat_rate
       from product p
       where p.archived = false
       order by p.name asc
     |]
     close conn
-    return $ (rProducts :: [(Int, String, Int)]) <&> \(id, name, price) -> Product id name price
+    return $ (rProducts :: [(Int, String, String, Int, VatRate)]) <&> \(id, code, name, price, vatRate) -> Product id code name price vatRate
 
   getHouseholds :: ByteString -> IO [Household]
   getHouseholds connectionString = do
@@ -298,21 +312,21 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only householdId)
     close conn
 
-  createProduct :: ByteString -> String -> Int -> IO Int
-  createProduct connectionString name price = do
+  createProduct :: ByteString -> String -> String -> Int -> VatRate -> IO Int
+  createProduct connectionString code name price vatRate = do
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
-      insert into product (name, price, archived) values (?, ?, false) returning id
-    |] (name, price)
+      insert into product (code, name, price, vat_rate, archived) values (?, ?, ?, ?, false) returning id
+    |] (code, name, price, vatRate)
     close conn
     return id
   
-  updateProduct :: ByteString -> Int -> String -> Int -> IO ()
-  updateProduct connectionString id name price = do
+  updateProduct :: ByteString -> Int -> String -> String -> Int -> VatRate -> IO ()
+  updateProduct connectionString id code name price vatRate = do
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
-      update product set name = ?, price = ? where id = ?
-    |] (name, price, id)
+      update product set code = ?, name = ?, price = ?, vat_rate = ? where id = ?
+    |] (code, name, price, vatRate, id)
     close conn
   
   archiveProduct :: ByteString -> Int -> IO ()
