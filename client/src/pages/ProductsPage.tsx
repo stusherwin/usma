@@ -153,7 +153,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             { this.props.products.map((p, i) => 
             this.state.editing == p.id
             ? (
-              <div key={p.id} className={classNames('bg-product-lightest p-2', {'mt-2': i > 0})}>
+              <div key={p.id} className={classNames('bg-product-lightest p-2' /*, {'mt-2': i > 0}*/)}>
                 <h3 className="mb-4">Edit product</h3>
                 <TextField id="edit-code"
                            label="Code"
@@ -179,13 +179,22 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
               </div>
             )
             : (
-              <div key={p.id} className="flex justify-between items-baseline px-2 mt-2">
-                <span className="flex-grow">{p.name}</span>
-                <Money className="flex-no-shrink flex-no-grow" amount={p.price} />
-                <span className="flex-no-shrink flex-no-grow">
-                  <Button className="ml-2" action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                  <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                </span>
+              <div key={p.id} className={classNames('px-2 py-2', /*,
+                                                    {'border-grey-light border-t': i > 0 }*/
+                                                    { 'mt-4': i > 0
+                                                    , 'mb-4': i < this.props.products.length - 1})}>
+                <div className="flex justify-between items-baseline">
+                  <span className="flex-no-shrink flex-no-grow font-bold">{p.code}</span>
+                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.price} />
+                </div>
+                <p className="mt-2">{p.name}</p>
+                <div className="flex justify-between items-end mt-2">
+                  <span className="flex-no-shrink flex-no-grow text-grey">VAT: {p.vatRate} rate</span>
+                  <span className="flex-no-shrink flex-no-grow">
+                    <Button className="ml-2" action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                    <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                  </span>
+                </div>
               </div>
             )) }
           </div>
