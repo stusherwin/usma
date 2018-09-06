@@ -122,10 +122,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
             </div>
           </div>
         }
-
-        {!this.props.payments.length && !this.state.editing
-        ? <div className="p-2">No payments yet</div>
-        : (
+        {!this.props.payments.length && !this.state.editing &&
+          <div className="p-2 mb-4">No payments yet</div>
+        }
+        {!!this.props.payments.length &&
           <table className="border-collapse w-full mb-4">
             { this.props.payments.map(p =>
             this.state.editing == p.id
@@ -158,15 +158,13 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                 </td>
               </tr>
             )) }
-            {!!this.props.payments.length && 
-              <tr>
-                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-                <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
-                <td className="pt-2 pr-2"></td>
-              </tr>
-            }
+            <tr>
+              <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+              <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
+              <td className="pt-2 pr-2"></td>
+            </tr>
           </table>
-        )}
+        }
       </div>
     )
   }

@@ -41,7 +41,7 @@ export class FullOrderPage extends React.Component<FullOrderPageProps, {}> {
         <div>
           {this.props.order.items.map(i => (
             <div key={i.productId}>
-              <span>{i.productName}</span>
+              <span>{i.productCode}: {i.productName}</span>
               <span>x {i.itemQuantity}</span>
               <Money amount={i.itemTotal} />
             </div>

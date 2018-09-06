@@ -111,38 +111,45 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
   render() {
     const householdOrder = this.props.householdOrder
     const unusedProducts = this.props.products.filter(p => !householdOrder.items.find(i => i.productId == p.id))
+    const canAddItem = householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length
+    const canLeaveOrder = householdOrder.canBeAmended && !householdOrder.items.length
+    const canReopenOrder = householdOrder.canBeAmended && !!householdOrder.items.length && !householdOrder.isOpen
+    const canCancelOrder = householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen
+    const canCompleteOrder = householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen
 
     return (
       <div>
-        <div className="bg-order-dark p-2 pt-0">
-          <div>
-            {!householdOrder.items.length && 
-              <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.leaveOrder}><Icon type="remove" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Leave this order</Button>
-            }
-            {householdOrder.canBeAmended && !!householdOrder.items.length && !householdOrder.isOpen &&
-              <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</Button>
-            }
-            {householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen && (
-              <span>
+        {((canAddItem && !this.state.addingProduct) || canLeaveOrder || canReopenOrder || canCancelOrder || canCompleteOrder) && 
+          <div className="bg-order-dark p-2 pt-0">
+            <div>
+              {canAddItem && !this.state.addingProduct &&
+                <Button className="mr-2 mt-2" action={() => this.startAdd(unusedProducts[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add item</Button>
+              }
+              {canLeaveOrder && 
+                <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.leaveOrder}><Icon type="remove" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Leave this order</Button>
+              }
+              {canReopenOrder &&
+                <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</Button>
+              }
+              {canCancelOrder &&
                 <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel order</Button>
+              }
+              {canCompleteOrder && 
                 <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</Button>
-              </span>
-            )}
-            {householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length && !this.state.addingProduct &&
-              <Button className="mr-2 mt-2" action={() => this.startAdd(unusedProducts[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add item</Button>
-            }
+              }
+            </div>
           </div>
-        </div>
+        }
         <div>
           {!householdOrder.items.length && !this.state.addingProduct &&
-            <div className="p-2">No order items added yet</div>
+            <div className="p-2 mb-4">No order items added yet</div>
           }
           {this.state.addingProduct &&
             <div className="bg-product-lightest p-2">
               <h3 className="mb-4">Add order item</h3>
               <div className="flex justify-between items-baseline mb-4">
                 <select className="flex-grow mr-2" value={this.state.addingProduct.id} onChange={this.addingProductChanged}>
-                  {unusedProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {unusedProducts.map(p => <option key={p.id} value={p.id}>{p.code}: {p.name}</option>)}
                 </select>
                 <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.addingProductQuantity} onChange={this.addingQuantityChanged}>
                   {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
@@ -155,50 +162,50 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               </div>
             </div>
           }
-          <table className="border-collapse w-full mb-4">
-            {householdOrder.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
-            ? (
-              <tr key={i.productId}>
-                <td colSpan={4} className="bg-product-lightest p-2">
-                  <h3 className="mb-4">Edit order item</h3>
-                  <div className="flex justify-between items-baseline mb-4">
-                    <span className="flex-grow mr-2">{i.productName}</span>
-                    <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
-                      {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-                    </select>
-                    <Money className="flex-no-grow flex-no-shrink" amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
-                  </div>
-                  <div className="flex justify-end items-baseline">
-                    <Button className="ml-2" action={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-                    <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</Button>
-                  </div>
-                </td>
-              </tr>
-            )
-            : (
-              <tr key={i.productId}>
-                <td className="pt-2 pl-2 pr-2 w-full">{i.productName}</td>
-                <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
-                <td className="pt-2 pr-2 w-1">
-                  {householdOrder.canBeAmended && householdOrder.isOpen &&
-                    <span className="whitespace-no-wrap">
-                      <Button disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                      <Button className="ml-2" disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                    </span>
-                  }
-                </td>
-              </tr>
-            ))}
-            {!!householdOrder.items.length && 
+          {!!householdOrder.items.length &&
+            <table className="border-collapse w-full mb-4">
+              {householdOrder.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
+              ? (
+                <tr key={i.productId}>
+                  <td colSpan={4} className="bg-product-lightest p-2">
+                    <h3 className="mb-4">Edit order item</h3>
+                    <div className="flex justify-between items-baseline mb-4">
+                      <span className="flex-grow mr-2">{i.productCode}: {i.productName}</span>
+                      <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
+                        {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+                      </select>
+                      <Money className="flex-no-grow flex-no-shrink" amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
+                    </div>
+                    <div className="flex justify-end items-baseline">
+                      <Button className="ml-2" action={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                      <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</Button>
+                    </div>
+                  </td>
+                </tr>
+              )
+              : (
+                <tr key={i.productId}>
+                  <td className="pt-2 pl-2 pr-2 w-full">{i.productCode}: {i.productName}</td>
+                  <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
+                  <td className="pt-2 pr-2 w-1">
+                    {householdOrder.canBeAmended && householdOrder.isOpen &&
+                      <span className="whitespace-no-wrap">
+                        <Button disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                        <Button className="ml-2" disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                      </span>
+                    }
+                  </td>
+                </tr>
+              ))}
               <tr>
                 <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
                 <td className="pt-2 pr-2"></td>
                 <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.total} /></td>
                 <td className="pt-2 pr-2"></td>
               </tr>
-            }
-          </table>
+            </table>
+          }
         </div>
       </div>
     )

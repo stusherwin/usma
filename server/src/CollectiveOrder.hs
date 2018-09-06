@@ -20,6 +20,7 @@ module CollectiveOrder where
   instance ToJSON CollectiveOrder
 
   data CollectiveOrderItem = CollectiveOrderItem { productId :: Int
+                                                 , productCode :: String
                                                  , productName :: String
                                                  , itemQuantity :: Int
                                                  , itemTotal :: Int

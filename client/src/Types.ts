@@ -41,6 +41,7 @@ export type HouseholdOrder = { orderId: number
                              }
 
 export type OrderItem = { productId: number
+                        , productCode: string
                         , productName: string
                         , itemQuantity: number
                         , itemTotal: number

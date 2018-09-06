@@ -22,6 +22,7 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrder
 
   data HouseholdOrderItem = HouseholdOrderItem { productId :: Int
+                                               , productCode :: String
                                                , productName :: String
                                                , itemQuantity :: Int
                                                , itemTotal :: Int

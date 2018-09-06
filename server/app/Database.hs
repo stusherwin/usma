@@ -79,17 +79,17 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         order by o.id desc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, p.id, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
+        select hoi.order_id, p.id, p.code, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
-        group by hoi.order_id, p.id, p.name
-        order by p.name asc
+        group by hoi.order_id, p.id, p.code, p.name
+        order by p.code asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, String, Int, Int)])
     close conn
     return $ rOrders <&> \(id, created, complete, cancelled, placed, past, total) ->
-      let item (_, productId, name, quantity, total) = CollectiveOrderItem productId name quantity total
-          thisOrder (oId, _, _, _, _) = oId == id
+      let item (_, productId, code, name, quantity, total) = CollectiveOrderItem productId code name quantity total
+          thisOrder (oId, _, _, _, _, _) = oId == id
           items = map item $ filter thisOrder rItems
       in  collectiveOrder id created complete cancelled placed past total items
   
@@ -113,16 +113,16 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, hoi.household_id, p.id, p.name, hoi.quantity, p.price * hoi.quantity as total
+        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, hoi.quantity, p.price * hoi.quantity as total
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
-        order by p.name asc
+        order by p.code asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, Int)])
     close conn
     return $ rOrders <&> \(orderId, orderCreated, orderPlaced, orderPast, householdId, householdName, complete, cancelled, total) ->
-      let item (_, _, productId, name, quantity, total) = HouseholdOrderItem productId name quantity total
-          thisOrder (oId, hId, _, _, _, _) = oId == orderId && hId == householdId
+      let item (_, _, productId, code, name, quantity, total) = HouseholdOrderItem productId code name quantity total
+          thisOrder (oId, hId, _, _, _, _, _) = oId == orderId && hId == householdId
           items = map item $ filter thisOrder rItems
       in  householdOrder orderId orderCreated orderPlaced orderPast householdId householdName complete cancelled total items
 
@@ -133,7 +133,7 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
       select p.id, p.code, p.name, p.price, p.vat_rate
       from product p
       where p.archived = false
-      order by p.name asc
+      order by p.code asc
     |]
     close conn
     return $ (rProducts :: [(Int, String, String, Int, VatRate)]) <&> \(id, code, name, price, vatRate) -> Product id code name price vatRate
