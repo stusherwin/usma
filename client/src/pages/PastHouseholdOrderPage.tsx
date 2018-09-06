@@ -63,7 +63,7 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
           </table>
         }
         {!householdOrder.items.length && 
-          <div className="p-2 mb-4">There were no order items in this order</div>
+          <div className="p-2  mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There were no order items in this order</div>
         }
       </div>
     )

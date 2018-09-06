@@ -142,7 +142,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
         }
         <div>
           {!householdOrder.items.length && !this.state.addingProduct &&
-            <div className="p-2 mb-4">No order items added yet</div>
+            <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items added yet</div>
           }
           {this.state.addingProduct &&
             <div className="bg-product-lightest p-2">

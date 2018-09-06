@@ -114,7 +114,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             </div>
           }
           {!this.props.households.length && !this.state.editing
-          ? <div>No households created yet</div>
+          ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households created yet</div>
           : (
             <div>
               { this.props.households.map((h, i) => 

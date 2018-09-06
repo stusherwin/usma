@@ -123,7 +123,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           </div>
         }
         {!this.props.payments.length && !this.state.editing &&
-          <div className="p-2 mb-4">No payments yet</div>
+          <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet</div>
         }
         {!!this.props.payments.length &&
           <table className="border-collapse w-full mb-4">

@@ -51,7 +51,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             )
             : (
               <div>
-                <div className="my-2">No order currently in progress</div>
+                <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
                 <div className="flex justify-start">
                   <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
                 </div>
@@ -72,7 +72,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           </div>
         </div>
         {!pastOrders.length
-        ? <div className="p-2">No past orders</div> 
+        ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div> 
         : (
           <table className="border-collapse w-full mb-4">
             { pastOrders.map(o => (

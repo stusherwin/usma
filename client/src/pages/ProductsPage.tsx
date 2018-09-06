@@ -147,7 +147,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
           </div>
         }
         {!this.props.products.length && !this.state.editing
-        ? <div>No products created yet</div>
+        ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products created yet</div>
         : (
           <div>
             { this.props.products.map((p, i) => 

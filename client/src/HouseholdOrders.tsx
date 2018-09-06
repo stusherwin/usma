@@ -6,6 +6,7 @@ import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
 import { Button } from './Button'
+import { Icon } from './Icon'
 import { Money } from './Money'
 import { Router } from './Router'
 
@@ -31,7 +32,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
           </div>
         </div>
         {!pastOrders.length
-        ? <div className="p-2">No past orders</div>
+        ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>
         : (
           <table className="border-collapse w-full mb-4">
             { pastOrders.map(ho => (
