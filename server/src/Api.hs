@@ -26,6 +26,7 @@ module Api where
     :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
+    :<|> "product-list" :> Get '[JSON] [Product]
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

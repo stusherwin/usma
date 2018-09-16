@@ -15,18 +15,12 @@ module Main where
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
   import Data.Time.Calendar (toGregorian, fromGregorian, addGregorianYearsClip)
   import Data.Time.Format (formatTime, defaultTimeLocale)
-  import Data.Text (Text)
-  import Text.Read (readMaybe)
-  import qualified Data.Text as T (pack, unpack)
-  import qualified Data.ByteString.Char8 as B (pack, unpack)
   import Servant
   import Control.Concurrent(threadDelay)
-  import Data.ByteString (ByteString)
   import Network.Wai.Middleware.Cors (cors, simpleCorsResourcePolicy, corsRequestHeaders, corsMethods, simpleMethods, corsOrigins)
   import Network.Wai.Middleware.Servant.Options (provideOptions)
   import Network.Wai.Middleware.RequestLogger (logStdoutDev)
   import Network.Wai.Middleware.Static (staticPolicy, addBase)
-  import System.Environment (getEnv, getArgs)
   import Web.Cookie (parseCookiesText)
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
   import Data.Time.Calendar (Day)
@@ -39,24 +33,20 @@ module Main where
   import Product
   import Household
   import HouseholdPayment
+  import Config
 
   main :: IO ()
   main = do
-    args <- getArgs
-    let portStr = head args
-    putStrLn $ "port: " ++ portStr
-    connectionString <- if length args > 1 then return (args !! 1)
-                                           else getEnv "DATABASE_URL"
-    putStrLn $ "connection string: " ++ connectionString
-    run (read portStr) $ app $ B.pack connectionString
+    config <- getConfig
+    run (port config) $ app config
 
-  app :: ByteString -> Application
-  app conn = logStdoutDev
-             $ serve fullAPI (server conn)
+  app :: Config -> Application
+  app config = logStdoutDev
+               $ serve fullAPI (server config)
            
-  server :: ByteString -> Server FullAPI
-  server conn = appServer conn
-           :<|> Tagged (staticPolicy (addBase "client/static") staticOrDefault)
+  server :: Config -> Server FullAPI
+  server config = appServer config
+             :<|> Tagged (staticPolicy (addBase "client/static") staticOrDefault)
 
   staticOrDefault :: Application
   staticOrDefault req respond = respond $ 
@@ -66,17 +56,20 @@ module Main where
     "client/static/index.html"
     Nothing
 
-  appServer :: ByteString -> Server AppAPI
-  appServer conn = queryServer conn
-              :<|> commandServer conn 
+  appServer :: Config -> Server AppAPI
+  appServer config = queryServer config
+                :<|> commandServer config 
   
-  queryServer :: ByteString -> Server QueryAPI
-  queryServer conn = collectiveOrders
-                :<|> householdOrders
-                :<|> products
-                :<|> households
-                :<|> householdPayments
+  queryServer :: Config -> Server QueryAPI
+  queryServer config = collectiveOrders
+                  :<|> householdOrders
+                  :<|> products
+                  :<|> households
+                  :<|> householdPayments
+                  :<|> productList
     where
+    conn = connectionString config
+    
     collectiveOrders :: Handler [CollectiveOrder]
     collectiveOrders = liftIO $ D.getCollectiveOrders conn
     
@@ -92,28 +85,33 @@ module Main where
     householdPayments :: Handler [HouseholdPayment]
     householdPayments = liftIO $ D.getHouseholdPayments conn
 
-  commandServer :: ByteString -> Server CommandAPI
-  commandServer conn = createOrderForHousehold
-                  :<|> createOrder
-                  :<|> deleteOrder
-                  :<|> placeOrder
-                  :<|> createHouseholdOrder
-                  :<|> deleteHouseholdOrder
-                  :<|> cancelHouseholdOrder
-                  :<|> completeHouseholdOrder
-                  :<|> reopenHouseholdOrder
-                  :<|> ensureHouseholdOrderItem
-                  :<|> removeHouseholdOrderItem
-                  :<|> createHousehold
-                  :<|> updateHousehold
-                  :<|> archiveHousehold
-                  :<|> createProduct
-                  :<|> updateProduct
-                  :<|> archiveProduct
-                  :<|> createHouseholdPayment
-                  :<|> updateHouseholdPayment
-                  :<|> archiveHouseholdPayment
+    productList :: Handler [Product]
+    productList = liftIO $ loadProductList config
+      
+  commandServer :: Config -> Server CommandAPI
+  commandServer config = createOrderForHousehold
+                    :<|> createOrder
+                    :<|> deleteOrder
+                    :<|> placeOrder
+                    :<|> createHouseholdOrder
+                    :<|> deleteHouseholdOrder
+                    :<|> cancelHouseholdOrder
+                    :<|> completeHouseholdOrder
+                    :<|> reopenHouseholdOrder
+                    :<|> ensureHouseholdOrderItem
+                    :<|> removeHouseholdOrderItem
+                    :<|> createHousehold
+                    :<|> updateHousehold
+                    :<|> archiveHousehold
+                    :<|> createProduct
+                    :<|> updateProduct
+                    :<|> archiveProduct
+                    :<|> createHouseholdPayment
+                    :<|> updateHouseholdPayment
+                    :<|> archiveHouseholdPayment
     where
+    conn = connectionString config
+    
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = do
       day <- liftIO $ getCurrentTime >>= return . utctDay      
