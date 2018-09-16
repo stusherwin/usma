@@ -92,7 +92,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
               <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                 <h2>Current order</h2>
                 <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
-                <Button className="mt-2" action={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Join this order</Button>
+                <Button className="mt-2" action={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</Button>
               </div>
             </div>
           )

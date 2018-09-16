@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { HouseholdOrder, Product, OrderItem } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
@@ -116,33 +117,39 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     const canReopenOrder = householdOrder.canBeAmended && !!householdOrder.items.length && !householdOrder.isOpen
     const canCancelOrder = householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen
     const canCompleteOrder = householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen
+    const orderButtons = [canLeaveOrder, canReopenOrder, canCancelOrder, canCompleteOrder]
+    const addItemButton = canAddItem && !this.state.addingProduct
 
     return (
       <div>
-        {((canAddItem && !this.state.addingProduct) || canLeaveOrder || canReopenOrder || canCancelOrder || canCompleteOrder) && 
-          <div className="bg-order-dark p-2 pt-0">
-            <div>
-              {canAddItem && !this.state.addingProduct &&
-                <Button className="mr-2 mt-2" action={() => this.startAdd(unusedProducts[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add item</Button>
-              }
-              {canLeaveOrder && 
-                <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.leaveOrder}><Icon type="remove" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Leave this order</Button>
-              }
-              {canReopenOrder &&
-                <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</Button>
-              }
-              {canCancelOrder &&
-                <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel order</Button>
-              }
-              {canCompleteOrder && 
-                <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</Button>
-              }
-            </div>
+        {(addItemButton || orderButtons.some(b => b)) && 
+          <div className={classNames('bg-order-dark p-2 pt-0', {'flex justify-between': orderButtons.filter(b => b).length == 1})}>
+            {orderButtons.some(b => b) && 
+              <div>
+                {canLeaveOrder && 
+                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</Button>
+                }
+                {canReopenOrder &&
+                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</Button>
+                }
+                {canCancelOrder &&
+                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel order</Button>
+                }
+                {canCompleteOrder && 
+                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</Button>
+                }
+              </div>
+            }
+            {addItemButton &&
+              <div className={classNames({'mt-2': orderButtons.filter(b => b).length == 1, 'flex justify-end mt-4': orderButtons.filter(b => b).length > 1})}>
+                <Button action={() => this.startAdd(unusedProducts[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add order item</Button>
+              </div>
+            }
           </div>
         }
         <div>
           {!householdOrder.items.length && !this.state.addingProduct &&
-            <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items added yet</div>
+            <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No items added yet</div>
           }
           {this.state.addingProduct &&
             <div className="bg-product-lightest p-2">
