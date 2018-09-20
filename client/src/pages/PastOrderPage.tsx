@@ -35,18 +35,20 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
         </div>
         {!!this.props.householdOrders.length && 
           <table className="border-collapse w-full mb-4">
-            {this.props.householdOrders.map(ho => (
-              <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
-                <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
-                <td className="pt-2 pr-2">{ho.status}</td>
-                <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+            <tbody>
+              {this.props.householdOrders.map(ho => (
+                <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
+                  <td className="pt-2 pr-2">{ho.status}</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+                </tr>
+              ))}
+              <tr>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2"></td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.total} /></td>
               </tr>
-            ))}
-            <tr>
-              <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-              <td className="pt-2 pr-2"></td>
-              <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.total} /></td>
-            </tr>
+            </tbody>
           </table>
         }
         {!this.props.householdOrders.length && 

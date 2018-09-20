@@ -35,20 +35,22 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
         ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>
         : (
           <table className="border-collapse w-full mb-4">
-            { pastOrders.map(ho => (
-              <tr key={ho.orderId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
-                <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
-                <td className="pt-2 pr-2">{ho.status}</td>
-                <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
-              </tr>
-            )) }
-            {!!pastOrders.length &&
-              <tr>
-                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-                <td className="pt-2 pr-2"></td>
-                <td className="pt-2 pr-2 text-right font-bold"><Money amount={total} /></td>
-              </tr>
-            }
+            <tbody>
+              { pastOrders.map(ho => (
+                <tr key={ho.orderId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
+                  <td className="pt-2 pr-2">{ho.status}</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+                </tr>
+              )) }
+              {!!pastOrders.length &&
+                <tr>
+                  <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                  <td className="pt-2 pr-2"></td>
+                  <td className="pt-2 pr-2 text-right font-bold"><Money amount={total} /></td>
+                </tr>
+              }
+            </tbody>
           </table>
         )}
       </div>

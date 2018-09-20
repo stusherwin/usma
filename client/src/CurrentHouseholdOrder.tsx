@@ -171,46 +171,48 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           }
           {!!householdOrder.items.length &&
             <table className="border-collapse w-full mb-4">
-              {householdOrder.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
-              ? (
-                <tr key={i.productId}>
-                  <td colSpan={4} className="bg-product-lightest p-2">
-                    <h3 className="mb-4">Edit order item</h3>
-                    <div className="flex justify-between items-baseline mb-4">
-                      <span className="flex-grow mr-2">{i.productCode}: {i.productName}</span>
-                      <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
-                        {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-                      </select>
-                      <Money className="flex-no-grow flex-no-shrink" amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
-                    </div>
-                    <div className="flex justify-end items-baseline">
-                      <Button className="ml-2" action={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-                      <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</Button>
-                    </div>
-                  </td>
+              <tbody>
+                {householdOrder.items.map(i => this.state.editingProduct && this.state.editingProduct.id == i.productId 
+                ? (
+                  <tr key={i.productId}>
+                    <td colSpan={4} className="bg-product-lightest p-2">
+                      <h3 className="mb-4">Edit order item</h3>
+                      <div className="flex justify-between items-baseline mb-4">
+                        <span className="flex-grow mr-2">{i.productCode}: {i.productName}</span>
+                        <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
+                          {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+                        </select>
+                        <Money className="flex-no-grow flex-no-shrink" amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
+                      </div>
+                      <div className="flex justify-end items-baseline">
+                        <Button className="ml-2" action={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                        <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</Button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+                : (
+                  <tr key={i.productId}>
+                    <td className="pt-2 pl-2 pr-2 w-full">{i.productCode}: {i.productName}</td>
+                    <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
+                    <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
+                    <td className="pt-2 pr-2 w-1">
+                      {householdOrder.canBeAmended && householdOrder.isOpen &&
+                        <span className="whitespace-no-wrap">
+                          <Button disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                          <Button className="ml-2" disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                  <td className="pt-2 pr-2"></td>
+                  <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.total} /></td>
+                  <td className="pt-2 pr-2"></td>
                 </tr>
-              )
-              : (
-                <tr key={i.productId}>
-                  <td className="pt-2 pl-2 pr-2 w-full">{i.productCode}: {i.productName}</td>
-                  <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
-                  <td className="pt-2 pr-2 w-1">
-                    {householdOrder.canBeAmended && householdOrder.isOpen &&
-                      <span className="whitespace-no-wrap">
-                        <Button disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                        <Button className="ml-2" disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                      </span>
-                    }
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-                <td className="pt-2 pr-2"></td>
-                <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.total} /></td>
-                <td className="pt-2 pr-2"></td>
-              </tr>
+              </tbody>
             </table>
           }
         </div>

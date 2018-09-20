@@ -127,42 +127,44 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
         }
         {!!this.props.payments.length &&
           <table className="border-collapse w-full mb-4">
-            { this.props.payments.map(p =>
-            this.state.editing == p.id
-            ? (
-              <tr key={p.id}>
-                <td colSpan={3} className="bg-payment-lightest p-2">
-                  <h3 className="mb-4">Edit payment</h3>
-                  <TextField id="edit-date"
-                             label="Date"
-                             field={this.state.form.fields.date}
-                             valueOnChange={this.fieldChanged('date')} />
-                  <MoneyField id="edit-amount"
-                              label="Amount"
-                              field={this.state.form.fields.amount}
-                              valueOnChange={this.fieldChanged('amount')} />
-                  <div className="flex justify-end">
-                    <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-                    <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
-                  </div>
-                </td>
+            <tbody>
+              { this.props.payments.map(p =>
+              this.state.editing == p.id
+              ? (
+                <tr key={p.id}>
+                  <td colSpan={3} className="bg-payment-lightest p-2">
+                    <h3 className="mb-4">Edit payment</h3>
+                    <TextField id="edit-date"
+                               label="Date"
+                               field={this.state.form.fields.date}
+                               valueOnChange={this.fieldChanged('date')} />
+                    <MoneyField id="edit-amount"
+                                label="Amount"
+                                field={this.state.form.fields.amount}
+                                valueOnChange={this.fieldChanged('amount')} />
+                    <div className="flex justify-end">
+                      <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
+                      <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+                    </div>
+                  </td>
+                </tr>
+              )
+              : (
+                <tr key={p.id}>
+                  <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
+                  <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
+                    <Button action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                    <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                  </td>
+                </tr>
+              )) }
+              <tr>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
+                <td className="pt-2 pr-2"></td>
               </tr>
-            )
-            : (
-              <tr key={p.id}>
-                <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
-                <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
-                <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
-                  <Button action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                  <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                </td>
-              </tr>
-            )) }
-            <tr>
-              <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-              <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
-              <td className="pt-2 pr-2"></td>
-            </tr>
+            </tbody>
           </table>
         }
       </div>

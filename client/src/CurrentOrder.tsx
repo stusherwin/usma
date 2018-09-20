@@ -129,45 +129,47 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
         }
         {!!this.props.householdOrders.length &&
           <table className="border-collapse w-full mb-4">
-            {this.props.householdOrders.map(ho => {
-              let household = this.props.households.find(h => h.id == ho.householdId)
-              let status = (
-                <span>
-                  {ho.status}
-                  {ho.isComplete &&
-                    <span>
-                      {household && (
-                        household.balance > 0
-                        ? ' (paid)'
-                        : <span className="text-grey-dark"><br /><Money amount={household.balance} absolute /> to pay</span>
-                      )}
-                    </span>
-                  }
-                </span>
-              )
-              return (
-                <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
-                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
-                  <td className="pt-2 pr-2">{status}</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
-                  {deletableHousehold && 
-                    <td className="pt-2 pr-2 w-1">
-                      {order.canBeAmended && !ho.items.length &&
-                        <Button disabled={!!this.state.addingHousehold} action={() => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                      }
-                    </td>
-                  }
-                </tr>
+            <tbody>
+              {this.props.householdOrders.map(ho => {
+                let household = this.props.households.find(h => h.id == ho.householdId)
+                let status = (
+                  <span>
+                    {ho.status}
+                    {ho.isComplete &&
+                      <span>
+                        {household && (
+                          household.balance > 0
+                          ? ' (paid)'
+                          : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
+                        )}
+                      </span>
+                    }
+                  </span>
+                )
+                return (
+                  <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                    <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
+                    <td className="pt-2 pr-2">{status}</td>
+                    <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+                    {deletableHousehold && 
+                      <td className="pt-2 pr-2 w-1">
+                        {order.canBeAmended && !ho.items.length &&
+                          <Button disabled={!!this.state.addingHousehold} action={() => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                        }
+                      </td>
+                    }
+                  </tr>
+                )}
               )}
-            )}
-            <tr>
-              <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-              <td className="pt-2 pr-2"></td>
-              <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.total} /></td>
-              {deletableHousehold && 
-                <td className="pt-2 pr-2 w-1"><div className="bg-transparent w-9 h-6"></div></td>
-              }
-            </tr>
+              <tr>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2"></td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.total} /></td>
+                {deletableHousehold && 
+                  <td className="pt-2 pr-2 w-1"><div className="bg-transparent w-9 h-6"></div></td>
+                }
+              </tr>
+            </tbody>
           </table>
         }
       </div>

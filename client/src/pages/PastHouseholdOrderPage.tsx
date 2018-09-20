@@ -46,20 +46,22 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
         </div>
         {!!householdOrder.items.length && 
           <table className="border-collapse w-full mb-4">
-            {householdOrder.items.map(i => (
-                <tr key={i.productId}>  
-                  <td className="pt-2 pl-2 pr-2">{i.productCode}</td>
-                  <td className="pt-2 pr-2 w-full">{i.productName}</td>
-                  <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
-                </tr>
-            ))}
-            <tr>
-              <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-              <td className="pt-2 pr-2"></td>
-              <td className="pt-2 pr-2"></td>
-              <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.total} /></td>
-            </tr>
+            <tbody>
+              {householdOrder.items.map(i => (
+                  <tr key={i.productId}>  
+                    <td className="pt-2 pl-2 pr-2">{i.productCode}</td>
+                    <td className="pt-2 pr-2 w-full">{i.productName}</td>
+                    <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
+                    <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
+                  </tr>
+              ))}
+              <tr>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2"></td>
+                <td className="pt-2 pr-2"></td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.total} /></td>
+              </tr>
+            </tbody>
           </table>
         }
         {!householdOrder.items.length && 
