@@ -35,7 +35,7 @@ module Product where
     cwd <- getCurrentDirectory
     print cwd
     file <- readFile $ "server/data/" ++ (productListDataFile config)
-    return $ take 100 $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
+    return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
       parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
         let id = i+1
             desc' = unwords $ filter ((> 0) . length) $ map (T.unpack . T.strip . T.pack)

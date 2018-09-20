@@ -14,7 +14,7 @@ const query = {
   },
 
   products(): Promise<Product[]> {
-    return Http.get<Product[]>('/api/query/products')
+    return Http.get<Product[]>('/api/query/product-list')
   },
 
   households(): Promise<Household[]> {
