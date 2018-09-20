@@ -21,7 +21,7 @@ export const TextField = (props: TextFieldProps) => {
         <input type="text" 
                id={props.id} 
                autoFocus
-               className="flex-grow flex-no-shrink"
+               className="input flex-grow flex-no-shrink"
                value={props.field.stringValue} 
                onChange={onChange} />
       </div>
@@ -50,7 +50,7 @@ export const MoneyField = (props: MoneyFieldProps) => {
                htmlFor={props.id}>{props.label}:<span className="ml-2">&pound;</span></label>
         <input type="text"
                id={props.id}
-               className="flex-grow flex-no-shrink"
+               className="input flex-grow flex-no-shrink"
                value={props.field.stringValue}
                onChange={onChange} />
       </div>

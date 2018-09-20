@@ -43,11 +43,7 @@ button[disabled], button[disabled]:hover {
   @apply bg-grey-light-2 text-grey-dark border-grey-light cursor-default;
 }
 
-input[type="text"] {
-  @apply border border-grey px-1;
-}
-
-select {
+.input {
   @apply border border-grey px-1;
 }
 
@@ -55,7 +51,7 @@ select {
   @apply text-red;
 }
 
-.field.invalid input[type="text"] {
+.field.invalid .input {
   @apply border-red border-2;
 }
 

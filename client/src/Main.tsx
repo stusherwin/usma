@@ -187,7 +187,7 @@ export class Main extends React.Component<MainProps, MainState> {
         <div>
           {!!this.state.loading && 
             <div className="h-screen flex items-center justify-center text-grey-light">
-              <Icon type="refresh" className="w-16 h-16 -mt-4 rotating fill-current" />
+              <Icon type="loading" className="w-16 h-16 -mt-4 rotating fill-current" />
             </div>
           }
           {!!this.state.error && (

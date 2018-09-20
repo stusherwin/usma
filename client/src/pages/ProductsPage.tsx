@@ -38,7 +38,10 @@ export interface ProductsPageProps { products: Product[]
 
 export interface ProductsPageState { loadMoreVisible: boolean
                                    , products: IndexedProduct[]
+                                   , filteredProducts: Product[]
                                    , nextStartIndex: number
+                                   , searchString: string
+                                   , showLoadMore: boolean
                                    }
 
 export class ProductsPage extends React.Component<ProductsPageProps, ProductsPageState> {
@@ -47,7 +50,10 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
 
     this.state = { loadMoreVisible: false
                  , products: props.products.slice(0, pageSize).map(wrap(0))
+                 , filteredProducts: props.products
                  , nextStartIndex: pageSize
+                 , searchString: ''
+                 , showLoadMore: true
                  }
   }
 
@@ -61,7 +67,16 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
       if(loadMoreVisible !== this.state.loadMoreVisible) {
         this.setState({loadMoreVisible})
         if(loadMoreVisible) {
-          return true
+          console.log('load-more visible')
+          const start = this.state.nextStartIndex
+          const end = start + pageSize
+          const moreProducts = this.state.filteredProducts.slice(start, end).map(wrap(start))
+
+          this.setState({ products: [...this.state.products, ...moreProducts]
+                        , nextStartIndex: end
+                        , loadMoreVisible: false
+                        , showLoadMore: moreProducts.length >= pageSize
+                        })
         }
       }
 
@@ -69,18 +84,30 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     }
     
     checkLoadMoreTriggered()
+    document.onscroll = checkLoadMoreTriggered
+  }
 
-    document.onscroll = () => {
-      const loadMoreTriggered = checkLoadMoreTriggered()
-      if(loadMoreTriggered) {
-        const start = this.state.nextStartIndex
-        const end = start + pageSize
-        this.setState({ products: [...this.state.products, ...this.props.products.slice(start, end).map(wrap(start))]
-                      , nextStartIndex: end
-                      , loadMoreVisible: false
-                      })
-      }
+  searchChanged(value: string) {
+    const searchString = value.toLowerCase()
+    const searchWords = searchString.split(' ')
+    const searchFilter = (p: Product) => {
+      const code = p.code.toLowerCase()
+      const name = p.name.toLowerCase()
+      return searchWords.every(w => code.includes(w) || name.includes(w))
     }
+      
+    const filteredProducts = !!searchString.length
+      ? this.props.products.filter(searchFilter)
+      : this.props.products
+    const products = filteredProducts.slice(0, pageSize).map(wrap(0))
+
+    this.setState({ loadMoreVisible: false
+                  , products
+                  , filteredProducts
+                  , nextStartIndex: pageSize
+                  , searchString: searchString
+                  , showLoadMore: products.length >= pageSize
+                  })
   }
 
   render() {
@@ -92,18 +119,24 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         <div className="bg-product-light p-2">
           <TopNav className="text-white hover:text-white" />
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
-            <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="refresh" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
+            <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
+            <span className="relative">
+              <span className="absolute text-grey-darker" style={{bottom: '-2px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
+              <input type="text" placeholder="e.g. 'FX109' or 'Oat Bran'" className="w-full mt-2 border-product pl-6 input" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
+            </span>
           </div>
         </div>
         {!this.state.products.length
-        ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products available</div>
+        ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />
+            {this.state.searchString.length ? 'No matching products available' : 'No products loaded yet'}
+          </div>
         : (
           <div>
             { this.state.products.map((p, i) => (
-              <div key={p.index} className={classNames('px-2 py-2', /*,
+              <div key={p.index} className={classNames('px-2 py-2 mb-4', /*,
                                                     {'border-grey-light border-t': i > 0 }*/
                                                     { 'mt-4': i > 0
-                                                    , 'mb-4': i < this.state.products.length - 1})}>
+                                                    })}>
                 <div className="flex justify-between items-baseline">
                   <span className="flex-no-shrink flex-no-grow font-bold">{p.code}</span>
                   <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.price} />
@@ -116,9 +149,11 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             )) }
           </div>
         )}
-        <div id="load-more" className="bg-grey-lightest py-8 text-center text-grey mt-4">
-          <Icon type="refresh" className="w-4 h-4 mx-auto rotating ml-2 fill-current" />
-        </div>
+        {this.state.showLoadMore && 
+          <div id="load-more" className="bg-grey-lightest py-8 text-center text-grey">
+            <Icon type="loading" className="w-4 h-4 mx-auto rotating ml-2 fill-current" />
+          </div>
+        }
       </div>
     )
   }
