@@ -15,24 +15,15 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
-  exposed-modules:     Types
-                     , Api
-                     , CollectiveOrder
+  exposed-modules:     CollectiveOrder
                      , HouseholdOrder
                      , Household
                      , Product
                      , HouseholdPayment
-                     , Config
   build-depends:       base >= 4.7 && < 5
                      , aeson
-                     , servant
-                     , servant-server
                      , time
-                     , bytestring
-                     , cookie
-                     , http-api-data
                      , text
-                     , directory
   default-language:    Haskell2010
 
 executable usma
@@ -40,6 +31,9 @@ executable usma
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Database
+                     , Api
+                     , Config
+                     , ProductRepository
   build-depends:       base
                      , containers
                      , cookie
@@ -61,6 +55,7 @@ executable usma
                      , http-api-data
                      , http-types
                      , wai-middleware-static
+                     , directory
   default-language:    Haskell2010
 
 test-suite usma-test

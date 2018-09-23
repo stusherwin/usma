@@ -45,58 +45,39 @@ const command = {
   },
 
   createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/create-household-order`, { choOrderId: orderId
-                                                          , choHouseholdId: householdId
-                                                          })
+    return Http.post(`/api/command/create-household-order/${orderId}/${householdId}`, {})
   },
 
   deleteHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/delete-household-order`, { choOrderId: orderId
-                                                             , choHouseholdId: householdId
-                                                             })
+    return Http.post(`/api/command/delete-household-order/${orderId}/${householdId}`, {})
   },
 
   cancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/cancel-household-order`, { choOrderId: orderId
-                                                            , choHouseholdId: householdId
-                                                            })
+    return Http.post(`/api/command/cancel-household-order/${orderId}/${householdId}`, {})
   },
 
   completeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/complete-household-order`, { choOrderId: orderId
-                                                              , choHouseholdId: householdId
-                                                              })
+    return Http.post(`/api/command/complete-household-order/${orderId}/${householdId}`, {})
   },
 
   reopenHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/reopen-household-order`, { choOrderId: orderId
-                                                            , choHouseholdId: householdId
-                                                            })
+    return Http.post(`/api/command/reopen-household-order/${orderId}/${householdId}`, {})
   },
 
   ensureHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
-    return Http.post(`/api/command/ensure-household-order-item`, { ehoiOrderId: orderId
-                                                                 , ehoiHouseholdId: householdId
-                                                                 , ehoiProductId: productId
-                                                                 , ehoiQuantity: quantity
-                                                                 })
+    return Http.post(`/api/command/ensure-household-order-item/${orderId}/${householdId}/${productId}`, { hoidQuantity: quantity })
   },
 
   removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
-    return Http.post(`/api/command/remove-household-order-item`, { rhoiOrderId: orderId
-                                                                 , rhoiHouseholdId: householdId
-                                                                 , rhoiProductId: productId
-                                                                 })
+    return Http.post(`/api/command/remove-household-order-item/${orderId}/${householdId}/${productId}`, {})
   },
 
   createHousehold(name: string): Promise<number> {
-    return Http.post(`/api/command/create-household/`, { chName: name })
+    return Http.post(`/api/command/create-household/`, { hdName: name })
   },
 
   updateHousehold(id: number, name: string): Promise<number> {
-    return Http.post(`/api/command/update-household/`, { uhId: id
-                                                       , uhName: name 
-                                                       })
+    return Http.post(`/api/command/update-household/${id}`, { hdName: name })
   },
 
   archiveHousehold(id: number): Promise<{}> {
@@ -104,20 +85,19 @@ const command = {
   },
 
   createProduct(code: string, name: string, price: number, vatRate: VatRate): Promise<number> {
-    return Http.post(`/api/command/create-product/`, { cpCode: code
-                                                     , cpName: name
-                                                     , cpPrice: price
-                                                     , cpVatRate: vatRate
+    return Http.post(`/api/command/create-product/`, { pdCode: code
+                                                     , pdName: name
+                                                     , pdPrice: price
+                                                     , pdVatRate: vatRate
                                                      })
   },
 
   updateProduct(id: number, code: string, name: string, price: number, vatRate: VatRate): Promise<number> {
-    return Http.post(`/api/command/update-product/`, { upId: id
-                                                     , upCode: code
-                                                     , upName: name
-                                                     , upPrice: price
-                                                     , upVatRate: vatRate
-                                                     })
+    return Http.post(`/api/command/update-product/${id}`, { pdCode: code
+                                                          , pdName: name
+                                                          , pdPrice: price
+                                                          , pdVatRate: vatRate
+                                                          })
   },
 
   archiveProduct(id: number): Promise<{}> {
@@ -125,17 +105,15 @@ const command = {
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/command/create-household-payment/`, { chpHouseholdId: householdId
-                                                               , chpDate: Util.dateString(date)
-                                                               , chpAmount: amount
+    return Http.post(`/api/command/create-household-payment/`, { hpdDate: Util.dateString(date)
+                                                               , hpdAmount: amount
                                                                })
   },
 
-  updateHouseholdPayment(paymentId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/command/update-household-payment/`, { uhpPaymentId: paymentId
-                                                               , uhpDate: Util.dateString(date)
-                                                               , uhpAmount: amount
-                                                               })
+  updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
+    return Http.post(`/api/command/update-household-payment/${id}`, { hpdDate: Util.dateString(date)
+                                                                    , hpdAmount: amount
+                                                                    })
   },
 
   archiveHouseholdPayment(id: number): Promise<{}> {

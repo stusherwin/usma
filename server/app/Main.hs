@@ -25,7 +25,6 @@ module Main where
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
   import Data.Time.Calendar (Day)
   
-  import Types 
   import Api
   import qualified Database as D
   import CollectiveOrder
@@ -34,6 +33,7 @@ module Main where
   import Household
   import HouseholdPayment
   import Config
+  import ProductRepository
 
   main :: IO ()
   main = do
@@ -124,58 +124,58 @@ module Main where
       liftIO $ D.createOrder conn day Nothing
 
     deleteOrder :: Int -> Handler ()
-    deleteOrder = liftIO . (D.deleteOrder conn)
+    deleteOrder orderId = liftIO $ D.deleteOrder conn orderId
 
     placeOrder :: Int -> Handler ()
-    placeOrder = liftIO . (D.placeOrder conn)
+    placeOrder orderId = liftIO $ D.placeOrder conn orderId
 
     unplaceOrder :: Int -> Handler ()
     unplaceOrder = liftIO . (D.unplaceOrder conn)
 
-    createHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    createHouseholdOrder command = liftIO $ D.createHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    createHouseholdOrder :: Int -> Int -> Handler ()
+    createHouseholdOrder householdId orderId = liftIO $ D.createHouseholdOrder conn householdId orderId
 
-    deleteHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    deleteHouseholdOrder command = liftIO $ D.deleteHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    deleteHouseholdOrder :: Int -> Int -> Handler ()
+    deleteHouseholdOrder householdId orderId = liftIO $ D.deleteHouseholdOrder conn householdId orderId
 
-    cancelHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    cancelHouseholdOrder command = liftIO $ D.cancelHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    cancelHouseholdOrder :: Int -> Int -> Handler ()
+    cancelHouseholdOrder householdId orderId = liftIO $ D.cancelHouseholdOrder conn householdId orderId
 
-    completeHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    completeHouseholdOrder command = liftIO $ D.completeHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    completeHouseholdOrder :: Int -> Int -> Handler ()
+    completeHouseholdOrder householdId orderId = liftIO $ D.completeHouseholdOrder conn householdId orderId
 
-    reopenHouseholdOrder :: CancelHouseholdOrder -> Handler ()
-    reopenHouseholdOrder command = liftIO $ D.reopenHouseholdOrder conn (choOrderId command) (choHouseholdId command)
+    reopenHouseholdOrder :: Int -> Int -> Handler ()
+    reopenHouseholdOrder householdId orderId = liftIO $ D.reopenHouseholdOrder conn householdId orderId
  
-    ensureHouseholdOrderItem :: EnsureHouseholdOrderItem -> Handler ()
-    ensureHouseholdOrderItem command = liftIO $ D.ensureHouseholdOrderItem conn (ehoiOrderId command) (ehoiHouseholdId command) (ehoiProductId command) (ehoiQuantity command)
+    ensureHouseholdOrderItem :: Int -> Int -> Int -> HouseholdOrderItemDetails -> Handler ()
+    ensureHouseholdOrderItem householdId orderId productId details = liftIO $ D.ensureHouseholdOrderItem conn householdId orderId productId details
 
-    removeHouseholdOrderItem :: RemoveHouseholdOrderItem -> Handler ()
-    removeHouseholdOrderItem command = liftIO $ D.removeHouseholdOrderItem conn (rhoiOrderId command) (rhoiHouseholdId command) (rhoiProductId command)
+    removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
+    removeHouseholdOrderItem householdId orderId productId = liftIO $ D.removeHouseholdOrderItem conn householdId orderId productId
 
-    createHousehold :: CreateHousehold -> Handler Int
-    createHousehold command = liftIO $ D.createHousehold conn (chName command)
+    createHousehold :: HouseholdDetails -> Handler Int
+    createHousehold details = liftIO $ D.createHousehold conn details
 
-    updateHousehold :: UpdateHousehold -> Handler ()
-    updateHousehold command = liftIO $ D.updateHousehold conn (uhId command) (uhName command)
+    updateHousehold :: Int -> HouseholdDetails -> Handler ()
+    updateHousehold householdId details = liftIO $ D.updateHousehold conn householdId details
 
     archiveHousehold :: Int -> Handler ()
-    archiveHousehold = liftIO . (D.archiveHousehold conn)
+    archiveHousehold householdId = liftIO $ D.archiveHousehold conn householdId
 
-    createProduct :: CreateProduct -> Handler Int
-    createProduct command = liftIO $ D.createProduct conn (cpCode command) (cpName command) (cpPrice command) (cpVatRate command)
+    createProduct :: ProductDetails -> Handler Int
+    createProduct details = liftIO $ D.createProduct conn details
 
-    updateProduct :: UpdateProduct -> Handler ()
-    updateProduct command = liftIO $ D.updateProduct conn (upId command) (upCode command) (upName command) (upPrice command) (upVatRate command)
+    updateProduct :: Int -> ProductDetails -> Handler ()
+    updateProduct productId details = liftIO $ D.updateProduct conn productId details
 
     archiveProduct :: Int -> Handler ()
-    archiveProduct = liftIO . (D.archiveProduct conn)
+    archiveProduct productId = liftIO $ D.archiveProduct conn productId
   
-    createHouseholdPayment :: CreateHouseholdPayment -> Handler Int
-    createHouseholdPayment command = liftIO $ D.createHouseholdPayment conn (chpHouseholdId command) (chpDate command) (chpAmount command)
+    createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
+    createHouseholdPayment householdId details = liftIO $ D.createHouseholdPayment conn householdId details
 
-    updateHouseholdPayment :: UpdateHouseholdPayment -> Handler ()
-    updateHouseholdPayment command = liftIO $ D.updateHouseholdPayment conn (uhpPaymentId command) (uhpDate command) (uhpAmount command)
+    updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
+    updateHouseholdPayment householdPaymentId details = liftIO $ D.updateHouseholdPayment conn householdPaymentId details
 
     archiveHouseholdPayment :: Int -> Handler ()
-    archiveHouseholdPayment = liftIO . (D.archiveHouseholdPayment conn)
+    archiveHouseholdPayment householdPaymentId = liftIO $ D.archiveHouseholdPayment conn householdPaymentId

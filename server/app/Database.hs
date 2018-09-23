@@ -24,7 +24,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   import Data.Map.Lazy (fromListWith, assocs)
   import qualified Data.Text as T
   import Data.Text.Encoding (encodeUtf8)
-  import Types
   import qualified Data.IntMap.Strict as IM (IntMap(..), fromList, elems, lookup, insert, size)
   import Data.Time.Calendar (Day, showGregorian)
   import CollectiveOrder
@@ -221,31 +220,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only orderId)
     close conn
 
-  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> Int -> IO ()
-  ensureHouseholdOrderItem connectionString orderId householdId productId quantity = do
-    conn <- connectPostgreSQL connectionString
-    withTransaction conn $ do
-      exists <- query conn [sql|
-        select 1 from household_order_item where order_id = ? and household_id = ? and product_id = ?
-      |] (orderId, householdId, productId)
-      if null (exists :: [Only Int]) then
-        execute conn [sql|
-          insert into household_order_item (order_id, household_id, product_id, quantity) values (?, ?, ?, ?)
-        |] (orderId, householdId, productId, quantity)
-      else
-        execute conn [sql|
-          update household_order_item set quantity = ? where order_id = ? and household_id = ? and product_id = ?
-        |] (quantity, orderId, householdId, productId)  
-    close conn
-
-  removeHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> IO ()
-  removeHouseholdOrderItem connectionString orderId householdId productId = do
-    conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      delete from household_order_item where order_id = ? and household_id = ? and product_id = ?
-    |] (orderId, householdId, productId)
-    close conn
-
   createHouseholdOrder :: ByteString -> Int -> Int -> IO ()
   createHouseholdOrder connectionString orderId householdId = do
     conn <- connectPostgreSQL connectionString
@@ -294,9 +268,36 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
       update household_order set cancelled = false, complete = false where order_id = ? and household_id = ?
     |] (orderId, householdId)
     close conn
-  
-  createHousehold :: ByteString -> String -> IO Int
-  createHousehold connectionString name = do
+
+  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> HouseholdOrderItemDetails -> IO ()
+  ensureHouseholdOrderItem connectionString orderId householdId productId details = do
+    let quantity = hoidQuantity details
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      exists <- query conn [sql|
+        select 1 from household_order_item where order_id = ? and household_id = ? and product_id = ?
+      |] (orderId, householdId, productId)
+      if null (exists :: [Only Int]) then
+        execute conn [sql|
+          insert into household_order_item (order_id, household_id, product_id, quantity) values (?, ?, ?, ?)
+        |] (orderId, householdId, productId, quantity)
+      else
+        execute conn [sql|
+          update household_order_item set quantity = ? where order_id = ? and household_id = ? and product_id = ?
+        |] (quantity, orderId, householdId, productId)  
+    close conn
+
+  removeHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> IO ()
+  removeHouseholdOrderItem connectionString orderId householdId productId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      delete from household_order_item where order_id = ? and household_id = ? and product_id = ?
+    |] (orderId, householdId, productId)
+    close conn
+
+  createHousehold :: ByteString -> HouseholdDetails -> IO Int
+  createHousehold connectionString details = do
+    let name = hdName details
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
       insert into household (name, archived) values (?, false) returning id
@@ -304,8 +305,9 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     close conn
     return id
   
-  updateHousehold :: ByteString -> Int -> String -> IO ()
-  updateHousehold connectionString householdId name = do
+  updateHousehold :: ByteString -> Int -> HouseholdDetails -> IO ()
+  updateHousehold connectionString householdId details = do
+    let name = hdName details
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
       update household set name = ? where id = ?
@@ -320,8 +322,12 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only householdId)
     close conn
 
-  createProduct :: ByteString -> String -> String -> Int -> VatRate -> IO Int
-  createProduct connectionString code name price vatRate = do
+  createProduct :: ByteString -> ProductDetails -> IO Int
+  createProduct connectionString details = do
+    let code = pdCode details
+    let name = pdName details
+    let price = pdPrice details
+    let vatRate = pdVatRate details
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
       insert into product (code, name, price, vat_rate, archived) values (?, ?, ?, ?, false) returning id
@@ -329,8 +335,12 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     close conn
     return id
   
-  updateProduct :: ByteString -> Int -> String -> String -> Int -> VatRate -> IO ()
-  updateProduct connectionString id code name price vatRate = do
+  updateProduct :: ByteString -> Int -> ProductDetails -> IO ()
+  updateProduct connectionString id details = do
+    let code = pdCode details
+    let name = pdName details
+    let price = pdPrice details
+    let vatRate = pdVatRate details
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
       update product set code = ?, name = ?, price = ?, vat_rate = ? where id = ?
@@ -345,8 +355,10 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only productId)
     close conn
 
-  createHouseholdPayment :: ByteString -> Int -> Day -> Int -> IO Int
-  createHouseholdPayment connectionString householdId date amount = do
+  createHouseholdPayment :: ByteString -> Int -> HouseholdPaymentDetails -> IO Int
+  createHouseholdPayment connectionString householdId details = do
+    let date = hpdDate details
+    let amount = hpdAmount details
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
       insert into household_payment (household_id, "date", amount, archived) values (?, ?, ?, false) returning id
@@ -354,8 +366,10 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     close conn
     return id
 
-  updateHouseholdPayment :: ByteString -> Int -> Day -> Int -> IO ()
-  updateHouseholdPayment connectionString paymentId date amount = do
+  updateHouseholdPayment :: ByteString -> Int -> HouseholdPaymentDetails -> IO ()
+  updateHouseholdPayment connectionString paymentId details = do
+    let date = hpdDate details
+    let amount = hpdAmount details
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
       update household_payment set "date" = ?, amount = ? where id = ?

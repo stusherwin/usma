@@ -12,3 +12,9 @@ module HouseholdPayment where
                                            , amount :: Int
                                            } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdPayment
+
+  data HouseholdPaymentDetails = HouseholdPaymentDetails { hpdDate :: Day
+                                                         , hpdAmount :: Int
+                                                         } deriving (Eq, Show, Generic)
+  instance ToJSON HouseholdPaymentDetails
+  instance FromJSON HouseholdPaymentDetails

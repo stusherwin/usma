@@ -12,3 +12,8 @@ module Household where
                              , balance :: Int
                              } deriving (Eq, Show, Generic)
   instance ToJSON Household
+                                                                   
+  data HouseholdDetails = HouseholdDetails { hdName :: String
+                                           } deriving (Eq, Show, Generic)
+  instance ToJSON HouseholdDetails
+  instance FromJSON HouseholdDetails

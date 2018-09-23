@@ -31,6 +31,11 @@ module HouseholdOrder where
 
   data HouseholdOrderStatus = Open | Complete | Cancelled | Placed deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderStatus
+      
+  data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidQuantity :: Int
+                                                             } deriving (Eq, Show, Generic)
+  instance ToJSON HouseholdOrderItemDetails
+  instance FromJSON HouseholdOrderItemDetails
 
   householdOrder :: Int -> Day -> Bool -> Bool -> Int -> String -> Bool -> Bool -> Int -> [HouseholdOrderItem] -> HouseholdOrder
   householdOrder orderId orderCreated orderPlaced orderPast householdId householdName complete cancelled total items = 
