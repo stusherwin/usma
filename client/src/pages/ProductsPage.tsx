@@ -70,7 +70,6 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
       if(loadMoreVisible !== this.state.loadMoreVisible) {
         this.setState({loadMoreVisible})
         if(loadMoreVisible) {
-          console.log('load-more visible')
           const start = this.state.nextStartIndex
           const end = start + pageSize
           const moreProducts = this.state.filteredProducts.slice(start, end).map(wrap(start))
@@ -116,7 +115,13 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   startUpload = () => {
     this.setState({ uploading: true
                   , uploadedFile: undefined
-                  })
+                  , loadMoreVisible: false
+                  , products: this.props.products.slice(0, pageSize).map(wrap(0))
+                  , filteredProducts: this.props.products
+                  , nextStartIndex: pageSize
+                  , searchString: ''
+                  , showLoadMore: true
+                  , })
   }
 
   confirmUpload = () => {
@@ -149,21 +154,24 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-product-light p-2 pb-0">
+        <div className="bg-product-light p-2">
           <TopNav className="text-white hover:text-white" />
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <div className="flex justify-start">
-              <button onClick={() => this.setState({uploading: true})} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Upload product list</button>
+              <button onClick={this.startUpload} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Upload product list</button>
             </div>
           </div>
         </div>
-        <div className="bg-product-light p-2">
-          <span className="relative">
-            <span className="absolute text-grey-darker" style={{bottom: '-2px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
-            <input type="text" placeholder="e.g. 'FX109' or 'Oat Bran'" className="w-full mt-2 border-product pl-6 input" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
-          </span>
-        </div>
+        {!this.state.uploading && 
+          <div className="bg-product-lightest p-2">
+            <label htmlFor="search">Search for a particular product:</label>
+            <div className="relative mt-2">
+              <span className="absolute text-grey-darker" style={{bottom: '-2px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
+              <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" className="w-full pl-6 input" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
+            </div>
+          </div>
+        }
         {this.state.uploading && 
           <div className="bg-product-lightest p-2">
             <h3 className="mb-4">Upload product list</h3>
