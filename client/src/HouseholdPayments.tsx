@@ -4,7 +4,6 @@ import { Household, HouseholdPayment, CollectiveOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
-import { Button } from './Button'
 import { Icon } from './Icon'
 import { Money } from './Money'
 import { Router } from './Router'
@@ -101,7 +100,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-payment-dark leading-none mb-2 -mt-1">Payments</h2>
             <div className="flex justify-start">
-              <Button action={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</Button>
+              <button onClick={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
             </div>
           </div>
         </div>
@@ -117,8 +116,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                         field={this.state.form.fields.amount}
                         valueOnChange={this.fieldChanged('amount')} />
             <div className="flex justify-end">
-              <Button className="ml-2" action={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-              <Button className="ml-2" action={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+              <button className="ml-2" onClick={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+              <button className="ml-2" onClick={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
             </div>
           </div>
         }
@@ -143,8 +142,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                                 field={this.state.form.fields.amount}
                                 valueOnChange={this.fieldChanged('amount')} />
                     <div className="flex justify-end">
-                      <Button className="ml-2" action={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-                      <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+                      <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+                      <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
                     </div>
                   </td>
                 </tr>
@@ -154,8 +153,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
                   <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
-                    <Button action={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                    <Button className="ml-2" action={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                    <button onClick={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                    <button className="ml-2" onClick={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                   </td>
                 </tr>
               )) }

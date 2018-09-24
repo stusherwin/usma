@@ -9,11 +9,13 @@ module Api where
   import GHC.Generics
   import Data.Time.Calendar (Day)
   import Servant
+  import Servant.Multipart
   import CollectiveOrder
   import HouseholdOrder
   import Product
   import Household
   import HouseholdPayment
+  import Data.Text (Text)
  
   type AppAPI = 
          "api" :> (
@@ -51,6 +53,7 @@ module Api where
     :<|> "create-household-payment" :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] Int
     :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] ()
     :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
+    :<|> "upload-product-list" :> MultipartForm MultipartData :> Post '[JSON] String
 
   type FullAPI =
          AppAPI

@@ -42,6 +42,7 @@ executable usma
                      , servant-server
                      , servant-options
                      , servant-purescript
+                     , servant-multipart
                      , warp
                      , wai
                      , wai-cors

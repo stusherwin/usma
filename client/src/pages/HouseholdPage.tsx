@@ -5,7 +5,6 @@ import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, Product }
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
-import { Button } from '../Button'
 import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Router } from '../Router'
@@ -95,7 +94,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
                 <h2>Current order</h2>
                 <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
                 {!currentCollectiveOrder.isPlaced && 
-                  <Button className="mt-2" action={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</Button>
+                  <button className="mt-2" onClick={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
                 }
               </div>
             </div>
@@ -105,7 +104,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
               <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                 <h2>Current order</h2>
                 <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
-                <Button className="mt-2" action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</Button>
+                <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
               </div>
             </div>
           )}

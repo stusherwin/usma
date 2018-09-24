@@ -4,7 +4,6 @@ import { CollectiveOrder } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
-import { Button } from '../Button'
 import { Money } from '../Money'
 import { TopNav } from '../TopNav'
 

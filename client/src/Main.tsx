@@ -3,7 +3,6 @@ import * as React from 'react';
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
-import { Button } from './Button'
 import { Icon } from './Icon'
 import { Router } from './Router'
 

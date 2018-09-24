@@ -4,7 +4,6 @@ import * as classNames from 'classnames'
 import { Product, VatRate } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
-import { Button } from '../Button'
 import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Form, Field, Validate } from '../Validation'
@@ -42,6 +41,8 @@ export interface ProductsPageState { loadMoreVisible: boolean
                                    , nextStartIndex: number
                                    , searchString: string
                                    , showLoadMore: boolean
+                                   , uploading: boolean
+                                   , uploadedFile: File | undefined
                                    }
 
 export class ProductsPage extends React.Component<ProductsPageProps, ProductsPageState> {
@@ -54,6 +55,8 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                  , nextStartIndex: pageSize
                  , searchString: ''
                  , showLoadMore: true
+                 , uploading: false
+                 , uploadedFile: undefined
                  }
   }
 
@@ -87,7 +90,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     document.onscroll = checkLoadMoreTriggered
   }
 
-  searchChanged(value: string) {
+  searchChanged = (value: string) => {
     const searchString = value.toLowerCase()
     const searchWords = searchString.split(' ')
     const searchFilter = (p: Product) => {
@@ -110,22 +113,77 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
                   })
   }
 
+  startUpload = () => {
+    this.setState({ uploading: true
+                  , uploadedFile: undefined
+                  })
+  }
+
+  confirmUpload = () => {
+    if(!this.state.uploadedFile) return
+
+    var formData = new FormData()
+    formData.append('files', this.state.uploadedFile, this.state.uploadedFile.name)
+
+    this.props.request(ServerApi.command.uploadProductList(formData))
+      .then(this.props.reload)
+      .then(_ => this.setState({ uploading: false
+                               , uploadedFile: undefined
+                               })
+      )
+  }
+
+  cancelUpload = () => {
+    this.setState({ uploading: false
+                  , uploadedFile: undefined
+                  })
+  }
+
+  fileChanged = (file: File | undefined) => {
+    this.setState({uploadedFile: file})
+  }
+
   render() {
     return (
       <div>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-product-light p-2">
+        <div className="bg-product-light p-2 pb-0">
           <TopNav className="text-white hover:text-white" />
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
-            <span className="relative">
-              <span className="absolute text-grey-darker" style={{bottom: '-2px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
-              <input type="text" placeholder="e.g. 'FX109' or 'Oat Bran'" className="w-full mt-2 border-product pl-6 input" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
-            </span>
+            <div className="flex justify-start">
+              <button onClick={() => this.setState({uploading: true})} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Upload product list</button>
+            </div>
           </div>
         </div>
+        <div className="bg-product-light p-2">
+          <span className="relative">
+            <span className="absolute text-grey-darker" style={{bottom: '-2px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
+            <input type="text" placeholder="e.g. 'FX109' or 'Oat Bran'" className="w-full mt-2 border-product pl-6 input" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
+          </span>
+        </div>
+        {this.state.uploading && 
+          <div className="bg-product-lightest p-2">
+            <h3 className="mb-4">Upload product list</h3>
+            <div className="field mb-4">
+              <div className="flex justify-between items-baseline">
+                <label className="flex-no-grow flex-no-shrink mr-2"
+                       htmlFor="upload">Choose file: </label>
+                <input type="file"
+                       name="file"
+                       id="upload"
+                       className="flex-grow flex-no-shrink"
+                       onChange={e => this.fileChanged((e.target.files || [])[0])} />
+              </div>
+            </div>
+            <div className="flex justify-end">  
+              <button className="ml-2" onClick={this.confirmUpload} disabled={!this.state.uploadedFile}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Upload</button>
+              <button className="ml-2" onClick={this.cancelUpload}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+            </div>
+          </div>
+        }
         {!this.state.products.length
         ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />
             {this.state.searchString.length ? 'No matching products available' : 'No products loaded yet'}

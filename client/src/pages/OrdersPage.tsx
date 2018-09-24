@@ -5,7 +5,6 @@ import { CollectiveOrder, HouseholdOrder, Household } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
-import { Button } from '../Button'
 import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Router } from '../Router'
@@ -53,7 +52,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
               <div>
                 <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
                 <div className="flex justify-start">
-                  <Button action={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</Button>
+                  <button onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</button>
                 </div>
               </div>
             )}

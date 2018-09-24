@@ -5,7 +5,6 @@ import { HouseholdOrder, Product, OrderItem } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
-import { Button } from './Button'
 import { Icon } from './Icon'
 import { Money } from './Money'
 
@@ -127,22 +126,22 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             {orderButtons.some(b => b) && 
               <div>
                 {canLeaveOrder && 
-                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</Button>
+                  <button className="mr-2 mt-2" disabled={!!this.state.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
                 }
                 {canReopenOrder &&
-                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</Button>
+                  <button className="mr-2 mt-2" disabled={!!this.state.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
                 }
                 {canCancelOrder &&
-                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel order</Button>
+                  <button className="mr-2 mt-2" disabled={!!this.state.addingProduct} onClick={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel order</button>
                 }
                 {canCompleteOrder && 
-                  <Button className="mr-2 mt-2" disabled={!!this.state.addingProduct} action={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</Button>
+                  <button className="mr-2 mt-2" disabled={!!this.state.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</button>
                 }
               </div>
             }
             {addItemButton &&
               <div className={classNames({'mt-2': orderButtons.filter(b => b).length == 1, 'flex justify-end mt-4': orderButtons.filter(b => b).length > 1})}>
-                <Button action={() => this.startAdd(unusedProducts[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add order item</Button>
+                <button onClick={() => this.startAdd(unusedProducts[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add order item</button>
               </div>
             }
           </div>
@@ -164,8 +163,8 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <Money className="flex-no-grow flex-no-shrink" amount={this.state.addingProduct.price * this.state.addingProductQuantity} />
               </div>
               <div className="flex justify-end items-baseline">
-                <Button className="ml-2" action={this.confirmAdd}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</Button>
-                <Button className="ml-2" action={this.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</Button>
+                <button className="ml-2" onClick={this.confirmAdd}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                <button className="ml-2" onClick={this.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
               </div>
             </div>
           }
@@ -185,8 +184,8 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                         <Money className="flex-no-grow flex-no-shrink" amount={this.state.editingProduct.price * this.state.editingProductQuantity} />
                       </div>
                       <div className="flex justify-end items-baseline">
-                        <Button className="ml-2" action={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</Button>
-                        <Button className="ml-2" action={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</Button>
+                        <button className="ml-2" onClick={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+                        <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</button>
                       </div>
                     </td>
                   </tr>
@@ -199,8 +198,8 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                     <td className="pt-2 pr-2 w-1">
                       {householdOrder.canBeAmended && householdOrder.isOpen &&
                         <span className="whitespace-no-wrap">
-                          <Button disabled={!!this.state.addingProduct} action={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></Button>
-                          <Button className="ml-2" disabled={!!this.state.addingProduct} action={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></Button>
+                          <button disabled={!!this.state.addingProduct} onClick={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                          <button className="ml-2" disabled={!!this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                         </span>
                       }
                     </td>

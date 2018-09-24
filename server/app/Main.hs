@@ -15,7 +15,9 @@ module Main where
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
   import Data.Time.Calendar (toGregorian, fromGregorian, addGregorianYearsClip)
   import Data.Time.Format (formatTime, defaultTimeLocale)
+  import Data.Text (Text, unpack)
   import Servant
+  import Servant.Multipart
   import Control.Concurrent(threadDelay)
   import Network.Wai.Middleware.Cors (cors, simpleCorsResourcePolicy, corsRequestHeaders, corsMethods, simpleMethods, corsOrigins)
   import Network.Wai.Middleware.Servant.Options (provideOptions)
@@ -24,6 +26,7 @@ module Main where
   import Web.Cookie (parseCookiesText)
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
   import Data.Time.Calendar (Day)
+  import System.Directory (copyFile)
   
   import Api
   import qualified Database as D
@@ -110,6 +113,7 @@ module Main where
                     :<|> createHouseholdPayment
                     :<|> updateHouseholdPayment
                     :<|> archiveHouseholdPayment
+                    :<|> uploadProductList
     where
     conn = connectionString config
     
@@ -179,3 +183,9 @@ module Main where
 
     archiveHouseholdPayment :: Int -> Handler ()
     archiveHouseholdPayment householdPaymentId = liftIO $ D.archiveHouseholdPayment conn householdPaymentId
+
+    uploadProductList :: MultipartData -> Handler String
+    uploadProductList multipartData = liftIO $ do
+      let file = (files multipartData) !! 0
+      copyFile (fdFilePath file) ("server/data/" ++ (unpack $ fdFileName file))
+      return $ fdFilePath $ file

@@ -119,6 +119,10 @@ const command = {
   archiveHouseholdPayment(id: number): Promise<{}> {
     return Http.post(`/api/command/archive-household-payment/${id}`, {})
   },
+
+  uploadProductList(data: FormData): Promise<{}> {
+    return Http.postFormData(`/api/command/upload-product-list/`, data)
+  },
 }
 
 export const ServerApi = {
@@ -136,6 +140,13 @@ export class Http {
       { method: 'POST'
       , headers: new Headers({'Content-Type' : 'application/json'})
       , body: JSON.stringify(body)
+      }))
+  }
+
+  static postFormData<T>(url: string, data: FormData): Promise<T> {
+    return this.fetchHttpRequest(new Request(url,
+      { method: 'POST'
+      , body: data
       }))
   }
 
