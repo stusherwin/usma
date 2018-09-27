@@ -69,11 +69,11 @@ insert into household ("name", archived) values ('3 Bowling Alley', false) retur
 ---
 
 create table product
-( id       serial not null primary key
-, "code"   text   not null
-, "name"   text   not null
-, price    int    not null
-, vat_rate      char   not null
+( id       serial  not null primary key
+, "code"   text    not null
+, "name"   text    not null
+, price    int     not null
+, vat_rate char    not null
 , archived boolean not null
 );
 
@@ -133,5 +133,28 @@ insert into household_payment (household_id, "date", amount, archived) values (1
 insert into household_payment (household_id, "date", amount, archived) values (1, '2018-01-02', 20000, false) returning id into hp2Id;
 insert into household_payment (household_id, "date", amount, archived) values (3, '2018-01-01', 30000, false) returning id into hp3Id;
 insert into household_payment (household_id, "date", amount, archived) values (4, '2018-01-01', 40000, false) returning id into hp4Id;
+
+---
+
+create table catalogue_entry
+( code           text    not null primary key
+, category       text    not null
+, brand          text    not null
+, "description"  text    not null
+, "text"         text    not null
+, size           text    not null
+, price          int     not null
+, vat_rate       char    not null
+, rrp            int     null
+, biodynamic     boolean not null
+, fair_trade     boolean not null
+, gluten_free    boolean not null
+, organic        boolean not null
+, added_sugar    boolean not null
+, vegan          boolean not null
+, priceChanged   date    null
+)
+
+---
 
 end $$

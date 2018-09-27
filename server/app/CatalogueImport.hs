@@ -12,6 +12,7 @@ module ProductRepository where
   import Data.Maybe (catMaybes, fromMaybe)
   import Data.Char (toLower)
   import Product
+  import Data.Time.Format (formatTime, defaultTimeLocale)
 
   splitOn :: Eq a => a -> [a] -> [[a]]
   splitOn ch list = f list [[]] where
@@ -40,3 +41,10 @@ module ProductRepository where
                      _ -> Zero
         in  Just $ Product id code desc' price' vat'
       parse _ _ = Nothing
+
+  importCatalogue :: String -> String -> IO ()
+  importCataloge filePath fileName = do
+    day <- liftIO $ getCurrentTime >>= return . utctDay
+    copyFile filePath ("server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ fileName)
+    file <- readFile filePath
+    

@@ -37,6 +37,7 @@ module Main where
   import HouseholdPayment
   import Config
   import ProductRepository
+  import CatalogueImport
 
   main :: IO ()
   main = do
@@ -184,8 +185,10 @@ module Main where
     archiveHouseholdPayment :: Int -> Handler ()
     archiveHouseholdPayment householdPaymentId = liftIO $ D.archiveHouseholdPayment conn householdPaymentId
 
-    uploadProductList :: MultipartData -> Handler String
+    uploadProductList :: MultipartData -> Handler ()
     uploadProductList multipartData = liftIO $ do
-      let file = (files multipartData) !! 0
-      copyFile (fdFilePath file) ("server/data/" ++ (unpack $ fdFileName file))
-      return $ fdFilePath $ file
+      if length (files multipartData) != 0 then
+        err400
+      else do
+        let file = (files multipartData) !! 0
+        importCatalogue (fdFilePath file) (unpack $ fdFileName file)
