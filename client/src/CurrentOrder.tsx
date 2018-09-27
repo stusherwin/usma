@@ -62,6 +62,11 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       .then(this.props.reload)
   }
 
+  unplaceOrder = () => {
+    this.props.request(ServerApi.command.unplaceOrder(this.props.order.id))
+      .then(this.props.reload)
+  }
+
   render() {
     const order = this.props.order
     const unusedHouseholds = this.props.households.filter(h => !this.props.householdOrders.find(oh => oh.householdId == h.id))
@@ -106,6 +111,9 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               <Button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !canPlaceOrder} action={() => this.placeOrder()}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</Button>
             </div>
           }
+          {order.isPlaced && 
+            <Button className="mr-2 mt-2" action={() => this.unplaceOrder()}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Undo place order</Button>
+          }
         </div>
         {this.state.addingHousehold &&
           <div className="bg-household-lightest p-2">
@@ -130,8 +138,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                     <span>
                       {household && (
                         household.balance > 0
-                        ? '(paid)'
-                        : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
+                        ? ' (paid)'
+                        : <span className="text-grey-dark"><br /><Money amount={household.balance} absolute /> to pay</span>
                       )}
                     </span>
                   }

@@ -4,7 +4,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
-                , createOrder, deleteOrder, placeOrder
+                , createOrder, deleteOrder, placeOrder, unplaceOrder
                 , createHouseholdOrder, deleteHouseholdOrder, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
                 , ensureHouseholdOrderItem, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
@@ -210,6 +210,14 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
       update "order" set placed = true where id = ?
+    |] (Only orderId)
+    close conn
+
+  unplaceOrder :: ByteString -> Int -> IO ()
+  unplaceOrder connectionString orderId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      update "order" set placed = false where id = ?
     |] (Only orderId)
     close conn
 

@@ -33,6 +33,7 @@ module Api where
     :<|> "create-order" :> Post '[JSON] Int
     :<|> "delete-order" :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "place-order" :> Capture "orderId" Int :> Post '[JSON] ()
+    :<|> "unplace-order" :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "create-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "delete-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()
     :<|> "cancel-household-order" :> ReqBody '[JSON] CancelHouseholdOrder :> Post '[JSON] ()

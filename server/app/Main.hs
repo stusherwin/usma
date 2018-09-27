@@ -93,6 +93,7 @@ module Main where
                     :<|> createOrder
                     :<|> deleteOrder
                     :<|> placeOrder
+                    :<|> unplaceOrder
                     :<|> createHouseholdOrder
                     :<|> deleteHouseholdOrder
                     :<|> cancelHouseholdOrder
@@ -127,6 +128,9 @@ module Main where
 
     placeOrder :: Int -> Handler ()
     placeOrder = liftIO . (D.placeOrder conn)
+
+    unplaceOrder :: Int -> Handler ()
+    unplaceOrder = liftIO . (D.unplaceOrder conn)
 
     createHouseholdOrder :: CancelHouseholdOrder -> Handler ()
     createHouseholdOrder command = liftIO $ D.createHouseholdOrder conn (choOrderId command) (choHouseholdId command)
