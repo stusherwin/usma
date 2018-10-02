@@ -14,7 +14,7 @@ const query = {
   },
 
   products(): Promise<Product[]> {
-    return Http.get<Product[]>('/api/query/product-list')
+    return Http.get<Product[]>('/api/query/products')
   },
 
   households(): Promise<Household[]> {
@@ -120,8 +120,8 @@ const command = {
     return Http.post(`/api/command/archive-household-payment/${id}`, {})
   },
 
-  uploadProductList(data: FormData): Promise<{}> {
-    return Http.postFormData(`/api/command/upload-product-list/`, data)
+  uploadProductCatalogue(data: FormData): Promise<{}> {
+    return Http.postFormData(`/api/command/upload-product-catalogue/`, data)
   },
 }
 

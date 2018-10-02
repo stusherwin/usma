@@ -102,16 +102,16 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                 <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
               } */}
               {canDeleteOrder &&
-                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={() => this.deleteOrder()}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
+                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.deleteOrder}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
               }
               {canAddHousehold &&
-                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={() => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</button>
+                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={_ => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</button>
               }
-              <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !canPlaceOrder} onClick={() => this.placeOrder()}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
+              <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !canPlaceOrder} onClick={this.placeOrder}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
             </div>
           }
           {order.isPlaced && 
-            <Button className="mr-2 mt-2" action={() => this.unplaceOrder()}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Undo place order</Button>
+            <button className="mr-2 mt-2" onClick={this.unplaceOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Undo place order</button>
           }
         </div>
         {this.state.addingHousehold &&
@@ -153,7 +153,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                     {deletableHousehold && 
                       <td className="pt-2 pr-2 w-1">
                         {order.canBeAmended && !ho.items.length &&
-                          <button disabled={!!this.state.addingHousehold} onClick={() => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                          <button disabled={!!this.state.addingHousehold} onClick={_ => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                         }
                       </td>
                     }

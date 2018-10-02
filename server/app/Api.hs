@@ -29,7 +29,6 @@ module Api where
     :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
-    :<|> "product-list" :> Get '[JSON] [Product]
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
@@ -53,7 +52,7 @@ module Api where
     :<|> "create-household-payment" :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] Int
     :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] ()
     :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
-    :<|> "upload-product-list" :> MultipartForm MultipartData :> Post '[JSON] String
+    :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

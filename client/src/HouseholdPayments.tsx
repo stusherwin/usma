@@ -153,8 +153,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
                   <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
-                    <button onClick={() => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                    <button className="ml-2" onClick={() => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                    <button onClick={_ => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                    <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                   </td>
                 </tr>
               )) }

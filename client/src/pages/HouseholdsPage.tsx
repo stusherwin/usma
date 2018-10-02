@@ -135,8 +135,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                 <div key={h.id} className="flex justify-between items-baseline px-2 mt-2">
                   <RouterLink className="flex-grow" path={`/households/${h.id}`}>{h.name}</RouterLink>
                   <span className="flex-no-shrink flex-no-grow">
-                    <button className="ml-2" onClick={() => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                    <button className="ml-2" onClick={() => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                    <button className="ml-2" onClick={_ => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                    <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                   </span>
                 </div>
               )) }

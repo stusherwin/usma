@@ -10,11 +10,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                 , createHousehold, updateHousehold, archiveHousehold
                 , createProduct, updateProduct, archiveProduct
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
+                , replaceCatalogue
                 ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
   import Database.PostgreSQL.Simple.ToField
+  import Database.PostgreSQL.Simple.ToRow
   import Database.PostgreSQL.Simple.FromField
   import Database.PostgreSQL.Simple.FromRow
   import Database.PostgreSQL.Simple.Time (Unbounded(..))
@@ -31,6 +33,7 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   import Product
   import Household
   import HouseholdPayment
+  import CatalogueEntry
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
@@ -48,6 +51,12 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         Just 'S' -> return Standard
         Just 'R' -> return Reduced
         _ -> mzero
+
+  instance FromRow CatalogueEntry where
+    fromRow = CatalogueEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+  instance ToRow CatalogueEntry where
+    toRow e = [toField $ CatalogueEntry.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ CatalogueEntry.price e, toField $ CatalogueEntry.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ priceChanged e]
 
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
@@ -382,4 +391,17 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     execute conn [sql|
       update household_payment set archived = true where id = ?
     |] (Only id)
+    close conn
+
+  replaceCatalogue :: ByteString -> [CatalogueEntry] -> IO ()
+  replaceCatalogue connectionString entries = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      execute_ conn [sql|
+        truncate table catalogue_entry
+      |]
+      void $ executeMany conn [sql|
+        insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, priceChanged)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |] entries
     close conn

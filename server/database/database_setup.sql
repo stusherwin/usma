@@ -153,7 +153,7 @@ create table catalogue_entry
 , added_sugar    boolean not null
 , vegan          boolean not null
 , priceChanged   date    null
-)
+);
 
 ---
 

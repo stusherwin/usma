@@ -26,7 +26,8 @@ module Main where
   import Web.Cookie (parseCookiesText)
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
   import Data.Time.Calendar (Day)
-  import System.Directory (copyFile)
+  import System.Directory (copyFile, createDirectoryIfMissing)
+  import Control.Monad (mzero, when, void)
   
   import Api
   import qualified Database as D
@@ -36,7 +37,6 @@ module Main where
   import Household
   import HouseholdPayment
   import Config
-  import ProductRepository
   import CatalogueImport
 
   main :: IO ()
@@ -70,7 +70,6 @@ module Main where
                   :<|> products
                   :<|> households
                   :<|> householdPayments
-                  :<|> productList
     where
     conn = connectionString config
     
@@ -88,9 +87,6 @@ module Main where
 
     householdPayments :: Handler [HouseholdPayment]
     householdPayments = liftIO $ D.getHouseholdPayments conn
-
-    productList :: Handler [Product]
-    productList = liftIO $ loadProductList config
       
   commandServer :: Config -> Server CommandAPI
   commandServer config = createOrderForHousehold
@@ -114,7 +110,7 @@ module Main where
                     :<|> createHouseholdPayment
                     :<|> updateHouseholdPayment
                     :<|> archiveHouseholdPayment
-                    :<|> uploadProductList
+                    :<|> uploadProductCatalogue
     where
     conn = connectionString config
     
@@ -185,10 +181,13 @@ module Main where
     archiveHouseholdPayment :: Int -> Handler ()
     archiveHouseholdPayment householdPaymentId = liftIO $ D.archiveHouseholdPayment conn householdPaymentId
 
-    uploadProductList :: MultipartData -> Handler ()
-    uploadProductList multipartData = liftIO $ do
-      if length (files multipartData) != 0 then
-        err400
-      else do
-        let file = (files multipartData) !! 0
-        importCatalogue (fdFilePath file) (unpack $ fdFileName file)
+    uploadProductCatalogue :: MultipartData -> Handler ()
+    uploadProductCatalogue multipartData = do
+      when (length (files multipartData) /= 1) $
+        throwError err400
+      let file = (files multipartData) !! 0
+      liftIO $ createDirectoryIfMissing True "server/data/uploads/"
+      day <- liftIO $ getCurrentTime >>= return . utctDay
+      let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (unpack $ fdFileName file)
+      liftIO $copyFile (fdFilePath file) destFilePath
+      liftIO $ importCatalogue conn destFilePath

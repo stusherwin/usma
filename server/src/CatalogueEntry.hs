@@ -3,6 +3,7 @@
 
 module CatalogueEntry where
   import Data.Aeson
+  import Data.Time.Calendar (Day)
   import GHC.Generics
   import Product
 
@@ -21,6 +22,6 @@ module CatalogueEntry where
                                        , organic :: Bool
                                        , addedSugar :: Bool
                                        , vegan :: Bool
-                                       , priceChanged :: Maybe Date
+                                       , priceChanged :: Maybe Day
                                        } deriving (Eq, Show, Generic)
   instance ToJSON CatalogueEntry

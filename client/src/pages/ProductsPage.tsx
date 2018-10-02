@@ -130,7 +130,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     var formData = new FormData()
     formData.append('files', this.state.uploadedFile, this.state.uploadedFile.name)
 
-    this.props.request(ServerApi.command.uploadProductList(formData))
+    this.props.request(ServerApi.command.uploadProductCatalogue(formData))
       .then(this.props.reload)
       .then(_ => this.setState({ uploading: false
                                , uploadedFile: undefined
