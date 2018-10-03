@@ -5,6 +5,7 @@ module CollectiveOrder where
   import Data.Aeson
   import GHC.Generics
   import Data.Time.Calendar (Day)
+  import Product (VatRate)
   
   data CollectiveOrder = CollectiveOrder { id :: Int
                                          , createdDate :: Day
@@ -22,6 +23,8 @@ module CollectiveOrder where
   data CollectiveOrderItem = CollectiveOrderItem { productId :: Int
                                                  , productCode :: String
                                                  , productName :: String
+                                                 , productPrice :: Int
+                                                 , productVatRate :: VatRate
                                                  , itemQuantity :: Int
                                                  , itemTotal :: Int
                                                  } deriving (Eq, Show, Generic)

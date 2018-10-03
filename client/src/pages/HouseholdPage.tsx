@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, Product } from '../Types'
+import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
@@ -17,7 +17,7 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , householdOrders: HouseholdOrder[]
                                           , currentCollectiveOrder: CollectiveOrder | undefined
                                           , payments: HouseholdPayment[]
-                                          , products: Product[]
+                                          , products: ProductCatalogueEntry[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
                                           , loading: boolean
@@ -83,6 +83,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
               </div>
               <CurrentHouseholdOrder householdOrder={currentOrder}
                                      products={this.props.products}
+                                     loading={this.props.loading}
                                      reload={this.props.reload}
                                      request={this.props.request} />
             </div>

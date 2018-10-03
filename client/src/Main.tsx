@@ -23,7 +23,6 @@ export interface MainState { loading: boolean
                            , url: string
                            , collectiveOrders: CollectiveOrder[]
                            , householdOrders: HouseholdOrder[]
-                           , products: Product[]
                            , productCatalogue: ProductCatalogueEntry[]
                            , households: Household[]
                            , householdPayments: HouseholdPayment[]
@@ -44,7 +43,6 @@ export class Main extends React.Component<MainProps, MainState> {
                  , url
                  , collectiveOrders: []
                  , householdOrders: []
-                 , products: []
                  , productCatalogue: []
                  , households: []
                  , householdPayments: []
@@ -124,7 +122,7 @@ export class Main extends React.Component<MainProps, MainState> {
                        currentCollectiveOrder={currentCollectiveOrder}
                        householdOrders={householdOrders}
                        payments={householdPayments}
-                       products={this.state.products}
+                       products={this.state.productCatalogue}
                        reload={this.reload}
                        request={this.request}
                        loading={this.state.loading}
@@ -153,15 +151,13 @@ export class Main extends React.Component<MainProps, MainState> {
   reload = () =>
     this.request(Promise.all([ ServerApi.query.collectiveOrders()
                              , ServerApi.query.householdOrders()
-                             , ServerApi.query.products()
                              , ServerApi.query.households()
                              , ServerApi.query.householdPayments()
                              , ServerApi.query.productCatalogue()
                              ]))
-    .then(([collectiveOrders, householdOrders, products, households, householdPayments, productCatalogue]) => {
+    .then(([collectiveOrders, householdOrders, households, householdPayments, productCatalogue]) => {
       this.setState({ collectiveOrders
                     , householdOrders
-                    , products
                     , households
                     , householdPayments
                     , productCatalogue

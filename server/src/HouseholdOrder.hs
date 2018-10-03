@@ -5,6 +5,7 @@ module HouseholdOrder where
   import Data.Aeson
   import GHC.Generics
   import Data.Time.Calendar (Day)
+  import Product (VatRate)
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
                                        , orderCreatedDate :: Day
@@ -24,6 +25,8 @@ module HouseholdOrder where
   data HouseholdOrderItem = HouseholdOrderItem { productId :: Int
                                                , productCode :: String
                                                , productName :: String
+                                               , productPrice :: Int
+                                               , productVatRate :: VatRate
                                                , itemQuantity :: Int
                                                , itemTotal :: Int
                                                } deriving (Eq, Show, Generic)

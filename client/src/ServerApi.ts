@@ -69,8 +69,8 @@ const command = {
     return Http.post(`/api/command/reopen-household-order/${orderId}/${householdId}`, {})
   },
 
-  ensureHouseholdOrderItem(orderId: number, householdId: number, productId: number, quantity: number): Promise<{}> {
-    return Http.post(`/api/command/ensure-household-order-item/${orderId}/${householdId}/${productId}`, { hoidQuantity: quantity })
+  ensureHouseholdOrderItem(orderId: number, householdId: number, productCode: string, quantity: number): Promise<{}> {
+    return Http.post(`/api/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`, { hoidQuantity: quantity })
   },
 
   removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {

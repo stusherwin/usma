@@ -150,8 +150,8 @@ module Main where
     reopenHouseholdOrder :: Int -> Int -> Handler ()
     reopenHouseholdOrder householdId orderId = liftIO $ D.reopenHouseholdOrder conn householdId orderId
  
-    ensureHouseholdOrderItem :: Int -> Int -> Int -> HouseholdOrderItemDetails -> Handler ()
-    ensureHouseholdOrderItem householdId orderId productId details = liftIO $ D.ensureHouseholdOrderItem conn householdId orderId productId details
+    ensureHouseholdOrderItem :: Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
+    ensureHouseholdOrderItem householdId orderId productCode details = liftIO $ D.ensureHouseholdOrderItem conn householdId orderId productCode details
 
     removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem householdId orderId productId = liftIO $ D.removeHouseholdOrderItem conn householdId orderId productId

@@ -87,17 +87,17 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         order by o.id desc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, p.id, p.code, p.name, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
+        select hoi.order_id, p.id, p.code, p.name, p.price, p.vat_rate, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
-        group by hoi.order_id, p.id, p.code, p.name
+        group by hoi.order_id, p.id, p.code, p.name, p.price, p.vat_rate
         order by p.code asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Bool, Bool, Int)], is :: [(Int, Int, String, String, Int, VatRate, Int, Int)])
     close conn
     return $ rOrders <&> \(id, created, complete, cancelled, placed, past, total) ->
-      let item (_, productId, code, name, quantity, total) = CollectiveOrderItem productId code name quantity total
-          thisOrder (oId, _, _, _, _, _) = oId == id
+      let item (_, productId, code, name, price, vatRate, quantity, total) = CollectiveOrderItem productId code name price vatRate quantity total
+          thisOrder (oId, _, _, _, _, _, _, _) = oId == id
           items = map item $ filter thisOrder rItems
       in  collectiveOrder id created complete cancelled placed past total items
   
@@ -121,16 +121,16 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, hoi.quantity, p.price * hoi.quantity as total
+        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
         order by p.code asc
       |]
-      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, Int)])
+      return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, VatRate, Int, Int)])
     close conn
     return $ rOrders <&> \(orderId, orderCreated, orderPlaced, orderPast, householdId, householdName, complete, cancelled, total) ->
-      let item (_, _, productId, code, name, quantity, total) = HouseholdOrderItem productId code name quantity total
-          thisOrder (oId, hId, _, _, _, _, _) = oId == orderId && hId == householdId
+      let item (_, _, productId, code, name, price, vatRate, quantity, total) = HouseholdOrderItem productId code name price vatRate quantity total
+          thisOrder (oId, hId, _, _, _, _, _, _, _) = oId == orderId && hId == householdId
           items = map item $ filter thisOrder rItems
       in  householdOrder orderId orderCreated orderPlaced orderPast householdId householdName complete cancelled total items
 
@@ -278,11 +278,33 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (orderId, householdId)
     close conn
 
-  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> HouseholdOrderItemDetails -> IO ()
-  ensureHouseholdOrderItem connectionString orderId householdId productId details = do
+  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> String -> HouseholdOrderItemDetails -> IO ()
+  ensureHouseholdOrderItem connectionString orderId householdId productCode details = do
     let quantity = hoidQuantity details
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
+      productId <- do
+        ids <- query conn [sql|
+          select id from product where code = ?
+        |] (Only productCode)
+        case ids of
+          (Only id):xs -> return id
+          _ -> do
+            [Only id] <- query conn [sql|
+              insert into product ("code", "name", price, vat_rate, archived) 
+              select ce.code
+                   , concat_ws(' ', nullif(btrim(ce.brand), '')
+                                  , nullif(btrim(ce."description"), '')
+                                  , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                                  , nullif(btrim(ce."text"), ''))
+                   , ce.price
+                   , ce.vat_rate
+                   , false
+              from catalogue_entry ce
+              where ce.code = ?
+              returning id
+            |] (Only productCode)
+            return (id :: Int)
       exists <- query conn [sql|
         select 1 from household_order_item where order_id = ? and household_id = ? and product_id = ?
       |] (orderId, householdId, productId)
