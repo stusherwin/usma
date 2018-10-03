@@ -10,9 +10,9 @@ import { Form, Field, Validate } from '../Validation'
 import { RouterLink } from '../RouterLink'
 import { TopNav } from '../TopNav'
 import { TextField, MoneyField, DropDownField } from '../Field'
+import { LoadMore } from '../LoadMore'
 
 const pageSize = 10
-const loadMoretriggerMargin = 50
 const maxPages = 3
 
 export interface ProductsPageProps { products: ProductCatalogueEntry[]
@@ -22,8 +22,7 @@ export interface ProductsPageProps { products: ProductCatalogueEntry[]
                                    , error: ApiError | null
                                    }
 
-export interface ProductsPageState { loadMoreVisible: boolean
-                                   , products: ProductCatalogueEntry[]
+export interface ProductsPageState { products: ProductCatalogueEntry[]
                                    , filteredProducts: ProductCatalogueEntry[]
                                    , nextStartIndex: number
                                    , searchString: string
@@ -36,44 +35,31 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   constructor(props: ProductsPageProps) {
     super(props)
 
-    this.state = { loadMoreVisible: false
-                 , products: props.products.slice(0, pageSize)
-                 , filteredProducts: props.products
+    const filteredProducts = props.products
+
+    this.state = { filteredProducts
+                 , products: filteredProducts.slice(0, pageSize)
                  , nextStartIndex: pageSize
                  , searchString: ''
-                 , showLoadMore: true
+                 , showLoadMore: false
                  , uploading: false
                  , uploadedFile: undefined
                  }
   }
 
   componentDidMount() {
-    const checkLoadMoreTriggered = () => {
-      const loadMore = document.getElementById('load-more')
-      if(!loadMore) return false
-      
-      const rect = loadMore.getBoundingClientRect()
-      const loadMoreVisible = rect.top - window.innerHeight < loadMoretriggerMargin
-      if(loadMoreVisible !== this.state.loadMoreVisible) {
-        this.setState({loadMoreVisible})
-        if(loadMoreVisible) {
-          const start = this.state.nextStartIndex
-          const end = start + pageSize
-          const moreProducts = this.state.filteredProducts.slice(start, end)
+    this.setState({showLoadMore: true})
+  }
 
-          this.setState({ products: [...this.state.products, ...moreProducts]
-                        , nextStartIndex: end
-                        , loadMoreVisible: false
-                        , showLoadMore: moreProducts.length >= pageSize
-                        })
-        }
-      }
+  loadMore = () => {
+    const start = this.state.nextStartIndex
+    const end = start + pageSize
+    const moreProducts = this.state.filteredProducts.slice(start, end)
 
-      return false
-    }
-    
-    checkLoadMoreTriggered()
-    document.onscroll = checkLoadMoreTriggered
+    this.setState({ products: [...this.state.products, ...moreProducts]
+                  , nextStartIndex: end
+                  , showLoadMore: moreProducts.length >= pageSize
+                  })
   }
 
   searchChanged = (value: string) => {
@@ -88,27 +74,24 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     const filteredProducts = !!searchString.length
       ? this.props.products.filter(searchFilter)
       : this.props.products
-    const products = filteredProducts.slice(0, pageSize)
 
-    this.setState({ loadMoreVisible: false
-                  , products
-                  , filteredProducts
+    this.resetFilteredProducts(searchString, filteredProducts)
+  }
+
+  resetFilteredProducts = (searchString: string, filteredProducts: ProductCatalogueEntry[]) => {
+    this.setState({ filteredProducts
+                  , searchString
+                  , products: filteredProducts.slice(0, pageSize)
                   , nextStartIndex: pageSize
-                  , searchString: searchString
-                  , showLoadMore: products.length >= pageSize
+                  , showLoadMore: filteredProducts.length >= pageSize
                   })
   }
 
   startUpload = () => {
     this.setState({ uploading: true
                   , uploadedFile: undefined
-                  , loadMoreVisible: false
-                  , products: this.props.products.slice(0, pageSize)
-                  , filteredProducts: this.props.products
-                  , nextStartIndex: pageSize
-                  , searchString: ''
-                  , showLoadMore: true
-                  , })
+                  })
+    this.resetFilteredProducts('', this.props.products)
   }
 
   confirmUpload = () => {
@@ -119,11 +102,12 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
 
     this.props.request(ServerApi.command.uploadProductCatalogue(formData))
       .then(this.props.reload)
-      .then(_ => this.setState({ uploading: false
-                               , uploadedFile: undefined
-                               , products: this.props.products.slice(0, pageSize)
-                               })
-      )
+      .then(_ => {
+        this.setState({ uploading: false
+                      , uploadedFile: undefined
+                      })
+        this.resetFilteredProducts('', this.props.products)
+      })
   }
 
   cancelUpload = () => {
@@ -187,8 +171,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         : (
           <div>
             { this.state.products.map((p, i) => (
-              <div key={p.code} className={classNames('px-2 py-2 mb-4', /*,
-                                                    {'border-grey-light border-t': i > 0 }*/
+              <div key={p.code} className={classNames('px-2 py-2 mb-4',
                                                     { 'mt-4': i > 0
                                                     })}>
                 <div className="flex justify-between items-baseline">
@@ -204,11 +187,9 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
           </div>
         )}
         {this.state.showLoadMore && 
-          <div id="load-more" className="bg-grey-lightest py-8 text-center text-grey">
-            <Icon type="loading" className="w-4 h-4 mx-auto rotating ml-2 fill-current" />
-          </div>
+          <LoadMore loadMore={this.loadMore} />
         }
       </div>
     )
   }
-}  
+}
