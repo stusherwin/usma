@@ -134,6 +134,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
       .then(this.props.reload)
       .then(_ => this.setState({ uploading: false
                                , uploadedFile: undefined
+                               , products: this.props.products.slice(0, pageSize).map(wrap(0))
                                })
       )
   }

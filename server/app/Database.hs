@@ -404,4 +404,15 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, priceChanged)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       |] entries
+      execute_ conn [sql|
+        update product p
+        set "name" = concat_ws(' ', nullif(btrim(ce.brand), '')
+                                  , nullif(btrim(ce."description"), '')
+                                  , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                                  , nullif(btrim(ce."text"), ''))
+          , price = ce.price
+          , vat_rate = ce.vat_rate
+        from catalogue_entry ce
+        where ce.code = p.code
+      |]
     close conn

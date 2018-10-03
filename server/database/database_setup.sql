@@ -23,6 +23,7 @@ drop table if exists "household_order" cascade;
 drop table if exists "order" cascade;
 drop table if exists "household" cascade;
 drop table if exists "product" cascade;
+drop table if exists "catalogue_entry" cascade;
 
 ---
 
