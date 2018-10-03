@@ -8,7 +8,6 @@ module Config where
 
   data Config = Config { port :: Int
                        , connectionString :: ByteString
-                       , productListDataFile :: String
                        }
 
   getConfig :: IO Config
@@ -19,7 +18,4 @@ module Config where
     connectionString <- if length args > 1 then return (args !! 1)
                                            else getEnv "DATABASE_URL"
     putStrLn $ "connection string: " ++ connectionString
-    productListDataFile <- if length args > 2 then return (args !! 2)
-                           else getEnv "PRODUCT_LIST_DATA_FILE"
-    putStrLn $ "data file: " ++ productListDataFile
-    return $ Config port (B.pack connectionString) productListDataFile
+    return $ Config port (B.pack connectionString)
