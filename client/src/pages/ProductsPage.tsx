@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Product, VatRate } from '../Types'
+import { ProductCatalogueEntry, VatRate } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { Icon } from '../Icon'
@@ -15,21 +15,7 @@ const pageSize = 10
 const loadMoretriggerMargin = 50
 const maxPages = 3
 
-interface IndexedProduct extends Product {
-  index: number
-}
-
-const wrap = (offset: number) => (p: Product, i: number) => ({
-  id: p.id,
-  code: p.code,
-  name: p.name,
-  price: p.price,
-  vatRate: p.vatRate,
-  priceUpdated: p.priceUpdated,
-  index: offset + i
-})
-
-export interface ProductsPageProps { products: Product[]
+export interface ProductsPageProps { products: ProductCatalogueEntry[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
                                    , loading: boolean
@@ -37,8 +23,8 @@ export interface ProductsPageProps { products: Product[]
                                    }
 
 export interface ProductsPageState { loadMoreVisible: boolean
-                                   , products: IndexedProduct[]
-                                   , filteredProducts: Product[]
+                                   , products: ProductCatalogueEntry[]
+                                   , filteredProducts: ProductCatalogueEntry[]
                                    , nextStartIndex: number
                                    , searchString: string
                                    , showLoadMore: boolean
@@ -51,7 +37,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     super(props)
 
     this.state = { loadMoreVisible: false
-                 , products: props.products.slice(0, pageSize).map(wrap(0))
+                 , products: props.products.slice(0, pageSize)
                  , filteredProducts: props.products
                  , nextStartIndex: pageSize
                  , searchString: ''
@@ -73,7 +59,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         if(loadMoreVisible) {
           const start = this.state.nextStartIndex
           const end = start + pageSize
-          const moreProducts = this.state.filteredProducts.slice(start, end).map(wrap(start))
+          const moreProducts = this.state.filteredProducts.slice(start, end)
 
           this.setState({ products: [...this.state.products, ...moreProducts]
                         , nextStartIndex: end
@@ -93,7 +79,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
   searchChanged = (value: string) => {
     const searchString = value.toLowerCase()
     const searchWords = searchString.split(' ')
-    const searchFilter = (p: Product) => {
+    const searchFilter = (p: ProductCatalogueEntry) => {
       const code = p.code.toLowerCase()
       const name = p.name.toLowerCase()
       return searchWords.every(w => code.includes(w) || name.includes(w))
@@ -102,7 +88,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     const filteredProducts = !!searchString.length
       ? this.props.products.filter(searchFilter)
       : this.props.products
-    const products = filteredProducts.slice(0, pageSize).map(wrap(0))
+    const products = filteredProducts.slice(0, pageSize)
 
     this.setState({ loadMoreVisible: false
                   , products
@@ -117,7 +103,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
     this.setState({ uploading: true
                   , uploadedFile: undefined
                   , loadMoreVisible: false
-                  , products: this.props.products.slice(0, pageSize).map(wrap(0))
+                  , products: this.props.products.slice(0, pageSize)
                   , filteredProducts: this.props.products
                   , nextStartIndex: pageSize
                   , searchString: ''
@@ -135,7 +121,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
       .then(this.props.reload)
       .then(_ => this.setState({ uploading: false
                                , uploadedFile: undefined
-                               , products: this.props.products.slice(0, pageSize).map(wrap(0))
+                               , products: this.props.products.slice(0, pageSize)
                                })
       )
   }
@@ -201,7 +187,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         : (
           <div>
             { this.state.products.map((p, i) => (
-              <div key={p.index} className={classNames('px-2 py-2 mb-4', /*,
+              <div key={p.code} className={classNames('px-2 py-2 mb-4', /*,
                                                     {'border-grey-light border-t': i > 0 }*/
                                                     { 'mt-4': i > 0
                                                     })}>

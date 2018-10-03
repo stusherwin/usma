@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module CatalogueImport where
+module ProductCatalogueImport where
   import Data.Aeson
   import GHC.Generics
   import Config
@@ -18,7 +18,7 @@ module CatalogueImport where
   import Data.ByteString (ByteString)
   import System.Directory (copyFile)
   import Product
-  import CatalogueEntry
+  import ProductCatalogueData
   import Database
 
   splitOn :: Eq a => a -> [a] -> [[a]]
@@ -27,18 +27,12 @@ module CatalogueImport where
     f (x:xs) ws | x == ch = f xs ([]:ws)
     f (x:xs) (w:ws) = f xs ((x:w):ws)
 
-  loadCatalogue :: String -> IO [CatalogueEntry]
-  loadCatalogue filePath = do 
+  loadProductCatalogue :: String -> IO [ProductCatalogueData]
+  loadProductCatalogue filePath = do 
     file <- readFile filePath
     return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
       parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
-        let -- desc' = unwords $ filter ((> 0) . length) $ map (T.unpack . T.strip . T.pack)
-            --           [ brand
-            --           , desc
-            --           , if length size > 0 then "(" ++ map toLower size ++ ")" else ""
-            --           , text
-            --           ]
-            price' = fromMaybe 0 $ (* 100) . round <$> (readMaybe price :: Maybe Float)
+        let price' = fromMaybe 0 $ (* 100) . round <$> (readMaybe price :: Maybe Float)
             vat' = case vat of
                      "1" -> Standard
                      "5" -> Reduced
@@ -50,10 +44,10 @@ module CatalogueImport where
             o' = o == "O"
             s' = s == "S"
             v' = v == "V"
-        in  Just $ CatalogueEntry code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' Nothing
+        in  Just $ ProductCatalogueData code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' Nothing
       parse _ _ = Nothing
 
-  importCatalogue :: ByteString -> Day -> String -> IO ()
-  importCatalogue connectionString day filePath = do
-    catalogue <- loadCatalogue filePath
-    replaceCatalogue connectionString day catalogue
+  importProductCatalogue :: ByteString -> Day -> String -> IO ()
+  importProductCatalogue connectionString day filePath = do
+    catalogue <- loadProductCatalogue filePath
+    replaceProductCatalogue connectionString day catalogue

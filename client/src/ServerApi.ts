@@ -1,4 +1,4 @@
-import { Product, VatRate, Household, CollectiveOrder, HouseholdOrder, HouseholdPayment } from './Types'
+import { Product, VatRate, Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Util } from './Util'
 import { setTimeout } from 'timers';
 
@@ -26,6 +26,10 @@ const query = {
     return Http.get<HouseholdPayment[]>('/api/query/household-payments')
       .then(res => { res.forEach(hp => hp.date = new Date(hp.date)); return res })
   },
+
+  productCatalogue(): Promise<ProductCatalogueEntry[]> {
+    return Http.get<ProductCatalogueEntry[]>('/api/query/product-catalogue')
+  }
 }
 
 const command = {

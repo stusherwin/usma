@@ -8,6 +8,12 @@ export type Product = { id: number
                       , priceUpdated: Date | null
                       }
 
+export type ProductCatalogueEntry = { code: string
+                                    , name: string
+                                    , price: number
+                                    , vatRate: VatRate
+                                    }
+
 export type Household = { id: number
                         , name: string
                         , totalOrders: number

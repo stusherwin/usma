@@ -37,7 +37,8 @@ module Main where
   import Household
   import HouseholdPayment
   import Config
-  import CatalogueImport
+  import ProductCatalogueImport
+  import ProductCatalogueEntry
 
   main :: IO ()
   main = do
@@ -70,6 +71,7 @@ module Main where
                   :<|> products
                   :<|> households
                   :<|> householdPayments
+                  :<|> productCatalogue
     where
     conn = connectionString config
     
@@ -87,6 +89,9 @@ module Main where
 
     householdPayments :: Handler [HouseholdPayment]
     householdPayments = liftIO $ D.getHouseholdPayments conn
+
+    productCatalogue :: Handler [ProductCatalogueEntry]
+    productCatalogue = liftIO $ D.getProductCatalogue conn
       
   commandServer :: Config -> Server CommandAPI
   commandServer config = createOrderForHousehold
@@ -178,4 +183,4 @@ module Main where
       day <- liftIO $ getCurrentTime >>= return . utctDay
       let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (unpack $ fdFileName file)
       liftIO $copyFile (fdFilePath file) destFilePath
-      liftIO $ importCatalogue conn day destFilePath
+      liftIO $ importProductCatalogue conn day destFilePath

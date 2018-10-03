@@ -7,6 +7,7 @@
 module Api where
   import Data.Aeson
   import GHC.Generics
+  import Data.Text (Text)
   import Data.Time.Calendar (Day)
   import Servant
   import Servant.Multipart
@@ -15,7 +16,7 @@ module Api where
   import Product
   import Household
   import HouseholdPayment
-  import Data.Text (Text)
+  import ProductCatalogueEntry
  
   type AppAPI = 
          "api" :> (
@@ -29,6 +30,7 @@ module Api where
     :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
+    :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

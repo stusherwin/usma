@@ -14,7 +14,7 @@ import { FullOrderPage } from './pages/FullOrderPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { HouseholdsPage } from './pages/HouseholdsPage'
 import { HomePage } from './pages/HomePage'
-import { CollectiveOrder, HouseholdOrder, Product, Household, HouseholdPayment } from './Types'
+import { CollectiveOrder, HouseholdOrder, Product, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
 
 export interface MainProps {}
 export interface MainState { loading: boolean
@@ -24,6 +24,7 @@ export interface MainState { loading: boolean
                            , collectiveOrders: CollectiveOrder[]
                            , householdOrders: HouseholdOrder[]
                            , products: Product[]
+                           , productCatalogue: ProductCatalogueEntry[]
                            , households: Household[]
                            , householdPayments: HouseholdPayment[]
                            , initialised: boolean
@@ -44,6 +45,7 @@ export class Main extends React.Component<MainProps, MainState> {
                  , collectiveOrders: []
                  , householdOrders: []
                  , products: []
+                 , productCatalogue: []
                  , households: []
                  , householdPayments: []
                  , initialised: false
@@ -95,7 +97,7 @@ export class Main extends React.Component<MainProps, MainState> {
                          error={this.state.error} />
     })
     
-    this.router.route('/products', _ => <ProductsPage products={this.state.products}
+    this.router.route('/products', _ => <ProductsPage products={this.state.productCatalogue}
                                                       reload={this.reload}
                                                       request={this.request}
                                                       loading={this.state.loading}
@@ -154,13 +156,15 @@ export class Main extends React.Component<MainProps, MainState> {
                              , ServerApi.query.products()
                              , ServerApi.query.households()
                              , ServerApi.query.householdPayments()
+                             , ServerApi.query.productCatalogue()
                              ]))
-    .then(([collectiveOrders, householdOrders, products, households, householdPayments]) => {
+    .then(([collectiveOrders, householdOrders, products, households, householdPayments, productCatalogue]) => {
       this.setState({ collectiveOrders
                     , householdOrders
                     , products
                     , households
                     , householdPayments
+                    , productCatalogue
                     })
     })
 

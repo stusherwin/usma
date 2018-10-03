@@ -20,7 +20,8 @@ library
                      , Household
                      , Product
                      , HouseholdPayment
-                     , CatalogueEntry
+                     , ProductCatalogueData
+                     , ProductCatalogueEntry
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , time
@@ -34,7 +35,7 @@ executable usma
   other-modules:       Database
                      , Api
                      , Config
-                     , CatalogueImport
+                     , ProductCatalogueImport
   build-depends:       base
                      , containers
                      , cookie

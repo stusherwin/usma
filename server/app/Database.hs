@@ -3,13 +3,13 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments
+module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments, getProductCatalogue
                 , createOrder, deleteOrder, placeOrder, unplaceOrder
                 , createHouseholdOrder, deleteHouseholdOrder, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
                 , ensureHouseholdOrderItem, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
-                , replaceCatalogue
+                , replaceProductCatalogue
                 ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
@@ -32,7 +32,8 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   import Product
   import Household
   import HouseholdPayment
-  import CatalogueEntry
+  import ProductCatalogueData
+  import ProductCatalogueEntry
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
@@ -51,11 +52,11 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         Just 'R' -> return Reduced
         _ -> mzero
 
-  instance FromRow CatalogueEntry where
-    fromRow = CatalogueEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  instance FromRow ProductCatalogueData where
+    fromRow = ProductCatalogueData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
-  instance ToRow CatalogueEntry where
-    toRow e = [toField $ CatalogueEntry.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ CatalogueEntry.price e, toField $ CatalogueEntry.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ priceChanged e]
+  instance ToRow ProductCatalogueData where
+    toRow e = [toField $ ProductCatalogueData.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ ProductCatalogueData.price e, toField $ ProductCatalogueData.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ priceChanged e]
 
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
@@ -359,8 +360,24 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only id)
     close conn
 
-  replaceCatalogue :: ByteString -> Day -> [CatalogueEntry] -> IO ()
-  replaceCatalogue connectionString date entries = do
+  getProductCatalogue :: ByteString -> IO [ProductCatalogueEntry]
+  getProductCatalogue connectionString = do
+    conn <- connectPostgreSQL connectionString
+    rEntries <- query_ conn [sql|
+      select ce.code
+           , concat_ws(' ', nullif(btrim(ce.brand), '')
+                          , nullif(btrim(ce."description"), '')
+                          , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                          , nullif(btrim(ce."text"), ''))
+           , ce.price
+           , ce.vat_rate
+      from catalogue_entry ce
+    |]
+    close conn
+    return $ (rEntries :: [(String, String, Int, VatRate)]) <&> \(code, name, price, vatRate) -> ProductCatalogueEntry code name price vatRate
+
+  replaceProductCatalogue :: ByteString -> Day -> [ProductCatalogueData] -> IO ()
+  replaceProductCatalogue connectionString date entries = do
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
       execute_ conn [sql|
