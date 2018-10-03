@@ -13,7 +13,6 @@ import { TextField, MoneyField, DropDownField } from '../Field'
 import { LoadMore } from '../LoadMore'
 
 const pageSize = 10
-const maxPages = 3
 
 export interface ProductsPageProps { products: ProductCatalogueEntry[]
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -187,7 +186,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
           </div>
         )}
         {this.state.showLoadMore && 
-          <LoadMore loadMore={this.loadMore} />
+          <LoadMore scrollElement={document} loadMore={this.loadMore} />
         }
       </div>
     )

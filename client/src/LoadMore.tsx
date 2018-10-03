@@ -5,6 +5,7 @@ import { Icon } from './Icon'
 const loadMoretriggerMargin = 50
 
 export interface LoadMoreProps { loadMore: () => void
+                               , scrollElement: HTMLElement | Document
                                }
 
 export interface LoadMoreState { loadMoreVisible: boolean
@@ -36,7 +37,7 @@ export class LoadMore extends React.Component<LoadMoreProps, LoadMoreState> {
     }
     
     checkLoadMoreTriggered()
-    document.onscroll = checkLoadMoreTriggered
+    this.props.scrollElement.onscroll = checkLoadMoreTriggered
   }
 
   render() {
