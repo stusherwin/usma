@@ -104,9 +104,6 @@ module Main where
                     :<|> createHousehold
                     :<|> updateHousehold
                     :<|> archiveHousehold
-                    :<|> createProduct
-                    :<|> updateProduct
-                    :<|> archiveProduct
                     :<|> createHouseholdPayment
                     :<|> updateHouseholdPayment
                     :<|> archiveHouseholdPayment
@@ -163,15 +160,6 @@ module Main where
     archiveHousehold :: Int -> Handler ()
     archiveHousehold householdId = liftIO $ D.archiveHousehold conn householdId
 
-    createProduct :: ProductDetails -> Handler Int
-    createProduct details = liftIO $ D.createProduct conn details
-
-    updateProduct :: Int -> ProductDetails -> Handler ()
-    updateProduct productId details = liftIO $ D.updateProduct conn productId details
-
-    archiveProduct :: Int -> Handler ()
-    archiveProduct productId = liftIO $ D.archiveProduct conn productId
-  
     createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
     createHouseholdPayment householdId details = liftIO $ D.createHouseholdPayment conn householdId details
 
@@ -190,4 +178,4 @@ module Main where
       day <- liftIO $ getCurrentTime >>= return . utctDay
       let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (unpack $ fdFileName file)
       liftIO $copyFile (fdFilePath file) destFilePath
-      liftIO $ importCatalogue conn destFilePath
+      liftIO $ importCatalogue conn day destFilePath

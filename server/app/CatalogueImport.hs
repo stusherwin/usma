@@ -12,6 +12,7 @@ module CatalogueImport where
   import System.Directory (getCurrentDirectory)
   import Data.Maybe (catMaybes, fromMaybe)
   import Data.Char (toLower)
+  import Data.Time.Calendar (Day)
   import Data.Time.Format (formatTime, defaultTimeLocale)
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
   import Data.ByteString (ByteString)
@@ -52,7 +53,7 @@ module CatalogueImport where
         in  Just $ CatalogueEntry code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' Nothing
       parse _ _ = Nothing
 
-  importCatalogue :: ByteString -> String -> IO ()
-  importCatalogue connectionString filePath = do
+  importCatalogue :: ByteString -> Day -> String -> IO ()
+  importCatalogue connectionString day filePath = do
     catalogue <- loadCatalogue filePath
-    replaceCatalogue connectionString catalogue
+    replaceCatalogue connectionString day catalogue

@@ -25,6 +25,7 @@ const wrap = (offset: number) => (p: Product, i: number) => ({
   name: p.name,
   price: p.price,
   vatRate: p.vatRate,
+  priceUpdated: p.priceUpdated,
   index: offset + i
 })
 

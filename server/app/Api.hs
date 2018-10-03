@@ -46,9 +46,6 @@ module Api where
     :<|> "create-household"  :> ReqBody '[JSON] HouseholdDetails :> Post '[JSON] Int
     :<|> "update-household"  :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdDetails :> Post '[JSON] ()
     :<|> "archive-household" :> Capture "householdId" Int :> Post '[JSON] ()
-    :<|> "create-product"  :> ReqBody '[JSON] ProductDetails :> Post '[JSON] Int
-    :<|> "update-product"  :> Capture "productId" Int :> ReqBody '[JSON] ProductDetails :> Post '[JSON] ()
-    :<|> "archive-product" :> Capture "productId" Int :> Post '[JSON] ()
     :<|> "create-household-payment" :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] Int
     :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] ()
     :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()

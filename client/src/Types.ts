@@ -5,6 +5,7 @@ export type Product = { id: number
                       , name: string
                       , price: number
                       , vatRate: VatRate
+                      , priceUpdated: Date | null
                       }
 
 export type Household = { id: number

@@ -15,6 +15,7 @@ const query = {
 
   products(): Promise<Product[]> {
     return Http.get<Product[]>('/api/query/products')
+      .then(res => { res.forEach(p => p.priceUpdated = p.priceUpdated && new Date(p.priceUpdated)); return res })
   },
 
   households(): Promise<Household[]> {
@@ -82,26 +83,6 @@ const command = {
 
   archiveHousehold(id: number): Promise<{}> {
     return Http.post(`/api/command/archive-household/${id}`, {})
-  },
-
-  createProduct(code: string, name: string, price: number, vatRate: VatRate): Promise<number> {
-    return Http.post(`/api/command/create-product/`, { pdCode: code
-                                                     , pdName: name
-                                                     , pdPrice: price
-                                                     , pdVatRate: vatRate
-                                                     })
-  },
-
-  updateProduct(id: number, code: string, name: string, price: number, vatRate: VatRate): Promise<number> {
-    return Http.post(`/api/command/update-product/${id}`, { pdCode: code
-                                                          , pdName: name
-                                                          , pdPrice: price
-                                                          , pdVatRate: vatRate
-                                                          })
-  },
-
-  archiveProduct(id: number): Promise<{}> {
-    return Http.post(`/api/command/archive-product/${id}`, {})
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {

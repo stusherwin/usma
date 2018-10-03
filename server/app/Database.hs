@@ -8,7 +8,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                 , createHouseholdOrder, deleteHouseholdOrder, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
                 , ensureHouseholdOrderItem, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
-                , createProduct, updateProduct, archiveProduct
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 , replaceCatalogue
                 ) where
@@ -138,13 +137,13 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
   getProducts connectionString = do
     conn <- connectPostgreSQL connectionString
     rProducts <- query_ conn [sql|
-      select p.id, p.code, p.name, p.price, p.vat_rate
+      select p.id, p.code, p.name, p.price, p.vat_rate, p.price_updated
       from product p
       where p.archived = false
       order by p.code asc
     |]
     close conn
-    return $ (rProducts :: [(Int, String, String, Int, VatRate)]) <&> \(id, code, name, price, vatRate) -> Product id code name price vatRate
+    return $ (rProducts :: [(Int, String, String, Int, VatRate, Maybe Day)]) <&> \(id, code, name, price, vatRate, priceUpdated) -> Product id code name price vatRate priceUpdated
 
   getHouseholds :: ByteString -> IO [Household]
   getHouseholds connectionString = do
@@ -331,39 +330,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only householdId)
     close conn
 
-  createProduct :: ByteString -> ProductDetails -> IO Int
-  createProduct connectionString details = do
-    let code = pdCode details
-    let name = pdName details
-    let price = pdPrice details
-    let vatRate = pdVatRate details
-    conn <- connectPostgreSQL connectionString
-    [Only id] <- query conn [sql|
-      insert into product (code, name, price, vat_rate, archived) values (?, ?, ?, ?, false) returning id
-    |] (code, name, price, vatRate)
-    close conn
-    return id
-  
-  updateProduct :: ByteString -> Int -> ProductDetails -> IO ()
-  updateProduct connectionString id details = do
-    let code = pdCode details
-    let name = pdName details
-    let price = pdPrice details
-    let vatRate = pdVatRate details
-    conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      update product set code = ?, name = ?, price = ?, vat_rate = ? where id = ?
-    |] (code, name, price, vatRate, id)
-    close conn
-  
-  archiveProduct :: ByteString -> Int -> IO ()
-  archiveProduct connectionString productId = do
-    conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      update product set archived = true where id = ?
-    |] (Only productId)
-    close conn
-
   createHouseholdPayment :: ByteString -> Int -> HouseholdPaymentDetails -> IO Int
   createHouseholdPayment connectionString householdId details = do
     let date = hpdDate details
@@ -393,18 +359,18 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
     |] (Only id)
     close conn
 
-  replaceCatalogue :: ByteString -> [CatalogueEntry] -> IO ()
-  replaceCatalogue connectionString entries = do
+  replaceCatalogue :: ByteString -> Day -> [CatalogueEntry] -> IO ()
+  replaceCatalogue connectionString date entries = do
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
       execute_ conn [sql|
         truncate table catalogue_entry
       |]
       void $ executeMany conn [sql|
-        insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, priceChanged)
+        insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, price_changed)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       |] entries
-      execute_ conn [sql|
+      execute conn [sql|
         update product p
         set "name" = concat_ws(' ', nullif(btrim(ce.brand), '')
                                   , nullif(btrim(ce."description"), '')
@@ -412,7 +378,8 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                                   , nullif(btrim(ce."text"), ''))
           , price = ce.price
           , vat_rate = ce.vat_rate
+          , price_updated = case when ce.price <> p.price then ? else p.price_updated end
         from catalogue_entry ce
         where ce.code = p.code
-      |]
+      |] (Only date)
     close conn
