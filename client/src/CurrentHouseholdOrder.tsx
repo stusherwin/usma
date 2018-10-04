@@ -101,6 +101,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </div>
         }
         <div className="mb-4">
+          {canAddItem &&
+            <div className="p-2 flex justify-end">
+              <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
+            </div>
+          }
           {!householdOrder.items.length &&
             <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet</div>
           }
@@ -134,7 +139,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               </div>
             </div>
           }
-          {canAddItem &&
+          {canAddItem && householdOrder.items.length > 3 &&
             <div className="p-2 flex justify-end">
               <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
             </div>

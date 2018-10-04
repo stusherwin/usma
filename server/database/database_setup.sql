@@ -24,6 +24,7 @@ drop table if exists "order" cascade;
 drop table if exists "household" cascade;
 drop table if exists "product" cascade;
 drop table if exists "catalogue_entry" cascade;
+drop table if exists "vat_rate" cascade;
 
 ---
 
@@ -110,6 +111,7 @@ create table household_order_item
 , household_id int not null
 , product_id   int not null
 , quantity     int not null
+, ix           serial not null
 , primary key (order_id, household_id, product_id)
 , foreign key (order_id, household_id) references household_order (order_id, household_id)
 , foreign key (product_id) references product (id)
