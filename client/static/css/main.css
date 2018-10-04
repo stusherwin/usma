@@ -47,6 +47,10 @@ button[disabled], button[disabled]:hover {
   @apply border border-grey px-1;
 }
 
+.input.icon {
+  @apply pl-6;
+}
+
 .field.invalid label {
   @apply text-red;
 }
