@@ -1,10 +1,10 @@
 * What happens if you uncancel a past order? (can't)
-* Rename Order to CollectiveOrder
-* CollectiveOrder only cancelled if all HouseholdOrders cancelled
-* If collective order exists household has chance to join it otherwise create a new one
-* Add product code
 * Add no. of people to household (+ total per person to household order)
-* Products VAT included in price?
-* Cancel household order -> asks you to join existing order -> server error
-* Scrape prices from website?
 * After placing order copy order summary & parse it to update prices?
+* Save historic prices (and order totals) - if prices update don't want to update past order totals
+* Add multiple products to order at once
+* Place order (copy & paste code/quantity)
+* Verify order (check off against invoice)
+* server api regression tests
+* Order finite state machine - Cancelled -> Open : ReopenPossible vs ReopenAllowed
+* Order add product button top or bottom of product list? both

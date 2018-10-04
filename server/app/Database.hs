@@ -124,7 +124,6 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
-        -- order by p.code asc
       |]
       return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, VatRate, Int, Int)])
     close conn
@@ -297,10 +296,11 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                                   , nullif(btrim(ce."description"), '')
                                   , nullif('(' || lower(btrim(ce.size)) || ')', '()')
                                   , nullif(btrim(ce."text"), ''))
-                   , ce.price
+                   , cast(round(ce.price * v.multiplier) as int)
                    , ce.vat_rate
                    , false
               from catalogue_entry ce
+              inner join vat_rate v on ce.vat_rate = v.code
               where ce.code = ?
               returning id
             |] (Only productCode)
@@ -391,9 +391,10 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                           , nullif(btrim(ce."description"), '')
                           , nullif('(' || lower(btrim(ce.size)) || ')', '()')
                           , nullif(btrim(ce."text"), ''))
-           , ce.price
+           , cast(round(ce.price * v.multiplier) as int)
            , ce.vat_rate
       from catalogue_entry ce
+      inner join vat_rate v on ce.vat_rate = v.code
     |]
     close conn
     return $ (rEntries :: [(String, String, Int, VatRate)]) <&> \(code, name, price, vatRate) -> ProductCatalogueEntry code name price vatRate
@@ -415,10 +416,11 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
                                   , nullif(btrim(ce."description"), '')
                                   , nullif('(' || lower(btrim(ce.size)) || ')', '()')
                                   , nullif(btrim(ce."text"), ''))
-          , price = ce.price
+          , price = cast(round(ce.price * v.multiplier) as int)
           , vat_rate = ce.vat_rate
-          , price_updated = case when ce.price <> p.price then ? else p.price_updated end
+          , price_updated = case when round(ce.price * v.multiplier) <> p.price then ? else p.price_updated end
         from catalogue_entry ce
+        inner join vat_rate v on ce.vat_rate = v.code
         where ce.code = p.code
       |] (Only date)
     close conn

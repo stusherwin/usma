@@ -159,4 +159,13 @@ create table catalogue_entry
 
 ---
 
+create table vat_rate
+( code       char not null primary key
+, multiplier numeric(3, 2) not null
+);
+
+insert into vat_rate (code, multiplier) values('Z', 1.0);
+insert into vat_rate (code, multiplier) values('S', 1.2);
+insert into vat_rate (code, multiplier) values('R', 1.05);
+
 end $$

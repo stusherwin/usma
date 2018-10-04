@@ -32,12 +32,12 @@ module ProductCatalogueImport where
     file <- readFile filePath
     return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
       parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
-        let price' = fromMaybe 0 $ (* 100) . round <$> (readMaybe price :: Maybe Float)
+        let price' = fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
             vat' = case vat of
                      "1" -> Standard
                      "5" -> Reduced
                      _ -> Zero
-            rrp' = (* 100) . round <$> (readMaybe price :: Maybe Float)
+            rrp' =  round . (* 100) <$> (readMaybe price :: Maybe Float)
             b' = b == "B"
             f' = f == "F"
             g' = g == "G"
