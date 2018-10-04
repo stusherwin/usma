@@ -90,9 +90,9 @@ const command = {
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/command/create-household-payment/`, { hpdDate: Util.dateString(date)
-                                                               , hpdAmount: amount
-                                                               })
+    return Http.post(`/api/command/create-household-payment/${householdId}`, { hpdDate: Util.dateString(date)
+                                                                             , hpdAmount: amount
+                                                                             })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
