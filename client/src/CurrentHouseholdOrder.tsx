@@ -137,27 +137,32 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             <div>
               {householdOrder.items.map((i, ix) => this.state.editingProduct == i.productCode
               ? (
-                <div key={i.productId} className="bg-product-lightest p-2">
-                  <h3 className="mb-4">Edit order item</h3>
-                  <div className="flex justify-between items-baseline mb-4">
-                    <span className="flex-grow mr-2">{i.productCode}: {i.productName}</span>
-                    <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
-                      {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-                    </select>
-                    <Money className="flex-no-grow flex-no-shrink" amount={i.productPrice * this.state.editingProductQuantity} />
+                <div key={i.productId} className="bg-product-lightest p-2 mb-4 mt-4">
+                  <div className="flex justify-between items-baseline">
+                    <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
+                    <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
+                      <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
+                        {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+                      </select>
+                    </span>
+                    <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.productPrice * this.state.editingProductQuantity} />
                   </div>
-                  <div className="flex justify-end items-baseline">
-                    <button className="ml-2" onClick={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-                    <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</button>
+                  <p className="mt-2">{i.productName}</p>
+                  <div className="flex justify-between items-end mt-2">
+                    <span className="flex-no-shrink flex-no-grow text-grey">VAT: {i.productVatRate} rate</span>
+                    <span className="whitespace-no-wrap">
+                      <button className="ml-2" onClick={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+                      <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</button>
+                    </span>
                   </div>
                 </div>
               )
               : (
                 <div key={i.productId} className="p-2 mb-4 mt-4">
                   <div className="flex justify-between items-baseline">
-                    <span className="flex-no-shrink flex-no-grow w-1/3">{i.productCode}</span>
-                    <span className="flex-no-shrink flex-no-grow w-1/3">x {i.itemQuantity}</span>
-                    <Money className="flex-no-shrink flex-no-grow text-right w-1/3" amount={i.itemTotal} />
+                    <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
+                    <span className="flex-no-shrink flex-no-grow w-1/3 text-center">x {i.itemQuantity}</span>
+                    <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotal} />
                   </div>
                   <p className="mt-2">{i.productName}</p>
                   <div className="flex justify-between items-end mt-2">
