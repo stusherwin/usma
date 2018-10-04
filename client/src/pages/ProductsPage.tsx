@@ -139,7 +139,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
             <label htmlFor="search">Search for a particular product:</label>
             <div className="relative mt-2">
               <span className="absolute text-grey-darker" style={{bottom: '0px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
-              <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" className="w-full input icon" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
+              <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
             </div>
           </div>
         }

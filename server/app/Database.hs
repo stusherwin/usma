@@ -124,7 +124,7 @@ module Database ( getCollectiveOrders, getHouseholdOrders, getProducts, getHouse
         select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
-        order by p.code asc
+        -- order by p.code asc
       |]
       return (os :: [(Int, Day, Bool, Bool, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, VatRate, Int, Int)])
     close conn

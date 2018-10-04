@@ -17,8 +17,6 @@ export interface CurrentHouseholdOrderProps { householdOrder: HouseholdOrder
                                             }
 
 export interface CurrentHouseholdOrderState { addingProduct: boolean
-                                            , editingProduct: string | null
-                                            , editingProductQuantity: number
                                             }
 
 export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, CurrentHouseholdOrderState> {
@@ -26,8 +24,6 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     super(props)
 
     this.state = { addingProduct: false
-                 , editingProduct: null
-                 , editingProductQuantity: 1
                  }
   }
 
@@ -51,30 +47,10 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       .then(this.props.reload)
   }
 
-  startEdit = (item: OrderItem) => {
-    this.setState({ editingProduct: item.productCode
-                  , editingProductQuantity: item.itemQuantity
-                  })
-  } 
-
-  editingQuantityChanged = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    this.setState({ editingProductQuantity: parseInt(event.target.value) || 1
-                  })
-                  
-  confirmEdit = () => {
-    if(!this.state.editingProduct) return
-
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, this.state.editingProduct, this.state.editingProductQuantity))
+  editQuantity = (item: OrderItem, quantity: number) => {
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productCode, quantity))
       .then(this.props.reload)
-      .then(_ => this.setState({ editingProduct: null
-                               , editingProductQuantity: 1
-                               }))
   }
-
-  cancelEdit = () =>
-    this.setState({ editingProduct: null
-                  , editingProductQuantity: 1
-                  })
 
   cancelOrder = () => {
     this.props.request(ServerApi.command.cancelHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
@@ -125,61 +101,42 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </div>
         }
         <div className="mb-4">
-          {!this.state.addingProduct && !householdOrder.items.length &&
+          {!householdOrder.items.length &&
             <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet</div>
-          }
-          {!this.state.addingProduct && canAddItem &&
-            <div className="p-2 flex justify-end">
-              <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
-            </div>
           }
           {!!householdOrder.items.length &&
             <div>
-              {householdOrder.items.map((i, ix) => this.state.editingProduct == i.productCode
-              ? (
-                <div key={i.productId} className="bg-product-lightest p-2 mb-4 mt-4">
-                  <div className="flex justify-between items-baseline">
-                    <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
-                    <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
-                      <select className="flex-no-grow flex-no-shrink mr-2" value={this.state.editingProductQuantity} onChange={this.editingQuantityChanged}>
-                        {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-                      </select>
-                    </span>
-                    <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.productPrice * this.state.editingProductQuantity} />
-                  </div>
-                  <p className="mt-2">{i.productName}</p>
-                  <div className="flex justify-between items-end mt-2">
-                    <span className="flex-no-shrink flex-no-grow text-grey">VAT: {i.productVatRate} rate</span>
-                    <span className="whitespace-no-wrap">
-                      <button className="ml-2" onClick={this.confirmEdit}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-                      <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel</button>
-                    </span>
-                  </div>
-                </div>
-              )
-              : (
+              { householdOrder.items.map((i, ix) =>
                 <div key={i.productId} className="p-2 mb-4 mt-4">
                   <div className="flex justify-between items-baseline">
                     <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
-                    <span className="flex-no-shrink flex-no-grow w-1/3 text-center">x {i.itemQuantity}</span>
+                    <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
+                      {householdOrder.canBeAmended && householdOrder.isOpen
+                      ? <select className="flex-no-grow flex-no-shrink mr-2 border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
+                          {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+                        </select>
+                      : <span>x {i.itemQuantity}</span>
+                      }
+                    </span>
                     <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotal} />
                   </div>
-                  <p className="mt-2">{i.productName}</p>
                   <div className="flex justify-between items-end mt-2">
-                    <span className="flex-no-shrink flex-no-grow text-grey">VAT: {i.productVatRate} rate</span>
+                    <span className="flex-no-grow">{i.productName}</span>
                     {householdOrder.canBeAmended && householdOrder.isOpen &&
-                      <span className="whitespace-no-wrap">
-                        <button disabled={this.state.addingProduct} onClick={() => this.startEdit(i)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                        <button className="ml-2" disabled={this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                      </span>
+                      <button className="ml-4" disabled={this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                     }
                   </div>
                 </div>
-              ))}
+              )}
               <div className="p-2 flex justify-between items-baseline">
                 <span className="flex-no-shrink flex-no-grow font-bold">Total</span>
                 <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.total} />
               </div>
+            </div>
+          }
+          {canAddItem &&
+            <div className="p-2 flex justify-end">
+              <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
             </div>
           }
         </div>
