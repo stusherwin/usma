@@ -61,8 +61,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       .then(this.props.reload)
   }
 
-  unplaceOrder = () => {
-    this.props.request(ServerApi.command.unplaceOrder(this.props.order.id))
+  cancelOrder = () => {
+    this.props.request(ServerApi.command.cancelOrder(this.props.order.id))
       .then(this.props.reload)
   }
 
@@ -74,9 +74,11 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
     const orderMinimumReached = this.props.order.total >= 25000
 
-    const canDeleteOrder = !this.props.householdOrders.length
-    const canAddHousehold = !!unusedHouseholds.length
-    const canPlaceOrder = !!this.props.householdOrders.length && allComplete && allPaid && orderMinimumReached
+    const deleteOrderPossible = !this.props.householdOrders.length
+    const addHouseholdPossible = !!unusedHouseholds.length
+    const placeOrderPossible = !this.props.order.isCancelled && !!this.props.householdOrders.length
+    const placeOrderAllowed = allComplete && allPaid && orderMinimumReached
+    const cancelOrderPossible = !this.props.order.isPlaced
 
     const deletableHousehold = !!this.props.householdOrders.length && !!this.props.householdOrders.find(ho => !ho.items.length)
 
@@ -96,22 +98,21 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
             )}
           </div>
-          {order.canBeAmended && (canDeleteOrder || canAddHousehold) &&
+          {order.canBeAmended && (deleteOrderPossible || addHouseholdPossible || placeOrderPossible || cancelOrderPossible) &&
             <div className="mt-2">
-              {/* {!!this.props.order.items.length &&
-                <RouterLink path={`/orders/${this.props.order.id}/full`}>View full order</RouterLink>
-              } */}
-              {canDeleteOrder &&
+              {deleteOrderPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.deleteOrder}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
               }
-              {canAddHousehold &&
+              {addHouseholdPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={_ => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</button>
               }
-              <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !canPlaceOrder} onClick={this.placeOrder}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
+              {placeOrderPossible &&
+                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !placeOrderAllowed} onClick={this.placeOrder}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
+              }
+              {cancelOrderPossible &&
+                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Cancel order</button>
+              }
             </div>
-          }
-          {order.isPlaced && 
-            <button className="mr-2 mt-2" onClick={this.unplaceOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Undo place order</button>
           }
         </div>
         {this.state.addingHousehold &&

@@ -76,10 +76,16 @@ module Main where
     conn = connectionString config
     
     collectiveOrders :: Handler [CollectiveOrder]
-    collectiveOrders = liftIO $ D.getCollectiveOrders conn
+    collectiveOrders = do
+      o1 <- liftIO $ D.getCollectiveOrders conn
+      o2 <- liftIO $ D.getPastCollectiveOrders conn
+      return $ o1 ++ o2
     
     householdOrders :: Handler [HouseholdOrder]
-    householdOrders = liftIO $ D.getHouseholdOrders conn
+    householdOrders = do
+      ho1 <- liftIO $ D.getHouseholdOrders conn
+      ho2 <- liftIO $ D.getPastHouseholdOrders conn
+      return $ ho1 ++ ho2
     
     products :: Handler [Product]
     products = liftIO $ D.getProducts conn
@@ -98,7 +104,7 @@ module Main where
                     :<|> createOrder
                     :<|> deleteOrder
                     :<|> placeOrder
-                    :<|> unplaceOrder
+                    :<|> cancelOrder
                     :<|> createHouseholdOrder
                     :<|> deleteHouseholdOrder
                     :<|> cancelHouseholdOrder
@@ -130,10 +136,10 @@ module Main where
     deleteOrder orderId = liftIO $ D.deleteOrder conn orderId
 
     placeOrder :: Int -> Handler ()
-    placeOrder orderId = liftIO $ D.placeOrder conn orderId
+    placeOrder orderId = liftIO $ D.closeOrder conn False orderId
 
-    unplaceOrder :: Int -> Handler ()
-    unplaceOrder = liftIO . (D.unplaceOrder conn)
+    cancelOrder :: Int -> Handler ()
+    cancelOrder orderId = liftIO $ D.closeOrder conn True orderId
 
     createHouseholdOrder :: Int -> Int -> Handler ()
     createHouseholdOrder householdId orderId = liftIO $ D.createHouseholdOrder conn householdId orderId

@@ -25,35 +25,18 @@ drop table if exists "household" cascade;
 drop table if exists "product" cascade;
 drop table if exists "catalogue_entry" cascade;
 drop table if exists "vat_rate" cascade;
+drop table if exists past_household_order_item cascade;
+drop table if exists past_household_order cascade;
+drop table if exists past_order cascade;
 
 ---
 
 create table "order"
 ( id           serial  not null  primary key
 , created_date date    not null
-, placed       boolean not null
-, past         boolean not null
 );
 
-insert into "order" (created_date, placed, past)
-values ('2018-01-01', true, true)
-returning id
-into o1Id;
-
-insert into "order" (created_date, placed, past)
-values ('2018-01-02', false, true)
-returning id
-into o2Id;
-
-insert into "order" (created_date, placed, past)
-values ('2018-01-03', true, true)
-returning id
-into o3Id;
-
-insert into "order" (created_date, placed, past)
-values ('2018-01-04', false, false)
-returning id
-into o4Id;
+insert into "order" (id, created_date) values (4, '2018-01-04') returning id into o4Id;
 
 ---
 
@@ -63,9 +46,9 @@ create table household
 , archived boolean not null
 );
 
-insert into household ("name", archived) values ('123 Front Road', false)  returning id into h1Id;
-insert into household ("name", archived) values ('1 Main Terrace', false)  returning id into h2Id;
-insert into household ("name", archived) values ('24 The Street', false)   returning id into h3Id;
+insert into household ("name", archived) values ('123 Front Road',  false) returning id into h1Id;
+insert into household ("name", archived) values ('1 Main Terrace',  false) returning id into h2Id;
+insert into household ("name", archived) values ('24 The Street',   false) returning id into h3Id;
 insert into household ("name", archived) values ('3 Bowling Alley', false) returning id into h4Id;
 
 ---
@@ -76,14 +59,13 @@ create table product
 , "name"        text    not null
 , price         int     not null
 , vat_rate      char    not null
-, archived      boolean not null
 , price_updated date null
 );
 
-insert into product (code, "name", price, vat_rate, archived) values ('FX109', 'Jam', 1240, 'Z', false)     returning id into p1Id;
-insert into product (code, "name", price, vat_rate, archived) values ('CV308', 'Butter', 9523, 'S', false)   returning id into p2Id;
-insert into product (code, "name", price, vat_rate, archived) values ('M0043', 'Milk', 5210, 'R', false)    returning id into p3Id;
-insert into product (code, "name", price, vat_rate, archived) values ('BN995', 'Bananas', 1200, 'Z', false) returning id into p4Id;
+insert into product (code, "name", price, vat_rate) values ('FX109', 'Jam',     1240, 'Z') returning id into p1Id;
+insert into product (code, "name", price, vat_rate) values ('CV308', 'Butter',  9523, 'S') returning id into p2Id;
+insert into product (code, "name", price, vat_rate) values ('M0043', 'Milk',    5210, 'R') returning id into p3Id;
+insert into product (code, "name", price, vat_rate) values ('BN995', 'Bananas', 1200, 'Z') returning id into p4Id;
 
 ---
 
@@ -97,13 +79,6 @@ create table household_order
 , foreign key (household_id) references household (id)
 );
 
-insert into household_order (order_id, household_id, complete, cancelled) values (o1Id, h1Id, true, false);
-insert into household_order (order_id, household_id, complete, cancelled) values (o1Id, h2Id, true, false);
-insert into household_order (order_id, household_id, complete, cancelled) values (o2Id, h3Id, false, true);
-insert into household_order (order_id, household_id, complete, cancelled) values (o2Id, h4Id, false, true);
-insert into household_order (order_id, household_id, complete, cancelled) values (o3Id, h1Id, true, false);
-insert into household_order (order_id, household_id, complete, cancelled) values (o3Id, h4Id, true, false);
-
 ---
 
 create table household_order_item
@@ -116,11 +91,6 @@ create table household_order_item
 , foreign key (order_id, household_id) references household_order (order_id, household_id)
 , foreign key (product_id) references product (id)
 );
-
-insert into household_order_item (order_id, household_id, product_id, quantity) values (o1Id, h1Id, p1Id, 1);
-insert into household_order_item (order_id, household_id, product_id, quantity) values (o1Id, h2Id, p2Id, 2);
-insert into household_order_item (order_id, household_id, product_id, quantity) values (o2Id, h3Id, p3Id, 1);
-insert into household_order_item (order_id, household_id, product_id, quantity) values (o2Id, h4Id, p4Id, 5);
 
 ---
 
@@ -169,5 +139,52 @@ create table vat_rate
 insert into vat_rate (code, multiplier) values('Z', 1.0);
 insert into vat_rate (code, multiplier) values('S', 1.2);
 insert into vat_rate (code, multiplier) values('R', 1.05);
+
+---
+
+create table past_order
+( id           int  not null  primary key
+, created_date date    not null
+, cancelled    boolean not null
+);
+
+create table past_household_order
+( order_id     int     not null
+, household_id int     not null
+, cancelled    boolean not null
+, primary key (order_id, household_id)
+, foreign key (order_id) references past_order (id)
+, foreign key (household_id) references household (id)
+);
+
+create table past_household_order_item
+( order_id         int not null
+, household_id     int not null
+, product_id       int not null
+, product_code     text not null
+, product_name     text not null
+, product_price    int not null
+, product_vat_rate char not null
+, quantity         int not null
+, total            int not null
+, primary key (order_id, household_id, product_id)
+, foreign key (order_id, household_id) references past_household_order (order_id, household_id)
+);
+
+insert into past_order (id, created_date, cancelled) values (1, '2018-01-01', false);
+insert into past_order (id, created_date, cancelled) values (2, '2018-01-02', true);
+insert into past_order (id, created_date, cancelled) values (3, '2018-01-03', false);
+
+insert into past_household_order (order_id, household_id, cancelled) values (1, h1Id, false);
+insert into past_household_order (order_id, household_id, cancelled) values (1, h2Id, false);
+insert into past_household_order (order_id, household_id, cancelled) values (2, h3Id, true);
+insert into past_household_order (order_id, household_id, cancelled) values (2, h4Id, true);
+insert into past_household_order (order_id, household_id, cancelled) values (3, h1Id, false);
+insert into past_household_order (order_id, household_id, cancelled) values (3, h4Id, false);
+
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (1, h1Id, p1Id, 'FX109p', 'Jam p',     100, 'Z', 1, 200);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (1, h2Id, p2Id, 'CV308p', 'Butter p',  200, 'S', 2, 400);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (2, h3Id, p3Id, 'M0043p', 'Milk p',    300, 'R', 1, 300);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (2, h4Id, p4Id, 'BN995p', 'Bananas p', 400, 'Z', 5, 2000);
 
 end $$

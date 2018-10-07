@@ -45,8 +45,8 @@ const command = {
     return Http.post(`/api/command/place-order/${orderId}`, {})
   },
 
-  unplaceOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/command/unplace-order/${orderId}`, {})
+  cancelOrder(orderId: number): Promise<number> {
+    return Http.post(`/api/command/cancel-order/${orderId}`, {})
   },
 
   createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {

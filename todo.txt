@@ -1,10 +1,14 @@
+* Clone past orders -> add to current order, or create a new current order if none exists
+* Separate API calls for past orders/current order
+* Change API call for current order to be singleton
 * What happens if you uncancel a past order? (can't)
 * Add no. of people to household (+ total per person to household order)
-* After placing order copy order summary & parse it to update prices?
-* Save historic prices (and order totals) - if prices update don't want to update past order totals
 * Add multiple products to order at once
 * Place order (copy & paste code/quantity)
 * Verify order (check off against invoice)
 * server api regression tests
 * Order finite state machine - Cancelled -> Open : ReopenPossible vs ReopenAllowed
-* Order add product button top or bottom of product list? both
+* Loading indicator needs to be more prominent (disable all controls?)
+* Hide previous error on successful response
+* Error message styling
+* Household page sections (current order, past orders, payments) - separate tabs?
