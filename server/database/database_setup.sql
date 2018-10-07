@@ -36,7 +36,10 @@ create table "order"
 , created_date date    not null
 );
 
-insert into "order" (id, created_date) values (4, '2018-01-04') returning id into o4Id;
+insert into "order" (created_date) values ('2018-01-01') returning id into o1Id;
+insert into "order" (created_date) values ('2018-01-02') returning id into o2Id;
+insert into "order" (created_date) values ('2018-01-03') returning id into o3Id;
+insert into "order" (created_date) values ('2018-01-04') returning id into o4Id;
 
 ---
 
@@ -171,20 +174,24 @@ create table past_household_order_item
 , foreign key (order_id, household_id) references past_household_order (order_id, household_id)
 );
 
-insert into past_order (id, created_date, cancelled) values (1, '2018-01-01', false);
-insert into past_order (id, created_date, cancelled) values (2, '2018-01-02', true);
-insert into past_order (id, created_date, cancelled) values (3, '2018-01-03', false);
+delete from "order" where id = o1Id;
+delete from "order" where id = o2Id;
+delete from "order" where id = o3Id;
 
-insert into past_household_order (order_id, household_id, cancelled) values (1, h1Id, false);
-insert into past_household_order (order_id, household_id, cancelled) values (1, h2Id, false);
-insert into past_household_order (order_id, household_id, cancelled) values (2, h3Id, true);
-insert into past_household_order (order_id, household_id, cancelled) values (2, h4Id, true);
-insert into past_household_order (order_id, household_id, cancelled) values (3, h1Id, false);
-insert into past_household_order (order_id, household_id, cancelled) values (3, h4Id, false);
+insert into past_order (id, created_date, cancelled) values (o1Id, '2018-01-01', false);
+insert into past_order (id, created_date, cancelled) values (o2Id, '2018-01-02', true);
+insert into past_order (id, created_date, cancelled) values (o3Id, '2018-01-03', false);
 
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (1, h1Id, p1Id, 'FX109p', 'Jam p',     100, 'Z', 1, 200);
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (1, h2Id, p2Id, 'CV308p', 'Butter p',  200, 'S', 2, 400);
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (2, h3Id, p3Id, 'M0043p', 'Milk p',    300, 'R', 1, 300);
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (2, h4Id, p4Id, 'BN995p', 'Bananas p', 400, 'Z', 5, 2000);
+insert into past_household_order (order_id, household_id, cancelled) values (o1Id, h1Id, false);
+insert into past_household_order (order_id, household_id, cancelled) values (o1Id, h2Id, false);
+insert into past_household_order (order_id, household_id, cancelled) values (o2Id, h3Id, true);
+insert into past_household_order (order_id, household_id, cancelled) values (o2Id, h4Id, true);
+insert into past_household_order (order_id, household_id, cancelled) values (o3Id, h1Id, false);
+insert into past_household_order (order_id, household_id, cancelled) values (o3Id, h4Id, false);
+
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o1Id, h1Id, p1Id, 'FX109p', 'Jam p',     100, 'Z', 1, 200);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o1Id, h2Id, p2Id, 'CV308p', 'Butter p',  200, 'S', 2, 400);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o2Id, h3Id, p3Id, 'M0043p', 'Milk p',    300, 'R', 1, 300);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o2Id, h4Id, p4Id, 'BN995p', 'Bananas p', 400, 'Z', 5, 2000);
 
 end $$
