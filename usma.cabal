@@ -17,6 +17,9 @@ library
   hs-source-dirs:      server/src
   exposed-modules:     CollectiveOrder
                      , HouseholdOrder
+                     , PastCollectiveOrder
+                     , PastHouseholdOrder
+                     , OrderItem
                      , Household
                      , Product
                      , HouseholdPayment

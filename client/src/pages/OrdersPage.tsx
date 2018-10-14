@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, HouseholdOrder, Household } from '../Types'
+import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
@@ -11,9 +11,9 @@ import { Router } from '../Router'
 import { CurrentOrder } from '../CurrentOrder'
 import { TopNav } from '../TopNav'
 
-export interface OrdersPageProps { currentOrder: CollectiveOrder | undefined
+export interface OrdersPageProps { currentOrder: CollectiveOrder | null
                                  , currentHouseholdOrders: HouseholdOrder[]
-                                 , pastOrders: CollectiveOrder[]
+                                 , pastOrders: PastCollectiveOrder[]
                                  , households: Household[]
                                  , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                  , reload: () => Promise<void>
@@ -76,10 +76,9 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           <table className="border-collapse w-full mb-4">
             <tbody>
               { pastOrders.map(o => (
-                <tr key={o.id} className={classNames({'crossed-out': o.status == 'Cancelled'})}>
+                <tr key={o.id} className={classNames({'crossed-out': o.isCancelled})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
-                  <td className="pt-2 pr-2">{o.status}</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={o.total} /></td>
+                  <td className="pt-2 pr-2 text-right">{o.isCancelled ? 'Cancelled' : <Money amount={o.total} />}</td>
                 </tr>
               )) }
             </tbody>

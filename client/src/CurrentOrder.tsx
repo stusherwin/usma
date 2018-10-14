@@ -76,9 +76,9 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     const deleteOrderPossible = !this.props.householdOrders.length
     const addHouseholdPossible = !!unusedHouseholds.length
-    const placeOrderPossible = !this.props.order.isCancelled && !!this.props.householdOrders.length
+    const placeOrderPossible = !!this.props.householdOrders.length
     const placeOrderAllowed = allComplete && allPaid && orderMinimumReached
-    const cancelOrderPossible = !this.props.order.isPlaced
+    const cancelOrderPossible = true
 
     const deletableHousehold = !!this.props.householdOrders.length && !!this.props.householdOrders.find(ho => !ho.items.length)
 
@@ -86,19 +86,18 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       <div>
         <div className="bg-order-dark p-2 pt-0">
           <div className="">
-            {order.canBeAmended && (
-              !this.props.householdOrders.length
-              ? <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for households to join</span>
-              : !orderMinimumReached
-              ? <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for &pound;250.00 order minimum</span>
-              : !allComplete
-              ? <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for all orders to be completed</span>
-              : !allPaid
-              ? <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
+            {!this.props.householdOrders.length?
+                <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for households to join</span>
+              : !orderMinimumReached?
+                <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for &pound;250.00 order minimum</span>
+              : !allComplete?
+                <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for all orders to be completed</span>
+              : !allPaid?
+                <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
               : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
-            )}
+            }
           </div>
-          {order.canBeAmended && (deleteOrderPossible || addHouseholdPossible || placeOrderPossible || cancelOrderPossible) &&
+          {(deleteOrderPossible || addHouseholdPossible || placeOrderPossible || cancelOrderPossible) &&
             <div className="mt-2">
               {deleteOrderPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.deleteOrder}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
@@ -153,7 +152,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                     <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                     {deletableHousehold && 
                       <td className="pt-2 pr-2 w-1">
-                        {order.canBeAmended && !ho.items.length &&
+                        {!ho.items.length &&
                           <button disabled={!!this.state.addingHousehold} onClick={_ => this.deleteHouseholdOrder(ho)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                         }
                       </td>

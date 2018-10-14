@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household, HouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
+import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
@@ -9,13 +9,14 @@ import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { Router } from '../Router'
 import { CurrentHouseholdOrder } from '../CurrentHouseholdOrder'
-import { HouseholdOrders } from '../HouseholdOrders'
+import { PastHouseholdOrders } from '../PastHouseholdOrders'
 import { HouseholdPayments } from '../HouseholdPayments'
 import { TopNav } from '../TopNav'
 
 export interface HouseholdOrdersPageProps { household: Household
-                                          , householdOrders: HouseholdOrder[]
-                                          , currentCollectiveOrder: CollectiveOrder | undefined
+                                          , currentHouseholdOrder: HouseholdOrder | null
+                                          , pastHouseholdOrders: PastHouseholdOrder[]
+                                          , currentCollectiveOrder: CollectiveOrder | null
                                           , payments: HouseholdPayment[]
                                           , products: ProductCatalogueEntry[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -39,8 +40,8 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   }
   
   render() {
-    const currentOrder = this.props.householdOrders.filter(ho => !ho.isOrderPast)[0]
-    const pastOrders = this.props.householdOrders.filter(ho => ho.isOrderPast)
+    const currentOrder = this.props.currentHouseholdOrder
+    const pastOrders = this.props.pastHouseholdOrders
     const currentCollectiveOrder = this.props.currentCollectiveOrder
 
     return (
@@ -88,15 +89,13 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
                                      request={this.props.request} />
             </div>
           )
-          : currentCollectiveOrder && !currentCollectiveOrder.isCancelled
+          : currentCollectiveOrder
           ? (
             <div className="bg-order-dark p-2">
               <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                 <h2>Current order</h2>
                 <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
-                {!currentCollectiveOrder.isPlaced && 
-                  <button className="mt-2" onClick={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
-                }
+                <button className="mt-2" onClick={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
               </div>
             </div>
           )
@@ -109,11 +108,9 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
               </div>
             </div>
           )}
-          <HouseholdOrders household={this.props.household}
-                           householdOrders={this.props.householdOrders}
-                           currentCollectiveOrder={this.props.currentCollectiveOrder}
-                           request={this.props.request}
-                           reload={this.props.reload} />
+          <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                               request={this.props.request}
+                               reload={this.props.reload} />
           <HouseholdPayments household={this.props.household}
                              payments={this.props.payments}
                              request={this.props.request}

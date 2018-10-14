@@ -33,6 +33,8 @@ module Main where
   import qualified Database as D
   import CollectiveOrder
   import HouseholdOrder
+  import PastCollectiveOrder
+  import PastHouseholdOrder
   import Product
   import Household
   import HouseholdPayment
@@ -66,8 +68,10 @@ module Main where
                 :<|> commandServer config 
   
   queryServer :: Config -> Server QueryAPI
-  queryServer config = collectiveOrders
+  queryServer config = collectiveOrder
+                  :<|> pastCollectiveOrders
                   :<|> householdOrders
+                  :<|> pastHouseholdOrders
                   :<|> products
                   :<|> households
                   :<|> householdPayments
@@ -75,18 +79,18 @@ module Main where
     where
     conn = connectionString config
     
-    collectiveOrders :: Handler [CollectiveOrder]
-    collectiveOrders = do
-      o1 <- liftIO $ D.getCollectiveOrders conn
-      o2 <- liftIO $ D.getPastCollectiveOrders conn
-      return $ o1 ++ o2
+    collectiveOrder :: Handler (Maybe CollectiveOrder)
+    collectiveOrder = liftIO $ D.getCollectiveOrder conn
+    
+    pastCollectiveOrders :: Handler [PastCollectiveOrder]
+    pastCollectiveOrders = liftIO $ D.getPastCollectiveOrders conn
     
     householdOrders :: Handler [HouseholdOrder]
-    householdOrders = do
-      ho1 <- liftIO $ D.getHouseholdOrders conn
-      ho2 <- liftIO $ D.getPastHouseholdOrders conn
-      return $ ho1 ++ ho2
+    householdOrders = liftIO $ D.getHouseholdOrders conn
     
+    pastHouseholdOrders :: Handler [PastHouseholdOrder]
+    pastHouseholdOrders = liftIO $ D.getPastHouseholdOrders conn
+
     products :: Handler [Product]
     products = liftIO $ D.getProducts conn
 

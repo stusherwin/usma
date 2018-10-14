@@ -13,6 +13,8 @@ module Api where
   import Servant.Multipart
   import CollectiveOrder
   import HouseholdOrder
+  import PastCollectiveOrder
+  import PastHouseholdOrder
   import Product
   import Household
   import HouseholdPayment
@@ -25,8 +27,10 @@ module Api where
          )
 
   type QueryAPI =
-         "collective-orders" :> Get '[JSON] [CollectiveOrder]
+         "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
+    :<|> "past-collective-orders" :> Get '[JSON] [PastCollectiveOrder]
     :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
+    :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]
     :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]

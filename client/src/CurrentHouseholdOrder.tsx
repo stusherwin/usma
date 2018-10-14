@@ -75,11 +75,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
   render() {
     const householdOrder = this.props.householdOrder
     const unusedProducts = this.props.products.filter(p => !householdOrder.items.find(i => i.productCode == p.code))
-    const canAddItem = householdOrder.canBeAmended && householdOrder.isOpen && !!unusedProducts.length
-    const canLeaveOrder = householdOrder.canBeAmended && !householdOrder.items.length
-    const canReopenOrder = householdOrder.canBeAmended && !!householdOrder.items.length && !householdOrder.isOpen
-    const canCancelOrder = householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen
-    const canCompleteOrder = householdOrder.canBeAmended && !!householdOrder.items.length && householdOrder.isOpen
+    const canAddItem = householdOrder.isOpen && !!unusedProducts.length
+    const canLeaveOrder = !householdOrder.items.length
+    const canReopenOrder = !!householdOrder.items.length && !householdOrder.isOpen
+    const canCancelOrder = !!householdOrder.items.length && householdOrder.isOpen
+    const canCompleteOrder = !!householdOrder.items.length && householdOrder.isOpen
     const orderButtons = [canLeaveOrder, canReopenOrder, canCancelOrder, canCompleteOrder]
 
     return (
@@ -116,7 +116,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                   <div className="flex justify-between items-baseline">
                     <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
                     <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
-                      {householdOrder.canBeAmended && householdOrder.isOpen
+                      {householdOrder.isOpen
                       ? <select className="flex-no-grow flex-no-shrink mr-2 border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
                           {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
                         </select>
@@ -127,7 +127,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                   </div>
                   <div className="flex justify-between items-end mt-2">
                     <span className="flex-no-grow">{i.productName}</span>
-                    {householdOrder.canBeAmended && householdOrder.isOpen &&
+                    {householdOrder.isOpen &&
                       <button className="ml-4" disabled={this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                     }
                   </div>

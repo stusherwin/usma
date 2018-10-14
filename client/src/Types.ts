@@ -24,28 +24,38 @@ export type Household = { id: number
 export type CollectiveOrder = { id: number
                               , createdDate: Date
                               , isComplete: boolean
-                              , isCancelled: boolean
-                              , isPlaced: boolean
-                              , isPast: boolean
-                              , status: 'Open' | 'Complete' | 'Cancelled' | 'Placed'
-                              , canBeAmended: boolean
+                              , status: 'Open' | 'Complete'
                               , total: number
                               , items: OrderItem[]
                               }
 
+export type PastCollectiveOrder = { id: number
+                                  , createdDate: Date
+                                  , isCancelled: boolean
+                                  , total: number
+                                  , items: OrderItem[]
+                                  }
+
 export type HouseholdOrder = { orderId: number
                              , orderCreatedDate: Date
-                             , isOrderPast: boolean
                              , householdId: number
                              , householdName: string 
                              , isComplete: boolean
                              , isCancelled: boolean
                              , isOpen: boolean
-                             , status: 'Open' | 'Complete' | 'Cancelled' | 'Placed'
-                             , canBeAmended: boolean
+                             , status: 'Open' | 'Complete' | 'Cancelled'
                              , total: number
                              , items: OrderItem[]
                              }
+
+export type PastHouseholdOrder = { orderId: number
+                                 , orderCreatedDate: Date
+                                 , householdId: number
+                                 , householdName: string 
+                                 , isCancelled: boolean
+                                 , total: number
+                                 , items: OrderItem[]
+                                 }
 
 export type OrderItem = { productId: number
                         , productCode: string

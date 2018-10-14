@@ -1,6 +1,7 @@
 * Clone past orders -> add to current order, or create a new current order if none exists
 * Separate API calls for past orders/current order
 * Change API call for current order to be singleton
+* Cancelled order total? 
 * What happens if you uncancel a past order? (can't)
 * Add no. of people to household (+ total per person to household order)
 * Add multiple products to order at once

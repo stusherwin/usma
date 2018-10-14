@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household, HouseholdOrder, CollectiveOrder } from './Types'
+import { PastHouseholdOrder } from './Types'
 import { ServerApi, ApiError } from './ServerApi'
 import { Util } from './Util'
 import { RouterLink } from './RouterLink'
@@ -9,18 +9,14 @@ import { Icon } from './Icon'
 import { Money } from './Money'
 import { Router } from './Router'
 
-export interface HouseholdOrdersProps { household: Household
-                                      , householdOrders: HouseholdOrder[]
-                                      , currentCollectiveOrder: CollectiveOrder | undefined
-                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                      , reload: () => Promise<void>
-                                      }
+export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
+                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                          , reload: () => Promise<void>
+                                          }
 
-export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
+export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, {}> {
   render() {
-    const currentOrder = this.props.householdOrders.filter(ho => !ho.isOrderPast && !ho.isCancelled)[0]
-    const pastOrders = this.props.householdOrders.filter(ho => ho.isOrderPast || ho.isCancelled)
-    const currentCollectiveOrder = this.props.currentCollectiveOrder
+    const pastOrders = this.props.householdOrders
     const total = this.props.householdOrders.filter(ho => !ho.isCancelled).reduce((tot, ho) => tot + ho.total, 0)
 
     return (
@@ -36,16 +32,14 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, {}> {
           <table className="border-collapse w-full mb-4">
             <tbody>
               { pastOrders.map(ho => (
-                <tr key={ho.orderId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                <tr key={ho.orderId} className={classNames({'crossed-out': ho.isCancelled})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
-                  <td className="pt-2 pr-2">{ho.status}</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+                  <td className="pt-2 pr-2 text-right">{ho.isCancelled ? 'Cancelled' : <Money amount={ho.total} />}</td>
                 </tr>
               )) }
               {!!pastOrders.length &&
                 <tr>
                   <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-                  <td className="pt-2 pr-2"></td>
                   <td className="pt-2 pr-2 text-right font-bold"><Money amount={total} /></td>
                 </tr>
               }

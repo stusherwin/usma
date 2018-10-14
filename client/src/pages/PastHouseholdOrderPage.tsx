@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, Product, OrderItem } from '../Types'
+import { PastHouseholdOrder, Product, OrderItem } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../Util'
 import { RouterLink } from '../RouterLink'
@@ -9,7 +9,7 @@ import { Icon } from '../Icon'
 import { Money } from '../Money'
 import { TopNav } from '../TopNav'
 
-export interface PastHouseholdOrderPageProps { householdOrder: HouseholdOrder
+export interface PastHouseholdOrderPageProps { householdOrder: PastHouseholdOrder
                                              , referrer: 'order' | 'household'
                                              , loading: boolean
                                              , error: ApiError | null
@@ -37,7 +37,7 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
           <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past order</h2>
             <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(householdOrder.orderCreatedDate)}</span><span><Money amount={householdOrder.total} /></span></h3>
-            <h3 className="font-normal">{householdOrder.status}</h3>
+            <h3 className="font-normal">{householdOrder.isCancelled ? 'Cancelled' : ''}</h3>
             <div className="mt-2">
               <RouterLink path={`/orders/${householdOrder.orderId}`}>View order</RouterLink>
             </div>
