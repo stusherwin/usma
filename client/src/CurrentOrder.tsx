@@ -78,7 +78,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     const addHouseholdPossible = !!unusedHouseholds.length
     const placeOrderPossible = !!this.props.householdOrders.length
     const placeOrderAllowed = allComplete && allPaid && orderMinimumReached
-    const cancelOrderPossible = true
+    const cancelOrderPossible = !!this.props.householdOrders.length
 
     const deletableHousehold = !!this.props.householdOrders.length && !!this.props.householdOrders.find(ho => !ho.items.length)
 
@@ -97,23 +97,28 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
             }
           </div>
-          {(deleteOrderPossible || addHouseholdPossible || placeOrderPossible || cancelOrderPossible) &&
+          {(deleteOrderPossible || placeOrderPossible || cancelOrderPossible) &&
             <div className="mt-2">
               {deleteOrderPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.deleteOrder}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
               }
-              {addHouseholdPossible &&
-                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={_ => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add household</button>
+              {cancelOrderPossible &&
+                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Cancel order</button>
               }
               {placeOrderPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !placeOrderAllowed} onClick={this.placeOrder}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
               }
-              {cancelOrderPossible &&
-                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Cancel order</button>
-              }
             </div>
           }
         </div>
+        {!this.state.addingHousehold && addHouseholdPossible &&
+          <div className="p-2 flex justify-end">
+            <button disabled={!!this.state.addingHousehold} onClick={_ => this.startAddHousehold(unusedHouseholds[0])}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a household</button>
+          </div>
+        }
+        {!this.state.addingHousehold && !this.props.householdOrders.length &&
+          <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet</div>
+        }
         {this.state.addingHousehold &&
           <div className="bg-household-lightest p-2">
             <h3 className="mb-4">Add household</h3>

@@ -78,7 +78,8 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
               { pastOrders.map(o => (
                 <tr key={o.id} className={classNames({'crossed-out': o.isCancelled})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
-                  <td className="pt-2 pr-2 text-right">{o.isCancelled ? 'Cancelled' : <Money amount={o.total} />}</td>
+                  <td className="pt-2 pr-2">{o.isCancelled && 'Cancelled'}</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={o.total} /></td>
                 </tr>
               )) }
             </tbody>

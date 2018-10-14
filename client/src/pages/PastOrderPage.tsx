@@ -38,11 +38,13 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
               {this.props.householdOrders.map(ho => (
                 <tr key={ho.householdId} className={classNames({'crossed-out': ho.isCancelled})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
-                  <td className="pt-2 pr-2 text-right">{ho.isCancelled? 'Cancelled' : <Money amount={ho.total} />}</td>
+                  <td className="pt-2 pr-2">{ho.isCancelled && 'Cancelled'}</td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                 </tr>
               ))}
               <tr>
                 <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pr-2"></td>
                 <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.total} /></td>
               </tr>
             </tbody>

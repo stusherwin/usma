@@ -111,7 +111,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       os <- query_ conn [sql|
         select o.id, o.created_date, o.cancelled, coalesce(sum(hoi.total), 0) as total
         from past_order o
-        left join past_household_order ho on ho.order_id = o.id and ho.cancelled = false
+        left join past_household_order ho on ho.order_id = o.id and (o.cancelled or ho.cancelled = false)
         left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         group by o.id, o.created_date, o.cancelled
         order by o.id desc
@@ -163,7 +163,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        select o.id, o.created_date, h.id, h.name, ho.cancelled, coalesce(sum(hoi.total), 0) as total
+        select o.id, o.created_date, h.id, h.name, (case when o.cancelled then false else ho.cancelled end) as cancelled, coalesce(sum(hoi.total), 0) as total
         from past_household_order ho
         inner join past_order o on o.id = ho.order_id
         inner join household h on h.id = ho.household_id

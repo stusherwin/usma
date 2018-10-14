@@ -54,7 +54,7 @@ export class Main extends React.Component<MainProps, MainState> {
                  }
     
     this.router.route('/orders/{orderId}/households/{householdId}', c => {
-      const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
+      const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
       
       return householdOrder && 
         <PastHouseholdOrderPage referrer="order"
@@ -96,7 +96,7 @@ export class Main extends React.Component<MainProps, MainState> {
                                                       error={this.state.error} />)
     
     this.router.route('/households/{householdId}/orders/{orderId}', c => {
-      const householdOrder = this.state.householdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
+      const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
       
       return householdOrder && 
         <PastHouseholdOrderPage referrer="household"
