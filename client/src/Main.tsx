@@ -10,7 +10,7 @@ import { OrdersPage } from './pages/OrdersPage'
 import { PastOrderPage } from './pages/PastOrderPage'
 import { HouseholdPage } from './pages/HouseholdPage'
 import { PastHouseholdOrderPage } from './pages/PastHouseholdOrderPage'
-import { FullOrderPage } from './pages/FullOrderPage'
+import { PlaceOrderPage } from './pages/PlaceOrderPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { HouseholdsPage } from './pages/HouseholdsPage'
 import { HomePage } from './pages/HomePage'
@@ -52,6 +52,17 @@ export class Main extends React.Component<MainProps, MainState> {
                  , householdPayments: []
                  , initialised: false
                  }
+
+    this.router.route('/orders/place', _ => {
+      const currentOrder = this.state.collectiveOrder || undefined
+
+      return currentOrder &&
+        <PlaceOrderPage currentOrder={currentOrder}
+                        reload={this.reload}
+                        request={this.request}
+                        loading={this.state.loading}
+                        error={this.state.error} />
+    })
     
     this.router.route('/orders/{orderId}/households/{householdId}', c => {
       const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)

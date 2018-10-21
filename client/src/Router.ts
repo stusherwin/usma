@@ -9,6 +9,7 @@ export class Router {
 
   resolve(url: string): JSX.Element | undefined {
     let identifierParseFail = false
+
     for(let r of this.routes) {
       const identifierRegExp = /\{([^\}]+)\}/gi
       const routeRegExp = new RegExp('^' + r.route.replace(identifierRegExp, '([^/]+)'), "gi")
@@ -35,13 +36,17 @@ export class Router {
         break
       }
       
-      return r.component(identifierValues)
+      let component = r.component(identifierValues)
+      if(component) {
+        return component
+      }
     }
+
     console.log('Page not found for url: ' + url)
     return React.createElement('div', null, 'Page not found')
   }
 
   static navigate(url: string) {
-    window.history.pushState(url, url, url)
+    window.history.pushState(url, url, url);
   }
 }

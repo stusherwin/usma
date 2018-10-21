@@ -57,8 +57,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   }
 
   placeOrder = () => {
-    this.props.request(ServerApi.command.placeOrder(this.props.order.id))
-      .then(this.props.reload)
+    Router.navigate('/orders/place')
   }
 
   cancelOrder = () => {
