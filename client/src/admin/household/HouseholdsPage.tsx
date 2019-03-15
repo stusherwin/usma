@@ -3,12 +3,12 @@ import * as classNames from 'classnames'
 
 import { Household } from '../../Types'
 import { ServerApi, ApiError } from '../../ServerApi'
-import { Util } from '../../Util'
-import { RouterLink } from '../../RouterLink'
-import { Icon } from '../../Icon'
-import { Form, Field, Validate } from '../../Validation'
-import { TopNav } from '../../TopNav'
-import { TextField } from '../../Field'
+import { Util } from '../../common/Util'
+import { RouterLink } from '../../common/RouterLink'
+import { Icon } from '../../common/Icon'
+import { Form, Field, Validate } from '../../common/Validation'
+import { TopNav } from '../TopNav'
+import { TextField } from '../../common/Field'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>

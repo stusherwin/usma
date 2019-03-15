@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import { CollectiveOrder } from '../../Types'
 import { ServerApi, ApiError } from '../../ServerApi'
-import { Util } from '../../Util'
-import { RouterLink } from '../../RouterLink'
-import { Money } from '../../Money'
-import { TopNav } from '../../TopNav'
-import { Icon } from '../../Icon'
-import { Router } from '../../Router'
+import { Util } from '../../common/Util'
+import { RouterLink } from '../../common/RouterLink'
+import { Money } from '../../common/Money'
+import { TopNav } from '../TopNav'
+import { Icon } from '../../common/Icon'
+import { Router } from '../../common/Router'
 
 export interface PlaceOrderPageProps { currentOrder: CollectiveOrder
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>

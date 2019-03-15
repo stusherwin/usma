@@ -1,20 +1,21 @@
 import * as React from 'react';
 
 import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Icon } from './Icon'
-import { Router } from './Router'
+import { Util } from './common/Util'
+import { RouterLink } from './common/RouterLink'
+import { Icon } from './common/Icon'
+import { Router } from './common/Router'
 
-import { OrdersPage as AdminOrdersPage } from './pages/admin/OrdersPage'
-import { PastOrderPage as AdminPastOrderPage } from './pages/admin/PastOrderPage'
-import { HouseholdPage as AdminHouseholdPage } from './pages/admin/HouseholdPage'
-import { PastHouseholdOrderPage as AdminPastHouseholdOrderPage } from './pages/admin/PastHouseholdOrderPage'
-import { PlaceOrderPage as AdminPlaceOrderPage } from './pages/admin/PlaceOrderPage'
-import { ProductsPage as AdminProductsPage } from './pages/admin/ProductsPage'
-import { HouseholdsPage as AdminHouseholdsPage } from './pages/admin/HouseholdsPage'
-import { HomePage as AdminHomePage } from './pages/admin/HomePage'
-import { WelcomePage } from './pages/WelcomePage'
+import { OrdersPage as AdminOrdersPage } from './admin/order/OrdersPage'
+import { PastOrderPage as AdminPastOrderPage } from './admin/order/PastOrderPage'
+import { HouseholdPage as AdminHouseholdPage } from './admin/household/HouseholdPage'
+import { PastHouseholdOrderPage as AdminPastHouseholdOrderPage } from './admin/household/PastHouseholdOrderPage'
+import { PlaceOrderPage as AdminPlaceOrderPage } from './admin/order/PlaceOrderPage'
+import { ProductsPage as AdminProductsPage } from './admin/product/ProductsPage'
+import { HouseholdsPage as AdminHouseholdsPage } from './admin/household/HouseholdsPage'
+import { HomePage as AdminHomePage } from './admin/HomePage'
+import { WelcomePage } from './household/WelcomePage'
+import { HouseholdPage } from './household/HouseholdPage'
 import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Product, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
 
 export interface MainProps {}
@@ -155,16 +156,16 @@ export class Main extends React.Component<MainProps, MainState> {
       const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
       
       return household && 
-        <AdminHouseholdPage household={household}
-                            currentCollectiveOrder={currentCollectiveOrder}
-                            currentHouseholdOrder={currentHouseholdOrder}
-                            pastHouseholdOrders={pastHouseholdOrders}
-                            payments={householdPayments}
-                            products={this.state.productCatalogue}
-                            reload={this.reload}
-                            request={this.request}
-                            loading={this.state.loading}
-                            error={this.state.error} />
+        <HouseholdPage household={household}
+                       currentCollectiveOrder={currentCollectiveOrder}
+                       currentHouseholdOrder={currentHouseholdOrder}
+                       pastHouseholdOrders={pastHouseholdOrders}
+                       payments={householdPayments}
+                       products={this.state.productCatalogue}
+                       reload={this.reload}
+                       request={this.request}
+                       loading={this.state.loading}
+                       error={this.state.error} />
     })
 
     this.router.route('/', _ => <WelcomePage households={this.state.households}

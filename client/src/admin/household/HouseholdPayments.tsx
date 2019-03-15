@@ -1,14 +1,14 @@
 import * as React from 'react';
 
-import { Household, HouseholdPayment, CollectiveOrder } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Icon } from './Icon'
-import { Money } from './Money'
-import { Router } from './Router'
-import { Form, Field, Validate } from './Validation'
-import { TextField, MoneyField } from './Field'
+import { Household, HouseholdPayment, CollectiveOrder } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../common/Util'
+import { RouterLink } from '../../common/RouterLink'
+import { Icon } from '../../common/Icon'
+import { Money } from '../../common/Money'
+import { Router } from '../../common/Router'
+import { Form, Field, Validate } from '../../common/Validation'
+import { TextField, MoneyField } from '../../common/Field'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RouterLink } from './RouterLink'
+import { RouterLink } from '../common/RouterLink'
 
 export interface TopNavProps {
   className?: string

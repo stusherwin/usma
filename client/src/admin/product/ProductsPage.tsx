@@ -3,14 +3,14 @@ import * as classNames from 'classnames'
 
 import { ProductCatalogueEntry, VatRate } from '../../Types'
 import { ServerApi, ApiError } from '../../ServerApi'
-import { Util } from '../../Util'
-import { Icon } from '../../Icon'
-import { Money } from '../../Money'
-import { Form, Field, Validate } from '../../Validation'
-import { RouterLink } from '../../RouterLink'
-import { TopNav } from '../../TopNav'
-import { TextField, MoneyField, DropDownField } from '../../Field'
-import { LoadMore } from '../../LoadMore'
+import { Util } from '../../common/Util'
+import { Icon } from '../../common/Icon'
+import { Money } from '../../common/Money'
+import { Form, Field, Validate } from '../../common/Validation'
+import { RouterLink } from '../../common/RouterLink'
+import { TopNav } from '../TopNav'
+import { TextField, MoneyField, DropDownField } from '../../common/Field'
+import { LoadMore } from '../../common/LoadMore'
 
 const pageSize = 10
 

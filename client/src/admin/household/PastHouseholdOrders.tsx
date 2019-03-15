@@ -1,13 +1,13 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Icon } from './Icon'
-import { Money } from './Money'
-import { Router } from './Router'
+import { PastHouseholdOrder } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../common/Util'
+import { RouterLink } from '../../common/RouterLink'
+import { Icon } from '../../common/Icon'
+import { Money } from '../../common/Money'
+import { Router } from '../../common/Router'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>

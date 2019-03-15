@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { RouterLink } from '../../RouterLink'
-import { Icon } from '../../Icon'
+import { RouterLink } from '../common/RouterLink'
+import { Icon } from '../common/Icon'
 
 export interface HomePageProps { 
                                }

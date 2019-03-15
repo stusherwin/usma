@@ -1,13 +1,13 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, Product, OrderItem, ProductCatalogueEntry } from './Types'
-import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './Util'
-import { RouterLink } from './RouterLink'
-import { Icon } from './Icon'
-import { Money } from './Money'
-import { AddProduct } from './AddProduct'
+import { HouseholdOrder, Product, OrderItem, ProductCatalogueEntry } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../common/Util'
+import { RouterLink } from '../../common/RouterLink'
+import { Icon } from '../../common/Icon'
+import { Money } from '../../common/Money'
+import { AddProduct } from '../product/AddProduct'
 
 export interface CurrentHouseholdOrderProps { householdOrder: HouseholdOrder
                                             , products: ProductCatalogueEntry[]
