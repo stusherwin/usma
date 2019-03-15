@@ -53,11 +53,11 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   deleteOrder = () => {
     this.props.request(ServerApi.command.deleteOrder(this.props.order.id))
       .then(this.props.reload)
-      .then(_ => Router.navigate(`/orders`))
+      .then(_ => Router.navigate(`/admin/orders`))
   }
 
   placeOrder = () => {
-    Router.navigate('/orders/place')
+    Router.navigate('/admin/orders/place')
   }
 
   cancelOrder = () => {
@@ -143,7 +143,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                         {household && (
                           household.balance > 0
                           ? ' (paid)'
-                          : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
+                          : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/admin/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
                         )}
                       </span>
                     }
@@ -151,7 +151,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                 )
                 return (
                   <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
-                    <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
+                    <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
                     <td className="pt-2 pr-2">{status}</td>
                     <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                     {deletableHousehold && 

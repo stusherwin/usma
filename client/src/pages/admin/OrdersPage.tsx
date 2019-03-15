@@ -1,15 +1,15 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../Util'
-import { RouterLink } from '../RouterLink'
-import { Icon } from '../Icon'
-import { Money } from '../Money'
-import { Router } from '../Router'
-import { CurrentOrder } from '../CurrentOrder'
-import { TopNav } from '../TopNav'
+import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../Util'
+import { RouterLink } from '../../RouterLink'
+import { Icon } from '../../Icon'
+import { Money } from '../../Money'
+import { Router } from '../../Router'
+import { CurrentOrder } from '../../CurrentOrder'
+import { TopNav } from '../../TopNav'
 
 export interface OrdersPageProps { currentOrder: CollectiveOrder | null
                                  , currentHouseholdOrders: HouseholdOrder[]
@@ -77,7 +77,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             <tbody>
               { pastOrders.map(o => (
                 <tr key={o.id} className={classNames({'crossed-out': o.isCancelled})}>
-                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
+                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
                   <td className="pt-2 pr-2">{o.isCancelled && 'Cancelled'}</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={o.total} /></td>
                 </tr>

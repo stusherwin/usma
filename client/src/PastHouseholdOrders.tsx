@@ -33,7 +33,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             <tbody>
               { pastOrders.map(ho => (
                 <tr key={ho.orderId} className={classNames({'crossed-out': ho.isCancelled})}>
-                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
+                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
                   <td className="pt-2 pr-2">{ho.isCancelled && 'Cancelled'}</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                 </tr>

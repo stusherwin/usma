@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { CollectiveOrder } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../Util'
-import { RouterLink } from '../RouterLink'
-import { Money } from '../Money'
-import { TopNav } from '../TopNav'
-import { Icon } from '../Icon'
-import { Router } from '../Router'
+import { CollectiveOrder } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../Util'
+import { RouterLink } from '../../RouterLink'
+import { Money } from '../../Money'
+import { TopNav } from '../../TopNav'
+import { Icon } from '../../Icon'
+import { Router } from '../../Router'
 
 export interface PlaceOrderPageProps { currentOrder: CollectiveOrder
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -30,11 +30,11 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
   placeOrder = () => {
     this.props.request(ServerApi.command.placeOrder(this.props.currentOrder.id))
       .then(this.props.reload)
-      .then(_ => Router.navigate(`/orders`))
+      .then(_ => Router.navigate(`/admin/orders`))
   }
 
   cancel = () => {
-    Router.navigate('/orders')
+    Router.navigate('/admin/orders')
   }
 
   render() {

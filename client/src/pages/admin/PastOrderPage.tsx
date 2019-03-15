@@ -1,13 +1,13 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder, Household, PastHouseholdOrder } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../Util'
-import { RouterLink } from '../RouterLink'
-import { Icon } from '../Icon'
-import { Money } from '../Money'
-import { TopNav } from '../TopNav'
+import { PastCollectiveOrder, Household, PastHouseholdOrder } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../Util'
+import { RouterLink } from '../../RouterLink'
+import { Icon } from '../../Icon'
+import { Money } from '../../Money'
+import { TopNav } from '../../TopNav'
 
 export interface PastOrderPageProps { order: PastCollectiveOrder
                                     , householdOrders: PastHouseholdOrder[]
@@ -37,7 +37,7 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
             <tbody>
               {this.props.householdOrders.map(ho => (
                 <tr key={ho.householdId} className={classNames({'crossed-out': ho.isCancelled})}>
-                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
+                  <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
                   <td className="pt-2 pr-2">{ho.isCancelled && 'Cancelled'}</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                 </tr>

@@ -1,17 +1,17 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../Util'
-import { RouterLink } from '../RouterLink'
-import { Icon } from '../Icon'
-import { Money } from '../Money'
-import { Router } from '../Router'
-import { CurrentHouseholdOrder } from '../CurrentHouseholdOrder'
-import { PastHouseholdOrders } from '../PastHouseholdOrders'
-import { HouseholdPayments } from '../HouseholdPayments'
-import { TopNav } from '../TopNav'
+import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../Util'
+import { RouterLink } from '../../RouterLink'
+import { Icon } from '../../Icon'
+import { Money } from '../../Money'
+import { Router } from '../../Router'
+import { CurrentHouseholdOrder } from '../../CurrentHouseholdOrder'
+import { PastHouseholdOrders } from '../../PastHouseholdOrders'
+import { HouseholdPayments } from '../../HouseholdPayments'
+import { TopNav } from '../../TopNav'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentHouseholdOrder: HouseholdOrder | null

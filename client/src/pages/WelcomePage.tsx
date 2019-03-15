@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { Household } from '../../Types'
-import { RouterLink } from '../../RouterLink'
-import { Icon } from '../../Icon'
-import { Router } from '../../Router'
-import { Form, Field, Validate } from '../../Validation'
-import { TextField } from '../../Field'
-import { ServerApi, ApiError } from '../../ServerApi'
+import { Household } from '../Types'
+import { RouterLink } from '../RouterLink'
+import { Icon } from '../Icon'
+import { Router } from '../Router'
+import { Form, Field, Validate } from '../Validation'
+import { TextField } from '../Field'
+import { ServerApi, ApiError } from '../ServerApi'
 
 export interface WelcomePageProps { households: Household[]
                                   , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -51,12 +51,12 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
         .then(id => this.props.reload()
-          .then(_ => Router.navigate('/households/' + id)))
+          .then(_ => Router.navigate('/admin/households/' + id)))
     }
   }
 
   continue = () => {
-    Router.navigate('/households/' + this.state.selectedHouseholdId)
+    Router.navigate('/admin/households/' + this.state.selectedHouseholdId)
   }
 
   render() {
@@ -97,4 +97,4 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
       </div>
     )
   }
-}  
+}

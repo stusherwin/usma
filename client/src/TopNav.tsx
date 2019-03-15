@@ -7,9 +7,9 @@ export interface TopNavProps {
 
 export const TopNav = ({className}: TopNavProps) =>
   <nav className="flex justify-center mb-2">
-    <RouterLink className={`${className} ml-2 mr-2`} path="/orders">Orders</RouterLink>
+    <RouterLink className={`${className} ml-2 mr-2`} path="/admin/orders">Orders</RouterLink>
     &middot;
-    <RouterLink className={`${className} ml-2 mr-2`} path="/products">Products</RouterLink>
+    <RouterLink className={`${className} ml-2 mr-2`} path="/admin/products">Products</RouterLink>
     &middot;
-    <RouterLink className={`${className} ml-2 mr-2`} path="/households">Households</RouterLink>
+    <RouterLink className={`${className} ml-2 mr-2`} path="/admin/households">Households</RouterLink>
   </nav>

@@ -1,14 +1,14 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../Util'
-import { RouterLink } from '../RouterLink'
-import { Icon } from '../Icon'
-import { Form, Field, Validate } from '../Validation'
-import { TopNav } from '../TopNav'
-import { TextField } from '../Field'
+import { Household } from '../../Types'
+import { ServerApi, ApiError } from '../../ServerApi'
+import { Util } from '../../Util'
+import { RouterLink } from '../../RouterLink'
+import { Icon } from '../../Icon'
+import { Form, Field, Validate } from '../../Validation'
+import { TopNav } from '../../TopNav'
+import { TextField } from '../../Field'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -133,7 +133,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               )
               : (
                 <div key={h.id} className="flex justify-between items-baseline px-2 mt-2">
-                  <RouterLink className="flex-grow" path={`/households/${h.id}`}>{h.name}</RouterLink>
+                  <RouterLink className="flex-grow" path={`/admin/households/${h.id}`}>{h.name}</RouterLink>
                   <span className="flex-no-shrink flex-no-grow">
                     <button className="ml-2" onClick={_ => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
                     <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
