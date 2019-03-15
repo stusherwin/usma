@@ -14,6 +14,7 @@ import { PlaceOrderPage } from './pages/PlaceOrderPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { HouseholdsPage } from './pages/HouseholdsPage'
 import { HomePage } from './pages/HomePage'
+import { WelcomePage } from './pages/restructure/WelcomePage'
 import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Product, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
 
 export interface MainProps {}
@@ -143,7 +144,12 @@ export class Main extends React.Component<MainProps, MainState> {
                                                           loading={this.state.loading}
                                                           error={this.state.error} />)
     
-    this.router.route('/', _ => <HomePage />)
+    this.router.route('/home', _ => <HomePage />)
+    this.router.route('/', _ => <WelcomePage households={this.state.households}
+                                             request={this.request}
+                                             reload={this.reload}
+                                             loading={this.state.loading }
+                                             error={this.state.error} />)
   }
 
   componentDidMount() {
