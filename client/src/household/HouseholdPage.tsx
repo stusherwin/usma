@@ -11,7 +11,7 @@ import { Router } from '../common/Router'
 import { CurrentHouseholdOrder } from '../admin/household/CurrentHouseholdOrder'
 import { PastHouseholdOrders } from '../admin/household/PastHouseholdOrders'
 import { HouseholdPayments } from '../admin/household/HouseholdPayments'
-import { TopNav } from '../admin/TopNav'
+import { TopNav } from './TopNav'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentHouseholdOrder: HouseholdOrder | null
@@ -50,27 +50,11 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-household-light p-2">
-          <TopNav className="text-household-dark hover:text-household-darker" />
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
-            <h2 className="leading-none mb-2 -mt-1 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
-            <table className="border-collapse w-full text-household-darker">
-              <tbody>
-                <tr>
-                  <td>Total orders:</td>
-                  <td className="text-right"><Money amount={this.props.household.totalOrders} /></td>
-                </tr>
-                <tr>
-                  <td>Total payments:</td>
-                  <td className="text-right"><Money amount={this.props.household.totalPayments} /></td>
-                </tr>
-                <tr>
-                  <td>Balance:</td>
-                  <td className={classNames('text-right', {'text-red-dark': this.props.household.balance < 0})}><Money amount={this.props.household.balance} /></td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="bg-img-household bg-no-repeat bg-12 pl-16 min-h-12 relative mt-1">
+            <h2 className="leading-none -mt-1 pt-3 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
           </div>
         </div>
+        <TopNav />
         <div>
           {currentOrder
           ? (

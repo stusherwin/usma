@@ -402,8 +402,9 @@ module.exports = {
     'cover': 'cover',
     'contain': 'contain',
     '16': '4rem',
-    '4': '1rem',
+    '12': '3rem',
     '6': '1.5rem',
+    '4': '1rem',
   },
 
 
@@ -604,6 +605,7 @@ module.exports = {
     'full': '100%',
     'screen': '100vh',
     '16': '4rem',
+    '12': '3rem',
   },
 
 
