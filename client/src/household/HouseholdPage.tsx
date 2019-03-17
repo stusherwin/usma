@@ -64,17 +64,17 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
         </div>
         <nav className="flex justify-between bg-household-light">
           <RouterLink path={basePath}
-                      className={classNames('p-2 pb-3 text-center flex-grow rounded-t-lg', { 
+                      className={classNames('p-2 text-center flex-grow rounded-t-lg bg-order-dark text-black ml-2 mr-1', { 
                         'bg-order-dark text-black': Router.isCurrent(basePath),
                         'hover:bg-order-dark hover:text-black': !Router.isCurrent(basePath)
                       })}>Current order</RouterLink>
           <RouterLink path={`${basePath}past-orders`}
-                      className={classNames('p-2 pb-3 text-center flex-grow rounded-t-lg', { 
+                      className={classNames('p-2 text-center flex-grow rounded-t-lg bg-grey-lighter text-grey-darkest mr-1', { 
                         'bg-grey-lighter text-grey-darkest': Router.isCurrent(`${basePath}past-orders`),
                         'hover:bg-grey-lighter hover:text-grey-darkest': !Router.isCurrent(`${basePath}past-orders`) 
                       })}>Past orders</RouterLink>
           <RouterLink path={`${basePath}payments`} 
-                      className={classNames('p-2 pb-3 text-center flex-grow rounded-t-lg', { 
+                      className={classNames('p-2 text-center flex-grow rounded-t-lg bg-payment-light text-payment-dark mr-2', { 
                         'bg-payment-light text-payment-dark': Router.isCurrent(`${basePath}payments`),
                         'hover:bg-payment-light hover:text-payment-dark': !Router.isCurrent(`${basePath}payments`) 
                       })}>Payments</RouterLink>

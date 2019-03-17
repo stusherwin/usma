@@ -100,51 +100,53 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             }
           </div>
         }
-        <div className="mb-4">
-          {canAddItem &&
-            <div className="p-2 flex justify-end">
-              <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
-            </div>
-          }
-          {!householdOrder.items.length &&
-            <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet</div>
-          }
-          {!!householdOrder.items.length &&
-            <div>
-              { householdOrder.items.map((i, ix) =>
-                <div key={i.productId} className="p-2 mb-4 mt-4">
-                  <div className="flex justify-between items-baseline">
-                    <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
-                    <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
-                      {householdOrder.isOpen
-                      ? <select className="flex-no-grow flex-no-shrink mr-2 border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
-                          {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-                        </select>
-                      : <span>x {i.itemQuantity}</span>
-                      }
-                    </span>
-                    <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotal} />
-                  </div>
-                  <div className="flex justify-between items-end mt-2">
-                    <span className="flex-no-grow">{i.productName}</span>
-                    {householdOrder.isOpen &&
-                      <button className="ml-4" disabled={this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                    }
-                  </div>
-                </div>
-              )}
-              <div className="p-2 flex justify-between items-baseline">
-                <span className="flex-no-shrink flex-no-grow font-bold">Total</span>
-                <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.total} />
+        {!this.state.addingProduct && 
+          <div className="mb-4">
+            {canAddItem &&
+              <div className="p-2 flex justify-end">
+                <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
               </div>
-            </div>
-          }
-          {canAddItem && householdOrder.items.length > 3 &&
-            <div className="p-2 flex justify-end">
-              <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
-            </div>
-          }
-        </div>
+            }
+            {!householdOrder.items.length &&
+              <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet</div>
+            }
+            {!!householdOrder.items.length &&
+              <div>
+                { householdOrder.items.map((i, ix) =>
+                  <div key={i.productId} className="p-2 mb-4 mt-4">
+                    <div className="flex justify-between items-baseline">
+                      <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
+                      <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
+                        {householdOrder.isOpen
+                        ? <select className="flex-no-grow flex-no-shrink mr-2 border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
+                            {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+                          </select>
+                        : <span>x {i.itemQuantity}</span>
+                        }
+                      </span>
+                      <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotal} />
+                    </div>
+                    <div className="flex justify-between items-end mt-2">
+                      <span className="flex-no-grow">{i.productName}</span>
+                      {householdOrder.isOpen &&
+                        <button className="ml-4" disabled={this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                      }
+                    </div>
+                  </div>
+                )}
+                <div className="p-2 flex justify-between items-baseline">
+                  <span className="flex-no-shrink flex-no-grow font-bold">Total</span>
+                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.total} />
+                </div>
+              </div>
+            }
+            {canAddItem && householdOrder.items.length > 3 &&
+              <div className="p-2 flex justify-end">
+                <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
+              </div>
+            }
+          </div>
+        }
         {this.state.addingProduct &&
           <AddProduct products={unusedProducts}
                       loading={this.props.loading}
