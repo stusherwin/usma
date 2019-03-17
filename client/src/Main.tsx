@@ -34,12 +34,11 @@ export interface MainState { loading: boolean
                            }
 
 export class Main extends React.Component<MainProps, MainState> {
-  router = new Router()
-
   constructor(props: MainProps) {
     super(props)
 
     const url = '/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
+    Router.updateUrl(url)
 
     this.state = { loading: false
                  , error: null
@@ -54,135 +53,32 @@ export class Main extends React.Component<MainProps, MainState> {
                  , householdPayments: []
                  , initialised: false
                  }
-
-    this.router.route('/admin/orders/place', _ => {
-      const currentOrder = this.state.collectiveOrder || undefined
-
-      return currentOrder &&
-        <AdminPlaceOrderPage currentOrder={currentOrder}
-                             reload={this.reload}
-                             request={this.request}
-                             loading={this.state.loading}
-                             error={this.state.error} />
-    })
-    
-    this.router.route('/admin/orders/{orderId}/households/{householdId}', c => {
-      const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
-      
-      return householdOrder && 
-        <AdminPastHouseholdOrderPage referrer="order"
-                                     householdOrder={householdOrder}
-                                     loading={this.state.loading}
-                                     error={this.state.error} />
-    })
-
-    this.router.route('/admin/orders/{orderId}', c => {
-      const order = this.state.pastCollectiveOrders.find(o => o.id == c.orderId)
-      const householdOrders = this.state.pastHouseholdOrders.filter(o => o.orderId == c.orderId)
-
-      return order &&
-        <AdminPastOrderPage order={order}
-                            householdOrders={householdOrders}
-                            loading={this.state.loading}
-                            error={this.state.error} />
-    })
-
-    this.router.route('/admin/orders', c => {
-      const currentOrder = this.state.collectiveOrder
-      const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
-      const pastOrders = this.state.pastCollectiveOrders
-
-      return <AdminOrdersPage currentOrder={currentOrder}
-                              currentHouseholdOrders={currentHouseholdOrders}
-                              households={this.state.households}
-                              pastOrders={pastOrders}
-                              reload={this.reload}
-                              request={this.request}
-                              loading={this.state.loading}
-                              error={this.state.error} />
-    })
-    
-    this.router.route('/admin/products', _ => <AdminProductsPage products={this.state.productCatalogue}
-                                                                 reload={this.reload}
-                                                                 request={this.request}
-                                                                 loading={this.state.loading}
-                                                                 error={this.state.error} />)
-    
-    this.router.route('/admin/households/{householdId}/orders/{orderId}', c => {
-      const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
-      
-      return householdOrder && 
-        <AdminPastHouseholdOrderPage referrer="household"
-                                     householdOrder={householdOrder}
-                                     loading={this.state.loading}
-                                     error={this.state.error} />
-    })
-
-    this.router.route('/admin/households/{householdId}', c => {
-      const household = this.state.households.find(h => h.id == c.householdId)
-      const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
-      const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
-      const currentCollectiveOrder = this.state.collectiveOrder
-      const currentHouseholdOrder = currentCollectiveOrder && (householdOrders.filter(o => o.orderId == currentCollectiveOrder.id)[0] || null)
-      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
-      
-      return household && 
-        <AdminHouseholdPage household={household}
-                            currentCollectiveOrder={currentCollectiveOrder}
-                            currentHouseholdOrder={currentHouseholdOrder}
-                            pastHouseholdOrders={pastHouseholdOrders}
-                            payments={householdPayments}
-                            products={this.state.productCatalogue}
-                            reload={this.reload}
-                            request={this.request}
-                            loading={this.state.loading}
-                            error={this.state.error} />
-    })
-    
-    this.router.route('/admin/households', _ => <AdminHouseholdsPage households={this.state.households}
-                                                                     reload={this.reload}
-                                                                     request={this.request}
-                                                                     loading={this.state.loading}
-                                                                     error={this.state.error} />)
-    
-    this.router.route('/admin', _ => <AdminHomePage />)
-
-    this.router.route('/households/{householdId}', c => {
-      const household = this.state.households.find(h => h.id == c.householdId)
-      const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
-      const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
-      const currentCollectiveOrder = this.state.collectiveOrder
-      const currentHouseholdOrder = currentCollectiveOrder && (householdOrders.filter(o => o.orderId == currentCollectiveOrder.id)[0] || null)
-      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
-      
-      return household && 
-        <HouseholdPage household={household}
-                       currentCollectiveOrder={currentCollectiveOrder}
-                       currentHouseholdOrder={currentHouseholdOrder}
-                       pastHouseholdOrders={pastHouseholdOrders}
-                       payments={householdPayments}
-                       products={this.state.productCatalogue}
-                       reload={this.reload}
-                       request={this.request}
-                       loading={this.state.loading}
-                       error={this.state.error} />
-    })
-
-    this.router.route('/', _ => <WelcomePage households={this.state.households}
-                                             request={this.request}
-                                             reload={this.reload}
-                                             loading={this.state.loading }
-                                             error={this.state.error} />)
   }
 
   componentDidMount() {
-    window.onpopstate = e => this.setState({url: e.state || this.state.initialUrl});
-    (window as any).history.onpushstate = (state: any, title: any, url: string) => this.setState({ url })
+    // console.log('componentDidMount')
+
+    window.onpopstate = e => {
+      // console.log('onpopstate')
+      const url = e.state || this.state.initialUrl
+      Router.updateUrl(url)
+      this.setState({url});
+    }
+
+    (window as any).history.onpushstate = (state: any, title: any, url: string) => {
+      // console.log('onpushstate')
+      Router.updateUrl(url)
+      this.setState({ url })
+    }
         
     this.reload().then(() => 
       this.setState({ initialised: true
                     })
     )
+    
+    const url = '/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
+    this.setState({url})
+    Router.updateUrl(url)
   }
 
   reload = () =>
@@ -221,8 +117,129 @@ export class Main extends React.Component<MainProps, MainState> {
   }
 
   render() {
+    const router = new Router('')    
+    router.route('/admin/orders/place', _ => {
+      const currentOrder = this.state.collectiveOrder || undefined
+
+      return currentOrder &&
+        <AdminPlaceOrderPage currentOrder={currentOrder}
+                             reload={this.reload}
+                             request={this.request}
+                             loading={this.state.loading}
+                             error={this.state.error} />
+    })
+    
+    router.route('/admin/orders/{orderId}/households/{householdId}', c => {
+      const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
+      
+      return householdOrder && 
+        <AdminPastHouseholdOrderPage referrer="order"
+                                     householdOrder={householdOrder}
+                                     loading={this.state.loading}
+                                     error={this.state.error} />
+    })
+
+    router.route('/admin/orders/{orderId}', c => {
+      const order = this.state.pastCollectiveOrders.find(o => o.id == c.orderId)
+      const householdOrders = this.state.pastHouseholdOrders.filter(o => o.orderId == c.orderId)
+
+      return order &&
+        <AdminPastOrderPage order={order}
+                            householdOrders={householdOrders}
+                            loading={this.state.loading}
+                            error={this.state.error} />
+    })
+
+    router.route('/admin/orders', c => {
+      const currentOrder = this.state.collectiveOrder
+      const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
+      const pastOrders = this.state.pastCollectiveOrders
+
+      return <AdminOrdersPage currentOrder={currentOrder}
+                              currentHouseholdOrders={currentHouseholdOrders}
+                              households={this.state.households}
+                              pastOrders={pastOrders}
+                              reload={this.reload}
+                              request={this.request}
+                              loading={this.state.loading}
+                              error={this.state.error} />
+    })
+    
+    router.route('/admin/products', _ => <AdminProductsPage products={this.state.productCatalogue}
+                                                                 reload={this.reload}
+                                                                 request={this.request}
+                                                                 loading={this.state.loading}
+                                                                 error={this.state.error} />)
+    
+    router.route('/admin/households/{householdId}/orders/{orderId}', c => {
+      const householdOrder = this.state.pastHouseholdOrders.find(o => o.orderId == c.orderId && o.householdId == c.householdId)
+      
+      return householdOrder && 
+        <AdminPastHouseholdOrderPage referrer="household"
+                                     householdOrder={householdOrder}
+                                     loading={this.state.loading}
+                                     error={this.state.error} />
+    })
+
+    router.route('/admin/households/{householdId}', c => {
+      const household = this.state.households.find(h => h.id == c.householdId)
+      const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
+      const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
+      const currentCollectiveOrder = this.state.collectiveOrder
+      const currentHouseholdOrder = currentCollectiveOrder && (householdOrders.filter(o => o.orderId == currentCollectiveOrder.id)[0] || null)
+      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
+      
+      return household && 
+        <AdminHouseholdPage household={household}
+                            currentCollectiveOrder={currentCollectiveOrder}
+                            currentHouseholdOrder={currentHouseholdOrder}
+                            pastHouseholdOrders={pastHouseholdOrders}
+                            payments={householdPayments}
+                            products={this.state.productCatalogue}
+                            reload={this.reload}
+                            request={this.request}
+                            loading={this.state.loading}
+                            error={this.state.error} />
+    })
+    
+    router.route('/admin/households', _ => <AdminHouseholdsPage households={this.state.households}
+                                                                     reload={this.reload}
+                                                                     request={this.request}
+                                                                     loading={this.state.loading}
+                                                                     error={this.state.error} />)
+    
+    router.route('/admin', _ => <AdminHomePage />)
+
+    router.route('/households/{householdId}', (c, r) => {
+      const household = this.state.households.find(h => h.id == c.householdId)
+      const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
+      const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
+      const currentCollectiveOrder = this.state.collectiveOrder
+      const currentHouseholdOrder = currentCollectiveOrder && (householdOrders.filter(o => o.orderId == currentCollectiveOrder.id)[0] || null)
+      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
+      
+      return household && 
+        <HouseholdPage household={household}
+                       currentCollectiveOrder={currentCollectiveOrder}
+                       currentHouseholdOrder={currentHouseholdOrder}
+                       pastHouseholdOrders={pastHouseholdOrders}
+                       payments={householdPayments}
+                       products={this.state.productCatalogue}
+                       reload={this.reload}
+                       request={this.request}
+                       loading={this.state.loading}
+                       error={this.state.error}
+                       router={r} />
+    })
+
+    router.route('/', _ => <WelcomePage households={this.state.households}
+                                             request={this.request}
+                                             reload={this.reload}
+                                             loading={this.state.loading }
+                                             error={this.state.error} />)
+
     return this.state.initialised
-      ? this.body()
+      ? router.resolve()
       : (
         <div>
           {!!this.state.loading && 
@@ -235,9 +252,5 @@ export class Main extends React.Component<MainProps, MainState> {
           )}
         </div>
     )
-  }
-
-  body() {
-    return this.router.resolve(this.state.url)
   }
 }

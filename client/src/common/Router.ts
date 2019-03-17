@@ -1,17 +1,30 @@
 import * as React from 'react';
 
 export class Router {
-  private routes: {route: string, component: (c: {[key: string]: number}) => JSX.Element | undefined}[] = []
+  private baseUrl: string
+  static url: string
+  private routes: {route: string, component: (c: {[key: string]: number}, r: Router) => JSX.Element | undefined}[] = []
 
-  route(route: string, component: (c: {[key: string]: number}) => JSX.Element | undefined) {
-    this.routes.push({route, component})
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl
   }
 
-  resolve(url: string): JSX.Element | undefined {
+  route(route: string, component: (c: {[key: string]: number}, r: Router) => JSX.Element | undefined) {
+    let r = this.routes.find(r => r.route == route)
+    if(r) {
+      r.component = component
+    } else {
+      this.routes.push({route, component})
+    }
+  }
+
+  resolve(): JSX.Element | undefined {
     let identifierParseFail = false
+    const identifierRegExp = /\{([^\}]+)\}/gi
+    const baseRouteRegExp = new RegExp('^' + this.baseUrl.replace(identifierRegExp, '([^/]+)'), "gi")
+    const url = Router.url.replace(baseRouteRegExp, '')
 
     for(let r of this.routes) {
-      const identifierRegExp = /\{([^\}]+)\}/gi
       const routeRegExp = new RegExp('^' + r.route.replace(identifierRegExp, '([^/]+)'), "gi")
       const routeMatches = routeRegExp.exec(url)
       if(!routeMatches) {
@@ -36,17 +49,21 @@ export class Router {
         break
       }
       
-      let component = r.component(identifierValues)
+      let component = r.component(identifierValues, new Router(r.route))
       if(component) {
         return component
       }
     }
 
-    console.log('Page not found for url: ' + url)
+    console.log(this.baseUrl + ': Page not found for url: ' + url)
     return React.createElement('div', null, 'Page not found')
   }
 
   static navigate(url: string) {
     window.history.pushState(url, url, url);
+  }
+
+  static updateUrl(url: string) {
+    this.url = url.endsWith('/') ? url : url + '/'
   }
 }

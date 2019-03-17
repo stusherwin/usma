@@ -23,6 +23,7 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , reload: () => Promise<void>
                                           , loading: boolean
                                           , error: ApiError | null
+                                          , router: Router
                                           }
 
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}> {
@@ -40,6 +41,11 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   }
   
   render() {
+    this.props.router.route('/orders', _ => <div>Order</div>)
+    this.props.router.route('/products', _ => <div>Products</div>)
+    this.props.router.route('/households', _ => <div>Households</div>)
+    this.props.router.route('/', _ => <div>Order</div>)
+
     const currentOrder = this.props.currentHouseholdOrder
     const pastOrders = this.props.pastHouseholdOrders
     const currentCollectiveOrder = this.props.currentCollectiveOrder
@@ -54,8 +60,9 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
             <h2 className="leading-none -mt-1 pt-3 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
           </div>
         </div>
-        <TopNav />
-        <div>
+        <TopNav householdId={this.props.household.id} />
+        {this.props.router.resolve()}
+        {/* <div>
           {currentOrder
           ? (
             <div>
@@ -99,7 +106,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
                              payments={this.props.payments}
                              request={this.props.request}
                              reload={this.props.reload} />
-        </div>
+        </div> */}
       </div>
     )
   }
