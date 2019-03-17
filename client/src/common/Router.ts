@@ -11,6 +11,7 @@ export class Router {
 
   route(route: string, component: (c: {[key: string]: number}, r: Router) => JSX.Element | undefined) {
     let r = this.routes.find(r => r.route == route)
+
     if(r) {
       r.component = component
     } else {
@@ -64,6 +65,14 @@ export class Router {
   }
 
   static updateUrl(url: string) {
-    this.url = url.endsWith('/') ? url : url + '/'
+    this.url = Router.normalise(url)
+  }
+
+  static isCurrent(url: string) {
+    return this.url == Router.normalise(url)
+  }
+
+  private static normalise(url: string) {
+    return url.endsWith('/') ? url : url + '/';
   }
 }
