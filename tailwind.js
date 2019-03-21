@@ -64,8 +64,8 @@ let colors = {
   'product-lightest': '#fce5f6',
 
   'payment-dark': '#086469',
-  'payment': '#31a7ab',
-  'payment-light': '#7dc9cd',
+  'payment': '#70d587',
+  'payment-light': '#90e8a4',
   'payment-lightest': '#e6f2f3',
 
   'black': '#22292f',

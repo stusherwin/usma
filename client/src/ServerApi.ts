@@ -1,6 +1,5 @@
 import { Product, VatRate, Household, CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Util } from './common/Util'
-import { setTimeout } from 'timers';
 
 const query = {
   collectiveOrder(): Promise<CollectiveOrder | null> {

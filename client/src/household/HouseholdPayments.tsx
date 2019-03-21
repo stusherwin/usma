@@ -22,7 +22,7 @@ export interface HouseholdPaymentsState {
 export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, HouseholdPaymentsState> {
   render() {
     const total = this.props.payments.reduce((tot, p) => tot + p.amount, 0)
-
+ 
     return (
       <div>
         <div className="bg-payment-light p-2">
