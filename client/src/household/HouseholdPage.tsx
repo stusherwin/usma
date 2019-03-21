@@ -57,9 +57,17 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-household-light p-2">
-          <div className="bg-img-household bg-no-repeat bg-12 pl-16 min-h-12 relative mt-1">
-            <h2 className="leading-none -mt-1 pt-3 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
+        <div className="bg-household-light p-2 pb-4">
+          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
+            <h2 className="leading-none mb-2 -mt-1 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
+            <table className="border-collapse w-full text-household-darker">
+              <tbody>
+                <tr>
+                  <td>Current balance:</td>
+                  <td className={classNames('text-right', 'font-bold', {'text-red-dark': this.props.household.balance < 0})}><Money amount={this.props.household.balance} /></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <nav className="flex justify-between bg-household-light">
