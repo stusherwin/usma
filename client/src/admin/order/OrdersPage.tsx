@@ -76,9 +76,9 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
           <table className="border-collapse w-full mb-4">
             <tbody>
               { pastOrders.map(o => (
-                <tr key={o.id} className={classNames({'crossed-out': o.isCancelled})}>
+                <tr key={o.id} className={classNames({'crossed-out': o.isAbandoned})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
-                  <td className="pt-2 pr-2">{o.isCancelled && 'Cancelled'}</td>
+                  <td className="pt-2 pr-2">{o.isAbandoned && 'Abandoned'}</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={o.total} /></td>
                 </tr>
               )) }

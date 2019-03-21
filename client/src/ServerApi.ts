@@ -59,8 +59,8 @@ const command = {
     return Http.post(`/api/command/place-order/${orderId}`, {})
   },
 
-  cancelOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/command/cancel-order/${orderId}`, {})
+  abandonOrder(orderId: number): Promise<number> {
+    return Http.post(`/api/command/abandon-order/${orderId}`, {})
   },
 
   createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
@@ -71,8 +71,8 @@ const command = {
     return Http.post(`/api/command/delete-household-order/${orderId}/${householdId}`, {})
   },
 
-  cancelHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/cancel-household-order/${orderId}/${householdId}`, {})
+  abandonHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/abandon-household-order/${orderId}/${householdId}`, {})
   },
 
   completeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {

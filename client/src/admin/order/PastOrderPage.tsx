@@ -29,16 +29,16 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
           <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past order{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(order.createdDate)}</span><span><Money amount={order.total} /></span></h3>
-            <h3 className="font-normal">{order.isCancelled? 'Cancelled' : ''}</h3>
+            <h3 className="font-normal">{order.isAbandoned? 'Abandoned' : ''}</h3>
           </div>
         </div>
         {!!this.props.householdOrders.length && 
           <table className="border-collapse w-full mb-4">
             <tbody>
               {this.props.householdOrders.map(ho => (
-                <tr key={ho.householdId} className={classNames({'crossed-out': ho.isCancelled})}>
+                <tr key={ho.householdId} className={classNames({'crossed-out': ho.isAbandoned})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/orders/${ho.orderId}/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
-                  <td className="pt-2 pr-2">{ho.isCancelled && 'Cancelled'}</td>
+                  <td className="pt-2 pr-2">{ho.isAbandoned && 'Abandoned'}</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                 </tr>
               ))}

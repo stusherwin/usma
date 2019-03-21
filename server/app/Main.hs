@@ -108,10 +108,10 @@ module Main where
                     :<|> createOrder
                     :<|> deleteOrder
                     :<|> placeOrder
-                    :<|> cancelOrder
+                    :<|> abandonOrder
                     :<|> createHouseholdOrder
                     :<|> deleteHouseholdOrder
-                    :<|> cancelHouseholdOrder
+                    :<|> abandonHouseholdOrder
                     :<|> completeHouseholdOrder
                     :<|> reopenHouseholdOrder
                     :<|> ensureHouseholdOrderItem
@@ -142,8 +142,8 @@ module Main where
     placeOrder :: Int -> Handler ()
     placeOrder orderId = liftIO $ D.closeOrder conn False orderId
 
-    cancelOrder :: Int -> Handler ()
-    cancelOrder orderId = liftIO $ D.closeOrder conn True orderId
+    abandonOrder :: Int -> Handler ()
+    abandonOrder orderId = liftIO $ D.closeOrder conn True orderId
 
     createHouseholdOrder :: Int -> Int -> Handler ()
     createHouseholdOrder householdId orderId = liftIO $ D.createHouseholdOrder conn householdId orderId
@@ -151,8 +151,8 @@ module Main where
     deleteHouseholdOrder :: Int -> Int -> Handler ()
     deleteHouseholdOrder householdId orderId = liftIO $ D.deleteHouseholdOrder conn householdId orderId
 
-    cancelHouseholdOrder :: Int -> Int -> Handler ()
-    cancelHouseholdOrder householdId orderId = liftIO $ D.cancelHouseholdOrder conn householdId orderId
+    abandonHouseholdOrder :: Int -> Int -> Handler ()
+    abandonHouseholdOrder householdId orderId = liftIO $ D.cancelHouseholdOrder conn householdId orderId
 
     completeHouseholdOrder :: Int -> Int -> Handler ()
     completeHouseholdOrder householdId orderId = liftIO $ D.completeHouseholdOrder conn householdId orderId

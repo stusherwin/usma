@@ -33,7 +33,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
 
   render() {
     const pastOrders = this.props.householdOrders
-    const total = this.props.householdOrders.filter(ho => !ho.isCancelled).reduce((tot, ho) => tot + ho.total, 0)
+    const total = this.props.householdOrders.filter(ho => !ho.isAbandoned).reduce((tot, ho) => tot + ho.total, 0)
     const itemCount = (ho: PastHouseholdOrder) => {
       const sum = ho.items.reduce((tot, ho) => tot + ho.itemQuantity, 0)
       return sum + (sum == 1 ? ' item' : ' items')
@@ -52,10 +52,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
           <table className="border-collapse w-full mb-4">
             <tbody>
               { pastOrders.map(ho => ([
-                  <tr key={ho.orderId} className={classNames({'crossed-out': ho.isCancelled})}>
+                  <tr key={ho.orderId} className={classNames({'crossed-out': ho.isAbandoned})}>
                     <td className="pt-2 pl-2 pr-2"><a href="#" onClick={e => {e.preventDefault(); this.expandOrder(ho)}}>{Util.formatDate(ho.orderCreatedDate)}</a></td>
                     <td className="pt-2 pr-2">{itemCount(ho)}</td>
-                    <td className="pt-2 pr-2">{ho.isCancelled && 'Cancelled'}</td>
+                    <td className="pt-2 pr-2">{ho.isAbandoned && 'Abandoned'}</td>
                     <td className="pt-2 pr-2 text-right">{this.state.expanded != ho && <Money amount={ho.total} />}</td>
                   </tr>
                   ,

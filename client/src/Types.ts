@@ -31,7 +31,7 @@ export type CollectiveOrder = { id: number
 
 export type PastCollectiveOrder = { id: number
                                   , createdDate: Date
-                                  , isCancelled: boolean
+                                  , isAbandoned: boolean
                                   , total: number
                                   , items: OrderItem[]
                                   }
@@ -41,9 +41,9 @@ export type HouseholdOrder = { orderId: number
                              , householdId: number
                              , householdName: string 
                              , isComplete: boolean
-                             , isCancelled: boolean
+                             , isAbandoned: boolean
                              , isOpen: boolean
-                             , status: 'Open' | 'Complete' | 'Cancelled'
+                             , status: 'Open' | 'Complete' | 'Abandoned'
                              , total: number
                              , items: OrderItem[]
                              }
@@ -52,7 +52,7 @@ export type PastHouseholdOrder = { orderId: number
                                  , orderCreatedDate: Date
                                  , householdId: number
                                  , householdName: string 
-                                 , isCancelled: boolean
+                                 , isAbandoned: boolean
                                  , total: number
                                  , items: OrderItem[]
                                  }

@@ -60,8 +60,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     Router.navigate('/admin/orders/place')
   }
 
-  cancelOrder = () => {
-    this.props.request(ServerApi.command.cancelOrder(this.props.order.id))
+  abandonOrder = () => {
+    this.props.request(ServerApi.command.abandonOrder(this.props.order.id))
       .then(this.props.reload)
   }
 
@@ -77,7 +77,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     const addHouseholdPossible = !!unusedHouseholds.length
     const placeOrderPossible = !!this.props.householdOrders.length
     const placeOrderAllowed = allComplete && allPaid && orderMinimumReached
-    const cancelOrderPossible = !!this.props.householdOrders.length
+    const abandonOrderPossible = !!this.props.householdOrders.length
 
     const deletableHousehold = !!this.props.householdOrders.length && !!this.props.householdOrders.find(ho => !ho.items.length)
 
@@ -96,13 +96,13 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
             }
           </div>
-          {(deleteOrderPossible || placeOrderPossible || cancelOrderPossible) &&
+          {(deleteOrderPossible || placeOrderPossible || abandonOrderPossible) &&
             <div className="mt-2">
               {deleteOrderPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.deleteOrder}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
               }
-              {cancelOrderPossible &&
-                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Cancel order</button>
+              {abandonOrderPossible &&
+                <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
               }
               {placeOrderPossible &&
                 <button className="mr-2 mt-2" disabled={!!this.state.addingHousehold || !placeOrderAllowed} onClick={this.placeOrder}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
@@ -150,7 +150,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                   </span>
                 )
                 return (
-                  <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Cancelled'})}>
+                  <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Abandoned'})}>
                     <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
                     <td className="pt-2 pr-2">{status}</td>
                     <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>

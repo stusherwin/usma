@@ -41,10 +41,10 @@ module Api where
     :<|> "create-order" :> Post '[JSON] Int
     :<|> "delete-order" :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "place-order"  :> Capture "orderId" Int :> Post '[JSON] ()
-    :<|> "cancel-order"  :> Capture "orderId" Int :> Post '[JSON] ()
+    :<|> "abandon-order"  :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "create-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "delete-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
-    :<|> "cancel-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+    :<|> "abandon-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "complete-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reopen-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "ensure-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> ReqBody '[JSON] HouseholdOrderItemDetails :> Post '[JSON] ()

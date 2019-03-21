@@ -17,7 +17,7 @@ export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[
 export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, {}> {
   render() {
     const pastOrders = this.props.householdOrders
-    const total = this.props.householdOrders.filter(ho => !ho.isCancelled).reduce((tot, ho) => tot + ho.total, 0)
+    const total = this.props.householdOrders.filter(ho => !ho.isAbandoned).reduce((tot, ho) => tot + ho.total, 0)
 
     return (
       <div>
@@ -32,9 +32,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
           <table className="border-collapse w-full mb-4">
             <tbody>
               { pastOrders.map(ho => (
-                <tr key={ho.orderId} className={classNames({'crossed-out': ho.isCancelled})}>
+                <tr key={ho.orderId} className={classNames({'crossed-out': ho.isAbandoned})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/households/${ho.householdId}/orders/${ho.orderId}`}>{Util.formatDate(ho.orderCreatedDate) }</RouterLink></td>
-                  <td className="pt-2 pr-2">{ho.isCancelled && 'Cancelled'}</td>
+                  <td className="pt-2 pr-2">{ho.isAbandoned && 'Abandoned'}</td>
                   <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
                 </tr>
               )) }

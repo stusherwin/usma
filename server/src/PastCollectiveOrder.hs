@@ -9,7 +9,7 @@ module PastCollectiveOrder where
 
   data PastCollectiveOrder = PastCollectiveOrder { id :: Int
                                                  , createdDate :: Day
-                                                 , isCancelled :: Bool
+                                                 , isAbandoned :: Bool
                                                  , total :: Int
                                                  , items :: [OrderItem]
                                                  } deriving (Eq, Show, Generic)

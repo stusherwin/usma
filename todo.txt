@@ -1,14 +1,14 @@
 * Clone past orders -> add to current order, or create a new current order if none exists
 * Separate API calls for past orders/current order
 * Change API call for current order to be singleton
-* Cancelled order total? 
-* What happens if you uncancel a past order? (can't)
+* Abandoned order total? 
+* What happens if you unabandon a past order? (can't)
 * Add no. of people to household (+ total per person to household order)
 * Add multiple products to order at once
 * Place order (copy & paste code/quantity)
 * Verify order (check off against invoice)
 * server api regression tests
-* Order finite state machine - Cancelled -> Open : ReopenPossible vs ReopenAllowed
+* Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
 * Loading indicator needs to be more prominent (disable all controls?)
 * Hide previous error on successful response
 * Error message styling

@@ -52,8 +52,8 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       .then(this.props.reload)
   }
 
-  cancelOrder = () => {
-    this.props.request(ServerApi.command.cancelHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+  abandonOrder = () => {
+    this.props.request(ServerApi.command.abandonHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
       .then(this.props.reload)
   }
 
@@ -78,9 +78,9 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     const canAddItem = householdOrder.isOpen && !!unusedProducts.length
     const canLeaveOrder = !householdOrder.items.length
     const canReopenOrder = !!householdOrder.items.length && !householdOrder.isOpen
-    const canCancelOrder = !!householdOrder.items.length && householdOrder.isOpen
+    const canAbandonOrder = !!householdOrder.items.length && householdOrder.isOpen
     const canCompleteOrder = !!householdOrder.items.length && householdOrder.isOpen
-    const orderButtons = [canLeaveOrder, canReopenOrder, canCancelOrder, canCompleteOrder]
+    const orderButtons = [canLeaveOrder, canReopenOrder, canAbandonOrder, canCompleteOrder]
 
     return (
       <div>
@@ -92,8 +92,8 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             {canReopenOrder &&
               <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
             }
-            {canCancelOrder &&
-              <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.cancelOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Cancel order</button>
+            {canAbandonOrder &&
+              <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon order</button>
             }
             {canCompleteOrder && 
               <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</button>

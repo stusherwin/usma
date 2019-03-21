@@ -12,7 +12,7 @@ module HouseholdOrder where
                                        , householdId :: Int
                                        , householdName :: String 
                                        , isComplete :: Bool
-                                       , isCancelled :: Bool
+                                       , isAbandoned :: Bool
                                        , isOpen :: Bool
                                        , status :: HouseholdOrderStatus
                                        , total :: Int
@@ -20,7 +20,7 @@ module HouseholdOrder where
                                        } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrder
 
-  data HouseholdOrderStatus = Open | Complete | Cancelled deriving (Eq, Show, Generic)
+  data HouseholdOrderStatus = Open | Complete | Abandoned deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderStatus
       
   data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidQuantity :: Int
@@ -34,6 +34,6 @@ module HouseholdOrder where
     where
     open = not complete && not cancelled
     status = case (complete, cancelled) of
-           (_, True) -> Cancelled
+           (_, True) -> Abandoned
            (True, _) -> Complete
            _ -> Open
