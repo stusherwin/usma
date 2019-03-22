@@ -9,9 +9,11 @@ module OrderItem where
   data OrderItem = OrderItem { productId :: Int
                              , productCode :: String
                              , productName :: String
-                             , productPrice :: Int
+                             , productPriceExcVat :: Int
+                             , productPriceIncVat :: Int
                              , productVatRate :: VatRate
                              , itemQuantity :: Int
-                             , itemTotal :: Int
+                             , itemTotalExcVat :: Int
+                             , itemTotalIncVat :: Int
                              } deriving (Eq, Show, Generic)
   instance ToJSON OrderItem

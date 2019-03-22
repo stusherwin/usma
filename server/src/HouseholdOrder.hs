@@ -15,7 +15,8 @@ module HouseholdOrder where
                                        , isAbandoned :: Bool
                                        , isOpen :: Bool
                                        , status :: HouseholdOrderStatus
-                                       , total :: Int
+                                       , totalExcVat :: Int
+                                       , totalIncVat :: Int
                                        , items :: [OrderItem]
                                        } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrder
@@ -28,9 +29,9 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails
 
-  householdOrder :: Int -> Day -> Int -> String -> Bool -> Bool -> Int -> [OrderItem] -> HouseholdOrder
-  householdOrder orderId orderCreated householdId householdName complete cancelled total items = 
-    HouseholdOrder orderId orderCreated householdId householdName complete cancelled open status total items 
+  householdOrder :: Int -> Day -> Int -> String -> Bool -> Bool -> Int -> Int -> [OrderItem] -> HouseholdOrder
+  householdOrder orderId orderCreated householdId householdName complete cancelled totalExcVat totalIncVat items = 
+    HouseholdOrder orderId orderCreated householdId householdName complete cancelled open status totalExcVat totalIncVat items 
     where
     open = not complete && not cancelled
     status = case (complete, cancelled) of

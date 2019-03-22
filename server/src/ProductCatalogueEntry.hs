@@ -8,7 +8,8 @@ module ProductCatalogueEntry where
 
   data ProductCatalogueEntry = ProductCatalogueEntry { code :: String
                                                      , name :: String
-                                                     , price :: Int
+                                                     , priceExcVat :: Int
+                                                     , priceIncVat :: Int
                                                      , vatRate :: VatRate
                                                      } deriving (Eq, Show, Generic)
   instance ToJSON ProductCatalogueEntry

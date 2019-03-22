@@ -56,6 +56,17 @@ insert into household ("name", archived) values ('3 Bowling Alley', false) retur
 
 ---
 
+create table vat_rate
+( code       char not null primary key
+, multiplier numeric(3, 2) not null
+);
+
+insert into vat_rate (code, multiplier) values('Z', 1.0);
+insert into vat_rate (code, multiplier) values('S', 1.2);
+insert into vat_rate (code, multiplier) values('R', 1.05);
+
+---
+
 create table product
 ( id            serial  not null primary key
 , "code"        text    not null
@@ -63,6 +74,7 @@ create table product
 , price         int     not null
 , vat_rate      char    not null
 , price_updated date null
+, foreign key (vat_rate) references vat_rate (code)
 );
 
 insert into product (code, "name", price, vat_rate) values ('FX109', 'Jam',     1240, 'Z') returning id into p1Id;
@@ -134,17 +146,6 @@ create table catalogue_entry
 
 ---
 
-create table vat_rate
-( code       char not null primary key
-, multiplier numeric(3, 2) not null
-);
-
-insert into vat_rate (code, multiplier) values('Z', 1.0);
-insert into vat_rate (code, multiplier) values('S', 1.2);
-insert into vat_rate (code, multiplier) values('R', 1.05);
-
----
-
 create table past_order
 ( id           int  not null  primary key
 , created_date date    not null
@@ -161,15 +162,17 @@ create table past_household_order
 );
 
 create table past_household_order_item
-( order_id         int not null
-, household_id     int not null
-, product_id       int not null
-, product_code     text not null
-, product_name     text not null
-, product_price    int not null
-, product_vat_rate char not null
-, quantity         int not null
-, total            int not null
+( order_id              int not null
+, household_id          int not null
+, product_id            int not null
+, product_code          text not null
+, product_name          text not null
+, product_price_exc_vat int not null
+, product_price_inc_vat int not null
+, product_vat_rate      char not null
+, quantity              int not null
+, total_exc_vat         int not null
+, total_inc_vat         int not null
 , primary key (order_id, household_id, product_id)
 , foreign key (order_id, household_id) references past_household_order (order_id, household_id)
 );
@@ -189,9 +192,9 @@ insert into past_household_order (order_id, household_id, cancelled) values (o2I
 insert into past_household_order (order_id, household_id, cancelled) values (o3Id, h1Id, false);
 insert into past_household_order (order_id, household_id, cancelled) values (o3Id, h4Id, false);
 
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o1Id, h1Id, p1Id, 'FX109p', 'Jam p',     100, 'Z', 1, 200);
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o1Id, h2Id, p2Id, 'CV308p', 'Butter p',  200, 'S', 2, 400);
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o2Id, h3Id, p3Id, 'M0043p', 'Milk p',    300, 'R', 1, 300);
-insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total) values (o2Id, h4Id, p4Id, 'BN995p', 'Bananas p', 400, 'Z', 5, 2000);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat) values (o1Id, h1Id, p1Id, 'FX109p', 'Jam p',     100, 120, 'Z', 1, 100,  120);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat) values (o1Id, h2Id, p2Id, 'CV308p', 'Butter p',  200, 240, 'S', 2, 400,  480);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat) values (o2Id, h3Id, p3Id, 'M0043p', 'Milk p',    300, 315, 'R', 1, 300,  315);
+insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat) values (o2Id, h4Id, p4Id, 'BN995p', 'Bananas p', 400, 400, 'Z', 5, 2000, 2000);
 
 end $$

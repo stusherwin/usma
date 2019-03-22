@@ -10,10 +10,11 @@ module PastCollectiveOrder where
   data PastCollectiveOrder = PastCollectiveOrder { id :: Int
                                                  , createdDate :: Day
                                                  , isAbandoned :: Bool
-                                                 , total :: Int
+                                                 , totalExcVat :: Int
+                                                 , totalIncVat :: Int
                                                  , items :: [OrderItem]
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON PastCollectiveOrder
 
-  pastCollectiveOrder :: Int -> Day -> Bool -> Int -> [OrderItem] -> PastCollectiveOrder
+  pastCollectiveOrder :: Int -> Day -> Bool -> Int -> Int -> [OrderItem] -> PastCollectiveOrder
   pastCollectiveOrder = PastCollectiveOrder

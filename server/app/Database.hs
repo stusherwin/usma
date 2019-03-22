@@ -2,6 +2,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getProducts, getHouseholds, getHouseholdPayments, getProductCatalogue
                 , createOrder, deleteOrder, closeOrder
@@ -61,6 +62,23 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   instance ToRow ProductCatalogueData where
     toRow e = [toField $ ProductCatalogueData.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ ProductCatalogueData.price e, toField $ ProductCatalogueData.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ priceChanged e]
 
+  data HouseholdOrderItem = HouseholdOrderItem {
+    hoi_orderId :: Int,
+    hoi_householdId :: Int,
+    hoi_productId :: Int,
+    hoi_code :: String,
+    hoi_name :: String,
+    hoi_priceExcVat :: Int,
+    hoi_priceIncVat :: Int,
+    hoi_vatRate :: VatRate,
+    hoi_quantity :: Int,
+    hoi_totalExcVat :: Int,
+    hoi_totalIncVat :: Int
+  }
+
+  instance FromRow HouseholdOrderItem where
+    fromRow = HouseholdOrderItem <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
   infixl 4 <&>
@@ -81,35 +99,37 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                group by o.id, o.created_date
                order by o.id desc
              )
-        select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total
+        select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total_exc_vat, coalesce(sum(p.price * v.multiplier * hoi.quantity), 0) as total_inc_vat
         from orders o
         left join household_order ho on ho.order_id = o.id and ho.cancelled = false
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
+        left join vat_rate v on v.code = p.vat_rate
         group by o.id, o.created_date, o.complete
         order by o.id desc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, p.id, p.code, p.name, p.price, p.vat_rate, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total
+        select hoi.order_id, p.id, p.code, p.name, p.price as price_exc_vat, sum(p.price * v.multiplier) as price_inc_vat, p.vat_rate, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total_exc_vat, sum(p.price * v.multiplier * hoi.quantity) as total_inc_vat
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
+        inner join vat_rate v on v.code = p.vat_rate
         group by hoi.order_id, p.id, p.code, p.name, p.price, p.vat_rate
         order by p.code asc
       |]
-      return (os :: [(Int, Day, Bool, Int)], is :: [(Int, Int, String, String, Int, VatRate, Int, Int)])
+      return (os :: [(Int, Day, Bool, Int, Int)], is :: [(Int, Int, String, String, Int, Int, VatRate, Int, Int, Int)])
     close conn
-    return $ listToMaybe $ rOrders <&> \(id, created, complete, total) ->
-      let item (_, productId, code, name, price, vatRate, quantity, total) = OrderItem productId code name price vatRate quantity total
-          thisOrder (oId, _, _, _, _, _, _, _) = oId == id
+    return $ listToMaybe $ rOrders <&> \(id, created, complete, totalExcVat, totalIncVat) ->
+      let item (_, productId, code, name, priceExcVat, priceIncVat, vatRate, quantity, totalExcVat, totalIncVat) = OrderItem productId code name priceExcVat priceIncVat vatRate quantity totalExcVat totalIncVat
+          thisOrder (oId, _, _, _, _, _, _, _, _, _) = oId == id
           items = map item $ filter thisOrder rItems
-      in  collectiveOrder id created complete total items
+      in  collectiveOrder id created complete totalExcVat totalIncVat items
   
   getPastCollectiveOrders :: ByteString -> IO [PastCollectiveOrder]
   getPastCollectiveOrders connectionString = do
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        select o.id, o.created_date, o.cancelled, coalesce(sum(hoi.total), 0) as total
+        select o.id, o.created_date, o.cancelled, coalesce(sum(hoi.total_exc_vat), 0) as total_exc_vat, coalesce(sum(hoi.total_inc_vat), 0) as total_inc_vat
         from past_order o
         left join past_household_order ho on ho.order_id = o.id and (o.cancelled or ho.cancelled = false)
         left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
@@ -117,53 +137,55 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         order by o.id desc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price, hoi.product_vat_rate, sum(hoi.quantity) as quantity, sum(hoi.total) as total
+        select hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, sum(hoi.quantity) as quantity, sum(hoi.total_exc_vat) as total_exc_vat, sum(hoi.total_inc_vat) as total_inc_vat
         from past_household_order_item hoi
-        group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price, hoi.product_vat_rate
+        group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate
         order by hoi.order_id, hoi.product_code asc
       |]
-      return (os :: [(Int, Day, Bool, Int)], is :: [(Int, Int, String, String, Int, VatRate, Int, Int)])
+      return (os :: [(Int, Day, Bool, Int, Int)], is :: [(Int, Int, String, String, Int, Int, VatRate, Int, Int, Int)])
     close conn
-    return $ rOrders <&> \(id, created, cancelled, total) ->
-      let item (_, productId, code, name, price, vatRate, quantity, total) = OrderItem productId code name price vatRate quantity total
-          thisOrder (oId, _, _, _, _, _, _, _) = oId == id
+    return $ rOrders <&> \(id, created, cancelled, totalExcVat, totalIncVat) ->
+      let item (_, productId, code, name, priceExcVat, priceIncVat, vatRate, quantity, totalExcVat, totalIncVat) = OrderItem productId code name priceExcVat priceIncVat vatRate quantity totalExcVat totalIncVat
+          thisOrder (oId, _, _, _, _, _, _, _, _, _) = oId == id
           items = map item $ filter thisOrder rItems
-      in  pastCollectiveOrder id created cancelled total items
+      in  pastCollectiveOrder id created cancelled totalExcVat totalIncVat items
   
   getHouseholdOrders :: ByteString -> IO [HouseholdOrder]
   getHouseholdOrders connectionString = do
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        select o.id, o.created_date, h.id, h.name, ho.complete, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total
+        select o.id, o.created_date, h.id, h.name, ho.complete, ho.cancelled, coalesce(cast(round(sum(p.price * hoi.quantity)) as int), 0) as total_exc_vat, coalesce(cast(round(sum(p.price * v.multiplier * hoi.quantity)) as int), 0) as total_inc_vat
         from household_order ho
         inner join "order" o on o.id = ho.order_id
         inner join household h on h.id = ho.household_id
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
+        left join vat_rate v on v.code = p.vat_rate
         group by o.id, o.created_date, h.id, h.name, ho.complete, ho.cancelled
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total
+        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price as price_exc_vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, p.vat_rate, hoi.quantity, cast(round(p.price * hoi.quantity) as int) as total_exc_vat, cast(round(p.price * v.multiplier * hoi.quantity) as int) as total_exc_vat
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
+        inner join vat_rate v on v.code = p.vat_rate
         order by hoi.ix
       |]
-      return (os :: [(Int, Day, Int, String, Bool, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, VatRate, Int, Int)])
+      return (os :: [(Int, Day, Int, String, Bool, Bool, Int, Int)], is :: [HouseholdOrderItem])
     close conn
-    return $ rOrders <&> \(orderId, orderCreated, householdId, householdName, complete, cancelled, total) ->
-      let item (_, _, productId, code, name, price, vatRate, quantity, total) = OrderItem productId code name price vatRate quantity total
-          thisOrder (oId, hId, _, _, _, _, _, _, _) = oId == orderId && hId == householdId
+    return $ rOrders <&> \(orderId, orderCreated, householdId, householdName, complete, cancelled, totalExcVat, totalIncVat) ->
+      let item (HouseholdOrderItem { hoi_productId, hoi_code, hoi_name, hoi_priceExcVat, hoi_priceIncVat, hoi_vatRate, hoi_quantity, hoi_totalExcVat, hoi_totalIncVat}) = OrderItem hoi_productId hoi_code hoi_name hoi_priceExcVat hoi_priceIncVat hoi_vatRate hoi_quantity hoi_totalExcVat hoi_totalIncVat
+          thisOrder (HouseholdOrderItem { hoi_orderId, hoi_householdId }) = hoi_orderId == orderId && hoi_householdId == householdId
           items = map item $ filter thisOrder rItems
-      in  householdOrder orderId orderCreated householdId householdName complete cancelled total items
+      in  householdOrder orderId orderCreated householdId householdName complete cancelled totalExcVat totalIncVat items
 
   getPastHouseholdOrders :: ByteString -> IO [PastHouseholdOrder]
   getPastHouseholdOrders connectionString = do
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        select o.id, o.created_date, h.id, h.name, (case when o.cancelled then false else ho.cancelled end) as cancelled, coalesce(sum(hoi.total), 0) as total
+        select o.id, o.created_date, h.id, h.name, (case when o.cancelled then false else ho.cancelled end) as cancelled, coalesce(sum(hoi.total_exc_vat), 0) as total_exc_vat, coalesce(sum(hoi.total_inc_vat), 0) as total_inc_vat
         from past_household_order ho
         inner join past_order o on o.id = ho.order_id
         inner join household h on h.id = ho.household_id
@@ -172,28 +194,29 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, hoi.household_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price, hoi.product_vat_rate, hoi.quantity, hoi.total
+        select hoi.order_id, hoi.household_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.quantity, hoi.total_exc_vat, hoi.total_inc_vat
         from past_household_order_item hoi
         order by hoi.household_id, hoi.product_code
       |]
-      return (os :: [(Int, Day, Int, String, Bool, Int)], is :: [(Int, Int, Int, String, String, Int, VatRate, Int, Int)])
+      return (os :: [(Int, Day, Int, String, Bool, Int, Int)], is :: [HouseholdOrderItem])
     close conn
-    return $ rOrders <&> \(orderId, orderCreated, householdId, householdName, cancelled, total) ->
-      let item (_, _, productId, code, name, price, vatRate, quantity, total) = OrderItem productId code name price vatRate quantity total
-          thisOrder (oId, hId, _, _, _, _, _, _, _) = oId == orderId && hId == householdId
+    return $ rOrders <&> \(orderId, orderCreated, householdId, householdName, cancelled, totalExcVat, totalIncVat) ->
+      let item (HouseholdOrderItem { hoi_productId, hoi_code, hoi_name, hoi_priceExcVat, hoi_priceIncVat, hoi_vatRate, hoi_quantity, hoi_totalExcVat, hoi_totalIncVat}) = OrderItem hoi_productId hoi_code hoi_name hoi_priceExcVat hoi_priceIncVat hoi_vatRate hoi_quantity hoi_totalExcVat hoi_totalIncVat
+          thisOrder (HouseholdOrderItem { hoi_orderId, hoi_householdId }) = hoi_orderId == orderId && hoi_householdId == householdId
           items = map item $ filter thisOrder rItems
-      in  pastHouseholdOrder orderId orderCreated householdId householdName cancelled total items
+      in  pastHouseholdOrder orderId orderCreated householdId householdName cancelled totalExcVat totalIncVat items
 
   getProducts :: ByteString -> IO [Product]
   getProducts connectionString = do
     conn <- connectPostgreSQL connectionString
     rProducts <- query_ conn [sql|
-      select p.id, p.code, p.name, p.price, p.vat_rate, p.price_updated
+      select p.id, p.code, p.name, p.price as price_exc_vat, p.price * v.multiplier as price_inc_vat, p.vat_rate, p.price_updated
       from product p
+      inner join vat_rate v on v.code = p.vat_rate
       order by p.code asc
     |]
     close conn
-    return $ (rProducts :: [(Int, String, String, Int, VatRate, Maybe Day)]) <&> \(id, code, name, price, vatRate, priceUpdated) -> Product id code name price vatRate priceUpdated
+    return $ (rProducts :: [(Int, String, String, Int, Int, VatRate, Maybe Day)]) <&> \(id, code, name, priceExcVat, priceIncVat, vatRate, priceUpdated) -> Product id code name priceExcVat priceIncVat vatRate priceUpdated
 
   getHouseholds :: ByteString -> IO [Household]
   getHouseholds connectionString = do
@@ -202,14 +225,15 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         with household_total_orders as (
                select id, cast(sum(total) as int) as total
                from (
-                 (select h.id, coalesce(sum(p.price * hoi.quantity), 0) as total
+                 (select h.id, coalesce(sum(p.price * v.multiplier * hoi.quantity), 0) as total
                  from household h
                  left join household_order ho on ho.household_id = h.id and ho.cancelled = false
                  left join household_order_item hoi on hoi.household_id = ho.household_id and hoi.order_id = ho.order_id
                  left join product p on p.id = hoi.product_id
+                 left join vat_rate v on v.code = p.vat_rate
                  group by h.id)
                  union all
-                 (select h.id, coalesce(sum(hoi.total), 0) as total
+                 (select h.id, coalesce(sum(hoi.total_inc_vat), 0) as total
                  from household h
                  left join past_household_order ho on ho.household_id = h.id and ho.cancelled = false
                  left join past_household_order_item hoi on hoi.household_id = ho.household_id and hoi.order_id = ho.order_id
@@ -286,10 +310,11 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         where order_id = ?
       |] (cancelled, orderId)
       execute conn [sql|
-        insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price, product_vat_rate, quantity, total)
-        select hoi.order_id, hoi.household_id, hoi.product_id, p.code, p.name, p.price, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total
+        insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat)
+        select hoi.order_id, hoi.household_id, hoi.product_id, p.code, p.name, p.price as price_exc_Vat, p.price * v.multiplier as price_inc_vat, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total_exc_vat, p.price * v.multiplier * hoi.quantity as total_inc_vat
         from household_order_item hoi
         inner join product p on hoi.product_id = p.id
+        inner join vat_rate v on v.code = p.vat_rate
         where hoi.order_id = ?
       |] (Only orderId)
       execute conn [sql|
@@ -363,10 +388,9 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                                   , nullif(btrim(ce."description"), '')
                                   , nullif('(' || lower(btrim(ce.size)) || ')', '()')
                                   , nullif(btrim(ce."text"), ''))
-                   , cast(round(ce.price * v.multiplier) as int)
+                   , ce.price
                    , ce.vat_rate
               from catalogue_entry ce
-              inner join vat_rate v on ce.vat_rate = v.code
               where ce.code = ?
               returning id
             |] (Only productCode)
@@ -457,13 +481,14 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                           , nullif(btrim(ce."description"), '')
                           , nullif('(' || lower(btrim(ce.size)) || ')', '()')
                           , nullif(btrim(ce."text"), ''))
-           , cast(round(ce.price * v.multiplier) as int)
+           , ce.price as price_exc_vat
+           , cast(round(ce.price * v.multiplier) as int) as price_inc_vat
            , ce.vat_rate
       from catalogue_entry ce
       inner join vat_rate v on ce.vat_rate = v.code
     |]
     close conn
-    return $ (rEntries :: [(String, String, Int, VatRate)]) <&> \(code, name, price, vatRate) -> ProductCatalogueEntry code name price vatRate
+    return $ (rEntries :: [(String, String, Int, Int, VatRate)]) <&> \(code, name, priceExcVat, priceIncVat, vatRate) -> ProductCatalogueEntry code name priceExcVat priceIncVat vatRate
 
   replaceProductCatalogue :: ByteString -> Day -> [ProductCatalogueData] -> IO ()
   replaceProductCatalogue connectionString date entries = do
@@ -482,11 +507,10 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                                   , nullif(btrim(ce."description"), '')
                                   , nullif('(' || lower(btrim(ce.size)) || ')', '()')
                                   , nullif(btrim(ce."text"), ''))
-          , price = cast(round(ce.price * v.multiplier) as int)
+          , price = ce.price
           , vat_rate = ce.vat_rate
-          , price_updated = case when round(ce.price * v.multiplier) <> p.price then ? else p.price_updated end
+          , price_updated = ce.price <> p.price then ? else p.price_updated end
         from catalogue_entry ce
-        inner join vat_rate v on ce.vat_rate = v.code
         where ce.code = p.code
       |] (Only date)
     close conn

@@ -11,7 +11,8 @@ module CollectiveOrder where
                                          , createdDate :: Day
                                          , isComplete :: Bool
                                          , status :: CollectiveOrderStatus
-                                         , total :: Int
+                                         , totalExcVat :: Int
+                                         , totalIncVat :: Int
                                          , items :: [OrderItem]
                                          } deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrder
@@ -19,9 +20,9 @@ module CollectiveOrder where
   data CollectiveOrderStatus = Open | Complete deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrderStatus
 
-  collectiveOrder :: Int -> Day -> Bool -> Int -> [OrderItem] -> CollectiveOrder
-  collectiveOrder id created complete total items = 
-    CollectiveOrder id created complete status total items
+  collectiveOrder :: Int -> Day -> Bool -> Int -> Int -> [OrderItem] -> CollectiveOrder
+  collectiveOrder id created complete totalExcVat totalIncVat items = 
+    CollectiveOrder id created complete status totalExcVat totalIncVat items
     where
     status = case complete of
                True -> Complete

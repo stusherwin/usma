@@ -3,14 +3,16 @@ export type VatRate = 'Zero' | 'Standard' | 'Reduced'
 export type Product = { id: number
                       , code: string
                       , name: string
-                      , price: number
+                      , priceExcVat: number
+                      , priceIncVat: number
                       , vatRate: VatRate
                       , priceUpdated: Date | null
                       }
 
 export type ProductCatalogueEntry = { code: string
                                     , name: string
-                                    , price: number
+                                    , priceExcVat: number
+                                    , priceIncVat: number
                                     , vatRate: VatRate
                                     }
 
@@ -25,14 +27,16 @@ export type CollectiveOrder = { id: number
                               , createdDate: Date
                               , isComplete: boolean
                               , status: 'Open' | 'Complete'
-                              , total: number
+                              , totalExcVat: number
+                              , totalIncVat: number
                               , items: OrderItem[]
                               }
 
 export type PastCollectiveOrder = { id: number
                                   , createdDate: Date
                                   , isAbandoned: boolean
-                                  , total: number
+                                  , totalExcVat: number
+                                  , totalIncVat: number
                                   , items: OrderItem[]
                                   }
 
@@ -44,7 +48,8 @@ export type HouseholdOrder = { orderId: number
                              , isAbandoned: boolean
                              , isOpen: boolean
                              , status: 'Open' | 'Complete' | 'Abandoned'
-                             , total: number
+                             , totalExcVat: number
+                             , totalIncVat: number
                              , items: OrderItem[]
                              }
 
@@ -53,17 +58,20 @@ export type PastHouseholdOrder = { orderId: number
                                  , householdId: number
                                  , householdName: string 
                                  , isAbandoned: boolean
-                                 , total: number
+                                 , totalExcVat: number
+                                 , totalIncVat: number
                                  , items: OrderItem[]
                                  }
 
 export type OrderItem = { productId: number
                         , productCode: string
                         , productName: string
-                        , productPrice: number
+                        , productPriceExcVat: number
+                        , productPriceIncVat: number
                         , productVatRate: VatRate
                         , itemQuantity: number
-                        , itemTotal: number
+                        , itemTotalExcVat: number
+                        , itemTotalIncVat: number
                         }
 
 export type HouseholdPayment = { id: number 

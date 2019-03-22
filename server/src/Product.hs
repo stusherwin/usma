@@ -9,7 +9,8 @@ module Product where
   data Product = Product { id :: Int
                          , code :: String
                          , name :: String
-                         , price :: Int
+                         , priceExcVat :: Int
+                         , priceIncVat :: Int
                          , vatRate :: VatRate
                          , priceUpdated :: Maybe Day
                          } deriving (Eq, Show, Generic)
