@@ -36,7 +36,7 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
         <div className="bg-grey-lighter p-2">
           <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past order</h2>
-            <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(householdOrder.orderCreatedDate)}</span><span><Money amount={householdOrder.total} /></span></h3>
+            <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(householdOrder.orderCreatedDate)}</span><span><Money amount={householdOrder.totalIncVat} /></span></h3>
             <h3 className="font-normal">{householdOrder.isAbandoned ? 'Abandoned' : ''}</h3>
             <div className="mt-2">
               <RouterLink path={`/admin/orders/${householdOrder.orderId}`}>View order</RouterLink>
@@ -51,14 +51,14 @@ export class PastHouseholdOrderPage extends React.Component<PastHouseholdOrderPa
                     <td className="pt-2 pl-2 pr-2">{i.productCode}</td>
                     <td className="pt-2 pr-2 w-full">{i.productName}</td>
                     <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                    <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotal} /></td>
+                    <td className="pt-2 pr-2 text-right"><Money amount={i.itemTotalExcVat} /></td>
                   </tr>
               ))}
               <tr>
                 <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
                 <td className="pt-2 pr-2"></td>
                 <td className="pt-2 pr-2"></td>
-                <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.total} /></td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={householdOrder.totalIncVat} /></td>
               </tr>
             </tbody>
           </table>

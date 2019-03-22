@@ -50,7 +50,7 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
           <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="leading-none mb-2 -mt-1">Place order{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <div>
-              <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.createdDate)}</span><span><Money amount={currentOrder.total} /></span></h3>
+              <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.createdDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
               <h3 className="font-normal">{currentOrder.status}</h3>
             </div>
           </div>
@@ -81,7 +81,7 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
                   <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
                     <span>x {i.itemQuantity}</span>
                   </span>
-                  <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotal} />
+                  <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotalExcVat} />
                 </div>
                 <div className="flex justify-between items-end mt-2">
                   <span className="flex-no-grow">{i.productName}</span>
@@ -90,7 +90,7 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
             ))}
             <div className="p-2 flex justify-between items-baseline">
               <span className="flex-no-shrink flex-no-grow font-bold">Total</span>
-              <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={currentOrder.total} />
+              <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={currentOrder.totalIncVat} />
             </div>
           </div>
         }

@@ -44,7 +44,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
           <div className="bg-order-dark p-2">
             <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
               <h2>Current order</h2>
-              <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.total} /></span></h3>
+              <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
               <h3 className="font-normal">{currentOrder.status}</h3>
             </div>
           </div>

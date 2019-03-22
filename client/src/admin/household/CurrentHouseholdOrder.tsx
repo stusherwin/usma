@@ -123,7 +123,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                       : <span>x {i.itemQuantity}</span>
                       }
                     </span>
-                    <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotal} />
+                    <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotalExcVat} />
                   </div>
                   <div className="flex justify-between items-end mt-2">
                     <span className="flex-no-grow">{i.productName}</span>
@@ -135,7 +135,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               )}
               <div className="p-2 flex justify-between items-baseline">
                 <span className="flex-no-shrink flex-no-grow font-bold">Total</span>
-                <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.total} />
+                <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.totalIncVat} />
               </div>
             </div>
           }

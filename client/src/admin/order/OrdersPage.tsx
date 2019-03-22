@@ -44,7 +44,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
             {currentOrder
             ? (
               <div>
-                <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.createdDate)}</span><span><Money amount={currentOrder.total} /></span></h3>
+                <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.createdDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
                 <h3 className="font-normal">{currentOrder.status}</h3>
               </div>
             )
@@ -79,7 +79,7 @@ export class OrdersPage extends React.Component<OrdersPageProps, {}> {
                 <tr key={o.id} className={classNames({'crossed-out': o.isAbandoned})}>
                   <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/orders/${o.id}`}>{ Util.formatDate(o.createdDate)}</RouterLink></td>
                   <td className="pt-2 pr-2">{o.isAbandoned && 'Abandoned'}</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={o.total} /></td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={o.totalIncVat} /></td>
                 </tr>
               )) }
             </tbody>

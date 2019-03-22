@@ -107,7 +107,7 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
               <div key={p.code} className="px-2 py-2 mb-4 mt-4 bg-white">
                 <div className="flex justify-between items-baseline">
                   <span className="flex-no-shrink flex-no-grow font-bold">{p.code}</span>
-                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.price} />
+                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.priceExcVat} />
                 </div>
                 <p className="mt-2">{p.name}</p>
                 <div className="flex justify-between items-end mt-2">

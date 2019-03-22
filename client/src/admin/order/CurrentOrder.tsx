@@ -71,7 +71,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     const allComplete = this.props.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
     const householdsInOrder = this.props.households.filter(h => !!this.props.householdOrders.find(oh => oh.householdId == h.id))
     const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
-    const orderMinimumReached = this.props.order.total >= 25000
+    const orderMinimumReached = this.props.order.totalIncVat >= 25000
 
     const deleteOrderPossible = !this.props.householdOrders.length
     const addHouseholdPossible = !!unusedHouseholds.length
@@ -153,7 +153,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                   <tr key={ho.householdId} className={classNames({'crossed-out': ho.status == 'Abandoned'})}>
                     <td className="pt-2 pl-2 pr-2"><RouterLink path={`/admin/households/${ho.householdId}`}>{ho.householdName}</RouterLink></td>
                     <td className="pt-2 pr-2">{status}</td>
-                    <td className="pt-2 pr-2 text-right"><Money amount={ho.total} /></td>
+                    <td className="pt-2 pr-2 text-right"><Money amount={ho.totalIncVat} /></td>
                     {deletableHousehold && 
                       <td className="pt-2 pr-2 w-1">
                         {!ho.items.length &&
@@ -167,7 +167,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               <tr>
                 <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
                 <td className="pt-2 pr-2"></td>
-                <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.total} /></td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={order.totalIncVat} /></td>
                 {deletableHousehold && 
                   <td className="pt-2 pr-2 w-1"><div className="bg-transparent w-9 h-6"></div></td>
                 }
