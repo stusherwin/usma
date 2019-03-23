@@ -99,7 +99,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                group by o.id, o.created_date
                order by o.id desc
              )
-        select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total_exc_vat, coalesce(sum(p.price * v.multiplier * hoi.quantity), 0) as total_inc_vat
+        select o.id, o.created_date, o.complete, coalesce(sum(p.price * hoi.quantity), 0) as total_exc_vat, cast(round(coalesce(sum(p.price * v.multiplier * hoi.quantity), 0)) as int) as total_inc_vat
         from orders o
         left join household_order ho on ho.order_id = o.id and ho.cancelled = false
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
@@ -109,7 +109,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         order by o.id desc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, p.id, p.code, p.name, p.price as price_exc_vat, sum(p.price * v.multiplier) as price_inc_vat, p.vat_rate, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total_exc_vat, sum(p.price * v.multiplier * hoi.quantity) as total_inc_vat
+        select hoi.order_id, p.id, p.code, p.name, p.price as price_exc_vat, cast(round(sum(p.price * v.multiplier)) as int) as price_inc_vat, p.vat_rate, sum(hoi.quantity) as quantity, sum(p.price * hoi.quantity) as total_exc_vat, cast(round(sum(p.price * v.multiplier * hoi.quantity)) as int) as total_inc_vat
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
         inner join vat_rate v on v.code = p.vat_rate
@@ -155,7 +155,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        select o.id, o.created_date, h.id, h.name, ho.complete, ho.cancelled, coalesce(cast(round(sum(p.price * hoi.quantity)) as int), 0) as total_exc_vat, coalesce(cast(round(sum(p.price * v.multiplier * hoi.quantity)) as int), 0) as total_inc_vat
+        select o.id, o.created_date, h.id, h.name, ho.complete, ho.cancelled, coalesce(sum(p.price * hoi.quantity), 0) as total_exc_vat, cast(round(coalesce(sum(p.price * v.multiplier * hoi.quantity), 0)) as int) as total_inc_vat
         from household_order ho
         inner join "order" o on o.id = ho.order_id
         inner join household h on h.id = ho.household_id
@@ -166,7 +166,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         order by o.id desc, h.name asc
       |]
       is <- query_ conn [sql|
-        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price as price_exc_vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, p.vat_rate, hoi.quantity, cast(round(p.price * hoi.quantity) as int) as total_exc_vat, cast(round(p.price * v.multiplier * hoi.quantity) as int) as total_exc_vat
+        select hoi.order_id, hoi.household_id, p.id, p.code, p.name, p.price as price_exc_vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total_exc_vat, cast(round(p.price * v.multiplier * hoi.quantity) as int) as total_inc_vat
         from household_order_item hoi
         inner join product p on p.id = hoi.product_id
         inner join vat_rate v on v.code = p.vat_rate
@@ -210,7 +210,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   getProducts connectionString = do
     conn <- connectPostgreSQL connectionString
     rProducts <- query_ conn [sql|
-      select p.id, p.code, p.name, p.price as price_exc_vat, p.price * v.multiplier as price_inc_vat, p.vat_rate, p.price_updated
+      select p.id, p.code, p.name, p.price as price_exc_vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, p.vat_rate, p.price_updated
       from product p
       inner join vat_rate v on v.code = p.vat_rate
       order by p.code asc
@@ -225,7 +225,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         with household_total_orders as (
                select id, cast(sum(total) as int) as total
                from (
-                 (select h.id, coalesce(sum(p.price * v.multiplier * hoi.quantity), 0) as total
+                 (select h.id, cast(round(coalesce(sum(p.price * v.multiplier * hoi.quantity), 0)) as int) as total
                  from household h
                  left join household_order ho on ho.household_id = h.id and ho.cancelled = false
                  left join household_order_item hoi on hoi.household_id = ho.household_id and hoi.order_id = ho.order_id
@@ -311,7 +311,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       |] (cancelled, orderId)
       execute conn [sql|
         insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat)
-        select hoi.order_id, hoi.household_id, hoi.product_id, p.code, p.name, p.price as price_exc_Vat, p.price * v.multiplier as price_inc_vat, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total_exc_vat, p.price * v.multiplier * hoi.quantity as total_inc_vat
+        select hoi.order_id, hoi.household_id, hoi.product_id, p.code, p.name, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, p.vat_rate, hoi.quantity, p.price * hoi.quantity as total_exc_vat, cast(round(p.price * v.multiplier * hoi.quantity) as int) as total_inc_vat
         from household_order_item hoi
         inner join product p on hoi.product_id = p.id
         inner join vat_rate v on v.code = p.vat_rate
