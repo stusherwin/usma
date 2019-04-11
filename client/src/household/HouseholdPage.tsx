@@ -2,18 +2,13 @@ import * as React from 'react';
 import * as classNames from 'classnames'
 
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../common/Util'
-import { RouterLink } from '../common/RouterLink'
+import { ApiError } from '../ServerApi'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Router } from '../common/Router'
-import { CurrentOrderCollapsed } from './CurrentOrderCollapsed'
 import { CurrentOrder } from './CurrentOrder'
-import { PastHouseholdOrdersCollapsed } from './PastHouseholdOrdersCollapsed'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
-import { HouseholdPaymentsCollapsed } from './HouseholdPaymentsCollapsed'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentHouseholdOrder: HouseholdOrder | null
@@ -32,7 +27,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   render() {
     let basePath = `/households/${this.props.household.id}/`
 
-    this.props.router.route('/order', _ =>
+    let expand = (i: number) => () =>
       <div>
         <CurrentOrder household={this.props.household}
                       currentOrder={this.props.currentHouseholdOrder}
@@ -40,55 +35,26 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
                       products={this.props.products}
                       loading={this.props.loading}
                       basePath={basePath}
+                      expanded={i == 1}
                       request={this.props.request}
                       reload={this.props.reload} />
-        <PastHouseholdOrdersCollapsed householdOrders={this.props.pastHouseholdOrders}
-                                      basePath={basePath} />
-        <HouseholdPaymentsCollapsed household={this.props.household}
-                                    basePath={basePath} />
-      </div>
-    )
-    this.props.router.route('/past-orders', _ =>
-      <div>
-        <CurrentOrderCollapsed household={this.props.household}
-                               currentOrder={this.props.currentHouseholdOrder}
-                               currentCollectiveOrder={this.props.currentCollectiveOrder}
-                               basePath={basePath} />
         <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
                              basePath={basePath}
+                             expanded={i == 2}
                              request={this.props.request}
                              reload={this.props.reload} />
-        <HouseholdPaymentsCollapsed household={this.props.household}
-                                    basePath={basePath} />
-      </div>
-    )
-    this.props.router.route('/payments', _ => 
-      <div>
-        <CurrentOrderCollapsed household={this.props.household}
-                               currentOrder={this.props.currentHouseholdOrder}
-                               currentCollectiveOrder={this.props.currentCollectiveOrder}
-                               basePath={basePath} />
-        <PastHouseholdOrdersCollapsed householdOrders={this.props.pastHouseholdOrders}
-                                      basePath={basePath} />
         <HouseholdPayments household={this.props.household}
                            payments={this.props.payments}
                            basePath={basePath}
+                           expanded={i == 3}
                            request={this.props.request}
                            reload={this.props.reload} />
       </div>
-    )
-    this.props.router.route('/', _ => 
-      <div>
-        <CurrentOrderCollapsed household={this.props.household}
-                               currentOrder={this.props.currentHouseholdOrder}
-                               currentCollectiveOrder={this.props.currentCollectiveOrder}
-                               basePath={basePath} />
-        <PastHouseholdOrdersCollapsed householdOrders={this.props.pastHouseholdOrders} 
-                                      basePath={basePath}/>
-        <HouseholdPaymentsCollapsed household={this.props.household}
-                                    basePath={basePath} />
-      </div>
-    )
+
+    this.props.router.route('/order', expand(1))
+    this.props.router.route('/past-orders', expand(2))
+    this.props.router.route('/payments', expand(3))
+    this.props.router.route('/', expand(0))
 
     return (
       <div>

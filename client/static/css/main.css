@@ -128,3 +128,7 @@ button[disabled], button[disabled]:hover {
   height: 4.5rem;
   pointer-events: none;
 }
+
+.transition {
+  
+}

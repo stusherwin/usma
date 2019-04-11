@@ -13,6 +13,7 @@ export interface CurrentOrderProps { household: Household
                                    , products: ProductCatalogueEntry[]
                                    , loading: boolean
                                    , basePath: string
+                                   , expanded: boolean
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
                                    }
@@ -38,11 +39,12 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
   render() {
     let currentOrder = this.props.currentOrder
     let currentCollectiveOrder = this.props.currentCollectiveOrder
+    let linkPath = this.props.basePath + (!this.props.expanded ? 'order' : '')
 
     return (
       <div>
-        <RouterLink path={this.props.basePath} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
-          <Icon type="collapse" className="w-4 h-4 fill-current absolute pin-r mr-2" />
+        <RouterLink path={linkPath} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
+          <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mr-2" />
           { currentOrder
             ? (
               <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
@@ -68,7 +70,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
            ))
           }
         </RouterLink>
-        { currentOrder && 
+        { currentOrder && this.props.expanded &&
           <CurrentHouseholdOrder householdOrder={currentOrder}
                                  products={this.props.products}
                                  loading={this.props.loading}
