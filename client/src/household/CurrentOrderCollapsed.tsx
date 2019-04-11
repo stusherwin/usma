@@ -18,6 +18,7 @@ export class CurrentOrderCollapsed extends React.Component<CurrentOrderCollapsed
 
     return (
       <RouterLink path={`${this.props.basePath}order`} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
+        <Icon type="expand" className="w-4 h-4 fill-current absolute pin-r mr-2" />
         { currentOrder
         ? (
           <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">

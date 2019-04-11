@@ -1,14 +1,10 @@
 import * as React from 'react';
 
-import { Household, HouseholdPayment, CollectiveOrder } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
+import { Household, HouseholdPayment } from '../Types'
 import { Util } from '../common/Util'
 import { RouterLink } from '../common/RouterLink'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Router } from '../common/Router'
-import { Form, Field, Validate } from '../common/Validation'
-import { TextField, MoneyField } from '../common/Field'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]
@@ -27,6 +23,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     return (
       <div>
         <RouterLink path={this.props.basePath} className="bg-payment-light p-2 block no-underline hover:no-underline text-payment-dark hover:text-payment-dark">
+          <Icon type="collapse" className="w-4 h-4 fill-current absolute pin-r mr-2" />
           <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-payment-dark leading-none mb-2 -mt-1">Payments</h2>
             <h3 className="mt-0 flex justify-between"><span>Total payments:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
