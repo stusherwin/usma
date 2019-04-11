@@ -509,7 +509,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                                   , nullif(btrim(ce."text"), ''))
           , price = ce.price
           , vat_rate = ce.vat_rate
-          , price_updated = ce.price <> p.price then ? else p.price_updated end
+          , price_updated = case when ce.price <> p.price then ? else p.price_updated end
         from catalogue_entry ce
         where ce.code = p.code
       |] (Only date)

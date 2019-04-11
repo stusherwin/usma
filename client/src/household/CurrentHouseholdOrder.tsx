@@ -108,7 +108,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               </div>
             }
             {!householdOrder.items.length &&
-              <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet</div>
+              <div className="text-grey-darker p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet {!this.props.products.length && ' - the product catalogue is empty'}</div>
             }
             {!!householdOrder.items.length &&
               <div>
@@ -134,6 +134,10 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                     </div>
                   </div>
                 )}
+                <div className="p-2 flex justify-between items-baseline">
+                  <span className="flex-no-shrink flex-no-grow">VAT</span>
+                  <Money className="flex-no-shrink flex-no-grow text-right" amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
+                </div>
                 <div className="p-2 flex justify-between items-baseline">
                   <span className="flex-no-shrink flex-no-grow font-bold">Total</span>
                   <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.totalIncVat} />

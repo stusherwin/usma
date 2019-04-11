@@ -12,6 +12,7 @@ import { TextField, MoneyField } from '../common/Field'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]
+                                        , basePath: string
                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                         , reload: () => Promise<void>
                                         }
@@ -25,11 +26,12 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
  
     return (
       <div>
-        <div className="bg-payment-light p-2">
+        <RouterLink path={this.props.basePath} className="bg-payment-light p-2 block no-underline hover:no-underline text-payment-dark hover:text-payment-dark">
           <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-payment-dark leading-none mb-2 -mt-1">Payments</h2>
+            <h3 className="mt-0 flex justify-between"><span>Total payments:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
           </div>
-        </div>
+        </RouterLink>
         {!this.props.payments.length &&
           <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet</div>
         }
@@ -43,7 +45,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                 </tr>
               ) }
               <tr>
-                <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
+                <td className="pt-2 pl-2 pr-2 font-bold">Total payments</td>
                 <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
               </tr>
             </tbody>

@@ -5,12 +5,14 @@ import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { ServerApi, ApiError } from '../ServerApi'
+import { RouterLink } from '../common/RouterLink'
 
 export interface CurrentOrderProps { household: Household
                                    , currentOrder: HouseholdOrder | null
                                    , currentCollectiveOrder: CollectiveOrder | null
                                    , products: ProductCatalogueEntry[]
                                    , loading: boolean
+                                   , basePath: string
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
                                    }
@@ -38,42 +40,41 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
     let currentCollectiveOrder = this.props.currentCollectiveOrder
 
     return (
-      currentOrder
-      ? (
-        <div>
-          <div className="bg-order-dark p-2">
-            <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
-              <h2>Current order</h2>
-              <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
-              <h3 className="font-normal">{currentOrder.status}</h3>
-            </div>
-          </div>
+      <div>
+        <RouterLink path={this.props.basePath} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
+          { currentOrder
+            ? (
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
+                <h2>Current order</h2>
+                <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
+                <h3 className="font-normal">{currentOrder.status}</h3>
+              </div>
+            )
+            : (currentCollectiveOrder
+            ? (
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
+                <h2>Current order</h2>
+                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
+                <button className="mt-2" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
+              </div>
+            )
+            : (
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
+                <h2>Current order</h2>
+                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
+                <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
+              </div>
+           ))
+          }
+        </RouterLink>
+        { currentOrder && 
           <CurrentHouseholdOrder householdOrder={currentOrder}
                                  products={this.props.products}
                                  loading={this.props.loading}
                                  reload={this.props.reload}
                                  request={this.props.request} />
-        </div>
-      )
-      : (currentCollectiveOrder
-      ? (
-        <div className="bg-order-dark p-2">
-          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
-            <h2>Current order</h2>
-            <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
-            <button className="mt-2" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
-          </div>
-        </div>
-      )
-      : (
-        <div className="bg-order-dark p-2">
-          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
-            <h2>Current order</h2>
-            <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
-            <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
-          </div>
-        </div>
-      ))
+        }
+      </div>
     )
   }
 }

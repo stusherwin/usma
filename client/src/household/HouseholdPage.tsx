@@ -8,9 +8,12 @@ import { RouterLink } from '../common/RouterLink'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Router } from '../common/Router'
+import { CurrentOrderCollapsed } from './CurrentOrderCollapsed'
 import { CurrentOrder } from './CurrentOrder'
+import { PastHouseholdOrdersCollapsed } from './PastHouseholdOrdersCollapsed'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
+import { HouseholdPaymentsCollapsed } from './HouseholdPaymentsCollapsed'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentHouseholdOrder: HouseholdOrder | null
@@ -27,30 +30,65 @@ export interface HouseholdOrdersPageProps { household: Household
 
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}> {  
   render() {
-    const order = <CurrentOrder household={this.props.household}
-                                currentOrder={this.props.currentHouseholdOrder}
-                                currentCollectiveOrder={this.props.currentCollectiveOrder}
-                                products={this.props.products}
-                                loading={this.props.loading}
-                                request={this.props.request}
-                                reload={this.props.reload} />
+    let basePath = `/households/${this.props.household.id}/`
 
-    // this.props.router.route('/order', _ => order)
+    this.props.router.route('/order', _ =>
+      <div>
+        <CurrentOrder household={this.props.household}
+                      currentOrder={this.props.currentHouseholdOrder}
+                      currentCollectiveOrder={this.props.currentCollectiveOrder}
+                      products={this.props.products}
+                      loading={this.props.loading}
+                      basePath={basePath}
+                      request={this.props.request}
+                      reload={this.props.reload} />
+        <PastHouseholdOrdersCollapsed householdOrders={this.props.pastHouseholdOrders}
+                                      basePath={basePath} />
+        <HouseholdPaymentsCollapsed household={this.props.household}
+                                    basePath={basePath} />
+      </div>
+    )
     this.props.router.route('/past-orders', _ =>
-      <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
-                           request={this.props.request}
-                           reload={this.props.reload} />
+      <div>
+        <CurrentOrderCollapsed household={this.props.household}
+                               currentOrder={this.props.currentHouseholdOrder}
+                               currentCollectiveOrder={this.props.currentCollectiveOrder}
+                               basePath={basePath} />
+        <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                             basePath={basePath}
+                             request={this.props.request}
+                             reload={this.props.reload} />
+        <HouseholdPaymentsCollapsed household={this.props.household}
+                                    basePath={basePath} />
+      </div>
     )
     this.props.router.route('/payments', _ => 
-      <HouseholdPayments household={this.props.household}
-                         payments={this.props.payments}
-                         request={this.props.request}
-                         reload={this.props.reload} />
-
+      <div>
+        <CurrentOrderCollapsed household={this.props.household}
+                               currentOrder={this.props.currentHouseholdOrder}
+                               currentCollectiveOrder={this.props.currentCollectiveOrder}
+                               basePath={basePath} />
+        <PastHouseholdOrdersCollapsed householdOrders={this.props.pastHouseholdOrders}
+                                      basePath={basePath} />
+        <HouseholdPayments household={this.props.household}
+                           payments={this.props.payments}
+                           basePath={basePath}
+                           request={this.props.request}
+                           reload={this.props.reload} />
+      </div>
     )
-    this.props.router.route('/', _ => order)
-
-    let basePath = `/households/${this.props.household.id}/`
+    this.props.router.route('/', _ => 
+      <div>
+        <CurrentOrderCollapsed household={this.props.household}
+                               currentOrder={this.props.currentHouseholdOrder}
+                               currentCollectiveOrder={this.props.currentCollectiveOrder}
+                               basePath={basePath} />
+        <PastHouseholdOrdersCollapsed householdOrders={this.props.pastHouseholdOrders} 
+                                      basePath={basePath}/>
+        <HouseholdPaymentsCollapsed household={this.props.household}
+                                    basePath={basePath} />
+      </div>
+    )
 
     return (
       <div>
@@ -70,23 +108,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
             </table>
           </div>
         </div>
-        <nav className="flex justify-between bg-household-light">
-          <RouterLink path={basePath}
-                      className={classNames('p-2 text-center flex-grow rounded-t-lg bg-order-dark text-black ml-2 mr-1', { 
-                        'bg-order-dark text-black': Router.isCurrent(basePath),
-                        'hover:bg-order-dark hover:text-black': !Router.isCurrent(basePath)
-                      })}>Current order</RouterLink>
-          <RouterLink path={`${basePath}past-orders`}
-                      className={classNames('p-2 text-center flex-grow rounded-t-lg bg-grey-lighter text-grey-darkest mr-1', { 
-                        'bg-grey-lighter text-grey-darkest': Router.isCurrent(`${basePath}past-orders`),
-                        'hover:bg-grey-lighter hover:text-grey-darkest': !Router.isCurrent(`${basePath}past-orders`) 
-                      })}>Past orders</RouterLink>
-          <RouterLink path={`${basePath}payments`} 
-                      className={classNames('p-2 text-center flex-grow rounded-t-lg bg-payment-light text-payment-dark mr-2', { 
-                        'bg-payment-light text-payment-dark': Router.isCurrent(`${basePath}payments`),
-                        'hover:bg-payment-light hover:text-payment-dark': !Router.isCurrent(`${basePath}payments`) 
-                      })}>Payments</RouterLink>
-        </nav>
         {this.props.router.resolve()}
       </div>
     )
