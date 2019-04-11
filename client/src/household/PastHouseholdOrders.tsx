@@ -3,13 +3,12 @@ import * as classNames from 'classnames'
 
 import { PastHouseholdOrder } from '../Types'
 import { Util } from '../common/Util'
-import { RouterLink } from '../common/RouterLink'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
-                                          , basePath: string
                                           , expanded: boolean
+                                          , toggle: () => void
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
                                           }
@@ -59,17 +58,16 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       const sum = ho.items.reduce((tot, ho) => tot + ho.itemQuantity, 0)
       return sum + (sum == 1 ? ' item' : ' items')
     }
-    let linkPath = this.props.basePath + (!this.props.expanded ? 'past-orders' : '')
 
     return (
       <div>
-        <RouterLink path={linkPath} className="bg-grey-lighter p-2 block no-underline hover:no-underline text-grey-darkest hover:text-grey-darkest">
+        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-grey-lighter p-2 block no-underline hover:no-underline text-grey-darkest hover:text-grey-darkest">
           <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mr-2" />
           <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past orders</h2>
             <h3 className="mt-0 flex justify-between"><span>Total orders:</span><span><Money amount={total} /></span></h3>
           </div>
-        </RouterLink>
+        </a>
         <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
           { !pastOrders.length
             ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>

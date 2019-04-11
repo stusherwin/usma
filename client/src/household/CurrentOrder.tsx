@@ -5,15 +5,14 @@ import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { ServerApi, ApiError } from '../ServerApi'
-import { RouterLink } from '../common/RouterLink'
 
 export interface CurrentOrderProps { household: Household
                                    , currentOrder: HouseholdOrder | null
                                    , currentCollectiveOrder: CollectiveOrder | null
                                    , products: ProductCatalogueEntry[]
                                    , loading: boolean
-                                   , basePath: string
                                    , expanded: boolean
+                                   , toggle: () => void
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
                                    }
@@ -61,11 +60,10 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   render() {
     let currentOrder = this.props.currentOrder
     let currentCollectiveOrder = this.props.currentCollectiveOrder
-    let linkPath = this.props.basePath + (!this.props.expanded ? 'order' : '')
 
     return (
       <div>
-        <RouterLink path={linkPath} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
+        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
           <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mr-2" />
           { currentOrder
             ? (
@@ -91,7 +89,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               </div>
            ))
           }
-        </RouterLink>
+        </a>
         <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
           { currentOrder &&
             <CurrentHouseholdOrder householdOrder={currentOrder}

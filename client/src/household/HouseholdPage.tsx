@@ -22,40 +22,17 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , error: ApiError | null
                                           , router: Router
                                           }
+type Section = 'orders' | 'past-orders' | 'payments'
+export interface HouseholdOrdersPageState { expanded: Section | null }
+export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, HouseholdOrdersPageState> {  
+  constructor(props: HouseholdOrdersPageProps) {
+    super(props)
+    this.state = { expanded: null }
+  }
 
-export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}> {  
+  toggle = (toExpand: Section) => () => this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}))
+
   render() {
-    let basePath = `/households/${this.props.household.id}/`
-
-    let expand = (expanded: number) => () =>
-      <div>
-        <CurrentOrder household={this.props.household}
-                      currentOrder={this.props.currentHouseholdOrder}
-                      currentCollectiveOrder={this.props.currentCollectiveOrder}
-                      products={this.props.products}
-                      loading={this.props.loading}
-                      basePath={basePath}
-                      expanded={expanded == 1}
-                      request={this.props.request}
-                      reload={this.props.reload} />
-        <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
-                             basePath={basePath}
-                             expanded={expanded == 2}
-                             request={this.props.request}
-                             reload={this.props.reload} />
-        <HouseholdPayments household={this.props.household}
-                           payments={this.props.payments}
-                           basePath={basePath}
-                           expanded={expanded == 3}
-                           request={this.props.request}
-                           reload={this.props.reload} />
-      </div>
-
-    this.props.router.route('/order', expand(1))
-    this.props.router.route('/past-orders', expand(2))
-    this.props.router.route('/payments', expand(3))
-    this.props.router.route('/', expand(0))
-
     return (
       <div>
         {!!this.props.error && (
@@ -74,7 +51,29 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
             </table>
           </div>
         </div>
-        {this.props.router.resolve()}
+        <div>
+          <CurrentOrder household={this.props.household}
+              currentOrder={this.props.currentHouseholdOrder}
+              currentCollectiveOrder={this.props.currentCollectiveOrder}
+              products={this.props.products}
+              loading={this.props.loading}
+              expanded={this.state.expanded == 'orders'}
+              toggle={this.toggle('orders')}
+              request={this.props.request}
+              reload={this.props.reload} />
+          <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                               expanded={this.state.expanded == 'past-orders'}
+                               toggle={this.toggle('past-orders')}
+                               request={this.props.request}
+                               reload={this.props.reload} />
+          <HouseholdPayments household={this.props.household}
+                             payments={this.props.payments}
+                             expanded={this.state.expanded == 'payments'}
+                             toggle={this.toggle('payments')}
+                             request={this.props.request}
+                             reload={this.props.reload} />
+
+        </div>
       </div>
     )
   }
