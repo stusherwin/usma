@@ -14,13 +14,34 @@ export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[
                                           , reload: () => Promise<void>
                                           }
 
-export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, {expanded: PastHouseholdOrder | null}> {
+export interface HouseholdPaymentsState { height: number 
+                                        , expanded: PastHouseholdOrder | null
+                                        }
+
+export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, HouseholdPaymentsState> {
+  content: React.RefObject<HTMLDivElement>
+
   constructor(props: PastHouseholdOrdersProps) {
     super(props)
 
+    this.content = React.createRef();
+
     this.state = {
-      expanded: null
+      expanded: null,
+      height: 0
     }
+  }
+
+  componentWillReceiveProps() {
+    if(!this.content.current) return
+
+    this.setState({height: this.content.current.scrollHeight})
+  }
+
+  componentDidMount() {
+    if(!this.content.current) return
+
+    this.setState({height: this.content.current.scrollHeight})
   }
 
   expandOrder = (ho: PastHouseholdOrder) => {
@@ -49,63 +70,64 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             <h3 className="mt-0 flex justify-between"><span>Total orders:</span><span><Money amount={total} /></span></h3>
           </div>
         </RouterLink>
-        { this.props.expanded && (
-          !pastOrders.length
-          ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>
-          : (
-            <table className="border-collapse w-full mb-4">
-              <tbody>
-                { pastOrders.map(ho => ([
-                    <tr key={ho.orderId} className={classNames({'crossed-out': ho.isAbandoned})}>
-                      <td className={classNames('pt-2 pl-2 pr-2', {'pb-2': this.state.expanded == ho})}><a href="#" onClick={e => {e.preventDefault(); this.expandOrder(ho)}}>{Util.formatDate(ho.orderCreatedDate)}</a></td>
-                      <td className={classNames('pt-2 pr-2', {'pb-2': this.state.expanded == ho})}>{itemCount(ho)}</td>
-                      <td className={classNames('pt-2 pr-2', {'pb-2': this.state.expanded == ho})}>{ho.isAbandoned && 'Abandoned'}</td>
-                      <td className={classNames('pt-2 pr-2 text-right', {'pb-2': this.state.expanded == ho})}>{this.state.expanded != ho && <Money amount={ho.totalIncVat} />}</td>
-                    </tr>
-                    ,
-                    this.state.expanded == ho &&
-                      <tr>
-                        <td colSpan={4}>
-                          <table>
-                            <tbody>
-                              {ho.items.map(i =>
-                                <tr key={i.productId}>  
-                                  <td className="bg-grey-lightest pt-2 pl-2 pr-2">{i.productCode}</td>
-                                  <td className="bg-grey-lightest pt-2 pr-2 w-full">{i.productName}</td>
-                                  <td className="bg-grey-lightest pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                                  <td className="bg-grey-lightest pt-2 pr-2 text-right"><Money amount={i.itemTotalExcVat} /></td>
-                                </tr>
-                              )}
-                              <tr>
-                                <td className="bg-grey-lightest pt-2 pl-2 pr-2">VAT</td>
-                                <td className="bg-grey-lightest pt-2 pr-2"></td>
-                                <td className="bg-grey-lightest pt-2 pr-2"></td>
-                                <td className="bg-grey-lightest pt-2 pr-2 text-right"><Money amount={ho.totalIncVat - ho.totalExcVat} /></td>
-                              </tr>
-                              <tr>
-                                <td className="bg-grey-lightest pt-2 pb-2 pl-2 pr-2 font-bold">Total</td>
-                                <td className="bg-grey-lightest pt-2 pb-2 pr-2"></td>
-                                <td className="bg-grey-lightest pt-2 pb-2 pr-2"></td>
-                                <td className="bg-grey-lightest pt-2 pb-2 pr-2 font-bold text-right"><Money amount={ho.totalIncVat} /></td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </td>
+        <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
+          { !pastOrders.length
+            ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>
+            : (
+              <table className="border-collapse w-full mb-4">
+                <tbody>
+                  { pastOrders.map(ho => ([
+                      <tr key={ho.orderId} className={classNames({'crossed-out': ho.isAbandoned})}>
+                        <td className={classNames('pt-2 pl-2 pr-2', {'pb-2': this.state.expanded == ho})}><a href="#" onClick={e => {e.preventDefault(); this.expandOrder(ho)}}>{Util.formatDate(ho.orderCreatedDate)}</a></td>
+                        <td className={classNames('pt-2 pr-2', {'pb-2': this.state.expanded == ho})}>{itemCount(ho)}</td>
+                        <td className={classNames('pt-2 pr-2', {'pb-2': this.state.expanded == ho})}>{ho.isAbandoned && 'Abandoned'}</td>
+                        <td className={classNames('pt-2 pr-2 text-right', {'pb-2': this.state.expanded == ho})}>{this.state.expanded != ho && <Money amount={ho.totalIncVat} />}</td>
                       </tr>
-                    ]
-                )) }
-                {!!pastOrders.length &&
-                  <tr>
-                    <td className="pt-8 pl-2 pr-2 font-bold">Total orders</td>
-                    <td className="pt-8 pr-2"></td>
-                    <td className="pt-8 pr-2"></td>
-                    <td className="pt-8 pr-2 text-right font-bold"><Money amount={total} /></td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          )
-        )}
+                      ,
+                      this.state.expanded == ho &&
+                        <tr>
+                          <td colSpan={4}>
+                            <table>
+                              <tbody>
+                                {ho.items.map(i =>
+                                  <tr key={i.productId}>  
+                                    <td className="bg-grey-lightest pt-2 pl-2 pr-2">{i.productCode}</td>
+                                    <td className="bg-grey-lightest pt-2 pr-2 w-full">{i.productName}</td>
+                                    <td className="bg-grey-lightest pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
+                                    <td className="bg-grey-lightest pt-2 pr-2 text-right"><Money amount={i.itemTotalExcVat} /></td>
+                                  </tr>
+                                )}
+                                <tr>
+                                  <td className="bg-grey-lightest pt-2 pl-2 pr-2">VAT</td>
+                                  <td className="bg-grey-lightest pt-2 pr-2"></td>
+                                  <td className="bg-grey-lightest pt-2 pr-2"></td>
+                                  <td className="bg-grey-lightest pt-2 pr-2 text-right"><Money amount={ho.totalIncVat - ho.totalExcVat} /></td>
+                                </tr>
+                                <tr>
+                                  <td className="bg-grey-lightest pt-2 pb-2 pl-2 pr-2 font-bold">Total</td>
+                                  <td className="bg-grey-lightest pt-2 pb-2 pr-2"></td>
+                                  <td className="bg-grey-lightest pt-2 pb-2 pr-2"></td>
+                                  <td className="bg-grey-lightest pt-2 pb-2 pr-2 font-bold text-right"><Money amount={ho.totalIncVat} /></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      ]
+                  )) }
+                  {!!pastOrders.length &&
+                    <tr>
+                      <td className="pt-8 pl-2 pr-2 font-bold">Total orders</td>
+                      <td className="pt-8 pr-2"></td>
+                      <td className="pt-8 pr-2"></td>
+                      <td className="pt-8 pr-2 text-right font-bold"><Money amount={total} /></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            )
+          }
+        </div>
       </div>
     )
   }

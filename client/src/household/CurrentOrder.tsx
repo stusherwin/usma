@@ -18,7 +18,30 @@ export interface CurrentOrderProps { household: Household
                                    , reload: () => Promise<void>
                                    }
 
-export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
+export interface CurrentOrderState { height: number }
+
+export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrderState> {
+  content: React.RefObject<HTMLDivElement>
+
+  constructor(props: CurrentOrderProps) {
+    super(props)
+
+    this.content = React.createRef();
+    this.state = { height: 0 }
+  }
+
+  componentWillReceiveProps() {
+    if(!this.content.current) return
+
+    this.setState({height: this.content.current.scrollHeight})
+  }
+
+  componentDidMount() {
+    if(!this.content.current) return
+
+    this.setState({height: this.content.current.scrollHeight})
+  }
+
   newOrder = () => {
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createOrder(householdId))
@@ -30,7 +53,6 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
       return
 
     const orderId = this.props.currentCollectiveOrder.id
-    const date = new Date()
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
@@ -70,13 +92,15 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
            ))
           }
         </RouterLink>
-        { currentOrder && this.props.expanded &&
-          <CurrentHouseholdOrder householdOrder={currentOrder}
-                                 products={this.props.products}
-                                 loading={this.props.loading}
-                                 reload={this.props.reload}
-                                 request={this.props.request} />
-        }
+        <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
+          { currentOrder &&
+            <CurrentHouseholdOrder householdOrder={currentOrder}
+                                   products={this.props.products}
+                                   loading={this.props.loading}
+                                   reload={this.props.reload}
+                                   request={this.props.request} />
+          }
+        </div>
       </div>
     )
   }

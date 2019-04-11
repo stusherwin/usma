@@ -14,10 +14,30 @@ export interface HouseholdPaymentsProps { household: Household
                                         , reload: () => Promise<void>
                                         }
 
-export interface HouseholdPaymentsState { 
-                                        }
+export interface HouseholdPaymentsState { height: number }
 
 export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, HouseholdPaymentsState> {
+  content: React.RefObject<HTMLDivElement>
+
+  constructor(props: HouseholdPaymentsProps) {
+    super(props)
+
+    this.content = React.createRef();
+    this.state = { height: 0 }
+  }
+
+  componentWillReceiveProps() {
+    if(!this.content.current) return
+
+    this.setState({height: this.content.current.scrollHeight})
+  }
+
+  componentDidMount() {
+    if(!this.content.current) return
+
+    this.setState({height: this.content.current.scrollHeight})
+  }
+
   render() {
     const total = this.props.payments.reduce((tot, p) => tot + p.amount, 0)
     let linkPath = this.props.basePath + (!this.props.expanded ? 'payments' : '')
@@ -31,8 +51,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
             <h3 className="mt-0 flex justify-between"><span>Total payments:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
           </div>
         </RouterLink>
-        { this.props.expanded && (
-            this.props.payments.length 
+        <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>        
+          { this.props.payments.length 
               ? <table className="border-collapse w-full mb-4">
                   <tbody>
                     { this.props.payments.map(p =>
@@ -48,8 +68,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   </tbody>
                 </table>
               : <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet</div>
-          )
-        }
+          }
+        </div>
       </div>
     )
   }

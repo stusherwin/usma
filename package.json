@@ -16,20 +16,21 @@
     "webpack:server": "webpack-dev-server --progress --inline --hot",
     "webpack:server:debug": "DEBUG=purs-loader* DEBUG_DEPTH=100 webpack-dev-server --progress --inline --hot",
     "dev": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=webpack.config.js",
-    "watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=tailwind.webpack.config.js",
+    "tailwind-watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=tailwind.webpack.config.js & webpack:server",
     "prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=webpack.config.js",
-    "heroku-postbuild": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=tailwind.webpack.config.js && webpack  --progress --bail"
-  }, 
+    "heroku-postbuild": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=tailwind.webpack.config.js && webpack  --progress --bail",
+    "watch": "npm-run-all --parallel tailwind-watch webpack:server"
+  },
   "dependencies": {
     "@types/classnames": "^2.2.6",
-    "@types/react": "^16.0.35",
-    "@types/react-dom": "^16.0.3",
+    "@types/react": "^16.8.13",
+    "@types/react-dom": "^16.8.4",
     "classnames": "^2.2.6",
     "css-loader": "^0.28.7",
     "file-loader": "^1.1.6",
     "lodash.difference": "^4.5.0",
-    "react": "^16.2.0",
-    "react-dom": "^16.2.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "style-loader": "^0.19.1",
     "ts-loader": "^3.3.1",
     "typescript": "^2.6.2",
@@ -39,14 +40,15 @@
   },
   "devDependencies": {
     "awesome-typescript-loader": "^3.4.1",
-    "source-map-loader": "^0.2.3",
-    "tailwindcss": "^0.6.4",
-    "webpack-dev-server": "^2.0.0",
     "cross-env": "^5.1",
     "css-loader": "^0.28.7",
     "extract-text-webpack-plugin": "^3.0.2",
+    "npm-run-all": "^4.1.5",
     "postcss": "^6.0.14",
     "postcss-loader": "^2.0.8",
-    "style-loader": "^0.19.0"
+    "source-map-loader": "^0.2.3",
+    "style-loader": "^0.19.0",
+    "tailwindcss": "^0.6.4",
+    "webpack-dev-server": "^2.0.0"
   }
 }

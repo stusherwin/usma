@@ -27,7 +27,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   render() {
     let basePath = `/households/${this.props.household.id}/`
 
-    let expand = (i: number) => () =>
+    let expand = (expanded: number) => () =>
       <div>
         <CurrentOrder household={this.props.household}
                       currentOrder={this.props.currentHouseholdOrder}
@@ -35,18 +35,18 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
                       products={this.props.products}
                       loading={this.props.loading}
                       basePath={basePath}
-                      expanded={i == 1}
+                      expanded={expanded == 1}
                       request={this.props.request}
                       reload={this.props.reload} />
         <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
                              basePath={basePath}
-                             expanded={i == 2}
+                             expanded={expanded == 2}
                              request={this.props.request}
                              reload={this.props.reload} />
         <HouseholdPayments household={this.props.household}
                            payments={this.props.payments}
                            basePath={basePath}
-                           expanded={i == 3}
+                           expanded={expanded == 3}
                            request={this.props.request}
                            reload={this.props.reload} />
       </div>
