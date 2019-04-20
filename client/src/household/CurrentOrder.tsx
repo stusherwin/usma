@@ -77,7 +77,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             ? (
               <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                 <h2>Current order</h2>
-                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
+                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{currentCollectiveOrder.createdByName}</strong> started an order on <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p  >
                 <button className="mt-2" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
               </div>
             )
