@@ -25,6 +25,8 @@ export type Household = { id: number
 
 export type CollectiveOrder = { id: number
                               , createdDate: Date
+                              , createdBy: number
+                              , createdByName: string
                               , isComplete: boolean
                               , status: 'Open' | 'Complete'
                               , totalExcVat: number
@@ -34,6 +36,8 @@ export type CollectiveOrder = { id: number
 
 export type PastCollectiveOrder = { id: number
                                   , createdDate: Date
+                                  , createdBy: number
+                                  , createdByName: string
                                   , isAbandoned: boolean
                                   , totalExcVat: number
                                   , totalIncVat: number
@@ -42,6 +46,8 @@ export type PastCollectiveOrder = { id: number
 
 export type HouseholdOrder = { orderId: number
                              , orderCreatedDate: Date
+                             , orderCreatedBy: number
+                             , orderCreatedByName: string
                              , householdId: number
                              , householdName: string 
                              , isComplete: boolean
@@ -55,6 +61,8 @@ export type HouseholdOrder = { orderId: number
 
 export type PastHouseholdOrder = { orderId: number
                                  , orderCreatedDate: Date
+                                 , orderCreatedBy: number
+                                 , orderCreatedByName: string
                                  , householdId: number
                                  , householdName: string 
                                  , isAbandoned: boolean

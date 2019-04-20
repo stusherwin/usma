@@ -104,8 +104,7 @@ module Main where
     productCatalogue = liftIO $ D.getProductCatalogue conn
       
   commandServer :: Config -> Server CommandAPI
-  commandServer config = createOrderForHousehold
-                    :<|> createOrder
+  commandServer config = createOrder
                     :<|> deleteOrder
                     :<|> placeOrder
                     :<|> abandonOrder
@@ -126,15 +125,10 @@ module Main where
     where
     conn = connectionString config
     
-    createOrderForHousehold :: Int -> Handler Int
-    createOrderForHousehold householdId = do
+    createOrder :: Int -> Handler Int
+    createOrder householdId = do
       day <- liftIO $ getCurrentTime >>= return . utctDay      
-      liftIO $ D.createOrder conn day (Just householdId)
-
-    createOrder :: Handler Int
-    createOrder = do
-      day <- liftIO $ getCurrentTime >>= return . utctDay      
-      liftIO $ D.createOrder conn day Nothing
+      liftIO $ D.createOrder conn day householdId
 
     deleteOrder :: Int -> Handler ()
     deleteOrder orderId = liftIO $ D.deleteOrder conn orderId

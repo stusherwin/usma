@@ -47,8 +47,8 @@ const query = {
 }
 
 const command = {
-  createOrder(householdId?: number): Promise<number> {
-    return Http.post(`/api/command/create-order/${householdId || ''}`, {})
+  createOrder(householdId: number): Promise<number> {
+    return Http.post(`/api/command/create-order/${householdId}`, {})
   },
 
   deleteOrder(orderId: number): Promise<number> {

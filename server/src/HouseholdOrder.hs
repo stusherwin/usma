@@ -9,6 +9,8 @@ module HouseholdOrder where
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
                                        , orderCreatedDate :: Day
+                                       , orderCreatedBy :: Int
+                                       , orderCreatedByName :: String
                                        , householdId :: Int
                                        , householdName :: String 
                                        , isComplete :: Bool
@@ -29,9 +31,9 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails
 
-  householdOrder :: Int -> Day -> Int -> String -> Bool -> Bool -> Int -> Int -> [OrderItem] -> HouseholdOrder
-  householdOrder orderId orderCreated householdId householdName complete cancelled totalExcVat totalIncVat items = 
-    HouseholdOrder orderId orderCreated householdId householdName complete cancelled open status totalExcVat totalIncVat items 
+  householdOrder :: Int -> Day -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> [OrderItem] -> HouseholdOrder
+  householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled totalExcVat totalIncVat items = 
+    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open status totalExcVat totalIncVat items 
     where
     open = not complete && not cancelled
     status = case (complete, cancelled) of

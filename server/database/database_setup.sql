@@ -31,18 +31,6 @@ drop table if exists past_order cascade;
 
 ---
 
-create table "order"
-( id           serial  not null  primary key
-, created_date date    not null
-);
-
-insert into "order" (created_date) values ('2018-01-01') returning id into o1Id;
-insert into "order" (created_date) values ('2018-01-02') returning id into o2Id;
-insert into "order" (created_date) values ('2018-01-03') returning id into o3Id;
-insert into "order" (created_date) values ('2018-01-04') returning id into o4Id;
-
----
-
 create table household
 ( id       serial  not null primary key
 , "name"   text    not null
@@ -53,6 +41,19 @@ insert into household ("name", archived) values ('123 Front Road',  false) retur
 insert into household ("name", archived) values ('1 Main Terrace',  false) returning id into h2Id;
 insert into household ("name", archived) values ('24 The Street',   false) returning id into h3Id;
 insert into household ("name", archived) values ('3 Bowling Alley', false) returning id into h4Id;
+
+---
+
+create table "order"
+( id            serial  not null  primary key
+, created_date  date    not null
+, created_by_id int     not null
+);
+
+insert into "order" (created_date, created_by_id) values ('2018-01-01', h1Id) returning id into o1Id;
+insert into "order" (created_date, created_by_id) values ('2018-01-02', h1Id) returning id into o2Id;
+insert into "order" (created_date, created_by_id) values ('2018-01-03', h1Id) returning id into o3Id;
+insert into "order" (created_date, created_by_id) values ('2018-01-04', h1Id) returning id into o4Id;
 
 ---
 
@@ -147,15 +148,18 @@ create table catalogue_entry
 ---
 
 create table past_order
-( id           int  not null  primary key
-, created_date date    not null
-, cancelled    boolean not null
+( id              int  not null  primary key
+, created_date    date    not null
+, created_by_id   int   not null
+, created_by_name text    not null
+, cancelled       boolean not null
 );
 
 create table past_household_order
-( order_id     int     not null
-, household_id int     not null
-, cancelled    boolean not null
+( order_id       int     not null
+, household_id   int     not null
+, household_name text     not null
+, cancelled      boolean not null
 , primary key (order_id, household_id)
 , foreign key (order_id) references past_order (id)
 , foreign key (household_id) references household (id)
@@ -181,16 +185,16 @@ delete from "order" where id = o1Id;
 delete from "order" where id = o2Id;
 delete from "order" where id = o3Id;
 
-insert into past_order (id, created_date, cancelled) values (o1Id, '2018-01-01', false);
-insert into past_order (id, created_date, cancelled) values (o2Id, '2018-01-02', true);
-insert into past_order (id, created_date, cancelled) values (o3Id, '2018-01-03', false);
+insert into past_order (id, created_date, created_by_id, created_by_name, cancelled) values (o1Id, '2018-01-01', h1Id, '123 Front Road', false);
+insert into past_order (id, created_date, created_by_id, created_by_name, cancelled) values (o2Id, '2018-01-02', h1Id, '123 Front Road', true);
+insert into past_order (id, created_date, created_by_id, created_by_name, cancelled) values (o3Id, '2018-01-03', h1Id, '123 Front Road', false);
 
-insert into past_household_order (order_id, household_id, cancelled) values (o1Id, h1Id, false);
-insert into past_household_order (order_id, household_id, cancelled) values (o1Id, h2Id, false);
-insert into past_household_order (order_id, household_id, cancelled) values (o2Id, h3Id, true);
-insert into past_household_order (order_id, household_id, cancelled) values (o2Id, h4Id, true);
-insert into past_household_order (order_id, household_id, cancelled) values (o3Id, h1Id, false);
-insert into past_household_order (order_id, household_id, cancelled) values (o3Id, h4Id, false);
+insert into past_household_order (order_id, household_id, household_name, cancelled) values (o1Id, h1Id, '123 Front Road',  false);
+insert into past_household_order (order_id, household_id, household_name, cancelled) values (o1Id, h2Id, '1 Main Terrace',  false);
+insert into past_household_order (order_id, household_id, household_name, cancelled) values (o2Id, h3Id, '24 The Street',   true);
+insert into past_household_order (order_id, household_id, household_name, cancelled) values (o2Id, h4Id, '3 Bowling Alley', true);
+insert into past_household_order (order_id, household_id, household_name, cancelled) values (o3Id, h1Id, '123 Front Road',  false);
+insert into past_household_order (order_id, household_id, household_name, cancelled) values (o3Id, h4Id, '3 Bowling Alley', false);
 
 insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat) values (o1Id, h1Id, p1Id, 'FX109p', 'Jam p',     100, 120, 'Z', 1, 100,  120);
 insert into past_household_order_item (order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, total_exc_vat, total_inc_vat) values (o1Id, h2Id, p2Id, 'CV308p', 'Butter p',  200, 240, 'S', 2, 400,  480);

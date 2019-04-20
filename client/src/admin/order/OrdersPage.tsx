@@ -23,7 +23,8 @@ export interface OrdersPageProps { currentOrder: CollectiveOrder | null
 
 export class OrdersPage extends React.Component<OrdersPageProps, {}> {
   newOrder = () => {
-    this.props.request(ServerApi.command.createOrder())
+    // TODO: Have some way of choosing the household to create order
+    this.props.request(ServerApi.command.createOrder(this.props.households[0].id))
       .then(this.props.reload)
   }
 

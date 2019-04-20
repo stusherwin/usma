@@ -9,6 +9,8 @@ module PastCollectiveOrder where
 
   data PastCollectiveOrder = PastCollectiveOrder { id :: Int
                                                  , createdDate :: Day
+                                                 , createdBy :: Int
+                                                 , createdByName :: String
                                                  , isAbandoned :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int
@@ -16,5 +18,5 @@ module PastCollectiveOrder where
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON PastCollectiveOrder
 
-  pastCollectiveOrder :: Int -> Day -> Bool -> Int -> Int -> [OrderItem] -> PastCollectiveOrder
+  pastCollectiveOrder :: Int -> Day -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastCollectiveOrder
   pastCollectiveOrder = PastCollectiveOrder

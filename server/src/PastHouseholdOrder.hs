@@ -9,6 +9,8 @@ module PastHouseholdOrder where
   
   data PastHouseholdOrder = PastHouseholdOrder { orderId :: Int
                                                , orderCreatedDate :: Day
+                                               , orderCreatedBy :: Int
+                                               , orderCreatedByName :: String
                                                , householdId :: Int
                                                , householdName :: String 
                                                , isAbandoned :: Bool
@@ -18,5 +20,5 @@ module PastHouseholdOrder where
                                                } deriving (Eq, Show, Generic)
   instance ToJSON PastHouseholdOrder
 
-  pastHouseholdOrder :: Int -> Day -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastHouseholdOrder
+  pastHouseholdOrder :: Int -> Day -> Int -> String -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastHouseholdOrder
   pastHouseholdOrder = PastHouseholdOrder

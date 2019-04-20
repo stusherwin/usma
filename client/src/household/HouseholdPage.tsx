@@ -27,7 +27,7 @@ export interface HouseholdOrdersPageState { expanded: Section | null }
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, HouseholdOrdersPageState> {  
   constructor(props: HouseholdOrdersPageProps) {
     super(props)
-    this.state = { expanded: null }
+    this.state = { expanded: 'orders' }
   }
 
   toggle = (toExpand: Section) => () => this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}))
