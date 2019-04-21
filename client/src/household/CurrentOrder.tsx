@@ -69,20 +69,20 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             ? (
               <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
                 <h2>Current order</h2>
-                <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
+                <h3 className="flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
                 <h3 className="font-normal">{currentOrder.status}</h3>
               </div>
             )
             : (currentCollectiveOrder
             ? (
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
                 <h2>Current order</h2>
                 <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{currentCollectiveOrder.createdByName}</strong> started an order on <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p  >
                 <button className="mt-2" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
               </div>
             )
             : (
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
+              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
                 <h2>Current order</h2>
                 <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
                 <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
@@ -90,15 +90,15 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
            ))
           }
         </a>
-        <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
-          { currentOrder &&
-            <CurrentHouseholdOrder householdOrder={currentOrder}
-                                   products={this.props.products}
-                                   loading={this.props.loading}
-                                   reload={this.props.reload}
-                                   request={this.props.request} />
-          }
-        </div>
+        { currentOrder &&
+          <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
+              <CurrentHouseholdOrder householdOrder={currentOrder}
+                                     products={this.props.products}
+                                     loading={this.props.loading}
+                                     reload={this.props.reload}
+                                     request={this.props.request} />
+          </div>
+        }
       </div>
     )
   }

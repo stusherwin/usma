@@ -44,9 +44,9 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
       <div>
         <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-payment-light p-2 block no-underline hover:no-underline text-payment-dark hover:text-payment-dark">
           <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mr-2" />
-          <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
-            <h2 className="text-payment-dark leading-none mb-2 -mt-1">Payments</h2>
-            <h3 className="mt-0 flex justify-between"><span>Total payments:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
+          <div className="bg-img-payment bg-no-repeat bg-16 pl-20 min-h-16 relative">
+            <h2 className="text-payment-dark leading-none mb-2">Payments</h2>
+            <h3 className="flex justify-between"><span>Total payments:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
           </div>
         </a>
         <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>        

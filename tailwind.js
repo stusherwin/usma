@@ -53,10 +53,14 @@ let colors = {
   'household-lighter': '#caeff4',
   'household-lightest': '#dff2f5',
 
-  'order': '#f0faa0',
+  'order': '#f0faa0', //#fff07e ?
   'order-dark': '#ffe85c',
   'order-lighter': '#fef6a3',
   'order-lightest': '#fffebb',
+
+  'past-order': '#ffa868', //#ff6633
+  'past-order-lighter': '#feb244',
+  'past-order-lightest': '#f8d78a',
 
   'product': '#b1529e',
   'product-light': '#ca72b8',
@@ -403,6 +407,7 @@ module.exports = {
     'contain': 'contain',
     '16': '4rem',
     '12': '3rem',
+    '8': '2rem',
     '6': '1.5rem',
     '4': '1rem',
   },
@@ -604,6 +609,7 @@ module.exports = {
     '0': '0',
     'full': '100%',
     'screen': '100vh',
+    '20': '5rem',
     '16': '4rem',
     '12': '3rem',
   },

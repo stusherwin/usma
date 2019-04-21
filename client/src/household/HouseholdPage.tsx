@@ -38,41 +38,33 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-household-light p-2 pb-4">
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
-            <h2 className="leading-none mb-2 -mt-1 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
-            <table className="border-collapse w-full text-household-darker">
-              <tbody>
-                <tr>
-                  <td>Current balance:</td>
-                  <td className={classNames('text-right', 'font-bold', {'text-red-dark': this.props.household.balance < 0})}><Money amount={this.props.household.balance} /></td>
-                </tr>
-              </tbody>
-            </table>
+        <div className="bg-household-light p-2 pt-4 pb-4">
+          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative">
+            <h2 className="leading-none text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
           </div>
         </div>
-        <div>
-          <CurrentOrder household={this.props.household}
-              currentOrder={this.props.currentHouseholdOrder}
-              currentCollectiveOrder={this.props.currentCollectiveOrder}
-              products={this.props.products}
-              loading={this.props.loading}
-              expanded={this.state.expanded == 'orders'}
-              toggle={this.toggle('orders')}
-              request={this.props.request}
-              reload={this.props.reload} />
-          <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
-                               expanded={this.state.expanded == 'past-orders'}
-                               toggle={this.toggle('past-orders')}
-                               request={this.props.request}
-                               reload={this.props.reload} />
-          <HouseholdPayments household={this.props.household}
-                             payments={this.props.payments}
-                             expanded={this.state.expanded == 'payments'}
-                             toggle={this.toggle('payments')}
+        <CurrentOrder household={this.props.household}
+            currentOrder={this.props.currentHouseholdOrder}
+            currentCollectiveOrder={this.props.currentCollectiveOrder}
+            products={this.props.products}
+            loading={this.props.loading}
+            expanded={this.state.expanded == 'orders'}
+            toggle={this.toggle('orders')}
+            request={this.props.request}
+            reload={this.props.reload} />
+        <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                             expanded={this.state.expanded == 'past-orders'}
+                             toggle={this.toggle('past-orders')}
                              request={this.props.request}
                              reload={this.props.reload} />
-
+        <HouseholdPayments household={this.props.household}
+                           payments={this.props.payments}
+                           expanded={this.state.expanded == 'payments'}
+                           toggle={this.toggle('payments')}
+                           request={this.props.request}
+                           reload={this.props.reload} />
+        <div className="bg-household-light p-2 pl-20 text-household-darker">
+          <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={this.props.household.balance} /></span></h3>
         </div>
       </div>
     )

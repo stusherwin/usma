@@ -61,18 +61,28 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
 
     return (
       <div>
-        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-grey-lighter p-2 block no-underline hover:no-underline text-grey-darkest hover:text-grey-darkest">
-          <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mr-2" />
-          <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-2">
-            <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past orders</h2>
-            <h3 className="mt-0 flex justify-between"><span>Total orders:</span><span><Money amount={total} /></span></h3>
-          </div>
+        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className={classNames(
+            'bg-past-order-lighter p-2 block no-underline hover:no-underline text-black hover:text-black', {
+              'min-h-0': !this.props.expanded,
+              'min-h-20': this.props.expanded 
+            })} style={{ 
+              transition: this.props.expanded? 'min-height 0.125s 0s ease-in' : 'min-height 0.125s 0.125s ease-out'
+            }}>
+          <div className="bg-img-order bg-no-repeat w-16 h-16 absolute"></div>
+          <h2 className="leading-none ml-20 relative flex">Past orders
+            <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
+          </h2>
         </a>
-        <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
+        <div ref={this.content} style={{
+            overflow: 'hidden',
+            transition: this.props.expanded? 'height 0.125s 0.125s ease-out' : 'height 0.125s 0s ease-in',
+            height: this.props.expanded? this.state.height : 0,
+            boxShadow: 'rgba(0, 0, 0, 0.1) 0px 5px 5px 0px inset'
+          }}>
           { !pastOrders.length
             ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>
             : (
-              <table className="border-collapse w-full mb-4">
+              <table className="border-collapse w-full mb-4 mt-2">
                 <tbody>
                   { pastOrders.map(ho => ([
                       <tr key={ho.orderId} className={classNames({'crossed-out': ho.isAbandoned})}>
@@ -113,19 +123,14 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                         </tr>
                       ]
                   )) }
-                  {!!pastOrders.length &&
-                    <tr>
-                      <td className="pt-8 pl-2 pr-2 font-bold">Total orders</td>
-                      <td className="pt-8 pr-2"></td>
-                      <td className="pt-8 pr-2"></td>
-                      <td className="pt-8 pr-2 text-right font-bold"><Money amount={total} /></td>
-                    </tr>
-                  }
                 </tbody>
               </table>
             )
           }
         </div>
+        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-past-order-lighter p-2 text-black block no-underline hover:no-underline hover:text-black">
+          <h3 className="flex justify-between ml-20"><span>Total:</span><span><Money amount={total} /></span></h3>
+        </a>
       </div>
     )
   }

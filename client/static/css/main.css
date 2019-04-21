@@ -132,5 +132,5 @@ button[disabled], button[disabled]:hover {
 .transition-height {
   height: 0;
   overflow: hidden;
-  transition: height 0.25s ease;
+  transition: height 0.25s 0.25s ease-out;
 }
