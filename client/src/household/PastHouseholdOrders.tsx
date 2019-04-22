@@ -8,7 +8,7 @@ import { Money } from '../common/Money'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
                                           , expanded: boolean
-                                          , replacePrevExpanded: boolean
+                                          , otherExpanding: boolean
                                           , toggle: () => void
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
@@ -69,9 +69,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             })} style={{ 
               transition: this.props.expanded
                 // expanding
-                ? (this.props.replacePrevExpanded? 'min-height 0.125s ease-in 0.25s' : 'min-height 0.125s ease-in 0s')
+                ? 'min-height 0.125s ease-in 0s' //(this.props.otherExpanding? 'min-height 0.125s ease-in 0.25s' : 'min-height 0.125s ease-in 0s')
                 // collapsing
-                : 'min-height 0.125s ease-out 0.125s'
+                : (this.props.otherExpanding? 'min-height 0.125s ease-out 0.375s' : 'min-height 0.125s ease-out 0.125s')
             }}>
           <div className="bg-img-order bg-no-repeat w-16 h-16 absolute"></div>
           <h2 className="leading-none ml-20 relative flex">Past orders
@@ -82,9 +82,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             overflow: 'hidden',
             transition: this.props.expanded
               // expanding
-              ? (this.props.replacePrevExpanded ? 'height 0.125s ease-out 0.375s' : 'height 0.125s ease-out 0.125s')
+              ? 'height 0.125s ease-out 0.125s' //(this.props.otherExpanding ? 'height 0.125s ease-out 0.375s' : 'height 0.125s ease-out 0.125s')
               // collapsing
-              : 'height 0.125s ease-in 0s',
+              : (this.props.otherExpanding? 'height 0.125s ease-in 0.25s' : 'height 0.125s ease-in 0s'),
             height: this.props.expanded? this.state.height : 0,
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 5px 5px 0px inset'
           }}>

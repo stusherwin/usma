@@ -23,14 +23,14 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , router: Router
                                           }
 type Section = 'orders' | 'past-orders' | 'payments'
-export interface HouseholdOrdersPageState { expanded: Section | null, prevExpanded: Section | null }
+export interface HouseholdOrdersPageState { expanded: Section | null }
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, HouseholdOrdersPageState> {  
   constructor(props: HouseholdOrdersPageProps) {
     super(props)
-    this.state = { expanded: 'orders', prevExpanded: null }
+    this.state = { expanded: 'orders' }
   }
 
-  toggle = (toExpand: Section) => () => this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand, prevExpanded: expanded}))
+  toggle = (toExpand: Section) => () => this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}))
 
   render() {
     return (
@@ -49,20 +49,20 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
             products={this.props.products}
             loading={this.props.loading}
             expanded={this.state.expanded == 'orders'}
-            replacePrevExpanded={!!this.state.prevExpanded && this.state.prevExpanded != 'orders'}
+            otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}
             toggle={this.toggle('orders')}
             request={this.props.request}
             reload={this.props.reload} />
         <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
                              expanded={this.state.expanded == 'past-orders'}
-                             replacePrevExpanded={!!this.state.prevExpanded && this.state.prevExpanded != 'past-orders'}
+                             otherExpanding={!!this.state.expanded && this.state.expanded != 'past-orders'}
                              toggle={this.toggle('past-orders')}
                              request={this.props.request}
                              reload={this.props.reload} />
         <HouseholdPayments household={this.props.household}
                            payments={this.props.payments}
                            expanded={this.state.expanded == 'payments'}
-                           replacePrevExpanded={!!this.state.prevExpanded && this.state.prevExpanded != 'payments'}
+                           otherExpanding={!!this.state.expanded && this.state.expanded != 'payments'}
                            toggle={this.toggle('payments')}
                            request={this.props.request}
                            reload={this.props.reload} />
