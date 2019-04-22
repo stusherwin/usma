@@ -1,4 +1,6 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
+
 import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
 import { Util } from '../common/Util'
@@ -63,42 +65,51 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     return (
       <div>
-        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
-          <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mr-2" />
+        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} 
+           className={classNames(
+            'bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black', {
+              'min-h-0': !this.props.expanded,
+              'min-h-20': this.props.expanded 
+            })} style={{ 
+              transition: this.props.expanded? 'min-height 0.125s 0s ease-in' : 'min-height 0.125s 0.125s ease-out'
+            }}>
+          <div className="bg-img-order bg-no-repeat w-16 h-16 absolute"></div>
+          <h2 className="leading-none ml-20 relative flex">Current order
+            <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
+          </h2>
+        </a>
+        <div ref={this.content} style={{
+          overflow: 'hidden',
+          transition: this.props.expanded? 'height 0.125s 0.125s ease-out' : 'height 0.125s 0s ease-in',
+          height: this.props.expanded? this.state.height : 0,
+          boxShadow: 'rgba(0, 0, 0, 0.1) 0px 5px 5px 0px inset'
+        }}>
           { currentOrder
             ? (
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
-                <h2>Current order</h2>
-                <h3 className="flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
-                <h3 className="font-normal">{currentOrder.status}</h3>
-              </div>
-            )
-            : (currentCollectiveOrder
-            ? (
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
-                <h2>Current order</h2>
-                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{currentCollectiveOrder.createdByName}</strong> started an order on <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p  >
-                <button className="mt-2" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
-              </div>
-            )
-            : (
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
-                <h2>Current order</h2>
-                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
-                <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
-              </div>
-           ))
-          }
-        </a>
-        { currentOrder &&
-          <div ref={this.content} className="transition-height" style={{height: this.props.expanded? this.state.height : 0}}>
               <CurrentHouseholdOrder householdOrder={currentOrder}
                                      products={this.props.products}
                                      loading={this.props.loading}
                                      reload={this.props.reload}
                                      request={this.props.request} />
-          </div>
-        }
+            )
+            : (currentCollectiveOrder
+            ? (
+              <div className="p-2 mb-2 mt-2 text-grey-darker">
+                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{currentCollectiveOrder.createdByName}</strong> started an order on <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p  >
+                <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
+              </div>
+            )
+            : (
+              <div className="p-2 mb-2 mt-2 text-grey-darker">
+                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
+                <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
+              </div>
+           ))
+          }
+        </div>
+        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black">
+          <h3 className="flex justify-between ml-20"><span>Total:</span><span><Money amount={currentOrder? currentOrder.totalIncVat : 0} /></span></h3>
+        </a>
       </div>
     )
   }
