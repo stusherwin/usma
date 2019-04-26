@@ -96,7 +96,7 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
             <button onClick={this.props.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
           </div>
         </div>
-        <div className="py-4 px-2 shadow-inner-top">
+        <div className="py-4 px-2 shadow-inner-top bg-white">
           { !this.state.products.length
             ? <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products found</div>
             : this.state.products.map((p, i) => 

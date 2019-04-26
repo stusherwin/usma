@@ -97,7 +97,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
           </h2>
           <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={total} /></span></h3>
         </a>
-        <div className="shadow-inner-top px-2 py-4">
+        <div className="shadow-inner-top bg-white px-2 py-4">
           { !pastOrders.length
             ? <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders</div>
             : (

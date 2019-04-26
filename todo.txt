@@ -15,8 +15,6 @@
 * Household page sections (current order, past orders, payments) - separate tabs?
 
 
-* cancel add when collapsing sections
 * Style product row / add product row
 * Show vat on product row
 * Negative payments
-* Loading overlay

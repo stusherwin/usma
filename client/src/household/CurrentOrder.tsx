@@ -135,13 +135,13 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           )
           : (currentCollectiveOrder
           ? (
-            <div className="shadow-inner-top px-2 py-4 text-grey-darker">
+            <div className="shadow-inner-top bg-white px-2 py-4 text-grey-darker">
               <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{currentCollectiveOrder.createdByName}</strong> started an order on <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p  >
               <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
             </div>
           )
           : (
-            <div className="shadow-inner-top px-2 py-4 text-grey-darker">
+            <div className="shadow-inner-top bg-white px-2 py-4 text-grey-darker">
               <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
               <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
             </div>

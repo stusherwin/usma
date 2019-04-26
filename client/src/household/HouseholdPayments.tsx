@@ -78,7 +78,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, {
           </h2>
           <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
         </a>
-        <div className="shadow-inner-top px-2 py-4">
+        <div className="shadow-inner-top bg-white px-2 py-4">
           { this.props.payments.length 
             ? <table className="border-collapse w-full">
                 <tbody>

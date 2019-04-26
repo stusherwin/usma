@@ -85,7 +85,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </div>
         }
         {!this.props.addingProduct && 
-          <div className="shadow-inner-top px-2 py-4">
+          <div className="shadow-inner-top bg-white px-2 py-4">
             {!householdOrder.items.length &&
               <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet {!this.props.products.length && ' - the product catalogue is empty'}</div>
             }
