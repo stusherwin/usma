@@ -134,3 +134,7 @@ button[disabled], button[disabled]:hover {
   overflow: hidden;
   transition: height 0.25s 0.25s ease-out;
 }
+
+.shadow-inner-top {
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 5px 5px 0px inset;
+}
