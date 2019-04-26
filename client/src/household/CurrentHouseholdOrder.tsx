@@ -100,20 +100,20 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             }
           </div>
         }
+        {!this.state.addingProduct && canAddItem &&
+          <div className="bg-order-dark p-2 flex justify-end">
+            <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
+          </div>
+        }
         {!this.state.addingProduct && 
           <div className="shadow-inner-top px-2 py-4">
-            {canAddItem &&
-              <div className="flex justify-end mb-4">
-                <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
-              </div>
-            }
             {!householdOrder.items.length &&
               <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet {!this.props.products.length && ' - the product catalogue is empty'}</div>
             }
             {!!householdOrder.items.length &&
               <div>
                 { householdOrder.items.map((i, ix) =>
-                  <div key={i.productId} className="mb-4 mt-4">
+                  <div key={i.productId} className={classNames({'mt-8': ix > 0})}>
                     <div className="flex justify-between items-baseline">
                       <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
                       <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
@@ -134,11 +134,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                     </div>
                   </div>
                 )}
-                <div className="mt-4 flex justify-between items-baseline">
+                <div className="mt-8 flex justify-between items-baseline">
                   <span className="flex-no-shrink flex-no-grow">VAT:</span>
                   <Money className="flex-no-shrink flex-no-grow text-right" amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
                 </div>
-                <div className="mt-4 flex justify-between items-baseline">
+                <div className="mt-2 flex justify-between items-baseline">
                   <span className="flex-no-shrink flex-no-grow font-bold">Total:</span>
                   <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.totalIncVat} />
                 </div>
