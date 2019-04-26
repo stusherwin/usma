@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, Product, OrderItem, ProductCatalogueEntry } from '../Types'
+import { HouseholdOrder, Product, OrderItem, ProductCatalogueEntry, Household, CollectiveOrder } from '../Types'
 import { ServerApi, ApiError } from '../ServerApi'
 import { Util } from '../common/Util'
 import { RouterLink } from '../common/RouterLink'
@@ -9,8 +9,11 @@ import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { AddProduct } from './AddProduct'
 
-export interface CurrentHouseholdOrderProps { householdOrder: HouseholdOrder
+export interface CurrentHouseholdOrderProps { currentOrder: CollectiveOrder
+                                            , currentHouseholdOrder: HouseholdOrder
+                                            , currentHouseholdOrders: HouseholdOrder[]
                                             , products: ProductCatalogueEntry[]
+                                            , households: Household[]
                                             , loading: boolean
                                             , addingProduct: boolean
                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -22,37 +25,37 @@ export interface CurrentHouseholdOrderProps { householdOrder: HouseholdOrder
 
 export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
   removeItem = (item: OrderItem) => {
-    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productId))
+    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productId))
       .then(this.props.reload)
   }
 
   editQuantity = (item: OrderItem, quantity: number) => {
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productCode, quantity))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, quantity))
       .then(this.props.reload)
   }
 
   abandonOrder = () => {
-    this.props.request(ServerApi.command.abandonHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+    this.props.request(ServerApi.command.abandonHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
       .then(this.props.reload)
   }
 
   completeOrder = () => {
-    this.props.request(ServerApi.command.completeHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+    this.props.request(ServerApi.command.completeHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
       .then(this.props.reload)
   }
 
   reopenOrder = () => {
-    this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+    this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
       .then(this.props.reload)
   }
 
   leaveOrder = () => {
-    this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.householdOrder.orderId, this.props.householdOrder.householdId))
+    this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
       .then(this.props.reload)
   }
 
   render() {
-    const householdOrder = this.props.householdOrder
+    const householdOrder = this.props.currentHouseholdOrder
     const unusedProducts = this.props.products.filter(p => !householdOrder.items.find(i => i.productCode == p.code))
     const canAddItem = !this.props.addingProduct && householdOrder.isOpen && !!unusedProducts.length
     const canLeaveOrder = !householdOrder.items.length
@@ -60,6 +63,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     const canAbandonOrder = !!householdOrder.items.length && householdOrder.isOpen
     const canCompleteOrder = !!householdOrder.items.length && householdOrder.isOpen
     const orderButtons = [canLeaveOrder, canReopenOrder, canAbandonOrder, canCompleteOrder, canAddItem]
+
+    const allComplete = this.props.currentHouseholdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
+    const householdsInOrder = this.props.households.filter(h => !!this.props.currentHouseholdOrders.find(oh => oh.householdId == h.id))
+    const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
+    const orderMinimumReached = this.props.currentOrder.totalIncVat >= 25000
 
     return (
       <div>
@@ -69,10 +77,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
             }
             {canReopenOrder &&
-              <div className="flex-no-grow flex-no-shrink mr-2 mt-2">
-                <span className="mr-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was {householdOrder.isAbandoned ? 'abandoned' : 'completed'}</span>
-                <button disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen</button>
-              </div>
+              <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen</button>
             }
             {canAbandonOrder &&
               <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
@@ -89,6 +94,21 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           <div className="shadow-inner-top bg-white px-2 py-4">
             {!householdOrder.items.length &&
               <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet {!this.props.products.length && ' - the product catalogue is empty'}</div>
+            }
+            {householdOrder.isComplete &&
+              <div className="text-green mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order complete
+              {!orderMinimumReached?
+                <span>, collective total is <Money amount={this.props.currentOrder.totalIncVat} />. Waiting for &pound;250.00 order minimum</span>
+              : !allComplete?
+                <span>, waiting for all orders to be completed</span>
+              : !allPaid?
+                <span>, waiting for everyone to pay up</span>
+              : <span>, waiting for order to be placed</span>
+              }
+              </div>
+            }
+            {householdOrder.isAbandoned &&
+              <div className="mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order abandoned</div>
             }
             {!!householdOrder.items.length &&
               <div>

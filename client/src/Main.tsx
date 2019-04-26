@@ -203,10 +203,10 @@ export class Main extends React.Component<MainProps, MainState> {
     })
     
     router.route('/admin/households', _ => <AdminHouseholdsPage households={this.state.households}
-                                                                     reload={this.reload}
-                                                                     request={this.request}
-                                                                     loading={this.state.loading}
-                                                                     error={this.state.error} />)
+                                                                reload={this.reload}
+                                                                request={this.request}
+                                                                loading={this.state.loading}
+                                                                error={this.state.error} />)
     
     router.route('/admin', _ => <AdminHomePage />)
 
@@ -214,17 +214,20 @@ export class Main extends React.Component<MainProps, MainState> {
       const household = this.state.households.find(h => h.id == c.householdId)
       const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
       const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
-      const currentCollectiveOrder = this.state.collectiveOrder
-      const currentHouseholdOrder = currentCollectiveOrder && (householdOrders.filter(o => o.orderId == currentCollectiveOrder.id)[0] || null)
+      const currentOrder = this.state.collectiveOrder
+      const currentHouseholdOrder = currentOrder && (householdOrders.filter(o => o.orderId == currentOrder.id)[0] || null)
+      const currentHouseholdOrders = currentOrder && householdOrders.filter(o => o.orderId == currentOrder.id) || []
       const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
       
       return household && 
         <HouseholdPage household={household}
-                       currentCollectiveOrder={currentCollectiveOrder}
+                       currentOrder={currentOrder}
                        currentHouseholdOrder={currentHouseholdOrder}
+                       currentHouseholdOrders={currentHouseholdOrders}
                        pastHouseholdOrders={pastHouseholdOrders}
                        payments={householdPayments}
                        products={this.state.productCatalogue}
+                       households={this.state.households}
                        reload={this.reload}
                        request={this.request}
                        loading={this.state.loading}

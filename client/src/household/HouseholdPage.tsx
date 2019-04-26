@@ -11,11 +11,13 @@ import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
 
 export interface HouseholdOrdersPageProps { household: Household
+                                          , currentOrder: CollectiveOrder | null
                                           , currentHouseholdOrder: HouseholdOrder | null
+                                          , currentHouseholdOrders: HouseholdOrder[]
                                           , pastHouseholdOrders: PastHouseholdOrder[]
-                                          , currentCollectiveOrder: CollectiveOrder | null
                                           , payments: HouseholdPayment[]
                                           , products: ProductCatalogueEntry[]
+                                          , households: Household[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
                                           , loading: boolean
@@ -44,15 +46,17 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
           </div>
         </div>
         <CurrentOrder household={this.props.household}
-            currentOrder={this.props.currentHouseholdOrder}
-            currentCollectiveOrder={this.props.currentCollectiveOrder}
-            products={this.props.products}
-            loading={this.props.loading}
-            expanded={this.state.expanded == 'orders'}
-            otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}
-            toggle={this.toggle('orders')}
-            request={this.props.request}
-            reload={this.props.reload} />
+                      currentOrder={this.props.currentOrder}
+                      currentHouseholdOrder={this.props.currentHouseholdOrder}
+                      currentHouseholdOrders={this.props.currentHouseholdOrders}
+                      products={this.props.products}
+                      households={this.props.households}
+                      loading={this.props.loading}
+                      expanded={this.state.expanded == 'orders'}
+                      otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}
+                      toggle={this.toggle('orders')}
+                      request={this.props.request}
+                      reload={this.props.reload} />
         <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
                              expanded={this.state.expanded == 'past-orders'}
                              otherExpanding={!!this.state.expanded && this.state.expanded != 'past-orders'}

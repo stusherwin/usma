@@ -115,7 +115,7 @@ button[disabled], button[disabled]:hover {
 }
 
 .crossed-out-1 {
-  /* position: relative; */
+  position: relative;
   @apply text-grey-dark;
   /* @apply text-grey-dark !important; */
 }
@@ -125,14 +125,14 @@ button[disabled], button[disabled]:hover {
 }
 
 .crossed-out-1::after {
-  /* position: absolute; */
-  /* content: '.'; */
-  /* color: transparent; */
-  /* left: 0; */
-  /* right: 0; */
-  /* top: -.5rem; */
-  /* z-index: 1; */
-  /* @apply border-grey-dark border-b; */
+  position: absolute;
+  content: '.';
+  color: transparent;
+  left: 0;
+  right: 0;
+  top: -.5rem;
+  z-index: 1;
+  @apply border-grey-dark border-b;
 }
 
 .collective-orders-header {

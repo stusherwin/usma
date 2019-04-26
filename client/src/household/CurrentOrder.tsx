@@ -12,9 +12,11 @@ const transitionTime = 0.25;
 const minHeight = '5rem';
 
 export interface CurrentOrderProps { household: Household
-                                   , currentOrder: HouseholdOrder | null
-                                   , currentCollectiveOrder: CollectiveOrder | null
+                                   , currentOrder: CollectiveOrder | null
+                                   , currentHouseholdOrders: HouseholdOrder[]
+                                   , currentHouseholdOrder: HouseholdOrder | null
                                    , products: ProductCatalogueEntry[]
+                                   , households: Household[]
                                    , loading: boolean
                                    , expanded: boolean
                                    , otherExpanding: boolean
@@ -78,9 +80,9 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
   confirmAdd = (product: ProductCatalogueEntry) => {
     if(!this.state.addingProduct) return
-    if(!this.props.currentOrder) return
+    if(!this.props.currentHouseholdOrder) return
 
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentOrder.orderId, this.props.currentOrder.householdId, product.code, 1))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, product.code, 1))
       .then(this.props.reload)
       .then(_ => this.setState({ addingProduct: false
                                }))
@@ -93,18 +95,18 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   }
 
   joinOrder = () => {
-    if(!this.props.currentCollectiveOrder)
+    if(!this.props.currentOrder)
       return
 
-    const orderId = this.props.currentCollectiveOrder.id
+    const orderId = this.props.currentOrder.id
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
   }
 
   render() {
-    let currentOrder = this.props.currentOrder
-    let currentCollectiveOrder = this.props.currentCollectiveOrder
+    let householdOrder = this.props.currentHouseholdOrder
+    let order = this.props.currentOrder
 
     return (
       <div ref={this.container} className="min-h-20" style={{ 
@@ -119,12 +121,15 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           <h2 className="leading-none ml-20 relative flex">Current order
             <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
           </h2>
-          <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={currentOrder && !currentOrder.isAbandoned? currentOrder.totalIncVat : 0} /></span></h3>
+          <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={householdOrder && !householdOrder.isAbandoned? householdOrder.totalIncVat : 0} /></span></h3>
         </a>
-        { currentOrder
+        { householdOrder && order
           ? (
-            <CurrentHouseholdOrder householdOrder={currentOrder}
+            <CurrentHouseholdOrder currentOrder={order}
+                                   currentHouseholdOrder={householdOrder}
+                                   currentHouseholdOrders={this.props.currentHouseholdOrders}
                                    products={this.props.products}
+                                   households={this.props.households}
                                    loading={this.props.loading}
                                    reload={this.props.reload}
                                    request={this.props.request}
@@ -133,10 +138,10 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                                    cancelAdd={this.cancelAdd}
                                    confirmAdd={this.confirmAdd} />
           )
-          : (currentCollectiveOrder
+          : (order
           ? (
             <div className="shadow-inner-top bg-white px-2 py-4 text-grey-darker">
-              <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{currentCollectiveOrder.createdByName}</strong> started an order on <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p  >
+              <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
               <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
             </div>
           )
