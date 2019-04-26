@@ -114,6 +114,27 @@ button[disabled], button[disabled]:hover {
   @apply border-grey-dark border-b;
 }
 
+.crossed-out-1 {
+  /* position: relative; */
+  @apply text-grey-dark;
+  /* @apply text-grey-dark !important; */
+}
+
+.crossed-out-1 a {
+  /* @apply text-blue-darker !important; */
+}
+
+.crossed-out-1::after {
+  /* position: absolute; */
+  /* content: '.'; */
+  /* color: transparent; */
+  /* left: 0; */
+  /* right: 0; */
+  /* top: -.5rem; */
+  /* z-index: 1; */
+  /* @apply border-grey-dark border-b; */
+}
+
 .collective-orders-header {
   @apply absolute text-white p-2 z-10;
   background: rgba(0, 0, 0, 0.25) none repeat scroll 0% 0%;

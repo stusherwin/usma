@@ -54,34 +54,35 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
   render() {
     const householdOrder = this.props.householdOrder
     const unusedProducts = this.props.products.filter(p => !householdOrder.items.find(i => i.productCode == p.code))
-    const canAddItem = householdOrder.isOpen && !!unusedProducts.length
+    const canAddItem = !this.props.addingProduct && householdOrder.isOpen && !!unusedProducts.length
     const canLeaveOrder = !householdOrder.items.length
     const canReopenOrder = !!householdOrder.items.length && !householdOrder.isOpen
     const canAbandonOrder = !!householdOrder.items.length && householdOrder.isOpen
     const canCompleteOrder = !!householdOrder.items.length && householdOrder.isOpen
-    const orderButtons = [canLeaveOrder, canReopenOrder, canAbandonOrder, canCompleteOrder]
+    const orderButtons = [canLeaveOrder, canReopenOrder, canAbandonOrder, canCompleteOrder, canAddItem]
 
     return (
       <div>
-        {(orderButtons.some(b => b)) && 
-          <div className="bg-order-dark p-2 pt-0">
+        {orderButtons.some(b => b) &&
+          <div className="bg-order-dark p-2 pt-0 flex flex-wrap content-start items-start">
             {canLeaveOrder && 
-              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
+              <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
             }
             {canReopenOrder &&
-              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
+              <div className="flex-no-grow flex-no-shrink mr-2 mt-2">
+                <span className="mr-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was {householdOrder.isAbandoned ? 'abandoned' : 'completed'}</span>
+                <button disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen</button>
+              </div>
             }
             {canAbandonOrder &&
-              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon order</button>
+              <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
             }
             {canCompleteOrder && 
-              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</button>
+              <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
             }
-          </div>
-        }
-        {!this.props.addingProduct && canAddItem &&
-          <div className="bg-order-dark p-2 flex justify-end">
-            <button onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
+            {canAddItem &&
+              <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add item</button>
+            }
           </div>
         }
         {!this.props.addingProduct && 
@@ -93,7 +94,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <div>
                 { householdOrder.items.map((i, ix) =>
                   <div key={i.productId} className={classNames({'mt-8': ix > 0})}>
-                    <div className="flex justify-between items-baseline">
+                    <div className={classNames('flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}>
                       <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
                       <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
                         {householdOrder.isOpen
@@ -105,29 +106,24 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                       </span>
                       <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotalExcVat} />
                     </div>
-                    <div className="flex justify-between items-end mt-2">
-                      <span className="flex-no-grow">{i.productName}</span>
+                    <div className="flex justify-between items-end">
+                      <span className={classNames('flex-no-grow', {'crossed-out-1': householdOrder.isAbandoned})}>{i.productName}</span>
                       {householdOrder.isOpen &&
                         <button className="ml-4" disabled={this.props.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                       }
                     </div>
                   </div>
                 )}
-                <div className="mt-8 flex justify-between items-baseline">
+                <div className={classNames('mt-8 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}>
                   <span className="flex-no-shrink flex-no-grow">VAT:</span>
                   <Money className="flex-no-shrink flex-no-grow text-right" amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
                 </div>
-                <div className="mt-2 flex justify-between items-baseline">
+                <div className={classNames('mt-2 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}>
                   <span className="flex-no-shrink flex-no-grow font-bold">Total:</span>
                   <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.totalIncVat} />
                 </div>
               </div>
             }
-            {/* {canAddItem && householdOrder.items.length > 3 &&
-              <div className="p-2 flex justify-end">
-                <button onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
-              </div>
-            } */}
           </div>
         }
         {this.props.addingProduct &&

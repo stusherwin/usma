@@ -87,8 +87,9 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
       <div id="add-container">
         <div className="bg-product-light text-white p-2 relative">
           <div className="bg-img-product bg-no-repeat w-16 h-16 absolute"></div>
-          <h2 className="leading-none ml-20 relative flex">Add a product</h2>
-          <div className="relative mt-4 ml-20">
+          <h2 className="leading-none ml-20">Add item</h2>
+          <label className="block mt-4 ml-20" htmlFor="search">Search for a particular product:</label>
+          <div className="relative mt-4">
             <span className="absolute text-grey-darker" style={{bottom: '0px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
             <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
           </div>
