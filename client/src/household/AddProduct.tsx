@@ -96,20 +96,23 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
             <button onClick={this.props.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
           </div>
         </div>
-        <div className="py-4 shadow-inner-top">
-          {this.state.products.map((p, i) => 
-            <div key={p.code} className={classNames('px-2 bg-white', {'mt-8': i > 0})}>
-              <div className="flex justify-between items-baseline">
-                <span className="flex-no-shrink flex-no-grow font-bold">{p.code}</span>
-                <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.priceExcVat} />
+        <div className="py-4 px-2 shadow-inner-top">
+          { !this.state.products.length
+            ? <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products found</div>
+            : this.state.products.map((p, i) => 
+              <div key={p.code} className={classNames('bg-white', {'mt-8': i > 0})}>
+                <div className="flex justify-between items-baseline">
+                  <span className="flex-no-shrink flex-no-grow font-bold">{p.code}</span>
+                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.priceExcVat} />
+                </div>
+                <p className="mt-2">{p.name}</p>
+                <div className="flex justify-between items-end mt-2">
+                  <span className="flex-no-shrink flex-no-grow text-grey">VAT: {p.vatRate} rate</span>
+                  <button className="ml-2" onClick={_ => this.props.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                </div>
               </div>
-              <p className="mt-2">{p.name}</p>
-              <div className="flex justify-between items-end mt-2">
-                <span className="flex-no-shrink flex-no-grow text-grey">VAT: {p.vatRate} rate</span>
-                <button className="ml-2" onClick={_ => this.props.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
-              </div>
-            </div>
-          )}
+            )
+          }
         </div>
         {this.state.showLoadMore && this.state.loadMoreScrollElement &&
           <LoadMore scrollElement={this.state.loadMoreScrollElement} loadMore={this.loadMore} />

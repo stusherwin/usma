@@ -12,36 +12,15 @@ import { AddProduct } from './AddProduct'
 export interface CurrentHouseholdOrderProps { householdOrder: HouseholdOrder
                                             , products: ProductCatalogueEntry[]
                                             , loading: boolean
+                                            , addingProduct: boolean
                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                             , reload: () => Promise<void>
+                                            , startAdd: () => void
+                                            , cancelAdd: () => void
+                                            , confirmAdd: (product: ProductCatalogueEntry) => void
                                             }
 
-export interface CurrentHouseholdOrderState { addingProduct: boolean
-                                            }
-
-export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, CurrentHouseholdOrderState> {
-  constructor(props: CurrentHouseholdOrderProps) {
-    super(props)
-
-    this.state = { addingProduct: false
-                 }
-  }
-
-  startAdd = () => this.setState({ addingProduct: true })
-
-  cancelAdd = () =>
-    this.setState({ addingProduct: false
-                  })
-
-  confirmAdd = (product: ProductCatalogueEntry) => {
-    if(!this.state.addingProduct) return
-
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, product.code, 1))
-      .then(this.props.reload)
-      .then(_ => this.setState({ addingProduct: false
-                               }))
-  }
-
+export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
   removeItem = (item: OrderItem) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productId))
       .then(this.props.reload)
@@ -87,25 +66,25 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
         {(orderButtons.some(b => b)) && 
           <div className="bg-order-dark p-2 pt-0">
             {canLeaveOrder && 
-              <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
+              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
             }
             {canReopenOrder &&
-              <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
+              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
             }
             {canAbandonOrder &&
-              <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon order</button>
+              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon order</button>
             }
             {canCompleteOrder && 
-              <button className="mr-2 mt-2" disabled={this.state.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</button>
+              <button className="mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete order</button>
             }
           </div>
         }
-        {!this.state.addingProduct && canAddItem &&
+        {!this.props.addingProduct && canAddItem &&
           <div className="bg-order-dark p-2 flex justify-end">
-            <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
+            <button onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
           </div>
         }
-        {!this.state.addingProduct && 
+        {!this.props.addingProduct && 
           <div className="shadow-inner-top px-2 py-4">
             {!householdOrder.items.length &&
               <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet {!this.props.products.length && ' - the product catalogue is empty'}</div>
@@ -129,7 +108,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                     <div className="flex justify-between items-end mt-2">
                       <span className="flex-no-grow">{i.productName}</span>
                       {householdOrder.isOpen &&
-                        <button className="ml-4" disabled={this.state.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                        <button className="ml-4" disabled={this.props.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                       }
                     </div>
                   </div>
@@ -144,18 +123,18 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 </div>
               </div>
             }
-            {canAddItem && householdOrder.items.length > 3 &&
+            {/* {canAddItem && householdOrder.items.length > 3 &&
               <div className="p-2 flex justify-end">
-                <button onClick={this.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
+                <button onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add a product</button>
               </div>
-            }
+            } */}
           </div>
         }
-        {this.state.addingProduct &&
+        {this.props.addingProduct &&
           <AddProduct products={unusedProducts}
                       loading={this.props.loading}
-                      cancelAdd={this.cancelAdd}
-                      confirmAdd={this.confirmAdd} />
+                      cancelAdd={this.props.cancelAdd}
+                      confirmAdd={this.props.confirmAdd} />
         }
       </div>
     )

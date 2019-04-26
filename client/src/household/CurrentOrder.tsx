@@ -23,18 +23,26 @@ export interface CurrentOrderProps { household: Household
                                    , reload: () => Promise<void>
                                    }
 
-export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
+export interface CurrentOrderState { addingProduct: boolean
+                                   }
+
+export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrderState> {
   container: React.RefObject<HTMLDivElement>
 
   constructor(props: CurrentOrderProps) {
     super(props)
 
     this.container = React.createRef();
+    this.state = { addingProduct: false
+               }
   }
 
   componentDidUpdate(prevProps: CurrentOrderProps) {
     if(prevProps.expanded != this.props.expanded) {
       this.animateHeight()
+      if(!prevProps.expanded) {
+        this.setState({addingProduct: false})
+      }
     }
   }
 
@@ -62,6 +70,20 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
     if(this.props.expanded) {
       el.style.height = null;
     }
+  }
+
+  startAdd = () => this.setState({ addingProduct: true })
+
+  cancelAdd = () => this.setState({ addingProduct: false })
+
+  confirmAdd = (product: ProductCatalogueEntry) => {
+    if(!this.state.addingProduct) return
+    if(!this.props.currentOrder) return
+
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentOrder.orderId, this.props.currentOrder.householdId, product.code, 1))
+      .then(this.props.reload)
+      .then(_ => this.setState({ addingProduct: false
+                               }))
   }
 
   newOrder = () => {
@@ -105,7 +127,11 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, {}> {
                                    products={this.props.products}
                                    loading={this.props.loading}
                                    reload={this.props.reload}
-                                   request={this.props.request} />
+                                   request={this.props.request}
+                                   addingProduct={this.state.addingProduct}
+                                   startAdd={this.startAdd}
+                                   cancelAdd={this.cancelAdd}
+                                   confirmAdd={this.confirmAdd} />
           )
           : (currentCollectiveOrder
           ? (
