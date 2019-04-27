@@ -9,3 +9,4 @@ run-server
 /dist/
 /client/static/dist/
 /server/data/
+/client/static/product-images/

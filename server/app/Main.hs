@@ -26,7 +26,7 @@ module Main where
   import Web.Cookie (parseCookiesText)
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
   import Data.Time.Calendar (Day)
-  import System.Directory (copyFile, createDirectoryIfMissing)
+  import System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
   import Control.Monad (mzero, when, void)
   
   import Api
@@ -42,10 +42,60 @@ module Main where
   import ProductCatalogueImport
   import ProductCatalogueEntry
 
+  import Network.HTTP.Conduit
+  import Text.HTML.TagSoup
+  import qualified Data.ByteString.Lazy as L
+  import qualified Data.ByteString.Lazy.Char8 as C
+  import Data.Text.Encoding
+  import System.IO (hFlush, stdout)
+  import Control.Exception (handle, SomeException(..))
+
+  data ProductData = ProductData { url :: String
+                                 , title :: String
+                                 , imageUrl :: String
+                                 , size :: Int
+                                 }
+
+  fetchProductData :: String -> IO (Maybe ProductData)
+  fetchProductData code = handle handleException $ do
+    html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
+    case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ C.unpack html of
+      [] -> return Nothing
+      (tags:_) -> do
+        let a = tags !! 2
+        let img = tags !! 4
+        return $ Just $ ProductData { url = fromAttrib "href" a
+                                    , title = fromAttrib "title" a
+                                    , imageUrl = fromAttrib "src" img
+                                    , size = read $ fromAttrib "height" img
+                                    }
+    where
+    handleException :: HttpException -> IO (Maybe ProductData)
+    handleException _ = return Nothing
+
+  fetchProductImage :: String -> IO (Maybe L.ByteString)
+  fetchProductImage code = handle handleException $ do 
+    let dir = "client/static/product-images/"
+    let file = dir ++ code ++ ".jpg"
+    exists <- doesFileExist file 
+    when (not exists) $ do
+      createDirectoryIfMissing True dir
+      productData <- fetchProductData code
+      case productData of
+        Just r -> do
+          imageData <- simpleHttp (imageUrl r)
+          L.writeFile file imageData
+        _ -> copyFile ("client/static/img/404.jpg") file
+    image <- L.readFile file
+    return $ Just image
+    where
+    handleException :: HttpException -> IO (Maybe L.ByteString)
+    handleException _ = return Nothing
+  
   main :: IO ()
   main = do
     config <- getConfig
-    run (port config) $ app config
+    run (Config.port config) $ app config
 
   app :: Config -> Application
   app config = logStdoutDev
@@ -76,6 +126,7 @@ module Main where
                   :<|> households
                   :<|> householdPayments
                   :<|> productCatalogue
+                  :<|> productImage
     where
     conn = connectionString config
     
@@ -102,6 +153,13 @@ module Main where
 
     productCatalogue :: Handler [ProductCatalogueEntry]
     productCatalogue = liftIO $ D.getProductCatalogue conn
+
+    productImage :: String -> Handler L.ByteString
+    productImage code = do
+      image <- liftIO $ fetchProductImage code
+      case image of
+        Just i -> return i
+        _ -> throwError err404
       
   commandServer :: Config -> Server CommandAPI
   commandServer config = createOrder

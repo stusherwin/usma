@@ -3,6 +3,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Api where
   import Data.Aeson
@@ -19,6 +21,16 @@ module Api where
   import Household
   import HouseholdPayment
   import ProductCatalogueEntry
+  import qualified Data.ByteString.Lazy as L
+  import Network.HTTP.Media ((//))
+
+  data Jpeg
+
+  instance Accept Jpeg where
+    contentType _ = "image" // "jpeg"
+
+  instance MimeRender Jpeg (L.ByteString) where
+    mimeRender _ = Prelude.id
  
   type AppAPI = 
          "api" :> (
@@ -35,6 +47,7 @@ module Api where
     :<|> "households" :> Get '[JSON] [Household]
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
     :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
+    :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] L.ByteString
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
