@@ -111,38 +111,48 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
             }
             {!!householdOrder.items.length &&
-              <div>
+              <table>
                 { householdOrder.items.map((i, ix) =>
-                  <div key={i.productId} className={classNames({'mt-8': ix > 0})}>
-                    <div className={classNames('flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}>
-                      <span className="flex-no-shrink flex-no-grow font-bold w-1/3">{i.productCode}</span>
-                      <span className="flex-no-shrink flex-no-grow w-1/3 text-center">
-                        {householdOrder.isOpen
-                        ? <select className="flex-no-grow flex-no-shrink mr-2 border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
+                  [
+                  <tr key={i.productId}>
+                    <td className={classNames('w-20 h-20 align-top', {'pt-8': ix > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${i.productCode}'`} /></td>
+                    <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': ix > 0})}>{i.productCode}</td>
+                    <td className={classNames('pl-2 pb-2 font-bold align-baseline', {'pt-8': ix > 0})}>
+                      {householdOrder.isOpen
+                        ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
                             {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
                           </select>
                         : <span>x {i.itemQuantity}</span>
-                        }
-                      </span>
-                      <Money className="flex-no-shrink flex-no-grow w-1/3 text-right" amount={i.itemTotalExcVat} />
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <span className={classNames('flex-no-grow', {'crossed-out-1': householdOrder.isAbandoned})}>{i.productName}</span>
+                      }
+                    </td>
+                    <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': ix > 0})} colSpan={2}><Money amount={i.itemTotalExcVat} /></td>
+                  </tr>
+                  ,
+                  <tr>
+                    <td className={classNames('pb-2 align-top')} colSpan={3}>{i.productName}</td>
+                    <td className={classNames('pl-2 align-top text-right')}>
                       {householdOrder.isOpen &&
                         <button className="ml-4" disabled={this.props.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                       }
-                    </div>
-                  </div>
-                )}
-                <div className={classNames('mt-8 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}>
-                  <span className="flex-no-shrink flex-no-grow">VAT:</span>
-                  <Money className="flex-no-shrink flex-no-grow text-right" amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
-                </div>
-                <div className={classNames('mt-2 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}>
-                  <span className="flex-no-shrink flex-no-grow font-bold">Total:</span>
-                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={householdOrder.totalIncVat} />
-                </div>
-              </div>
+                    </td>
+                  </tr>
+                  ,
+                  <tr>
+                    <td className={classNames('text-grey')} colSpan={3}>VAT: {i.productVatRate} rate</td>
+                    <td className={classNames('pl-2')}>&nbsp;</td>
+                  </tr>
+                  ])
+                }
+                <tr>
+                  <td className={classNames('pt-8 align-baseline')} colSpan={3}>VAT:</td>
+                  <td className={classNames('pl-2 pt-8 text-right align-baseline')} colSpan={2}><Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} /></td>
+                </tr>
+                <tr>
+                  <td className={classNames('pt-2 align-baseline font-bold')} colSpan={3}>Total:</td>
+                  <td className={classNames('pl-2 pt-2 text-right align-baseline font-bold')} colSpan={2}><Money amount={householdOrder.totalIncVat} /></td>
+                </tr>
+                {/* <div className={classNames('mt-8 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}> */}
+              </table>
             }
           </div>
         }
