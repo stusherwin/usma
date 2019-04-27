@@ -9,7 +9,6 @@
 * Verify order (check off against invoice)
 * server api regression tests
 * Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
-* Loading indicator needs to be more prominent (disable all controls?)
 * Hide previous error on successful response
 * Error message styling
 * Household page sections (current order, past orders, payments) - separate tabs?

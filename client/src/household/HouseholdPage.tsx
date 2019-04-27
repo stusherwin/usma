@@ -42,7 +42,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         )}
         <div className="bg-household-light p-2 pt-4 pb-4">
           <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative">
-            <h2 className="leading-none text-household-darker">{this.props.household.name}</h2>
+            <h2 className="leading-none text-black">{this.props.household.name}</h2>
           </div>
         </div>
         <CurrentOrder household={this.props.household}
@@ -70,7 +70,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                            toggle={this.toggle('payments')}
                            request={this.props.request}
                            reload={this.props.reload} />
-        <div className="bg-household-light p-2 pl-20 text-household-darker">
+        <div className="bg-household-light p-2 pl-20 text-black">
           <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={this.props.household.balance} /></span></h3>
         </div>
         <div className={classNames('fixed pin bg-black flex items-center justify-center text-grey-lighter', {

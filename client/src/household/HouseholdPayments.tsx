@@ -70,7 +70,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, {
             transitionDelay: this.props.expanded? '0s' : (this.props.otherExpanding? `${transitionTime / 2}s` : '0s')
           }} onTransitionEnd={this.unsetHeight}>
         <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className={classNames(
-            'bg-payment-light p-2 block no-underline hover:no-underline text-payment-dark hover:text-payment-dark min-h-20', {
+            'bg-payment-light p-2 block no-underline hover:no-underline text-black hover:text-black min-h-20', {
             })}>
           <div className="bg-img-payment bg-no-repeat w-16 h-16 absolute"></div>
           <h2 className="leading-none ml-20 relative flex">Payments

@@ -20,7 +20,7 @@ export interface CurrentHouseholdOrderProps { currentOrder: CollectiveOrder
                                             , reload: () => Promise<void>
                                             , startAdd: () => void
                                             , cancelAdd: () => void
-                                            , confirmAdd: (product: ProductCatalogueEntry) => void
+                                            , confirmAdd: (product: ProductCatalogueEntry) => Promise<void>
                                             }
 
 export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
@@ -77,7 +77,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
             }
             {canReopenOrder &&
-              <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen</button>
+              <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.reopenOrder}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
             }
             {canAbandonOrder &&
               <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.abandonOrder}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
@@ -86,7 +86,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.completeOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
             }
             {canAddItem &&
-              <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add item</button>
+              <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={this.props.startAdd}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
             }
           </div>
         }
@@ -103,7 +103,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <span>, waiting for all orders to be completed</span>
               : !allPaid?
                 <span>, waiting for everyone to pay up</span>
-              : <span>, waiting for order to be placed</span>
+              : <span>, collective order can now be placed</span>
               }
               </div>
             }

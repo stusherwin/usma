@@ -79,13 +79,11 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   cancelAdd = () => this.setState({ addingProduct: false })
 
   confirmAdd = (product: ProductCatalogueEntry) => {
-    if(!this.state.addingProduct) return
-    if(!this.props.currentHouseholdOrder) return
+    if(!this.state.addingProduct) return Promise.resolve();
+    if(!this.props.currentHouseholdOrder) return Promise.resolve();
 
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, product.code, 1))
+    return this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, product.code, 1))
       .then(this.props.reload)
-      .then(_ => this.setState({ addingProduct: false
-                               }))
   }
 
   newOrder = () => {

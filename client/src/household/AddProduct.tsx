@@ -2,9 +2,6 @@ import * as React from 'react';
 import * as classNames from 'classnames'
 
 import { HouseholdOrder, ProductCatalogueEntry, OrderItem } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Util } from '../common/Util'
-import { RouterLink } from '../common/RouterLink'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { LoadMore } from '../common/LoadMore'
@@ -14,7 +11,7 @@ const pageSize = 10
 export interface AddProductProps { products: ProductCatalogueEntry[]
                                  , loading: boolean
                                  , cancelAdd: () => void
-                                 , confirmAdd: (p: ProductCatalogueEntry) => void
+                                 , confirmAdd: (p: ProductCatalogueEntry) => Promise<void>
                                  }
 
 export interface AddProductState { products: ProductCatalogueEntry[]
@@ -82,19 +79,24 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
                   })
   }
 
+  confirmAdd = (p: ProductCatalogueEntry) => {
+    this.props.confirmAdd(p)
+      .then(() => this.resetFilteredProducts(this.state.searchString, this.state.filteredProducts.filter(fp => fp.code != p.code)))
+  }
+
   render() {
     return (
       <div id="add-container">
         <div className="bg-product-light text-white p-2 relative">
           <div className="bg-img-product bg-no-repeat w-16 h-16 absolute"></div>
-          <h2 className="leading-none ml-20">Add item</h2>
+          <h2 className="leading-none ml-20">Add items</h2>
           <label className="block mt-4 ml-20" htmlFor="search">Search for a particular product:</label>
           <div className="relative mt-4">
             <span className="absolute text-grey-darker" style={{bottom: '0px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
             <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={this.state.searchString} onChange={e => this.searchChanged(e.target.value)} />
           </div>
           <div className="absolute pin-r pin-t mt-2 mr-2">
-            <button onClick={this.props.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+            <button onClick={this.props.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Close</button>
           </div>
         </div>
         <div className="py-4 px-2 shadow-inner-top bg-white">
@@ -109,7 +111,7 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
                 <p className="mt-2">{p.name}</p>
                 <div className="flex justify-between items-end mt-2">
                   <span className="flex-no-shrink flex-no-grow text-grey">VAT: {p.vatRate} rate</span>
-                  <button className="ml-2" onClick={_ => this.props.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                  <button className="ml-2" onClick={_ => this.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
                 </div>
               </div>
             )
