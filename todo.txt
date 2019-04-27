@@ -17,4 +17,3 @@
 
 * Style product row / add product row
 * Show vat on product row
-* Negative payments

@@ -96,9 +96,9 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products added to this order yet {!this.props.products.length && ' - the product catalogue is empty'}</div>
             }
             {householdOrder.isComplete &&
-              <div className="text-green mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order complete
+              <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order complete
               {!orderMinimumReached?
-                <span>, collective total is <Money amount={this.props.currentOrder.totalIncVat} />. Waiting for &pound;250.00 order minimum</span>
+                <span>, waiting for minimum order to be reached. Current total is <Money amount={this.props.currentOrder.totalIncVat} /> of &pound;250.00</span>
               : !allComplete?
                 <span>, waiting for all orders to be completed</span>
               : !allPaid?
@@ -108,7 +108,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               </div>
             }
             {householdOrder.isAbandoned &&
-              <div className="mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order abandoned</div>
+              <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
             }
             {!!householdOrder.items.length &&
               <div>

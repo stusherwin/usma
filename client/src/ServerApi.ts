@@ -34,11 +34,12 @@ const query = {
 
   households(): Promise<Household[]> {
     return Http.get<Household[]>('/api/query/households')
+      .then(res => { res.forEach(h => { h.totalPayments = -h.totalPayments; h.balance = -h.balance;}); return res })
   },
 
   householdPayments(): Promise<HouseholdPayment[]> {
     return Http.get<HouseholdPayment[]>('/api/query/household-payments')
-      .then(res => { res.forEach(hp => hp.date = new Date(hp.date)); return res })
+      .then(res => { res.forEach(hp => { hp.date = new Date(hp.date); hp.amount = -hp.amount;}); return res })
   },
 
   productCatalogue(): Promise<ProductCatalogueEntry[]> {
