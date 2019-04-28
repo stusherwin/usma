@@ -102,19 +102,29 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
         <div className="py-4 px-2 shadow-inner-top bg-white">
           { !this.state.products.length
             ? <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products found</div>
-            : this.state.products.map((p, i) => 
-              <div key={p.code} className={classNames('bg-white', {'mt-8': i > 0})}>
-                <div className="flex justify-between items-baseline">
-                  <span className="flex-no-shrink flex-no-grow font-bold">{p.code}</span>
-                  <Money className="flex-no-shrink flex-no-grow text-right font-bold" amount={p.priceExcVat} />
-                </div>
-                <p className="mt-2">{p.name}</p>
-                <div className="flex justify-between items-end mt-2">
-                  <span className="flex-no-shrink flex-no-grow text-grey">VAT: {p.vatRate} rate</span>
-                  <button className="ml-2" onClick={_ => this.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
-                </div>
-              </div>
-            )
+            : <table>
+                {this.state.products.map((p, i) => 
+                  [
+                  <tr key={p.code + '-1'}>
+                    <td className={classNames('w-20 h-20 align-top', {'pt-8': i > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${p.code}`} /></td>
+                    <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': i > 0})} colSpan={3}>{p.code}</td>
+                    <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': i > 0})}><Money amount={p.priceExcVat} /></td>
+                  </tr>
+                  ,
+                  <tr key={p.code + '-2'}>
+                    <td className={classNames('pb-2 align-top')} colSpan={2}>{p.name}</td>
+                    <td className={classNames('pl-2 align-top text-right whitespace-no-wrap')} colSpan={2}>
+                      <button className="ml-2" onClick={_ => this.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                    </td>
+                  </tr>
+                  ,
+                  <tr key={p.code + '-3'}>
+                    <td className={classNames('text-grey')} colSpan={3}>VAT: {p.vatRate} rate</td>
+                    <td className={classNames('pl-2')}>&nbsp;</td>
+                  </tr>
+                  ])
+                }
+              </table>
           }
         </div>
         {this.state.showLoadMore && this.state.loadMoreScrollElement &&

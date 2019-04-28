@@ -114,10 +114,10 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
               <table>
                 { householdOrder.items.map((i, ix) =>
                   [
-                  <tr key={i.productId}>
-                    <td className={classNames('w-20 h-20 align-top', {'pt-8': ix > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${i.productCode}'`} /></td>
+                  <tr key={i.productId + '-1'}>
+                    <td className={classNames('w-20 h-20 align-top', {'pt-8': ix > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${i.productCode}`} /></td>
                     <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': ix > 0})}>{i.productCode}</td>
-                    <td className={classNames('pl-2 pb-2 font-bold align-baseline', {'pt-8': ix > 0})}>
+                    <td className={classNames('pl-2 pb-2 align-baseline', {'pt-8': ix > 0})}>
                       {householdOrder.isOpen
                         ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
                             {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
@@ -128,7 +128,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                     <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': ix > 0})} colSpan={2}><Money amount={i.itemTotalExcVat} /></td>
                   </tr>
                   ,
-                  <tr>
+                  <tr key={i.productId + '-2'}>
                     <td className={classNames('pb-2 align-top')} colSpan={3}>{i.productName}</td>
                     <td className={classNames('pl-2 align-top text-right')}>
                       {householdOrder.isOpen &&
@@ -137,7 +137,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                     </td>
                   </tr>
                   ,
-                  <tr>
+                  <tr key={i.productId + '-3'}>
                     <td className={classNames('text-grey')} colSpan={3}>VAT: {i.productVatRate} rate</td>
                     <td className={classNames('pl-2')}>&nbsp;</td>
                   </tr>
