@@ -4,11 +4,11 @@
 module HouseholdOrder where
   import Data.Aeson
   import GHC.Generics
-  import Data.Time.Calendar (Day)
+  import Data.Time.Clock (UTCTime)
   import OrderItem (OrderItem)
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
-                                       , orderCreatedDate :: Day
+                                       , orderCreatedDate :: UTCTime
                                        , orderCreatedBy :: Int
                                        , orderCreatedByName :: String
                                        , householdId :: Int
@@ -19,6 +19,8 @@ module HouseholdOrder where
                                        , status :: HouseholdOrderStatus
                                        , totalExcVat :: Int
                                        , totalIncVat :: Int
+                                       , newTotalExcVat :: Maybe Int
+                                       , newTotalIncVat :: Maybe Int
                                        , items :: [OrderItem]
                                        } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrder
@@ -31,9 +33,9 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails
 
-  householdOrder :: Int -> Day -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> [OrderItem] -> HouseholdOrder
-  householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled totalExcVat totalIncVat items = 
-    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open status totalExcVat totalIncVat items 
+  householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> HouseholdOrder
+  householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled totalExcVat totalIncVat newTotalExcVat newTotalIncVat items = 
+    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open status totalExcVat totalIncVat newTotalExcVat newTotalIncVat items 
     where
     open = not complete && not cancelled
     status = case (complete, cancelled) of

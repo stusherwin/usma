@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder, Product, OrderItem } from '../../Types'
+import { PastHouseholdOrder, OrderItem } from '../../Types'
 import { ServerApi, ApiError } from '../../ServerApi'
 import { Util } from '../../common/Util'
 import { RouterLink } from '../../common/RouterLink'

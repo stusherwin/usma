@@ -1,4 +1,4 @@
-import { Product, VatRate, Household, CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
+import { Household, CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Util } from './common/Util'
 
 const query = {
@@ -19,17 +19,12 @@ const query = {
 
   householdOrders(): Promise<HouseholdOrder[]> {
     return Http.get<HouseholdOrder[]>('/api/query/household-orders')
-      .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
+      .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
   },
 
   pastHouseholdOrders(): Promise<PastHouseholdOrder[]> {
     return Http.get<PastHouseholdOrder[]>('/api/query/past-household-orders')
       .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
-  },
-
-  products(): Promise<Product[]> {
-    return Http.get<Product[]>('/api/query/products')
-      .then(res => { res.forEach(p => p.priceUpdated = p.priceUpdated && new Date(p.priceUpdated)); return res })
   },
 
   households(): Promise<Household[]> {

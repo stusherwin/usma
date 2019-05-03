@@ -17,9 +17,9 @@ module ProductCatalogueImport where
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
   import Data.ByteString (ByteString)
   import System.Directory (copyFile)
-  import Product
   import ProductCatalogueData
   import Database
+  import Product (VatRate(..))
 
   splitOn :: Eq a => a -> [a] -> [[a]]
   splitOn ch list = f list [[]] where
@@ -47,7 +47,7 @@ module ProductCatalogueImport where
         in  Just $ ProductCatalogueData code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' Nothing
       parse _ _ = Nothing
 
-  importProductCatalogue :: ByteString -> Day -> String -> IO ()
-  importProductCatalogue connectionString day filePath = do
+  importProductCatalogue :: ByteString -> UTCTime -> String -> IO ()
+  importProductCatalogue connectionString date filePath = do
     catalogue <- loadProductCatalogue filePath
-    replaceProductCatalogue connectionString day catalogue
+    replaceProductCatalogue connectionString date catalogue

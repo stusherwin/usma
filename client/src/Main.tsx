@@ -16,7 +16,7 @@ import { HouseholdsPage as AdminHouseholdsPage } from './admin/household/Househo
 import { HomePage as AdminHomePage } from './admin/HomePage'
 import { WelcomePage } from './household/WelcomePage'
 import { HouseholdPage } from './household/HouseholdPage'
-import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Product, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
+import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
 
 export interface MainProps {}
 export interface MainState { loading: boolean

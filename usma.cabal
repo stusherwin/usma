@@ -19,6 +19,7 @@ library
                      , HouseholdOrder
                      , PastCollectiveOrder
                      , PastHouseholdOrder
+                     , PastOrderItem
                      , OrderItem
                      , Household
                      , Product

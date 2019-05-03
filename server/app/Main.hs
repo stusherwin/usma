@@ -35,7 +35,6 @@ module Main where
   import HouseholdOrder
   import PastCollectiveOrder
   import PastHouseholdOrder
-  import Product
   import Household
   import HouseholdPayment
   import Config
@@ -122,7 +121,6 @@ module Main where
                   :<|> pastCollectiveOrders
                   :<|> householdOrders
                   :<|> pastHouseholdOrders
-                  :<|> products
                   :<|> households
                   :<|> householdPayments
                   :<|> productCatalogue
@@ -141,9 +139,6 @@ module Main where
     
     pastHouseholdOrders :: Handler [PastHouseholdOrder]
     pastHouseholdOrders = liftIO $ D.getPastHouseholdOrders conn
-
-    products :: Handler [Product]
-    products = liftIO $ D.getProducts conn
 
     households :: Handler [Household]
     households = liftIO $ D.getHouseholds conn
@@ -185,7 +180,7 @@ module Main where
     
     createOrder :: Int -> Handler Int
     createOrder householdId = do
-      day <- liftIO $ getCurrentTime >>= return . utctDay      
+      day <- liftIO $ getCurrentTime
       liftIO $ D.createOrder conn day householdId
 
     deleteOrder :: Int -> Handler ()
@@ -198,7 +193,9 @@ module Main where
     abandonOrder orderId = liftIO $ D.closeOrder conn True orderId
 
     createHouseholdOrder :: Int -> Int -> Handler ()
-    createHouseholdOrder householdId orderId = liftIO $ D.createHouseholdOrder conn householdId orderId
+    createHouseholdOrder householdId orderId =  do
+      day <- liftIO $ getCurrentTime
+      liftIO $ D.createHouseholdOrder conn day householdId orderId
 
     deleteHouseholdOrder :: Int -> Int -> Handler ()
     deleteHouseholdOrder householdId orderId = liftIO $ D.deleteHouseholdOrder conn householdId orderId
@@ -213,7 +210,9 @@ module Main where
     reopenHouseholdOrder householdId orderId = liftIO $ D.reopenHouseholdOrder conn householdId orderId
  
     ensureHouseholdOrderItem :: Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
-    ensureHouseholdOrderItem householdId orderId productCode details = liftIO $ D.ensureHouseholdOrderItem conn householdId orderId productCode details
+    ensureHouseholdOrderItem householdId orderId productCode details = do
+      day <- liftIO $ getCurrentTime
+      liftIO $ D.ensureHouseholdOrderItem conn day householdId orderId productCode details
 
     removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem householdId orderId productId = liftIO $ D.removeHouseholdOrderItem conn householdId orderId productId
@@ -242,7 +241,8 @@ module Main where
         throwError err400
       let file = (files multipartData) !! 0
       liftIO $ createDirectoryIfMissing True "server/data/uploads/"
-      day <- liftIO $ getCurrentTime >>= return . utctDay
+      date <- liftIO $ getCurrentTime
+      let day = utctDay date
       let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (unpack $ fdFileName file)
       liftIO $copyFile (fdFilePath file) destFilePath
-      liftIO $ importProductCatalogue conn day destFilePath
+      liftIO $ importProductCatalogue conn date destFilePath

@@ -11,3 +11,10 @@
 * Hide previous error on successful response
 * Error message styling
 * Household page sections (current order, past orders, payments) - separate tabs?
+
+* Product import - what happens when product is removed from catalogue?
+* cast(round(p.price * v.multiplier * hoi.quantity) as int) should be cast(round(p.price * v.multiplier) as int)  * hoi.quantity
+* Product price updates on collective order, all updates accepted
+* All order totals should be based on item_total_inc_vat
+* Why left join on getCollectiveOrder? getPastCollectiveOrders?
+* household orders - items don't need to be sum()

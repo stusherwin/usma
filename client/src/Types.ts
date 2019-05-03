@@ -1,14 +1,5 @@
 export type VatRate = 'Zero' | 'Standard' | 'Reduced'
 
-export type Product = { id: number
-                      , code: string
-                      , name: string
-                      , priceExcVat: number
-                      , priceIncVat: number
-                      , vatRate: VatRate
-                      , priceUpdated: Date | null
-                      }
-
 export type ProductCatalogueEntry = { code: string
                                     , name: string
                                     , priceExcVat: number
@@ -41,7 +32,7 @@ export type PastCollectiveOrder = { id: number
                                   , isAbandoned: boolean
                                   , totalExcVat: number
                                   , totalIncVat: number
-                                  , items: OrderItem[]
+                                  , items: PastOrderItem[]
                                   }
 
 export type HouseholdOrder = { orderId: number
@@ -56,6 +47,8 @@ export type HouseholdOrder = { orderId: number
                              , status: 'Open' | 'Complete' | 'Abandoned'
                              , totalExcVat: number
                              , totalIncVat: number
+                             , newTotalExcVat: number | null
+                             , newTotalIncVat: number | null
                              , items: OrderItem[]
                              }
 
@@ -68,7 +61,7 @@ export type PastHouseholdOrder = { orderId: number
                                  , isAbandoned: boolean
                                  , totalExcVat: number
                                  , totalIncVat: number
-                                 , items: OrderItem[]
+                                 , items: PastOrderItem[]
                                  }
 
 export type OrderItem = { productId: number
@@ -80,7 +73,23 @@ export type OrderItem = { productId: number
                         , itemQuantity: number
                         , itemTotalExcVat: number
                         , itemTotalIncVat: number
+                        , productDiscontinued: boolean
+                        , newProductPriceExcVat: number | null
+                        , newProductPriceIncVat: number | null
+                        , newItemTotalExcVat: number | null
+                        , newItemTotalIncVat: number | null
                         }
+
+export type PastOrderItem = { productId: number
+                            , productCode: string
+                            , productName: string
+                            , productPriceExcVat: number
+                            , productPriceIncVat: number
+                            , productVatRate: VatRate
+                            , itemQuantity: number
+                            , itemTotalExcVat: number
+                            , itemTotalIncVat: number
+                            }
 
 export type HouseholdPayment = { id: number 
                                , householdId: number

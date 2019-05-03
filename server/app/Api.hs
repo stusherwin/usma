@@ -17,7 +17,6 @@ module Api where
   import HouseholdOrder
   import PastCollectiveOrder
   import PastHouseholdOrder
-  import Product
   import Household
   import HouseholdPayment
   import ProductCatalogueEntry
@@ -43,7 +42,6 @@ module Api where
     :<|> "past-collective-orders" :> Get '[JSON] [PastCollectiveOrder]
     :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
     :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]
-    :<|> "products" :> Get '[JSON] [Product]
     :<|> "households" :> Get '[JSON] [Household]
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
     :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]

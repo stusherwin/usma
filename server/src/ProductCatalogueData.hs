@@ -5,7 +5,7 @@ module ProductCatalogueData where
   import Data.Aeson
   import Data.Time.Calendar (Day)
   import GHC.Generics
-  import Product
+  import Product (VatRate(..))
 
   data ProductCatalogueData = ProductCatalogueData { code :: String
                                                      , category :: String

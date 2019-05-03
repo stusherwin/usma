@@ -4,8 +4,8 @@
 module OrderItem where
   import Data.Aeson
   import GHC.Generics
-  import Product (VatRate)
-  
+  import Product (VatRate(..))
+
   data OrderItem = OrderItem { productId :: Int
                              , productCode :: String
                              , productName :: String
@@ -15,5 +15,10 @@ module OrderItem where
                              , itemQuantity :: Int
                              , itemTotalExcVat :: Int
                              , itemTotalIncVat :: Int
+                             , productDiscontinued :: Bool
+                             , newProductPriceExcVat :: Maybe Int
+                             , newProductPriceIncVat :: Maybe Int
+                             , newItemTotalExcVat :: Maybe Int
+                             , newItemTotalIncVat :: Maybe Int
                              } deriving (Eq, Show, Generic)
   instance ToJSON OrderItem

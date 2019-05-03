@@ -4,7 +4,7 @@
 module ProductCatalogueEntry where
   import Data.Aeson
   import GHC.Generics
-  import Product (VatRate)
+  import Product (VatRate(..))
 
   data ProductCatalogueEntry = ProductCatalogueEntry { code :: String
                                                      , name :: String

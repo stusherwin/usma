@@ -4,11 +4,11 @@
 module CollectiveOrder where
   import Data.Aeson
   import GHC.Generics
-  import Data.Time.Calendar (Day)
+  import Data.Time.Clock (UTCTime)
   import OrderItem (OrderItem)
   
   data CollectiveOrder = CollectiveOrder { id :: Int
-                                         , createdDate :: Day
+                                         , createdDate :: UTCTime
                                          , createdBy :: Int
                                          , createdByName :: String
                                          , isComplete :: Bool
@@ -22,7 +22,7 @@ module CollectiveOrder where
   data CollectiveOrderStatus = Open | Complete deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrderStatus
 
-  collectiveOrder :: Int -> Day -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> CollectiveOrder
+  collectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> CollectiveOrder
   collectiveOrder id createdDate createdBy createdByName complete totalExcVat totalIncVat items = 
     CollectiveOrder id createdDate createdBy createdByName complete status totalExcVat totalIncVat items
     where
