@@ -113,9 +113,9 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     ho_complete :: Bool, 
     ho_cancelled :: Bool, 
     ho_totalExcVat :: Int, 
-    ho_totalIncVat :: Int,
-    ho_newTotalExcVat :: Maybe Int, 
-    ho_newTotalIncVat :: Maybe Int
+    ho_totalIncVat :: Int
+    -- ho_newTotalExcVat :: Maybe Int, 
+    -- ho_newTotalIncVat :: Maybe Int
   }
 
   instance FromRow HouseholdOrderData where
@@ -145,7 +145,19 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
              )
         select o.id, o.created_date, o.created_by_id, o.created_by_name, o.complete, 
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
-          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat
+          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
+          -- case when max(p.updated) <= ho.updated then null 
+          --      else coalesce(sum(case when p.updated <= ho.updated then hoi.item_total_exc_vat 
+          --                             when p.discontinued then 0 
+          --                             else p.price * hoi.quantity
+          --                        end), 0) 
+          -- end as new_total_exc_vat,
+          -- case when max(p.updated) <= ho.updated then null 
+          --      else coalesce(sum(case when p.updated <= ho.updated then hoi.item_total_inc_vat 
+          --                             when p.discontinued then 0 
+          --                             else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+          --                        end), 0) 
+          end as new_total_inc_vat
         from orders o
         left join household_order ho on ho.order_id = o.id and ho.cancelled = false
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
@@ -190,13 +202,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         group by hoi.order_id, hoi.household_id, p.id, p.code, p.name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, p.vat_rate, hoi.item_total_exc_vat, hoi.item_total_inc_vat, p.discontinued, p.updated, ho.updated, p.price, v.multiplier
         order by p.code asc
       |]
-      return (os :: [(Int, UTCTime, Int, String, Bool, Int, Int)], is :: [HouseholdOrderItemData])
+      return (os :: [(Int, UTCTime, Int, String, Bool, Int, Int, Maybe Int, Maybe Int)], is :: [HouseholdOrderItemData])
     close conn
-    return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, totalExcVat, totalIncVat) ->
+    return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, totalExcVat, totalIncVat, newTotalExcVat, newTotalIncVat) ->
       let item (HouseholdOrderItemData { hoi_productId, hoi_code, hoi_name, hoi_priceExcVat, hoi_priceIncVat, hoi_vatRate, hoi_quantity, hoi_itemTotalExcVat, hoi_itemTotalIncVat, hoi_discontinued, hoi_newProductPriceExcVat, hoi_newProductPriceIncVat, hoi_newItemTotalExcVat, hoi_newItemTotalIncVat }) = OrderItem hoi_productId hoi_code hoi_name hoi_priceExcVat hoi_priceIncVat hoi_vatRate hoi_quantity hoi_itemTotalExcVat hoi_itemTotalIncVat hoi_discontinued hoi_newProductPriceExcVat hoi_newProductPriceIncVat hoi_newItemTotalExcVat hoi_newItemTotalIncVat
           thisOrder (HouseholdOrderItemData { hoi_orderId }) = hoi_orderId == id
           items = map item $ filter thisOrder rItems
-      in  collectiveOrder id created createdBy createdByName complete totalExcVat totalIncVat items
+      in  collectiveOrder id created createdBy createdByName complete totalExcVat totalIncVat newTotalExcVat newTotalIncVat items
   
   getPastCollectiveOrders :: ByteString -> IO [PastCollectiveOrder]
   getPastCollectiveOrders connectionString = do

@@ -13,5 +13,4 @@
 * Household page sections (current order, past orders, payments) - separate tabs?
 
 * Product price updates on collective order, all updates accepted
-* Why left join on getCollectiveOrder? getPastCollectiveOrders?
 * household orders - items don't need to be sum()

@@ -69,6 +69,59 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
     const orderMinimumReached = this.props.currentOrder.totalIncVat >= 25000
 
+    const items = householdOrder.items.filter(i => !i.productDiscontinued)
+    const discontinuedItems = householdOrder.items.filter(i => i.productDiscontinued)
+
+    const renderItem = (i: OrderItem, ix: number) => 
+      [
+      <tr key={i.productId + '-1'}>
+        <td className={classNames('w-20 h-20 align-top', {'pt-8': ix > 0})} rowSpan={3}>
+          <img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${i.productCode}`} />
+        </td>
+        <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': ix > 0, '': i.productDiscontinued})}>{i.productCode}</td>
+        <td className={classNames('pl-2 pb-2 align-baseline', {'pt-8': ix > 0})}>
+          {householdOrder.isOpen && !i.productDiscontinued
+            ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
+                {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+              </select>
+            : <span className={classNames({'': i.productDiscontinued})}>x {i.itemQuantity}</span>
+          }
+        </td>
+        <td className={classNames('pl-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-8': ix > 0})} colSpan={2}>
+          {i.newItemTotalExcVat !== null
+            ? <span>
+                <span className="line-through"><Money amount={i.itemTotalExcVat} /></span> 
+                {!i.productDiscontinued && 
+                  <Money className="text-red font-bold" amount={i.newItemTotalExcVat} />
+                }
+              </span>
+            : <Money amount={i.itemTotalExcVat} />
+          }
+        </td>
+      </tr>
+      ,
+      <tr key={i.productId + '-2'}>
+        <td className={classNames('pb-2 align-top')} colSpan={3}>
+          {i.productDiscontinued
+            ? <span>
+                <span className="">{i.productName}</span><br />
+              </span>
+            : i.productName
+          }
+        </td>
+        <td className={classNames('pl-2 align-top text-right')}>
+          {householdOrder.isOpen && !i.productDiscontinued &&
+            <button className="ml-4" disabled={this.props.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+          }
+        </td>
+      </tr>
+      ,
+      <tr key={i.productId + '-3'}>
+        <td className={classNames('text-grey', {'': i.productDiscontinued})} colSpan={3}>VAT: {i.productVatRate} rate</td>
+        <td className={classNames('pl-2')}>&nbsp;</td>
+      </tr>
+      ]
+
     return (
       <div>
         {orderButtons.some(b => b) &&
@@ -110,46 +163,45 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             {householdOrder.isAbandoned &&
               <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
             }
+            {!!householdOrder.newTotalExcVat &&
+              <div className="bg-red-lighter p-2 mb-4"><Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.
+                <div className="flex justify-end mt-2"><button><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
+              </div>
+            }
             {!!householdOrder.items.length &&
               <table>
-                { householdOrder.items.map((i, ix) =>
-                  [
-                  <tr key={i.productId + '-1'}>
-                    <td className={classNames('w-20 h-20 align-top', {'pt-8': ix > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${i.productCode}`} /></td>
-                    <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': ix > 0})}>{i.productCode}</td>
-                    <td className={classNames('pl-2 pb-2 align-baseline', {'pt-8': ix > 0})}>
-                      {householdOrder.isOpen
-                        ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
-                            {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-                          </select>
-                        : <span>x {i.itemQuantity}</span>
-                      }
-                    </td>
-                    <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': ix > 0})} colSpan={2}><Money amount={i.itemTotalExcVat} /></td>
-                  </tr>
-                  ,
-                  <tr key={i.productId + '-2'}>
-                    <td className={classNames('pb-2 align-top')} colSpan={3}>{i.productName}</td>
-                    <td className={classNames('pl-2 align-top text-right')}>
-                      {householdOrder.isOpen &&
-                        <button className="ml-4" disabled={this.props.addingProduct} onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                      }
-                    </td>
-                  </tr>
-                  ,
-                  <tr key={i.productId + '-3'}>
-                    <td className={classNames('text-grey')} colSpan={3}>VAT: {i.productVatRate} rate</td>
-                    <td className={classNames('pl-2')}>&nbsp;</td>
-                  </tr>
-                  ])
-                }
+                { items.map(renderItem) }
+                <tr hidden={!discontinuedItems.length}>
+                  <td colSpan={5} className="text-red font-bold pt-8 pb-2">
+                    <span className="flex justify-start">
+                      <Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><span>The following products were discontinued <br />and will be removed:</span>
+                    </span>
+                  </td>
+                </tr>
+                { discontinuedItems.map(renderItem) }
                 <tr>
-                  <td className={classNames('pt-8 align-baseline')} colSpan={3}>VAT:</td>
-                  <td className={classNames('pl-2 pt-8 text-right align-baseline')} colSpan={2}><Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} /></td>
+                  <td className={classNames('pt-8 align-baseline')} colSpan={2}>VAT:</td>
+                  <td className={classNames('pl-2 pt-8 text-right align-baseline whitespace-no-wrap')} colSpan={3}>
+                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalExcVat !== null
+                      ? <span>
+                          <span className="line-through"><Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} /></span> 
+                          <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat - householdOrder.newTotalExcVat} />
+                        </span>
+                        : <Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
+                    }
+                  </td>
                 </tr>
                 <tr>
-                  <td className={classNames('pt-2 align-baseline font-bold')} colSpan={3}>Total:</td>
-                  <td className={classNames('pl-2 pt-2 text-right align-baseline font-bold')} colSpan={2}><Money amount={householdOrder.totalIncVat} /></td>
+                  <td className={classNames('pt-2 align-baseline font-bold')} colSpan={2}>Total:</td>
+                  <td className={classNames('pl-2 pt-2 text-right align-baseline font-bold whitespace-no-wrap')} colSpan={3}>
+                    {householdOrder.newTotalIncVat !== null
+                      ? <span>
+                          <span className="line-through"><Money amount={householdOrder.totalIncVat} /></span> 
+                          <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat} />
+                        </span>
+                        : <Money amount={householdOrder.totalIncVat} />
+                    }
+                  </td>
                 </tr>
                 {/* <div className={classNames('mt-8 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}> */}
               </table>

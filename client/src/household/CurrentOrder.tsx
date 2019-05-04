@@ -119,7 +119,19 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           <h2 className="leading-none ml-20 relative flex">Current order
             <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
           </h2>
-          <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={householdOrder && !householdOrder.isAbandoned? householdOrder.totalIncVat : 0} /></span></h3>
+          <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span>
+            <span>
+              {householdOrder 
+              ? householdOrder.newTotalIncVat !== null && !householdOrder.isAbandoned
+                ? <span>
+                    <span className="line-through"><Money amount={householdOrder.totalIncVat} /></span> 
+                    <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat} />
+                  </span>
+                  : <Money amount={!householdOrder.isAbandoned? householdOrder.totalIncVat : 0} />
+              : <Money amount={0} />
+              }
+            </span>
+          </h3>
         </a>
         { householdOrder && order
           ? (
