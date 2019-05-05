@@ -327,7 +327,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     conn <- connectPostgreSQL connectionString
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query_ conn [sql|
-        select o.id, o.created_date, o.created_by_id, o.created_by_name, ho.household_id, ho.household_name, (case when o.cancelled then false else ho.cancelled end) as cancelled, 
+        select o.id, o.created_date, o.created_by_id, o.created_by_name, ho.household_id, ho.household_name, (case when o.cancelled then true else ho.cancelled end) as cancelled, 
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
           coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat
         from past_household_order ho

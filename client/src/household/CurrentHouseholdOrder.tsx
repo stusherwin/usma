@@ -187,7 +187,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <tr>
                   <td className={classNames('pt-8 align-baseline')} colSpan={2}>VAT:</td>
                   <td className={classNames('pl-2 pt-8 text-right align-baseline whitespace-no-wrap')} colSpan={3}>
-                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalExcVat !== null && householdOrder.newTotalIncVat != householdOrder.totalIncVat
+                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalExcVat !== null && householdOrder.newTotalIncVat - householdOrder.newTotalExcVat != householdOrder.totalIncVat - householdOrder.totalExcVat
                       ? <span>
                           <span className="line-through"><Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} /></span> 
                           <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat - householdOrder.newTotalExcVat} />

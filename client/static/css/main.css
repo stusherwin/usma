@@ -97,20 +97,20 @@ button[disabled], button[disabled]:hover {
 
 .crossed-out {
   position: relative;
-  /* @apply text-grey-dark !important; */
+  @apply text-grey-dark !important;
 }
 
 .crossed-out a {
-  /* @apply text-blue-darker !important; */
+  @apply text-blue-darker !important;
 }
 
 .crossed-out::after {
   position: absolute;
   content: '.';
   color: transparent;
-  left: 0.25rem;
-  right: 0.25rem;
-  z-index: -1;
+  left: 0.5rem;
+  right: 0.5rem;
+  /* top: .5rem; */
   @apply border-grey-dark border-b;
 }
 
