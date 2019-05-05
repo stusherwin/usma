@@ -175,13 +175,14 @@ module Main where
                     :<|> updateHouseholdPayment
                     :<|> archiveHouseholdPayment
                     :<|> uploadProductCatalogue
+                    :<|> acceptCatalogueUpdates
     where
     conn = connectionString config
     
     createOrder :: Int -> Handler Int
     createOrder householdId = do
-      day <- liftIO $ getCurrentTime
-      liftIO $ D.createOrder conn day householdId
+      date <- liftIO $ getCurrentTime
+      liftIO $ D.createOrder conn date householdId
 
     deleteOrder :: Int -> Handler ()
     deleteOrder orderId = liftIO $ D.deleteOrder conn orderId
@@ -194,8 +195,8 @@ module Main where
 
     createHouseholdOrder :: Int -> Int -> Handler ()
     createHouseholdOrder householdId orderId =  do
-      day <- liftIO $ getCurrentTime
-      liftIO $ D.createHouseholdOrder conn day householdId orderId
+      date <- liftIO $ getCurrentTime
+      liftIO $ D.createHouseholdOrder conn date householdId orderId
 
     deleteHouseholdOrder :: Int -> Int -> Handler ()
     deleteHouseholdOrder householdId orderId = liftIO $ D.deleteHouseholdOrder conn householdId orderId
@@ -210,9 +211,7 @@ module Main where
     reopenHouseholdOrder householdId orderId = liftIO $ D.reopenHouseholdOrder conn householdId orderId
  
     ensureHouseholdOrderItem :: Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
-    ensureHouseholdOrderItem householdId orderId productCode details = do
-      day <- liftIO $ getCurrentTime
-      liftIO $ D.ensureHouseholdOrderItem conn day householdId orderId productCode details
+    ensureHouseholdOrderItem householdId orderId productCode details = liftIO $ D.ensureHouseholdOrderItem conn householdId orderId productCode details
 
     removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem householdId orderId productId = liftIO $ D.removeHouseholdOrderItem conn householdId orderId productId
@@ -246,3 +245,8 @@ module Main where
       let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (unpack $ fdFileName file)
       liftIO $copyFile (fdFilePath file) destFilePath
       liftIO $ importProductCatalogue conn date destFilePath
+
+    acceptCatalogueUpdates :: Int -> Int -> Handler ()
+    acceptCatalogueUpdates orderId householdId = do
+      date <- liftIO $ getCurrentTime
+      liftIO $ D.acceptCatalogueUpdates conn date orderId householdId

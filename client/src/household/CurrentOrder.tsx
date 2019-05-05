@@ -122,7 +122,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span>
             <span>
               {householdOrder 
-              ? householdOrder.newTotalIncVat !== null && !householdOrder.isAbandoned
+              ? householdOrder.newTotalIncVat !== null && householdOrder.newTotalIncVat != householdOrder.totalIncVat && !householdOrder.isAbandoned
                 ? <span>
                     <span className="line-through"><Money amount={householdOrder.totalIncVat} /></span> 
                     <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat} />

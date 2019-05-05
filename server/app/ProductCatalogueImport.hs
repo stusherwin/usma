@@ -27,8 +27,8 @@ module ProductCatalogueImport where
     f (x:xs) ws | x == ch = f xs ([]:ws)
     f (x:xs) (w:ws) = f xs ((x:w):ws)
 
-  loadProductCatalogue :: String -> IO [ProductCatalogueData]
-  loadProductCatalogue filePath = do 
+  loadProductCatalogue :: UTCTime -> String -> IO [ProductCatalogueData]
+  loadProductCatalogue date filePath = do 
     file <- readFile filePath
     return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
       parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
@@ -44,10 +44,10 @@ module ProductCatalogueImport where
             o' = o == "O"
             s' = s == "S"
             v' = v == "V"
-        in  Just $ ProductCatalogueData code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' Nothing
+        in  Just $ ProductCatalogueData code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' date
       parse _ _ = Nothing
 
   importProductCatalogue :: ByteString -> UTCTime -> String -> IO ()
   importProductCatalogue connectionString date filePath = do
-    catalogue <- loadProductCatalogue filePath
+    catalogue <- loadProductCatalogue date filePath
     replaceProductCatalogue connectionString date catalogue

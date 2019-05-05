@@ -118,6 +118,10 @@ const command = {
   uploadProductCatalogue(data: FormData): Promise<{}> {
     return Http.postFormData(`/api/command/upload-product-catalogue/`, data)
   },
+
+  acceptCatalogueUpdates(orderId: number, householdId: number): Promise<{}> {
+    return Http.post(`/api/command/accept-catalogue-updates/${orderId}/${householdId}`, {})
+  },
 }
 
 export const ServerApi = {

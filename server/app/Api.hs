@@ -66,6 +66,7 @@ module Api where
     :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] ()
     :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
     :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
+    :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

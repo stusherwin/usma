@@ -54,6 +54,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       .then(this.props.reload)
   }
 
+  acceptUpdates = () => {
+    this.props.request(ServerApi.command.acceptCatalogueUpdates(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
   render() {
     const householdOrder = this.props.currentHouseholdOrder
     const unusedProducts = this.props.products.filter(p => !householdOrder.items.find(i => i.productCode == p.code))
@@ -88,7 +93,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           }
         </td>
         <td className={classNames('pl-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-8': ix > 0})} colSpan={2}>
-          {i.newItemTotalExcVat !== null
+          {i.newItemTotalExcVat !== null && i.newItemTotalExcVat != i.itemTotalExcVat
             ? <span>
                 <span className="line-through"><Money amount={i.itemTotalExcVat} /></span> 
                 {!i.productDiscontinued && 
@@ -163,9 +168,9 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             {householdOrder.isAbandoned &&
               <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
             }
-            {!!householdOrder.newTotalExcVat &&
+            {!!householdOrder.newTotalExcVat && householdOrder.newTotalIncVat != householdOrder.totalIncVat &&
               <div className="bg-red-lighter p-2 mb-4"><Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.
-                <div className="flex justify-end mt-2"><button><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
+                <div className="flex justify-end mt-2"><button onClick={this.acceptUpdates}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
               </div>
             }
             {!!householdOrder.items.length &&
@@ -182,7 +187,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <tr>
                   <td className={classNames('pt-8 align-baseline')} colSpan={2}>VAT:</td>
                   <td className={classNames('pl-2 pt-8 text-right align-baseline whitespace-no-wrap')} colSpan={3}>
-                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalExcVat !== null
+                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalExcVat !== null && householdOrder.newTotalIncVat != householdOrder.totalIncVat
                       ? <span>
                           <span className="line-through"><Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} /></span> 
                           <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat - householdOrder.newTotalExcVat} />
@@ -194,7 +199,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <tr>
                   <td className={classNames('pt-2 align-baseline font-bold')} colSpan={2}>Total:</td>
                   <td className={classNames('pl-2 pt-2 text-right align-baseline font-bold whitespace-no-wrap')} colSpan={3}>
-                    {householdOrder.newTotalIncVat !== null
+                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalIncVat != householdOrder.totalIncVat
                       ? <span>
                           <span className="line-through"><Money amount={householdOrder.totalIncVat} /></span> 
                           <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat} />

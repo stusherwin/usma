@@ -10,7 +10,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , ensureHouseholdOrderItem, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
-                , replaceProductCatalogue
+                , replaceProductCatalogue, acceptCatalogueUpdates
                 ) where
   import Control.Monad (mzero, when, void)
   import Control.Monad.IO.Class (liftIO)
@@ -62,7 +62,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     fromRow = ProductCatalogueData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
   instance ToRow ProductCatalogueData where
-    toRow e = [toField $ ProductCatalogueData.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ ProductCatalogueData.price e, toField $ ProductCatalogueData.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ priceChanged e]
+    toRow e = [toField $ ProductCatalogueData.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ ProductCatalogueData.price e, toField $ ProductCatalogueData.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ updated e]
 
   data HouseholdOrderItemData = HouseholdOrderItemData {
     hoi_orderId :: Int,
@@ -113,9 +113,9 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     ho_complete :: Bool, 
     ho_cancelled :: Bool, 
     ho_totalExcVat :: Int, 
-    ho_totalIncVat :: Int
-    -- ho_newTotalExcVat :: Maybe Int, 
-    -- ho_newTotalIncVat :: Maybe Int
+    ho_totalIncVat :: Int,
+    ho_newTotalExcVat :: Maybe Int, 
+    ho_newTotalIncVat :: Maybe Int
   }
 
   instance FromRow HouseholdOrderData where
@@ -145,7 +145,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
              )
         select o.id, o.created_date, o.created_by_id, o.created_by_name, o.complete, 
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
-          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
+          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat
+          --,
           -- case when max(p.updated) <= ho.updated then null 
           --      else coalesce(sum(case when p.updated <= ho.updated then hoi.item_total_exc_vat 
           --                             when p.discontinued then 0 
@@ -157,7 +158,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           --                             when p.discontinued then 0 
           --                             else cast(round(p.price * v.multiplier) as int) * hoi.quantity
           --                        end), 0) 
-          end as new_total_inc_vat
+          -- end as new_total_inc_vat
         from orders o
         left join household_order ho on ho.order_id = o.id and ho.cancelled = false
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
@@ -202,13 +203,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         group by hoi.order_id, hoi.household_id, p.id, p.code, p.name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, p.vat_rate, hoi.item_total_exc_vat, hoi.item_total_inc_vat, p.discontinued, p.updated, ho.updated, p.price, v.multiplier
         order by p.code asc
       |]
-      return (os :: [(Int, UTCTime, Int, String, Bool, Int, Int, Maybe Int, Maybe Int)], is :: [HouseholdOrderItemData])
+      return (os :: [(Int, UTCTime, Int, String, Bool, Int, Int {-, Maybe Int, Maybe Int-})], is :: [HouseholdOrderItemData])
     close conn
-    return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, totalExcVat, totalIncVat, newTotalExcVat, newTotalIncVat) ->
+    return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, totalExcVat, totalIncVat {-, newTotalExcVat, newTotalIncVat-}) ->
       let item (HouseholdOrderItemData { hoi_productId, hoi_code, hoi_name, hoi_priceExcVat, hoi_priceIncVat, hoi_vatRate, hoi_quantity, hoi_itemTotalExcVat, hoi_itemTotalIncVat, hoi_discontinued, hoi_newProductPriceExcVat, hoi_newProductPriceIncVat, hoi_newItemTotalExcVat, hoi_newItemTotalIncVat }) = OrderItem hoi_productId hoi_code hoi_name hoi_priceExcVat hoi_priceIncVat hoi_vatRate hoi_quantity hoi_itemTotalExcVat hoi_itemTotalIncVat hoi_discontinued hoi_newProductPriceExcVat hoi_newProductPriceIncVat hoi_newItemTotalExcVat hoi_newItemTotalIncVat
           thisOrder (HouseholdOrderItemData { hoi_orderId }) = hoi_orderId == id
           items = map item $ filter thisOrder rItems
-      in  collectiveOrder id created createdBy createdByName complete totalExcVat totalIncVat newTotalExcVat newTotalIncVat items
+      in  collectiveOrder id created createdBy createdByName complete totalExcVat totalIncVat {-newTotalExcVat newTotalIncVat-} items
   
   getPastCollectiveOrders :: ByteString -> IO [PastCollectiveOrder]
   getPastCollectiveOrders connectionString = do
@@ -256,13 +257,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
              , ho.cancelled
              , coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat
              , coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat
-             , case when max(p.updated) <= ho.updated then null 
+             , case when max(p.updated) is null or max(p.updated) <= ho.updated then null 
                     else coalesce(sum(case when p.updated <= ho.updated then hoi.item_total_exc_vat 
                                            when p.discontinued then 0 
                                            else p.price * hoi.quantity
                                       end), 0) 
                end as new_total_exc_vat
-             , case when max(p.updated) <= ho.updated then null 
+             , case when max(p.updated) is null or max(p.updated) <= ho.updated then null 
                     else coalesce(sum(case when p.updated <= ho.updated then hoi.item_total_inc_vat 
                                            when p.discontinued then 0 
                                            else cast(round(p.price * v.multiplier) as int) * hoi.quantity
@@ -497,8 +498,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     |] (orderId, householdId)
     close conn
 
-  ensureHouseholdOrderItem :: ByteString -> UTCTime -> Int -> Int -> String -> HouseholdOrderItemDetails -> IO ()
-  ensureHouseholdOrderItem connectionString date orderId householdId productCode details = do
+  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> String -> HouseholdOrderItemDetails -> IO ()
+  ensureHouseholdOrderItem connectionString orderId householdId productCode details = do
     let quantity = hoidQuantity details
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
@@ -519,11 +520,11 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                    , ce.price
                    , ce.vat_rate
                    , false
-                   , ?
+                   , ce.updated
               from catalogue_entry ce
               where ce.code = ?
               returning id
-            |] (date, productCode)
+            |] (Only productCode)
             return (id :: Int)
       exists <- query conn [sql|
         select 1 from household_order_item where order_id = ? and household_id = ? and product_id = ?
@@ -636,7 +637,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         truncate table catalogue_entry
       |]
       void $ executeMany conn [sql|
-        insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, price_changed)
+        insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, updated)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       |] entries
       execute conn [sql|
@@ -654,3 +655,32 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         where p.id = product.id
       |] (Only date)
     close conn
+
+  acceptCatalogueUpdates :: ByteString -> UTCTime -> Int -> Int -> IO ()
+  acceptCatalogueUpdates connectionString date orderId householdId = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      execute conn [sql|
+        update household_order set updated = ?
+        where order_id = ? and household_id = ?
+      |] (date, orderId, householdId)
+      execute conn [sql|
+        update household_order_item hoi set
+          product_price_exc_vat = p.price, 
+          product_price_inc_vat = cast(round(p.price * v.multiplier) as int),
+          item_total_exc_vat = p.price * hoi.quantity,
+          item_total_inc_vat = cast(round(p.price * v.multiplier) as int) * hoi.quantity
+        from household_order_item hoi2
+        inner join product p on p.id = hoi2.product_id
+        inner join vat_rate v on v.code = p.vat_rate
+        where hoi.order_id = hoi2.order_id and hoi.household_id = hoi2.household_id and hoi.product_id = hoi2.product_id
+          and hoi.order_id = ? and hoi.household_id = ?
+      |] (orderId, householdId)
+      execute conn [sql|
+        delete from household_order_item
+        where order_id = ? and household_id = ? and product_id in (
+          select id from product where discontinued = true
+        )
+      |] (orderId, householdId)
+    close conn
+    

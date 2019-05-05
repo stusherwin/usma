@@ -88,11 +88,11 @@ insert into product (code, "name", price, vat_rate, discontinued, updated) value
 ---
 
 create table household_order
-( order_id         int       not null
-, household_id     int       not null
+( order_id         int         not null
+, household_id     int         not null
 , updated          timestamptz not null
-, complete         boolean   not null
-, cancelled        boolean   not null
+, complete         boolean     not null
+, cancelled        boolean     not null
 , primary key (order_id, household_id)
 , foreign key (order_id) references "order" (id)
 , foreign key (household_id) references household (id)
@@ -134,22 +134,22 @@ insert into household_payment (household_id, "date", amount, archived) values (4
 ---
 
 create table catalogue_entry
-( code           text    not null primary key
-, category       text    not null
-, brand          text    not null
-, "description"  text    not null
-, "text"         text    not null
-, size           text    not null
-, price          int     not null
-, vat_rate       char    not null
-, rrp            int     null
-, biodynamic     boolean not null
-, fair_trade     boolean not null
-, gluten_free    boolean not null
-, organic        boolean not null
-, added_sugar    boolean not null
-, vegan          boolean not null
-, price_changed  date    null
+( code           text        not null primary key
+, category       text        not null
+, brand          text        not null
+, "description"  text        not null
+, "text"         text        not null
+, size           text        not null
+, price          int         not null
+, vat_rate       char        not null
+, rrp            int         null
+, biodynamic     boolean     not null
+, fair_trade     boolean     not null
+, gluten_free    boolean     not null
+, organic        boolean     not null
+, added_sugar    boolean     not null
+, vegan          boolean     not null
+, updated        timestamptz not null
 );
 
 ---
