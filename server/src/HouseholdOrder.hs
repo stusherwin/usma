@@ -17,10 +17,10 @@ module HouseholdOrder where
                                        , isAbandoned :: Bool
                                        , isOpen :: Bool
                                        , status :: HouseholdOrderStatus
+                                       , oldTotalExcVat :: Maybe Int
+                                       , oldTotalIncVat :: Maybe Int
                                        , totalExcVat :: Int
                                        , totalIncVat :: Int
-                                       , newTotalExcVat :: Maybe Int
-                                       , newTotalIncVat :: Maybe Int
                                        , items :: [OrderItem]
                                        } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrder
@@ -33,7 +33,7 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails
 
-  householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> HouseholdOrder
+  householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Maybe Int -> Maybe Int -> Int -> Int -> [OrderItem] -> HouseholdOrder
   householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled totalExcVat totalIncVat newTotalExcVat newTotalIncVat items = 
     HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open status totalExcVat totalIncVat newTotalExcVat newTotalIncVat items 
     where

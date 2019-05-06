@@ -20,10 +20,10 @@ export type CollectiveOrder = { id: number
                               , createdByName: string
                               , isComplete: boolean
                               , status: 'Open' | 'Complete'
+                              , oldTotalExcVat: number | null
+                              , oldTotalIncVat: number | null
                               , totalExcVat: number
                               , totalIncVat: number
-                              , newTotalExcVat: number | null
-                              , newTotalIncVat: number | null
                               , items: OrderItem[]
                               }
 
@@ -47,10 +47,10 @@ export type HouseholdOrder = { orderId: number
                              , isAbandoned: boolean
                              , isOpen: boolean
                              , status: 'Open' | 'Complete' | 'Abandoned'
+                             , oldTotalExcVat: number | null
+                             , oldTotalIncVat: number | null
                              , totalExcVat: number
                              , totalIncVat: number
-                             , newTotalExcVat: number | null
-                             , newTotalIncVat: number | null
                              , items: OrderItem[]
                              }
 
@@ -69,17 +69,17 @@ export type PastHouseholdOrder = { orderId: number
 export type OrderItem = { productId: number
                         , productCode: string
                         , productName: string
-                        , productPriceExcVat: number
-                        , productPriceIncVat: number
+                        , oldProductPriceExcVat: number | null
+                        , oldProductPriceIncVat: number | null
                         , productVatRate: VatRate
                         , itemQuantity: number
+                        , oldItemTotalExcVat: number | null
+                        , oldItemTotalIncVat: number | null
+                        , productDiscontinued: boolean
+                        , productPriceExcVat: number
+                        , productPriceIncVat: number
                         , itemTotalExcVat: number
                         , itemTotalIncVat: number
-                        , productDiscontinued: boolean
-                        , newProductPriceExcVat: number | null
-                        , newProductPriceIncVat: number | null
-                        , newItemTotalExcVat: number | null
-                        , newItemTotalIncVat: number | null
                         }
 
 export type PastOrderItem = { productId: number

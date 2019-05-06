@@ -93,11 +93,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           }
         </td>
         <td className={classNames('pl-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-8': ix > 0})} colSpan={2}>
-          {i.newItemTotalExcVat !== null && i.newItemTotalExcVat != i.itemTotalExcVat
+          {i.oldItemTotalExcVat !== null && i.oldItemTotalExcVat != i.itemTotalExcVat
             ? <span>
-                <span className="line-through"><Money amount={i.itemTotalExcVat} /></span> 
+                <span className="line-through"><Money amount={i.oldItemTotalExcVat} /></span> 
                 {!i.productDiscontinued && 
-                  <Money className="text-red font-bold" amount={i.newItemTotalExcVat} />
+                  <Money className="text-red font-bold" amount={i.itemTotalExcVat} />
                 }
               </span>
             : <Money amount={i.itemTotalExcVat} />
@@ -168,7 +168,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             {householdOrder.isAbandoned &&
               <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
             }
-            {!!householdOrder.newTotalExcVat && householdOrder.newTotalIncVat != householdOrder.totalIncVat &&
+            {!!householdOrder.oldTotalExcVat && householdOrder.oldTotalIncVat != householdOrder.totalIncVat &&
               <div className="bg-red-lighter p-2 mb-4"><Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.
                 <div className="flex justify-end mt-2"><button onClick={this.acceptUpdates}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
               </div>
@@ -187,10 +187,10 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <tr>
                   <td className={classNames('pt-8 align-baseline')} colSpan={2}>VAT:</td>
                   <td className={classNames('pl-2 pt-8 text-right align-baseline whitespace-no-wrap')} colSpan={3}>
-                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalExcVat !== null && householdOrder.newTotalIncVat - householdOrder.newTotalExcVat != householdOrder.totalIncVat - householdOrder.totalExcVat
+                    {householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalExcVat !== null && householdOrder.oldTotalIncVat - householdOrder.oldTotalExcVat != householdOrder.totalIncVat - householdOrder.totalExcVat
                       ? <span>
-                          <span className="line-through"><Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} /></span> 
-                          <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat - householdOrder.newTotalExcVat} />
+                          <span className="line-through"><Money amount={householdOrder.oldTotalIncVat - householdOrder.oldTotalExcVat} /></span> 
+                          <Money className="text-red font-bold" amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
                         </span>
                         : <Money amount={householdOrder.totalIncVat - householdOrder.totalExcVat} />
                     }
@@ -199,10 +199,10 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 <tr>
                   <td className={classNames('pt-2 align-baseline font-bold')} colSpan={2}>Total:</td>
                   <td className={classNames('pl-2 pt-2 text-right align-baseline font-bold whitespace-no-wrap')} colSpan={3}>
-                    {householdOrder.newTotalIncVat !== null && householdOrder.newTotalIncVat != householdOrder.totalIncVat
+                    {householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalIncVat != householdOrder.totalIncVat
                       ? <span>
-                          <span className="line-through"><Money amount={householdOrder.totalIncVat} /></span> 
-                          <Money className="text-red font-bold" amount={householdOrder.newTotalIncVat} />
+                          <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
+                          <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
                         </span>
                         : <Money amount={householdOrder.totalIncVat} />
                     }
@@ -210,7 +210,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
                 </tr>
                 {/* <div className={classNames('mt-8 flex justify-between items-baseline', {'crossed-out-1': householdOrder.isAbandoned})}> */}
               </table>
-            }
+            } 
           </div>
         }
         {this.props.addingProduct &&
