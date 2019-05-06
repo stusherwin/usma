@@ -22,6 +22,8 @@ export type CollectiveOrder = { id: number
                               , status: 'Open' | 'Complete'
                               , totalExcVat: number
                               , totalIncVat: number
+                              , newTotalExcVat: number | null
+                              , newTotalIncVat: number | null
                               , items: OrderItem[]
                               }
 

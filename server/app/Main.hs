@@ -84,8 +84,9 @@ module Main where
         Just r -> do
           imageData <- simpleHttp (imageUrl r)
           L.writeFile file imageData
-        _ -> copyFile ("client/static/img/404.jpg") file
-    image <- L.readFile file
+        _ -> return ()
+    exists <- doesFileExist file 
+    image <- L.readFile $ if exists then file else "client/static/img/404.jpg"
     return $ Just image
     where
     handleException :: HttpException -> IO (Maybe L.ByteString)
