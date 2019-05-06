@@ -72,6 +72,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     const allComplete = this.props.currentHouseholdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
     const householdsInOrder = this.props.households.filter(h => !!this.props.currentHouseholdOrders.find(oh => oh.householdId == h.id))
     const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
+    const allHouseholdsUpToDate = this.props.currentOrder.allHouseholdsUpToDate;
     const orderMinimumReached = this.props.currentOrder.totalIncVat >= 25000
 
     const items = householdOrder.items.filter(i => !i.productDiscontinued)
@@ -155,7 +156,9 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             }
             {householdOrder.isComplete &&
               <div className="bg-blue-lighter p-2 mb-4"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order complete
-              {!orderMinimumReached?
+              {!allHouseholdsUpToDate?
+                <span>, waiting for all households to accept latest catalogue updates</span>
+              : !orderMinimumReached?
                 <span>, waiting for minimum order to be reached. Current total is <Money amount={this.props.currentOrder.totalIncVat} /> of &pound;250.00</span>
               : !allComplete?
                 <span>, waiting for all orders to be completed</span>

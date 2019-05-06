@@ -17,6 +17,7 @@ module CollectiveOrder where
                                          , oldTotalIncVat :: Maybe Int
                                          , totalExcVat :: Int
                                          , totalIncVat :: Int
+                                         , allHouseholdsUpToDate :: Bool
                                          , items :: [OrderItem]
                                          } deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrder
@@ -24,9 +25,9 @@ module CollectiveOrder where
   data CollectiveOrderStatus = Open | Complete deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrderStatus
 
-  collectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Maybe Int -> Maybe Int -> Int -> Int -> [OrderItem] -> CollectiveOrder
-  collectiveOrder id createdDate createdBy createdByName complete totalExcVat totalIncVat newTotalExcVat newTotalIncVat items = 
-    CollectiveOrder id createdDate createdBy createdByName complete status totalExcVat totalIncVat newTotalExcVat newTotalIncVat items
+  collectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Maybe Int -> Maybe Int -> Int -> Int -> Bool -> [OrderItem] -> CollectiveOrder
+  collectiveOrder id createdDate createdBy createdByName complete totalExcVat totalIncVat newTotalExcVat newTotalIncVat allHouseholdsUpToDate items = 
+    CollectiveOrder id createdDate createdBy createdByName complete status totalExcVat totalIncVat newTotalExcVat newTotalIncVat allHouseholdsUpToDate items
     where
     status = case complete of
                True -> Complete

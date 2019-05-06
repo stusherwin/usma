@@ -24,6 +24,7 @@ export type CollectiveOrder = { id: number
                               , oldTotalIncVat: number | null
                               , totalExcVat: number
                               , totalIncVat: number
+                              , allHouseholdsUpToDate: boolean
                               , items: OrderItem[]
                               }
 
