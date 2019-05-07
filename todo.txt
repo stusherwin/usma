@@ -1,6 +1,4 @@
 * Clone past orders -> add to current order, or create a new current order if none exists
-* Separate API calls for past orders/current order
-* Change API call for current order to be singleton
 * Abandoned order total? 
 * What happens if you unabandon a past order? (can't)
 * Add no. of people to household (+ total per person to household order)
@@ -8,9 +6,13 @@
 * Verify order (check off against invoice)
 * server api regression tests
 * Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
+
 * Hide previous error on successful response
 * Error message styling
+
 * Household page sections (current order, past orders, payments) - separate tabs?
 
-* Product price updates on collective order, all updates accepted
 * household orders - items don't need to be sum()
+* cross through only on prices/amounts not whole row
+* crossed out amounts grey-darker
+* copy new styles to admin area

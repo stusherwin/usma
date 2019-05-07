@@ -212,10 +212,10 @@ export class Main extends React.Component<MainProps, MainState> {
 
     router.route('/households/{householdId}', (c, r) => {
       const household = this.state.households.find(h => h.id == c.householdId)
-      const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
+      const householdOrders = this.state.householdOrders
       const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
       const currentOrder = this.state.collectiveOrder
-      const currentHouseholdOrder = currentOrder && (householdOrders.filter(o => o.orderId == currentOrder.id)[0] || null)
+      const currentHouseholdOrder = currentOrder && (householdOrders.filter(o => o.householdId == c.householdId && o.orderId == currentOrder.id)[0] || null)
       const currentHouseholdOrders = currentOrder && householdOrders.filter(o => o.orderId == currentOrder.id) || []
       const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
       
