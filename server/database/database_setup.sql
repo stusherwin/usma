@@ -32,9 +32,12 @@ drop table if exists past_order cascade;
 ---
 
 create table household
-( id       serial  not null primary key
-, "name"   text    not null
-, archived boolean not null
+( id           serial  not null primary key
+, "name"       text    not null
+, contact_name  text    null
+, contact_email text    null
+, contact_phone text    null
+, archived     boolean not null
 );
 
 insert into household ("name", archived) values ('123 Front Road',  false) returning id into h1Id;

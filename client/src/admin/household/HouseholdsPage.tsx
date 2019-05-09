@@ -26,16 +26,21 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     super(props)
 
     this.state = { editing: null
-                 , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]) })
+                 , form: Form.create({ 
+                     name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]),
+                     contactName: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
+                     contactEmail: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
+                     contactPhone: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', [])
+                   })
                  }
   }
 
   startCreate = () => this.setState({ editing: 'new'
-                                    , form: this.state.form.reset({name: ''})
+                                    , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                     })
 
   cancelCreate = () => this.setState({ editing: null
-                                     , form: this.state.form.reset({name: ''})
+                                     , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                      })
 
   confirmCreate = () => {
@@ -43,21 +48,21 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     console.log(validated)
     this.setState({ form: validated })
     if(validated.valid()) {
-      this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
+      this.props.request(ServerApi.command.createHousehold(validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))
         .then(this.props.reload)
         .then(_ => this.setState({ editing: null
-                                 , form: this.state.form.reset({name: ''})
+                                 , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                  })
         )
     }
   }
 
   startEdit = (household: Household) => this.setState({ editing: household.id
-                                                      , form: this.state.form.reset({name: household.name})
+                                                      , form: this.state.form.reset({name: household.name, contactName: household.contactName, contactEmail: household.contactEmail, contactPhone: household.contactPhone})
                                                       })
 
   cancelEdit = () => this.setState({ editing: null
-                                   , form: this.state.form.reset({name: ''})
+                                   , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                    })
 
   confirmEdit = () => {
@@ -67,10 +72,10 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     console.log(validated)
     this.setState({ form: validated })
     if(validated.valid()) {
-      this.props.request(ServerApi.command.updateHousehold(this.state.editing, validated.fields.name.value))
+      this.props.request(ServerApi.command.updateHousehold(this.state.editing, validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))
         .then(this.props.reload)
         .then(_ => this.setState({ editing: null
-                                 , form: this.state.form.reset({name: ''})
+                                 , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                  })
         )
     }
@@ -104,8 +109,21 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
               <h3 className="mb-4">Create new household</h3>
               <TextField id="create-name"
                          label="Name"
+                         autofocus
                          field={this.state.form.fields.name}
                          valueOnChange={this.fieldChanged('name')} />
+              <TextField id="create-contactName"
+                         label="Contact name"
+                         field={this.state.form.fields.contactName}
+                         valueOnChange={this.fieldChanged('contactName')} />
+              <TextField id="create-contactEmail"
+                         label="Contact email"
+                         field={this.state.form.fields.contactEmail}
+                         valueOnChange={this.fieldChanged('contactEmail')} />
+              <TextField id="create-contactPhone"
+                         label="Contact phone"
+                         field={this.state.form.fields.contactPhone}
+                         valueOnChange={this.fieldChanged('contactPhone')} />
               <div className="flex justify-end">
                 <button className="ml-2" onClick={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
                 <button className="ml-2" onClick={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
@@ -123,8 +141,21 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                   <h3 className="mb-4">Edit household</h3>
                   <TextField id="edit-name"
                              label="Name"
+                             autofocus
                              field={this.state.form.fields.name}
                              valueOnChange={this.fieldChanged('name')} />
+                  <TextField id="edit-contactName"
+                             label="Contact name"
+                             field={this.state.form.fields.contactName}
+                             valueOnChange={this.fieldChanged('contactName')} />
+                  <TextField id="edit-contactEmail"
+                             label="Contact email"
+                             field={this.state.form.fields.contactEmail}
+                             valueOnChange={this.fieldChanged('contactEmail')} />
+                  <TextField id="edit-contactPhone"
+                             label="Contact phone"
+                             field={this.state.form.fields.contactPhone}
+                             valueOnChange={this.fieldChanged('contactPhone')} />
                   <div className="flex justify-end">
                     <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
                     <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>

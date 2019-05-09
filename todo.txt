@@ -1,18 +1,30 @@
 * Clone past orders -> add to current order, or create a new current order if none exists
 * Abandoned order total? 
 * What happens if you unabandon a past order? (can't)
+
+* household contact details
 * Add no. of people to household (+ total per person to household order)
+
 * Place order (copy & paste code/quantity)
 * Verify order (check off against invoice)
+
 * server api regression tests
 * Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
 
 * Hide previous error on successful response
 * Error message styling
 
-* Household page sections (current order, past orders, payments) - separate tabs?
-
 * household orders - items don't need to be sum()
 * cross through only on prices/amounts not whole row
 * crossed out amounts grey-darker
+* crossed out money separate component?
 * copy new styles to admin area
+
+* Make payment check a config setting
+* Move order buttons to parent component
+* Payment section in admin, separate from households
+
+* Welcome screen list instead of dropdown?
+* Store current household in session
+
+* Current order stick to top when scrolling down in Add Product

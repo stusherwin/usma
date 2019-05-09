@@ -151,7 +151,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           : (order
           ? (
             <div className="shadow-inner-top bg-white px-2 py-4 text-grey-darker">
-              <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
+              <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
               <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
             </div>
           )

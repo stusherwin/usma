@@ -9,6 +9,9 @@ export type ProductCatalogueEntry = { code: string
 
 export type Household = { id: number
                         , name: string
+                        , contactName: string | null
+                        , contactEmail: string | null
+                        , contactPhone: string | null
                         , totalOrders: number
                         , totalPayments: number
                         , balance: number

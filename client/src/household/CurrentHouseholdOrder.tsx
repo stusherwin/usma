@@ -130,7 +130,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
 
     return (
       <div>
-        {orderButtons.some(b => b) &&
+        {!this.props.addingProduct && orderButtons.some(b => b) &&
           <div className="bg-order-dark p-2 pt-0 flex flex-wrap content-start items-start">
             {canLeaveOrder && 
               <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={this.props.addingProduct} onClick={this.leaveOrder}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>

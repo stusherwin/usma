@@ -87,12 +87,20 @@ const command = {
     return Http.post(`/api/command/remove-household-order-item/${orderId}/${householdId}/${productId}`, {})
   },
 
-  createHousehold(name: string): Promise<number> {
-    return Http.post(`/api/command/create-household/`, { hdName: name })
+  createHousehold(name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
+    return Http.post(`/api/command/create-household/`, { hdName: name
+                                                       , hdContactName: contactName
+                                                       , hdContactEmail: contactEmail
+                                                       , hdContactPhone: contactPhone 
+                                                       })
   },
 
-  updateHousehold(id: number, name: string): Promise<number> {
-    return Http.post(`/api/command/update-household/${id}`, { hdName: name })
+  updateHousehold(id: number, name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
+    return Http.post(`/api/command/update-household/${id}`, { hdName: name
+                                                            , hdContactName: contactName
+                                                            , hdContactEmail: contactEmail
+                                                            , hdContactPhone: contactPhone 
+                                                            })
   },
 
   archiveHousehold(id: number): Promise<{}> {

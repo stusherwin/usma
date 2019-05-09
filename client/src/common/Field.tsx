@@ -6,6 +6,7 @@ export interface TextFieldProps {
   id: string
   label: string
   field: Field
+  autofocus?: boolean
   valueOnChange: (value: string) => void
 }
 
@@ -20,7 +21,7 @@ export const TextField = (props: TextFieldProps) => {
                htmlFor={props.id}>{props.label}:</label>
         <input type="text" 
                id={props.id} 
-               autoFocus
+               autoFocus={props.autofocus || false}
                className="input flex-grow flex-no-shrink"
                value={props.field.stringValue} 
                onChange={onChange} />
@@ -36,6 +37,7 @@ export interface MoneyFieldProps {
   id: string
   label: string
   field: Field
+  autofocus?: boolean
   valueOnChange: (value: string) => void
 }
 
@@ -51,6 +53,7 @@ export const MoneyField = (props: MoneyFieldProps) => {
         <input type="text"
                id={props.id}
                className="input flex-grow flex-no-shrink"
+               autoFocus={props.autofocus || false}
                value={props.field.stringValue}
                onChange={onChange} />
       </div>
@@ -65,6 +68,7 @@ export interface DropDownFieldProps {
   id: string
   label: string
   field: Field
+  autofocus?: boolean
   valueOnChange: (value: string) => void
   options: (string | {name: string, value: string})[]
 }
@@ -80,6 +84,7 @@ export const DropDownField = (props: DropDownFieldProps) => {
                htmlFor={props.id}>{props.label}:</label>
         <select id={props.id} 
                 className="flex-grow flex-no-shrink"
+                autoFocus={props.autofocus || false}
                 value={props.field.stringValue}
                 onChange={onChange}>
           {props.options.map(o => typeof o === 'string'

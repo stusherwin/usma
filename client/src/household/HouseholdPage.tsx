@@ -43,6 +43,26 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         <div className="bg-household-light p-2 pt-4 pb-4">
           <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative">
             <h2 className="leading-none text-black">{this.props.household.name}</h2>
+            <table className="border-collapse w-full mt-1">
+              {this.props.household.contactName &&
+                <tr>
+                  <th className="font-bold text-left pt-1 pr-2">Contact:</th>
+                  <td className="pt-1">{this.props.household.contactName}</td>
+                </tr>
+              }
+              {this.props.household.contactEmail &&
+                <tr>
+                  <th className="font-bold text-left pt-1 pr-2">Email:</th>
+                  <td className="pt-1">{this.props.household.contactEmail}</td>
+                </tr>
+              }
+              {this.props.household.contactPhone &&
+                <tr>
+                  <th className="font-bold text-left pt-1 pr-2">Phone:</th>
+                  <td className="pt-1">{this.props.household.contactPhone}</td>
+                </tr>
+              }
+            </table>
           </div>
         </div>
         <CurrentOrder household={this.props.household}

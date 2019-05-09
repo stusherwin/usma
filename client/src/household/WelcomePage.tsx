@@ -26,7 +26,12 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
 
     this.state = { selectedHouseholdId: props.households.length ? props.households[0].id : undefined
                  , editing: null
-                 , form: Form.create({ name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]) })
+                 , form: Form.create({ 
+                     name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]),
+                     contactName: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
+                     contactEmail: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
+                     contactPhone: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', [])
+                   })
                  }
   }
 
@@ -38,18 +43,18 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
     this.setState({ form: this.state.form.update(fieldName, value) })
 
   startCreate = () => this.setState({ editing: 'new'
-                                    , form: this.state.form.reset({name: ''})
+                                    , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                     })
 
   cancelCreate = () => this.setState({ editing: null
-                                     , form: this.state.form.reset({name: ''})
+                                     , form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
                                      })
 
   confirmCreate = () => {
     const validated = this.state.form.validate()
     this.setState({ form: validated })
     if(validated.valid()) {
-      this.props.request(ServerApi.command.createHousehold(validated.fields.name.value))
+      this.props.request(ServerApi.command.createHousehold(validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))
         .then(id => this.props.reload()
           .then(_ => Router.navigate('/households/' + id)))
     }
@@ -91,7 +96,20 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
             <TextField id="create-name"
                        label="Name"
                        field={this.state.form.fields.name}
+                       autofocus
                        valueOnChange={this.fieldChanged('name')} />
+            <TextField id="create-contactName"
+                       label="Contact name"
+                       field={this.state.form.fields.contactName}
+                       valueOnChange={this.fieldChanged('contactName')} />
+            <TextField id="create-contactEmail"
+                       label="Contact email"
+                       field={this.state.form.fields.contactEmail}
+                       valueOnChange={this.fieldChanged('contactEmail')} />
+            <TextField id="create-contactPhone"
+                       label="Contact phone"
+                       field={this.state.form.fields.contactPhone}
+                       valueOnChange={this.fieldChanged('contactPhone')} />
             <div className="flex justify-end">
               <button className="ml-2" onClick={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
               <button className="ml-2" onClick={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>

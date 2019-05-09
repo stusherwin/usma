@@ -110,6 +110,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
             <TextField id="create-date"
                        label="Date"
                        field={this.state.form.fields.date}
+                       autofocus
                        valueOnChange={this.fieldChanged('date')} />
             <MoneyField id="create-amount"
                         label="Amount"
@@ -135,6 +136,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                     <h3 className="mb-4">Edit payment</h3>
                     <TextField id="edit-date"
                                label="Date"
+                               autofocus
                                field={this.state.form.fields.date}
                                valueOnChange={this.fieldChanged('date')} />
                     <MoneyField id="edit-amount"

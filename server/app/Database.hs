@@ -169,7 +169,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           end as old_total_inc_vat,
           cast(coalesce(sum(ho.total_exc_vat), 0) as int) as total_exc_vat,
           cast(coalesce(sum(ho.total_inc_vat), 0) as int) as new_total_inc_vat,
-          bool_and(ho.up_to_date or ho.total_inc_vat = ho.old_total_inc_vat) as all_up_to_date
+          coalesce(bool_and(ho.up_to_date or ho.total_inc_vat = ho.old_total_inc_vat), true) as all_up_to_date
         from orders o
         left join household_orders ho on ho.order_id = o.id
         group by o.id, o.created_date, o.created_by_id, o.created_by_name, o.complete
@@ -395,7 +395,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
             left join household_payment hp on hp.household_id = h.id
             group by h.id
           )
-      select h.id, h.name, hto.total as total_orders, htp.total as total_payments, htp.total - hto.total as balance
+      select h.id, h.name, h.contact_name, h.contact_email, h.contact_phone, hto.total as total_orders, htp.total as total_payments, htp.total - hto.total as balance
       from household h
       inner join household_total_orders hto on hto.id = h.id
       inner join household_total_payments htp on htp.id = h.id
@@ -403,7 +403,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       order by h.name asc
     |]
     close conn
-    return $ (rHouseholds :: [(Int, String, Int, Int, Int)]) <&> \(id, name, totalOrders, totalPayments, balance) -> Household id name totalOrders totalPayments balance
+    return $ (rHouseholds :: [(Int, String, Maybe String, Maybe String, Maybe String, Int, Int, Int)]) <&> \(id, name, contactName, contactEmail, contactPhone, totalOrders, totalPayments, balance) -> Household id name contactName contactEmail contactPhone totalOrders totalPayments balance
 
   getHouseholdPayments :: ByteString -> IO [HouseholdPayment]
   getHouseholdPayments connectionString = do
@@ -576,21 +576,21 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
 
   createHousehold :: ByteString -> HouseholdDetails -> IO Int
   createHousehold connectionString details = do
-    let name = hdName details
     conn <- connectPostgreSQL connectionString
     [Only id] <- query conn [sql|
-      insert into household (name, archived) values (?, false) returning id
-    |] (Only name)
+      insert into household (name, contact_name, contact_email, contact_phone, archived) values (?, ?, ?, ?, false) returning id
+    |] (hdName details, hdContactName details, hdContactEmail details, hdContactPhone details)
     close conn
     return id
   
   updateHousehold :: ByteString -> Int -> HouseholdDetails -> IO ()
   updateHousehold connectionString householdId details = do
-    let name = hdName details
     conn <- connectPostgreSQL connectionString
     execute conn [sql|
-      update household set name = ? where id = ?
-    |] (name, householdId)
+      update household set 
+        name = ?, contact_name = ?, contact_email = ?, contact_phone = ? 
+      where id = ?
+    |] (hdName details, hdContactName details, hdContactEmail details, hdContactPhone details, householdId)
     close conn
 
   archiveHousehold :: ByteString -> Int -> IO ()
