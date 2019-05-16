@@ -2,7 +2,6 @@
 * Abandoned order total? 
 * What happens if you unabandon a past order? (can't)
 
-* household contact details
 * Add no. of people to household (+ total per person to household order)
 
 * Place order (copy & paste code/quantity)

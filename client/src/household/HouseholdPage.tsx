@@ -2,13 +2,15 @@ import * as React from 'react';
 import * as classNames from 'classnames'
 
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
-import { ApiError } from '../ServerApi'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Router } from '../common/Router'
 import { CurrentOrder } from './CurrentOrder'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Form, Field, Validate } from '../common/Validation'
+import { TextField } from '../common/Field'
 
 const transitionTime = 0.25;
 const minHeight = '5rem';
@@ -28,14 +30,31 @@ export interface HouseholdOrdersPageProps { household: Household
                                           , router: Router
                                           }
 type Section = 'orders' | 'past-orders' | 'payments'
-export interface HouseholdOrdersPageState { expanded: Section | null, thisExpanded: boolean }
+export interface HouseholdOrdersPageState { expanded: Section | null
+                                          , thisExpanded: boolean 
+                                          , form: Form
+                                          }
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, HouseholdOrdersPageState> {  
   container: React.RefObject<HTMLDivElement>
 
   constructor(props: HouseholdOrdersPageProps) {
     super(props)
-    this.state = { expanded: 'orders', thisExpanded: false }
+    this.state = { 
+      expanded: 'orders', 
+      thisExpanded: false,
+      form: Form.create({ 
+        name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]),
+        contactName: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
+        contactEmail: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
+        contactPhone: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', [])
+      })
+    }
+
     this.container = React.createRef();
+  }
+
+  componentDidMount() {
+    this.animateHeight()
   }
 
   animateHeight() {
@@ -73,6 +92,22 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
       this.animateHeight();
     })
   }
+
+  confirmEdit = () => {
+    const validated = this.state.form.validate()
+    console.log(validated)
+    this.setState({ form: validated })
+    if(validated.valid()) {
+      this.props.request(ServerApi.command.updateHousehold(this.props.household.id, validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))
+        .then(this.props.reload)
+        .then(_ => this.setState({ form: this.state.form.reset({name: '', contactName: null, contactEmail: null, contactPhone: null})
+                                 })
+        )
+    }
+  }
+
+  fieldChanged = (fieldName: string) => (value: string) =>
+    this.setState({ form: this.state.form.update(fieldName, value) })
 
   render() {
     return (
@@ -115,7 +150,30 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
             </table>
           </a>
           <div className="shadow-inner-top bg-white px-2 py-4">
-            <p>Hi there</p>
+            <div className={classNames('bg-household-lightest p-2')}>
+              <h3 className="mb-4">Edit household</h3>
+              <TextField id="edit-name"
+                         label="Name"
+                         autofocus
+                         field={this.state.form.fields.name}
+                         valueOnChange={this.fieldChanged('name')} />
+              <TextField id="edit-contactName"
+                         label="Contact name"
+                         field={this.state.form.fields.contactName}
+                         valueOnChange={this.fieldChanged('contactName')} />
+              <TextField id="edit-contactEmail"
+                         label="Contact email"
+                         field={this.state.form.fields.contactEmail}
+                         valueOnChange={this.fieldChanged('contactEmail')} />
+              <TextField id="edit-contactPhone"
+                         label="Contact phone"
+                         field={this.state.form.fields.contactPhone}
+                         valueOnChange={this.fieldChanged('contactPhone')} />
+              <div className="flex justify-end">
+                <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+                {/* <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button> */}
+              </div>
+            </div>
           </div>
         </div>
         <CurrentOrder household={this.props.household}

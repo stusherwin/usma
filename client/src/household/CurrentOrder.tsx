@@ -1,15 +1,12 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
 import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
+import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { ServerApi, ApiError } from '../ServerApi'
-
-const transitionTime = 0.25;
-const minHeight = '5rem';
+import { ServerApi } from '../ServerApi'
+import { CollapsibleWithHeader } from './CollapsibleWithHeader'
 
 export interface CurrentOrderProps { household: Household
                                    , currentOrder: CollectiveOrder | null
@@ -29,49 +26,11 @@ export interface CurrentOrderState { addingProduct: boolean
                                    }
 
 export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrderState> {
-  container: React.RefObject<HTMLDivElement>
-
   constructor(props: CurrentOrderProps) {
     super(props)
 
-    this.container = React.createRef();
     this.state = { addingProduct: false
-               }
-  }
-
-  componentDidUpdate(prevProps: CurrentOrderProps) {
-    if(prevProps.expanded != this.props.expanded) {
-      this.animateHeight()
-      if(!prevProps.expanded) {
-        this.setState({addingProduct: false})
-      }
-    }
-  }
-
-  componentDidMount() {
-    this.animateHeight()
-  }
-
-  animateHeight() {
-    const el = this.container.current
-    if(!el) return
-
-    if(this.props.expanded) {
-      el.style.height = el.scrollHeight + 'px';
-    } else {
-      el.style.height = el.scrollHeight + 'px';
-      el.offsetHeight; // trigger reflow
-      el.style.height = minHeight;
-    }
-  }
-
-  unsetHeight = () => {
-    const el = this.container.current
-    if(!el) return
-
-    if(this.props.expanded) {
-      el.style.height = null;
-    }
+                 }
   }
 
   startAdd = () => this.setState({ addingProduct: true })
@@ -105,34 +64,29 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   render() {
     let householdOrder = this.props.currentHouseholdOrder
     let order = this.props.currentOrder
-
+ 
     return (
-      <div ref={this.container} className="min-h-20" style={{ 
-          overflow: 'hidden',
-          height: minHeight,
-          transition: `height ${transitionTime / 2}s ease`,
-          transitionDelay: this.props.expanded? '0s' : (this.props.otherExpanding? `${transitionTime / 2}s` : '0s')
-        }} onTransitionEnd={this.unsetHeight}>
-        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} 
-          className="bg-order-dark p-2 block no-underline hover:no-underline text-black hover:text-black min-h-20">
-          <div className="bg-img-order bg-no-repeat w-16 h-16 absolute"></div>
-          <h2 className="leading-none ml-20 relative flex">Current order
-            <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
-          </h2>
-          <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span>
-            <span>
-              {householdOrder 
-              ? householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalIncVat != householdOrder.totalIncVat && !householdOrder.isAbandoned
-                ? <span>
-                    <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
-                    <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
-                  </span>
-                : <Money amount={!householdOrder.isAbandoned? householdOrder.totalIncVat : 0} />
-              : <Money amount={0} />
-              }
-            </span>
-          </h3>
-        </a>
+      <CollapsibleWithHeader className="min-h-20"
+                             headerClassName="bg-order-dark min-h-20"
+                             headerImageClassName="bg-img-order"
+                             headerText="Current order"
+                             headerContent={() => (
+                              <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span>
+                                <span>
+                                  {householdOrder 
+                                  ? householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalIncVat != householdOrder.totalIncVat && !householdOrder.isAbandoned
+                                    ? <span>
+                                        <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
+                                        <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
+                                      </span>
+                                    : <Money amount={!householdOrder.isAbandoned? householdOrder.totalIncVat : 0} />
+                                  : <Money amount={0} />
+                                  }
+                                </span>
+                              </h3>
+                             )}
+                             onCollapse={this.cancelAdd}
+                             {...this.props}>
         { householdOrder && order
           ? (
             <CurrentHouseholdOrder currentOrder={order}
@@ -162,7 +116,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             </div>
          ))
         }
-      </div>
-    )
+     </CollapsibleWithHeader>
+   )
   }
 }
