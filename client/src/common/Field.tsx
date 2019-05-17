@@ -6,6 +6,7 @@ export interface TextFieldProps {
   id: string
   label: string
   field: Field
+  inputRef?: React.RefObject<HTMLInputElement>
   autofocus?: boolean
   valueOnChange: (value: string) => void
 }
@@ -20,6 +21,7 @@ export const TextField = (props: TextFieldProps) => {
         <label className="flex-no-grow flex-no-shrink mr-2"
                htmlFor={props.id}>{props.label}:</label>
         <input type="text" 
+               ref={props.inputRef}
                id={props.id} 
                autoFocus={props.autofocus || false}
                className="input flex-grow flex-no-shrink"

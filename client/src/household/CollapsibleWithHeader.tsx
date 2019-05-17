@@ -6,16 +6,19 @@ import { Icon } from '../common/Icon'
 const transitionTime = 0.25;
 const minHeight = '5rem';
 
-export interface CollapsibleWithHeaderProps { className: string 
-                                            , headerClassName: string 
-                                            , headerImageClassName: string
-                                            , headerText: string
-                                            , headerContent: () => JSX.Element
+export interface CollapsibleWithHeaderProps { className?: string 
+                                            , headerClassName?: string 
+                                            , headerImageClassName?: string
+                                            , headerText?: string
+                                            , headerContent?: () => JSX.Element
+                                            , backgroundClassName?: string
                                             , expanded: boolean
                                             , otherExpanding: boolean
                                             , toggle: () => void
                                             , onExpand?: () => void
                                             , onCollapse?: () => void
+                                            , onExpanded?: () => void
+                                            , onCollapsed?: () => void
                                             }
 
 export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeaderProps, {}> {
@@ -59,12 +62,22 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
     }
   }
 
-  unsetHeight = () => {
+  transitionEnded = () => {
     const el = this.container.current
-    if(!el) return
+    if(el) {
+      if(this.props.expanded) {
+        el.style.height = null;
+      }
+    }
 
     if(this.props.expanded) {
-      el.style.height = null;
+      if(this.props.onExpanded) {
+        this.props.onExpanded();
+      }
+    } else {
+      if(this.props.onCollapsed) {
+        this.props.onCollapsed();
+      }
     }
   }
   
@@ -75,7 +88,7 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
             height: minHeight,
             transition: `height ${transitionTime / 2}s ease`,
             transitionDelay: this.props.expanded? '0s' : (this.props.otherExpanding? `${transitionTime / 2}s` : '0s')
-          }} onTransitionEnd={this.unsetHeight}>
+          }} onTransitionEnd={this.transitionEnded}>
         <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className={classNames(
             'p-2 block no-underline text-black hover:text-black hover:no-underline',
             this.props.headerClassName)}>
@@ -83,9 +96,9 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
           <h2 className="leading-none ml-20 relative flex">{this.props.headerText}
             <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
           </h2>
-          { this.props.headerContent() }
+          { this.props.headerContent && this.props.headerContent() }
         </a>
-        <div className="shadow-inner-top bg-white px-2 py-4">
+        <div className={classNames('shadow-inner-top px-2 py-4', this.props.backgroundClassName || 'bg-white')}>
           { this.props.children }
         </div>
       </div>
