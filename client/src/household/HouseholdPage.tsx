@@ -51,10 +51,12 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   toggle = (toExpand: Section) => () => { 
+    console.log('toggle: ' + toExpand);
     this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
   }
 
   confirmEdit = () => {
+    console.log('confirmEdit');
     const validated = this.state.form.validate()
     console.log(validated)
     this.setState({ form: validated })
@@ -66,6 +68,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   cancelEdit = () => {
+    console.log('cancelEdit');
     this.toggle('household')()
     this.setState({ form: this.state.form.reset({ name: this.props.household.name
                                                 , contactName: this.props.household.contactName
@@ -75,15 +78,21 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                   })
   }
 
-  populateFields = () => this.setState({ form: this.state.form.reset({ name: this.props.household.name
+  populateFields = () => { 
+    console.log('populateFields');
+
+    this.setState({ form: this.state.form.reset({ name: this.props.household.name
                                                                      , contactName: this.props.household.contactName
                                                                      , contactEmail: this.props.household.contactEmail
                                                                      , contactPhone: this.props.household.contactPhone
                                                                      })
                                        })
+  }
 
-  fieldChanged = (fieldName: string) => (value: string) =>
+  fieldChanged = (fieldName: string) => (value: string) => {
+    console.log('fieldChanged');
     this.setState({ form: this.state.form.update(fieldName, value) })
+  }
 
   render() {
     return (
@@ -117,34 +126,35 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                                    }
                                  </table>
                                )}
-                               backgroundClassName="bg-household-lightest"
                                expanded={this.state.expanded == 'household'}
                                otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
                                toggle={this.toggle('household')}
                                onExpand={this.populateFields}
                                onCollapse={() => { if(this.nameInput.current) { this.nameInput.current.blur() } }}
                                onExpanded={() => { if(this.nameInput.current) { this.nameInput.current.focus() } }}>
-          <h3 className="mb-4">Edit household</h3>
-          <TextField id="edit-name"
-                     label="Name"
-                     inputRef={this.nameInput}
-                     field={this.state.form.fields.name}
-                     valueOnChange={this.fieldChanged('name')} />
-          <TextField id="edit-contactName"
-                     label="Contact name"
-                     field={this.state.form.fields.contactName}
-                     valueOnChange={this.fieldChanged('contactName')} />
-          <TextField id="edit-contactEmail"
-                     label="Contact email"
-                     field={this.state.form.fields.contactEmail}
-                     valueOnChange={this.fieldChanged('contactEmail')} />
-          <TextField id="edit-contactPhone"
-                     label="Contact phone"
-                     field={this.state.form.fields.contactPhone}
-                     valueOnChange={this.fieldChanged('contactPhone')} />
-          <div className="flex justify-end">
-            <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-            <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+          <div className="shadow-inner-top px-2 py-4 bg-household-lightest">
+            <h3 className="mb-4">Edit household</h3>
+            <TextField id="edit-name"
+                       label="Name"
+                       inputRef={this.nameInput}
+                       field={this.state.form.fields.name}
+                       valueOnChange={this.fieldChanged('name')} />
+            <TextField id="edit-contactName"
+                       label="Contact name"
+                       field={this.state.form.fields.contactName}
+                       valueOnChange={this.fieldChanged('contactName')} />
+            <TextField id="edit-contactEmail"
+                       label="Contact email"
+                       field={this.state.form.fields.contactEmail}
+                       valueOnChange={this.fieldChanged('contactEmail')} />
+            <TextField id="edit-contactPhone"
+                       label="Contact phone"
+                       field={this.state.form.fields.contactPhone}
+                       valueOnChange={this.fieldChanged('contactPhone')} />
+            <div className="flex justify-end">
+              <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+              <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+            </div>
           </div>
         </CollapsibleWithHeader>
         <CurrentOrder household={this.props.household}

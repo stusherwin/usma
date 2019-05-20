@@ -27,3 +27,5 @@
 * Store current household in session
 
 * Current order stick to top when scrolling down in Add Product
+
+* Multiple collective orders (unique link), user can be in multiple orders

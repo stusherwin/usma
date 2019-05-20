@@ -1,12 +1,14 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry } from '../Types'
+import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, OrderItem } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { ServerApi } from '../ServerApi'
 import { CollapsibleWithHeader } from './CollapsibleWithHeader'
+import { ServerApi } from '../ServerApi'
+import { AddProduct } from './AddProduct'
 
 export interface CurrentOrderProps { household: Household
                                    , currentOrder: CollectiveOrder | null
@@ -61,62 +63,181 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       .then(this.props.reload)
   }
 
+  abandonOrder = () => {
+    if(!this.props.currentHouseholdOrder) return
+    this.props.request(ServerApi.command.abandonHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
+  completeOrder = () => {
+    if(!this.props.currentHouseholdOrder) return
+    this.props.request(ServerApi.command.completeHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
+  reopenOrder = () => {
+    if(!this.props.currentHouseholdOrder) return
+    this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
+  leaveOrder = () => {
+    if(!this.props.currentHouseholdOrder) return
+    this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
+  acceptUpdates = () => {
+    if(!this.props.currentHouseholdOrder) return
+    this.props.request(ServerApi.command.acceptCatalogueUpdates(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
+  unusedProducts = () => {
+    if(!this.props.currentHouseholdOrder) return []
+
+    const items = this.props.currentHouseholdOrder.items
+    return this.props.products.filter(p => !items.find(i => i.productCode == p.code))
+  }
+
   render() {
-    let householdOrder = this.props.currentHouseholdOrder
     let order = this.props.currentOrder
- 
+    let householdOrder = this.props.currentHouseholdOrder
+    let unusedProducts = this.unusedProducts()
+
     return (
       <CollapsibleWithHeader className="min-h-20"
                              headerClassName="bg-order-dark min-h-20"
                              headerImageClassName="bg-img-order"
                              headerText="Current order"
                              headerContent={() => (
-                              <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span>
-                                <span>
-                                  {householdOrder 
-                                  ? householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalIncVat != householdOrder.totalIncVat && !householdOrder.isAbandoned
-                                    ? <span>
-                                        <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
-                                        <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
-                                      </span>
-                                    : <Money amount={!householdOrder.isAbandoned? householdOrder.totalIncVat : 0} />
-                                  : <Money amount={0} />
-                                  }
-                                </span>
-                              </h3>
+                              <div>
+                                <h3 className="flex justify-between ml-20 mt-4 mb-4">
+                                  <span>Total:</span>
+                                  {this.renderTotal()}
+                                </h3>
+                                {this.renderMessages()}
+                                {this.renderButtons(unusedProducts)}
+                              </div>
                              )}
                              onCollapse={this.cancelAdd}
                              {...this.props}>
-        { householdOrder && order
-          ? (
-            <CurrentHouseholdOrder currentOrder={order}
-                                   currentHouseholdOrder={householdOrder}
-                                   currentHouseholdOrders={this.props.currentHouseholdOrders}
-                                   products={this.props.products}
-                                   households={this.props.households}
-                                   loading={this.props.loading}
+        { !order? 
+          <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+            <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
+            <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
+          </div>
+        : !householdOrder?
+          <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+            <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
+            <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
+          </div>
+        : this.state.addingProduct?
+          <AddProduct products={unusedProducts}
+                      loading={this.props.loading}
+                      cancelAdd={this.cancelAdd}
+                      confirmAdd={this.confirmAdd} />
+        : !householdOrder.items.length?
+          <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+            <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet {!this.props.products.length && ' - the product catalogue is empty'}
+          </div>
+        : <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+            <CurrentHouseholdOrder currentHouseholdOrder={householdOrder}
                                    reload={this.props.reload}
-                                   request={this.props.request}
-                                   addingProduct={this.state.addingProduct}
-                                   startAdd={this.startAdd}
-                                   cancelAdd={this.cancelAdd}
-                                   confirmAdd={this.confirmAdd} />
-          )
-          : (order
-          ? (
-            <div className="shadow-inner-top bg-white px-2 py-4 text-grey-darker">
-              <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
-              <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
-            </div>
-          )
-          : (
-            <div className="shadow-inner-top bg-white px-2 py-4 text-grey-darker">
-              <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
-              <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
-            </div>
-         ))
+                                   request={this.props.request} />
+          </div>
         }
-     </CollapsibleWithHeader>
-   )
+      </CollapsibleWithHeader>
+    )
+  }
+
+  renderTotal = () => {
+    let householdOrder = this.props.currentHouseholdOrder
+
+    return !householdOrder?
+      <Money amount={0} />
+    : householdOrder.isAbandoned?
+      <Money amount={0} />
+    : householdOrder.oldTotalIncVat === null || householdOrder.oldTotalIncVat == householdOrder.totalIncVat?
+      <Money amount={householdOrder.totalIncVat} />
+    : <span>
+        <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
+        <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
+      </span>
+  }
+
+  renderMessages = () => {
+    let householdOrder = this.props.currentHouseholdOrder
+    if(!householdOrder) return
+
+    const allComplete = this.props.currentHouseholdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
+    const householdsInOrder = this.props.households.filter(h => !!this.props.currentHouseholdOrders.find(oh => oh.householdId == h.id))
+    const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
+    const allHouseholdsUpToDate = !!this.props.currentOrder && this.props.currentOrder.allHouseholdsUpToDate;
+    const orderMinimumReached = !!this.props.currentOrder && this.props.currentOrder.totalIncVat >= 25000
+
+    if(householdOrder.isAbandoned)
+      return <div className="bg-blue-lighter p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
+
+    if(!!householdOrder.oldTotalExcVat && householdOrder.oldTotalIncVat != householdOrder.totalIncVat)
+      return (
+        <div className="bg-red-lighter p-2"><Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.
+          <div className="flex justify-end mt-2"><button onClick={e => {e.stopPropagation(); this.acceptUpdates()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
+        </div>
+      )
+
+    if(!householdOrder.isComplete)
+      return
+
+    return (
+      <div className="bg-blue-lighter p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order complete
+      { !allHouseholdsUpToDate?
+        <span>, waiting for all households to accept latest catalogue updates</span>
+      : !orderMinimumReached?
+        <span>, waiting for minimum order to be reached. Current total is <Money amount={!!this.props.currentOrder && this.props.currentOrder.totalIncVat || 0} /> of &pound;250.00</span>
+      : !allComplete?
+        <span>, waiting for all orders to be completed</span>
+      : !allPaid?
+        <span>, waiting for everyone to pay up</span>
+      : <span>, collective order can now be placed</span>
+      }
+      </div>
+    )
+  }
+
+  renderButtons = (unusedProducts: ProductCatalogueEntry[]) => {
+    let householdOrder = this.props.currentHouseholdOrder
+    if(!householdOrder) return
+
+    if(this.state.addingProduct) return
+
+    const canAddItem = householdOrder.isOpen && !!unusedProducts.length
+    const canLeaveOrder = !householdOrder.items.length
+    const canReopenOrder = !!householdOrder.items.length && !householdOrder.isOpen
+    const canAbandonOrder = !!householdOrder.items.length && householdOrder.isOpen
+    const canCompleteOrder = !!householdOrder.items.length && householdOrder.isOpen
+    const orderButtons = [canLeaveOrder, canReopenOrder, canAbandonOrder, canCompleteOrder, canAddItem]
+
+    if(!orderButtons.some(b => b)) return
+
+    return (
+      <div className="bg-order-dark flex flex-wrap content-start items-start">
+        {canLeaveOrder && 
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
+        }
+        {canReopenOrder &&
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.reopenOrder()}}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
+        }
+        {canAbandonOrder &&
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.abandonOrder()}}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
+        }
+        {canCompleteOrder && 
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.completeOrder()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
+        }
+        {canAddItem &&
+          <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={e => { e.stopPropagation(); this.startAdd()}}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
+        }
+      </div>
+    )
   }
 }

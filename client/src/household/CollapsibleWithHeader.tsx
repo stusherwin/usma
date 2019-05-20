@@ -11,7 +11,6 @@ export interface CollapsibleWithHeaderProps { className?: string
                                             , headerImageClassName?: string
                                             , headerText?: string
                                             , headerContent?: () => JSX.Element
-                                            , backgroundClassName?: string
                                             , expanded: boolean
                                             , otherExpanding: boolean
                                             , toggle: () => void
@@ -34,10 +33,12 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
     if(prevProps.expanded != this.props.expanded) {
       this.animateHeight()
       if(this.props.expanded) {
+        console.log(this.props.headerText + ': expanding');
         if(this.props.onExpand) {
           this.props.onExpand()
         }
       } else {
+        console.log(this.props.headerText + ': collapsing');
         if(this.props.onCollapse) {
           this.props.onCollapse()
         }
@@ -71,10 +72,12 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
     }
 
     if(this.props.expanded) {
+      console.log(this.props.headerText + ': expanded');
       if(this.props.onExpanded) {
         this.props.onExpanded();
       }
     } else {
+      console.log(this.props.headerText + ': collapsed');
       if(this.props.onCollapsed) {
         this.props.onCollapsed();
       }
@@ -98,9 +101,7 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
           </h2>
           { this.props.headerContent && this.props.headerContent() }
         </a>
-        <div className={classNames('shadow-inner-top px-2 py-4', this.props.backgroundClassName || 'bg-white')}>
-          { this.props.children }
-        </div>
+        { this.props.children }
       </div>
     )
   }
