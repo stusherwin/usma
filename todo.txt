@@ -20,7 +20,6 @@
 * copy new styles to admin area
 
 * Make payment check a config setting
-* Move order buttons to parent component
 * Payment section in admin, separate from households
 
 * Welcome screen list instead of dropdown?

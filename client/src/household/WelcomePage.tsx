@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { Household } from '../Types'
 import { RouterLink } from '../common/RouterLink'
@@ -67,32 +68,38 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
   render() {
     return (
       <div className="h-screen bg-household-light text-household-darker">
-        <div className="collective-orders-header">
+        {/* <div className="collective-orders-header">
           <h1>Collective Orders</h1>
-        </div>
-        <div className="p-2 pt-4">
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative">
-            <h2 className="leading-none py-4">Welcome</h2>
-          </div>
+        </div> */}
+        <div className="p-2 block no-underline text-black hover:text-black hover:no-underline min-h-24">
+          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
+          <h2 className="leading-none ml-20 relative flex mt-2">Welcome
+          </h2>
+          {!this.props.households.length &&
+            <div>
+              <p className="mt-4 ml-20">Please enter some details about your household</p>
+            </div>
+          }
+          {!!this.props.households.length && !this.state.editing &&
+            <div>
+              <p className="mt-4 ml-20">Choose your household to continue.</p>
+              <div className="mt-4 flex">
+                <p className="mt-2 mr-4">Not in the list?</p>
+                <button className="" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add your household</button>
+              </div>
+            </div>
+          }
         </div>
         {!!this.props.households.length && !this.state.editing &&
-          <div className="p-2">
-            <p>Choose your household to continue:</p>
-            <select className="mt-4 w-full" value={this.state.selectedHouseholdId} onChange={this.selectedHouseholdChanged}>
-              {this.props.households.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-            </select>
-            <div className="mt-4">
-              <button className="" onClick={this.continue}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Continue</button>
-            </div>
-            <p className="mt-4">Not in the list?</p>
-            <div className="mt-4">
-              <button className="" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add your household</button>
-            </div>
+          <div className="shadow-inner-top bg-white px-2 py-4">
+            {this.props.households.map((h, i) => 
+              <RouterLink className={classNames('block', {'mt-2': i > 0})} key={h.id} path={`/households/${h.id}`}>{h.name}</RouterLink>
+            )}
           </div>
         }
         {(!this.props.households.length || this.state.editing == 'new') &&
-          <div className="bg-household-lightest p-2 mt-4">
-            <h3 className="mb-4">Enter a name for your household:</h3>
+          <div className="shadow-inner-top bg-household-lightest p-2 py-4">
+            <h3 className="mb-4">Your household details</h3>
             <TextField id="create-name"
                        label="Name"
                        field={this.state.form.fields.name}

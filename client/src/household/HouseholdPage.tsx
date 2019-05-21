@@ -12,6 +12,7 @@ import { ServerApi, ApiError } from '../ServerApi'
 import { Form, Field, Validate } from '../common/Validation'
 import { TextField } from '../common/Field'
 import { CollapsibleWithHeader } from './CollapsibleWithHeader'
+import { RouterLink } from '../common/RouterLink';
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentOrder: CollectiveOrder | null
@@ -100,31 +101,36 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <CollapsibleWithHeader className="min-h-32"
-                               headerClassName="bg-household-light min-h-32"
-                               headerImageClassName="bg-img-household"
+        <CollapsibleWithHeader className="min-h-28"
+                               headerClassName="bg-household-light min-h-28"
+                               headingClassName="mt-2"
+                               headerImageClassName="bg-img-household mt-2"
                                headerText={this.props.household.name}
                                headerContent={() => (
-                                 <table className="border-collapse w-full mt-1 ml-20">
-                                   {this.props.household.contactName &&
-                                     <tr>
-                                       <th className="font-bold text-left pt-1 pr-2">Contact:</th>
-                                       <td className="pt-1">{this.props.household.contactName}</td>
-                                     </tr>
-                                   }
-                                   {this.props.household.contactEmail &&
-                                     <tr>
-                                       <th className="font-bold text-left pt-1 pr-2">Email:</th>
-                                       <td className="pt-1">{this.props.household.contactEmail}</td>
-                                     </tr>
-                                   }
-                                   {this.props.household.contactPhone &&
-                                     <tr>
-                                       <th className="font-bold text-left pt-1 pr-2">Phone:</th>
-                                       <td className="pt-1">{this.props.household.contactPhone}</td>
-                                     </tr>
-                                   }
-                                 </table>
+                                 <div>
+                                   <RouterLink className="block ml-20 mt-1" path="/households">Change household</RouterLink>
+                                   <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                                   {/* <table className="border-collapse w-full mt-1">
+                                     {this.props.household.contactName &&
+                                       <tr>
+                                         <th className="font-bold text-left pt-1 pl-20 pr-2">Contact:</th>
+                                         <td className="pt-1">{this.props.household.contactName}</td>
+                                       </tr>
+                                     } */}
+                                     {/* {this.props.household.contactEmail &&
+                                       <tr>
+                                         <th className="font-bold text-left pt-1 pr-2">Email:</th>
+                                         <td className="pt-1">{this.props.household.contactEmail}</td>
+                                       </tr>
+                                     }
+                                     {this.props.household.contactPhone &&
+                                       <tr>
+                                         <th className="font-bold text-left pt-1 pr-2">Phone:</th>
+                                         <td className="pt-1">{this.props.household.contactPhone}</td>
+                                       </tr>
+                                     } */}
+                                   {/* </table> */}
+                                 </div>
                                )}
                                expanded={this.state.expanded == 'household'}
                                otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}

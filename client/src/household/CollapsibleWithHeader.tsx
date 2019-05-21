@@ -8,6 +8,7 @@ const minHeight = '5rem';
 
 export interface CollapsibleWithHeaderProps { className?: string 
                                             , headerClassName?: string 
+                                            , headingClassName?: string 
                                             , headerImageClassName?: string
                                             , headerText?: string
                                             , headerContent?: () => JSX.Element
@@ -96,7 +97,7 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
             'p-2 block no-underline text-black hover:text-black hover:no-underline',
             this.props.headerClassName)}>
           <div className={classNames('bg-no-repeat w-16 h-16 absolute', this.props.headerImageClassName)}></div>
-          <h2 className="leading-none ml-20 relative flex">{this.props.headerText}
+          <h2 className={classNames('leading-none ml-20 relative flex', this.props.headingClassName)}>{this.props.headerText}
             <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
           </h2>
           { this.props.headerContent && this.props.headerContent() }
