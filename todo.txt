@@ -28,3 +28,6 @@
 * Current order stick to top when scrolling down in Add Product
 
 * Multiple collective orders (unique link), user can be in multiple orders
+
+* Back button should trigger a reload
+* Periodic reload (if no activity for a while)

@@ -445,10 +445,10 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     withTransaction conn $ do
       execute conn [sql|
         insert into past_order (id, created_date, created_by_id, created_by_name, cancelled)
-        select id, created_date, h.id, h.name, ?
+        select o.id, o.created_date, h.id, h.name, ?
         from "order" o
         inner join household h on h.id = o.created_by_id
-        where id = ?
+        where o.id = ?
       |] (cancelled, orderId)
       execute conn [sql|
         insert into past_household_order (order_id, household_id, household_name, cancelled)

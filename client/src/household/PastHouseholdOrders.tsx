@@ -57,44 +57,44 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
             </div>
           : (
-            <div className="shadow-inner-top px-2 py-4 bg-white">
-              <table className="border-collapse w-full px-2 py-4">
+            <div className="shadow-inner-top py-4 bg-white">
+              <table className="border-collapse w-full">
                 <tbody>
                   { pastOrders.map((ho, i) => ([
                       <tr key={ho.orderId}>
-                        <td className={classNames('pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0})}>
+                        <td className={classNames('pl-2 pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0})}>
                           <a href="#" onClick={e => {e.preventDefault(); this.expandOrder(ho)}}>{Util.formatDate(ho.orderCreatedDate)}</a>
-                          <Icon type={this.state.expanded? 'collapse' : 'expand'} className="w-3 h-3 ml-2 text-grey-dark fill-current" />
+                          <Icon type={this.state.expanded == ho? 'collapse' : 'expand'} className="w-3 h-3 ml-2 text-grey-dark fill-current" />
                         </td>
                         {/* <td className={classNames('pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0})}>{itemCount(ho)}</td> */}
                         <td className={classNames('pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0})}>{ho.isAbandoned && 'Abandoned'}</td>
-                        <td className={classNames('text-right', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0, 'line-through': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
+                        <td className={classNames('pr-2 text-right', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0, 'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
                       </tr>
                       ,
                       this.state.expanded == ho &&
                         <tr>
                           <td colSpan={3}>
-                            <table className="border-collapse w-full">
+                            <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
                               <tbody>
                                 {ho.items.map(i =>
                                   <tr key={i.productId}>  
-                                    <td className="bg-grey-lighter pt-2 pr-2">{i.productCode}</td>
-                                    <td className="bg-grey-lighter pt-2 pr-2 w-full">{i.productName}</td>
-                                    <td className="bg-grey-lighter pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                                    <td className="bg-grey-lighter pt-2 text-right"><Money amount={i.itemTotalExcVat} /></td>
+                                    <td className="pt-2 pl-2 pr-2">{i.productCode}</td>
+                                    <td className="pt-2 pr-2 w-full">{i.productName}</td>
+                                    <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
+                                    <td className={classNames('pt-2 pr-2 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={i.itemTotalExcVat} /></td>
                                   </tr>
                                 )}
                                 <tr>
-                                  <td className="bg-grey-lighter pt-2 pr-2">VAT:</td>
-                                  <td className="bg-grey-lighter pt-2 pr-2"></td>
-                                  <td className="bg-grey-lighter pt-2 pr-2"></td>
-                                  <td className="bg-grey-lighter pt-2 text-right"><Money amount={ho.totalIncVat - ho.totalExcVat} /></td>
+                                  <td className="pt-2 pr-2 pl-2">VAT:</td>
+                                  <td className="pt-2 pr-2"></td>
+                                  <td className="pt-2 pr-2"></td>
+                                  <td className={classNames('pt-2 pr-2 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></td>
                                 </tr>
                                 <tr>
-                                  <td className="bg-grey-lighter pt-2 pb-2 pr-2 font-bold">Total:</td>
-                                  <td className="bg-grey-lighter pt-2 pb-2 pr-2"></td>
-                                  <td className="bg-grey-lighter pt-2 pb-2 pr-2"></td>
-                                  <td className="bg-grey-lighter pt-2 pb-2 font-bold text-right"><Money amount={ho.totalIncVat} /></td>
+                                  <td className="pt-2 pb-2 pl-2 pr-2 font-bold">Total:</td>
+                                  <td className="pt-2 pb-2 pr-2"></td>
+                                  <td className="pt-2 pb-2 pr-2"></td>
+                                  <td className={classNames('pt-2 pr-2 pb-2 font-bold text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
                                 </tr>
                               </tbody>
                             </table>
@@ -103,10 +103,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                       ]
                   )) }
                   <tr>
-                    <td className="pt-2 pr-2 font-bold">Total:</td>
+                    <td className="pt-2 pl-2 pr-2 font-bold">Total:</td>
                     {/* <td className="pt-2 pb-2 pr-2"></td> */}
                     <td className="pt-2 pb-2 pr-2"></td>
-                    <td className="pt-2 font-bold text-right"><Money amount={total} /></td>
+                    <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
                   </tr>
                 </tbody>
               </table>

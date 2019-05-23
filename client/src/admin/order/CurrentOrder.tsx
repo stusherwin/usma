@@ -69,14 +69,14 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     const order = this.props.order
     const unusedHouseholds = this.props.households.filter(h => !this.props.householdOrders.find(oh => oh.householdId == h.id))
     const allComplete = this.props.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
-    const householdsInOrder = this.props.households.filter(h => !!this.props.householdOrders.find(oh => oh.householdId == h.id))
-    const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
+    // const householdsInOrder = this.props.households.filter(h => !!this.props.householdOrders.find(oh => oh.householdId == h.id))
+    // const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
     const orderMinimumReached = this.props.order.totalIncVat >= 25000
 
     const deleteOrderPossible = !this.props.householdOrders.length
     const addHouseholdPossible = !!unusedHouseholds.length
     const placeOrderPossible = !!this.props.householdOrders.length
-    const placeOrderAllowed = allComplete && allPaid && orderMinimumReached
+    const placeOrderAllowed = allComplete /*&& allPaid*/ && orderMinimumReached
     const abandonOrderPossible = !!this.props.householdOrders.length
 
     const deletableHousehold = !!this.props.householdOrders.length && !!this.props.householdOrders.find(ho => !ho.items.length)
@@ -91,8 +91,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                 <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for &pound;250.00 order minimum</span>
               : !allComplete?
                 <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for all orders to be completed</span>
-              : !allPaid?
-                <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
+              // : !allPaid?
+              //   <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
               : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
             }
           </div>

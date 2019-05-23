@@ -96,15 +96,8 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
         }
         {this.state.view == "codes" && 
           <div className="mb-4 mt-4 p-2">
-            <textarea className="border p-2 w-full leading-tight" style={{minHeight: `${currentOrder.items.length * 32 * 1.25 + 1.5}rem`}}>
-              {[...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, 
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items,
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, 
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items,
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, 
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items,
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, 
-                ...currentOrder.items, ...currentOrder.items, ...currentOrder.items, ...currentOrder.items].map(i => `${i.productCode} ${i.itemQuantity}`).join('\n')}
+            <textarea className="border p-2 w-full leading-tight" style={{minHeight: `${currentOrder.items.length * 1.25 + 1.5}rem`}}>
+              {currentOrder.items.map(i => `${i.productCode} ${i.itemQuantity}`).join('\n')}
             </textarea>
           </div>
         }
