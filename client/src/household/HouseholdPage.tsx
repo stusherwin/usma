@@ -108,7 +108,9 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                                headerText={this.props.household.name}
                                headerContent={() => (
                                  <div>
-                                   <RouterLink className="block ml-20 mt-1" path="/households">Change household</RouterLink>
+                                   <div className="ml-20 mt-1">
+                                     <RouterLink path="/households">Change household</RouterLink>
+                                   </div>
                                    <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
                                    {/* <table className="border-collapse w-full mt-1">
                                      {this.props.household.contactName &&
