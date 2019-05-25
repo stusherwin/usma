@@ -71,7 +71,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     [
     <tr key={i.productId + '-1'}>
       <td className={classNames('w-20 h-20 align-top', {'pt-8': ix > 0})} rowSpan={3}>
-        <img className="w-20 h-20 -ml-1" src={`/api/query/product-image/${i.productCode}`} />
+        <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${i.productCode}`)} />
       </td>
       <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': ix > 0, '': i.productDiscontinued})}>{i.productCode}</td>
       <td className={classNames('pl-2 pb-2 align-baseline', {'pt-8': ix > 0})}>

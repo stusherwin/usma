@@ -141,9 +141,9 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                     {ho.isComplete &&
                       <span>
                         {household && (
-                          household.balance > 0
+                          household.balance <= 0
                           ? ' (paid)'
-                          : (<span>(<Money amount={household.balance} absolute /> to pay <RouterLink path={`/admin/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
+                          : (<span> (<Money amount={household.balance} absolute /> to pay <RouterLink path={`/admin/households/${ho.householdId}`}>Make payment</RouterLink>)</span>)
                         )}
                       </span>
                     }

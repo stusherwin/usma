@@ -52,7 +52,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   toggle = (toExpand: Section) => () => { 
-    console.log('toggle: ' + toExpand);
     this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
   }
 

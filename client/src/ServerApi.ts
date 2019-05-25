@@ -3,7 +3,7 @@ import { Util } from './common/Util'
 
 const query = {
   collectiveOrder(): Promise<CollectiveOrder | null> {
-    return Http.get<CollectiveOrder | null>('/api/query/collective-order')
+    return Http.get<CollectiveOrder | null>('/api/DEF/query/collective-order')
       .then(res => { 
         if(res) {
           res.createdDate = new Date(res.createdDate)
@@ -13,82 +13,82 @@ const query = {
   },
 
   pastCollectiveOrders(): Promise<PastCollectiveOrder[]> {
-    return Http.get<PastCollectiveOrder[]>('/api/query/past-collective-orders')
+    return Http.get<PastCollectiveOrder[]>('/api/DEF/query/past-collective-orders')
       .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
   },
 
   householdOrders(): Promise<HouseholdOrder[]> {
-    return Http.get<HouseholdOrder[]>('/api/query/household-orders')
+    return Http.get<HouseholdOrder[]>('/api/DEF/query/household-orders')
       .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
   },
 
   pastHouseholdOrders(): Promise<PastHouseholdOrder[]> {
-    return Http.get<PastHouseholdOrder[]>('/api/query/past-household-orders')
+    return Http.get<PastHouseholdOrder[]>('/api/DEF/query/past-household-orders')
       .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
   },
 
   households(): Promise<Household[]> {
-    return Http.get<Household[]>('/api/query/households')
+    return Http.get<Household[]>('/api/DEF/query/households')
       .then(res => { res.forEach(h => { h.totalPayments = -h.totalPayments; h.balance = -h.balance;}); return res })
   },
 
   householdPayments(): Promise<HouseholdPayment[]> {
-    return Http.get<HouseholdPayment[]>('/api/query/household-payments')
+    return Http.get<HouseholdPayment[]>('/api/DEF/query/household-payments')
       .then(res => { res.forEach(hp => { hp.date = new Date(hp.date); hp.amount = -hp.amount;}); return res })
   },
 
   productCatalogue(): Promise<ProductCatalogueEntry[]> {
-    return Http.get<ProductCatalogueEntry[]>('/api/query/product-catalogue')
+    return Http.get<ProductCatalogueEntry[]>('/api/DEF/query/product-catalogue')
   }
 }
 
 const command = {
   createOrder(householdId: number): Promise<number> {
-    return Http.post(`/api/command/create-order/${householdId}`, {})
+    return Http.post(`/api/DEF/command/create-order/${householdId}`, {})
   },
 
   deleteOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/command/delete-order/${orderId}`, {})
+    return Http.post(`/api/DEF/command/delete-order/${orderId}`, {})
   },
 
   placeOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/command/place-order/${orderId}`, {})
+    return Http.post(`/api/DEF/command/place-order/${orderId}`, {})
   },
 
   abandonOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/command/abandon-order/${orderId}`, {})
+    return Http.post(`/api/DEF/command/abandon-order/${orderId}`, {})
   },
 
   createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/create-household-order/${orderId}/${householdId}`, {})
+    return Http.post(`/api/DEF/command/create-household-order/${orderId}/${householdId}`, {})
   },
 
   deleteHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/delete-household-order/${orderId}/${householdId}`, {})
+    return Http.post(`/api/DEF/command/delete-household-order/${orderId}/${householdId}`, {})
   },
 
   abandonHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/abandon-household-order/${orderId}/${householdId}`, {})
+    return Http.post(`/api/DEF/command/abandon-household-order/${orderId}/${householdId}`, {})
   },
 
   completeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/complete-household-order/${orderId}/${householdId}`, {})
+    return Http.post(`/api/DEF/command/complete-household-order/${orderId}/${householdId}`, {})
   },
 
   reopenHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/reopen-household-order/${orderId}/${householdId}`, {})
+    return Http.post(`/api/DEF/command/reopen-household-order/${orderId}/${householdId}`, {})
   },
 
   ensureHouseholdOrderItem(orderId: number, householdId: number, productCode: string, quantity: number): Promise<{}> {
-    return Http.post(`/api/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`, { hoidQuantity: quantity })
+    return Http.post(`/api/DEF/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`, { hoidQuantity: quantity })
   },
 
   removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
-    return Http.post(`/api/command/remove-household-order-item/${orderId}/${householdId}/${productId}`, {})
+    return Http.post(`/api/DEF/command/remove-household-order-item/${orderId}/${householdId}/${productId}`, {})
   },
 
   createHousehold(name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
-    return Http.post(`/api/command/create-household/`, { hdName: name
+    return Http.post(`/api/DEF/command/create-household/`, { hdName: name
                                                        , hdContactName: contactName
                                                        , hdContactEmail: contactEmail
                                                        , hdContactPhone: contactPhone 
@@ -96,7 +96,7 @@ const command = {
   },
 
   updateHousehold(id: number, name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
-    return Http.post(`/api/command/update-household/${id}`, { hdName: name
+    return Http.post(`/api/DEF/command/update-household/${id}`, { hdName: name
                                                             , hdContactName: contactName
                                                             , hdContactEmail: contactEmail
                                                             , hdContactPhone: contactPhone 
@@ -104,37 +104,38 @@ const command = {
   },
 
   archiveHousehold(id: number): Promise<{}> {
-    return Http.post(`/api/command/archive-household/${id}`, {})
+    return Http.post(`/api/DEF/command/archive-household/${id}`, {})
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/command/create-household-payment/${householdId}`, { hpdDate: Util.dateString(date)
+    return Http.post(`/api/DEF/command/create-household-payment/${householdId}`, { hpdDate: Util.dateString(date)
                                                                              , hpdAmount: amount
                                                                              })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/command/update-household-payment/${id}`, { hpdDate: Util.dateString(date)
+    return Http.post(`/api/DEF/command/update-household-payment/${id}`, { hpdDate: Util.dateString(date)
                                                                     , hpdAmount: amount
                                                                     })
   },
 
   archiveHouseholdPayment(id: number): Promise<{}> {
-    return Http.post(`/api/command/archive-household-payment/${id}`, {})
+    return Http.post(`/api/DEF/command/archive-household-payment/${id}`, {})
   },
 
   uploadProductCatalogue(data: FormData): Promise<{}> {
-    return Http.postFormData(`/api/command/upload-product-catalogue/`, data)
+    return Http.postFormData(`/api/DEF/command/upload-product-catalogue/`, data)
   },
 
   acceptCatalogueUpdates(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/command/accept-catalogue-updates/${orderId}/${householdId}`, {})
+    return Http.post(`/api/DEF/command/accept-catalogue-updates/${orderId}/${householdId}`, {})
   },
 }
 
 export const ServerApi = {
   query,
-  command
+  command,
+  url: (url: string) => `/api/DEF/${url}`
 }
 
 export class Http {

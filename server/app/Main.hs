@@ -15,7 +15,8 @@ module Main where
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
   import Data.Time.Calendar (toGregorian, fromGregorian, addGregorianYearsClip)
   import Data.Time.Format (formatTime, defaultTimeLocale)
-  import Data.Text (Text, unpack)
+  import Data.Text (Text)
+  import Data.Text as T (unpack)
   import Servant
   import Servant.Multipart
   import Control.Concurrent(threadDelay)
@@ -28,7 +29,9 @@ module Main where
   import Data.Time.Calendar (Day)
   import System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
   import Control.Monad (mzero, when, void)
-  
+  import Data.ByteString (ByteString)
+  import Data.ByteString as B (unpack)
+
   import Api
   import qualified Database as D
   import CollectiveOrder
@@ -114,38 +117,44 @@ module Main where
     Nothing
 
   appServer :: Config -> Server AppAPI
-  appServer config = queryServer config
-                :<|> commandServer config 
+  appServer config groupKey = queryServer config groupKey
+                         :<|> commandServer config groupKey
   
-  queryServer :: Config -> Server QueryAPI
-  queryServer config = collectiveOrder
-                  :<|> pastCollectiveOrders
-                  :<|> householdOrders
-                  :<|> pastHouseholdOrders
-                  :<|> households
-                  :<|> householdPayments
-                  :<|> productCatalogue
-                  :<|> productImage
+  queryServer :: Config -> Text -> Server QueryAPI
+  queryServer config groupKey = collectiveOrder groupKey
+                           :<|> pastCollectiveOrders groupKey
+                           :<|> householdOrders groupKey
+                           :<|> pastHouseholdOrders groupKey
+                           :<|> households groupKey
+                           :<|> householdPayments groupKey
+                           :<|> productCatalogue
+                           :<|> productImage
     where
     conn = connectionString config
     
-    collectiveOrder :: Handler (Maybe CollectiveOrder)
-    collectiveOrder = liftIO $ D.getCollectiveOrder conn
+    collectiveOrder :: Text -> Handler (Maybe CollectiveOrder)
+    collectiveOrder groupKey = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.getCollectiveOrder conn groupId
     
-    pastCollectiveOrders :: Handler [PastCollectiveOrder]
-    pastCollectiveOrders = liftIO $ D.getPastCollectiveOrders conn
+    pastCollectiveOrders :: Text -> Handler [PastCollectiveOrder]
+    pastCollectiveOrders groupKey = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.getPastCollectiveOrders conn groupId
     
-    householdOrders :: Handler [HouseholdOrder]
-    householdOrders = liftIO $ D.getHouseholdOrders conn
+    householdOrders :: Text -> Handler [HouseholdOrder]
+    householdOrders groupKey = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.getHouseholdOrders conn groupId
     
-    pastHouseholdOrders :: Handler [PastHouseholdOrder]
-    pastHouseholdOrders = liftIO $ D.getPastHouseholdOrders conn
+    pastHouseholdOrders :: Text -> Handler [PastHouseholdOrder]
+    pastHouseholdOrders groupKey = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.getPastHouseholdOrders conn groupId
 
-    households :: Handler [Household]
-    households = liftIO $ D.getHouseholds conn
+    households :: Text -> Handler [Household]
+    households groupKey = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.getHouseholds conn groupId
 
-    householdPayments :: Handler [HouseholdPayment]
-    householdPayments = liftIO $ D.getHouseholdPayments conn
+    householdPayments :: Text -> Handler [HouseholdPayment]
+    householdPayments groupKey = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.getHouseholdPayments conn groupId
 
     productCatalogue :: Handler [ProductCatalogueEntry]
     productCatalogue = liftIO $ D.getProductCatalogue conn
@@ -157,83 +166,98 @@ module Main where
         Just i -> return i
         _ -> throwError err404
       
-  commandServer :: Config -> Server CommandAPI
-  commandServer config = createOrder
-                    :<|> deleteOrder
-                    :<|> placeOrder
-                    :<|> abandonOrder
-                    :<|> createHouseholdOrder
-                    :<|> deleteHouseholdOrder
-                    :<|> abandonHouseholdOrder
-                    :<|> completeHouseholdOrder
-                    :<|> reopenHouseholdOrder
-                    :<|> ensureHouseholdOrderItem
-                    :<|> removeHouseholdOrderItem
-                    :<|> createHousehold
-                    :<|> updateHousehold
-                    :<|> archiveHousehold
-                    :<|> createHouseholdPayment
-                    :<|> updateHouseholdPayment
-                    :<|> archiveHouseholdPayment
-                    :<|> uploadProductCatalogue
-                    :<|> acceptCatalogueUpdates
+  commandServer :: Config -> Text -> Server CommandAPI
+  commandServer config groupKey = createOrder groupKey
+                             :<|> deleteOrder groupKey
+                             :<|> placeOrder groupKey
+                             :<|> abandonOrder groupKey
+                             :<|> createHouseholdOrder groupKey
+                             :<|> deleteHouseholdOrder groupKey
+                             :<|> abandonHouseholdOrder groupKey
+                             :<|> completeHouseholdOrder groupKey
+                             :<|> reopenHouseholdOrder groupKey
+                             :<|> ensureHouseholdOrderItem groupKey
+                             :<|> removeHouseholdOrderItem groupKey
+                             :<|> createHousehold groupKey
+                             :<|> updateHousehold groupKey
+                             :<|> archiveHousehold groupKey
+                             :<|> createHouseholdPayment groupKey
+                             :<|> updateHouseholdPayment groupKey
+                             :<|> archiveHouseholdPayment groupKey
+                             :<|> uploadProductCatalogue
+                             :<|> acceptCatalogueUpdates groupKey
     where
     conn = connectionString config
     
-    createOrder :: Int -> Handler Int
-    createOrder householdId = do
+    createOrder :: Text -> Int -> Handler Int
+    createOrder groupKey householdId = findGroupOr404 conn groupKey $ \groupId -> do
       date <- liftIO $ getCurrentTime
-      liftIO $ D.createOrder conn date householdId
+      liftIO $ D.createOrder conn groupId date householdId
 
-    deleteOrder :: Int -> Handler ()
-    deleteOrder orderId = liftIO $ D.deleteOrder conn orderId
+    deleteOrder :: Text -> Int -> Handler ()
+    deleteOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.deleteOrder conn groupId orderId
 
-    placeOrder :: Int -> Handler ()
-    placeOrder orderId = liftIO $ D.closeOrder conn False orderId
+    placeOrder :: Text -> Int -> Handler ()
+    placeOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.closeOrder conn groupId False orderId
 
-    abandonOrder :: Int -> Handler ()
-    abandonOrder orderId = liftIO $ D.closeOrder conn True orderId
+    abandonOrder :: Text -> Int -> Handler ()
+    abandonOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.closeOrder conn groupId True orderId
 
-    createHouseholdOrder :: Int -> Int -> Handler ()
-    createHouseholdOrder householdId orderId =  do
+    createHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    createHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId -> do
       date <- liftIO $ getCurrentTime
-      liftIO $ D.createHouseholdOrder conn date householdId orderId
+      liftIO $ D.createHouseholdOrder conn groupId date householdId orderId
 
-    deleteHouseholdOrder :: Int -> Int -> Handler ()
-    deleteHouseholdOrder householdId orderId = liftIO $ D.deleteHouseholdOrder conn householdId orderId
+    deleteHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    deleteHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.deleteHouseholdOrder conn groupId householdId orderId
 
-    abandonHouseholdOrder :: Int -> Int -> Handler ()
-    abandonHouseholdOrder householdId orderId = liftIO $ D.cancelHouseholdOrder conn householdId orderId
+    abandonHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    abandonHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.cancelHouseholdOrder conn groupId householdId orderId
 
-    completeHouseholdOrder :: Int -> Int -> Handler ()
-    completeHouseholdOrder householdId orderId = liftIO $ D.completeHouseholdOrder conn householdId orderId
+    completeHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    completeHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.completeHouseholdOrder conn groupId householdId orderId
 
-    reopenHouseholdOrder :: Int -> Int -> Handler ()
-    reopenHouseholdOrder householdId orderId = liftIO $ D.reopenHouseholdOrder conn householdId orderId
+    reopenHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    reopenHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.reopenHouseholdOrder conn groupId householdId orderId
  
-    ensureHouseholdOrderItem :: Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
-    ensureHouseholdOrderItem householdId orderId productCode details = liftIO $ D.ensureHouseholdOrderItem conn householdId orderId productCode details
+    ensureHouseholdOrderItem :: Text -> Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
+    ensureHouseholdOrderItem groupKey householdId orderId productCode details = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.ensureHouseholdOrderItem conn groupId householdId orderId productCode details
 
-    removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
-    removeHouseholdOrderItem householdId orderId productId = liftIO $ D.removeHouseholdOrderItem conn householdId orderId productId
+    removeHouseholdOrderItem :: Text -> Int -> Int -> Int -> Handler ()
+    removeHouseholdOrderItem groupKey householdId orderId productId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.removeHouseholdOrderItem conn groupId householdId orderId productId
 
-    createHousehold :: HouseholdDetails -> Handler Int
-    createHousehold details = liftIO $ D.createHousehold conn details
+    createHousehold :: Text -> HouseholdDetails -> Handler Int
+    createHousehold groupKey details = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.createHousehold conn groupId details
 
-    updateHousehold :: Int -> HouseholdDetails -> Handler ()
-    updateHousehold householdId details = liftIO $ D.updateHousehold conn householdId details
+    updateHousehold :: Text -> Int -> HouseholdDetails -> Handler ()
+    updateHousehold groupKey householdId details = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.updateHousehold conn groupId householdId details
 
-    archiveHousehold :: Int -> Handler ()
-    archiveHousehold householdId = liftIO $ D.archiveHousehold conn householdId
+    archiveHousehold :: Text -> Int -> Handler ()
+    archiveHousehold groupKey householdId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.archiveHousehold conn groupId householdId
 
-    createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
-    createHouseholdPayment householdId details = liftIO $ D.createHouseholdPayment conn householdId details
+    createHouseholdPayment :: Text -> Int -> HouseholdPaymentDetails -> Handler Int
+    createHouseholdPayment groupKey householdId details = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.createHouseholdPayment conn groupId householdId details
 
-    updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
-    updateHouseholdPayment householdPaymentId details = liftIO $ D.updateHouseholdPayment conn householdPaymentId details
+    updateHouseholdPayment :: Text -> Int -> HouseholdPaymentDetails -> Handler ()
+    updateHouseholdPayment groupKey householdPaymentId details = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.updateHouseholdPayment conn groupId householdPaymentId details
 
-    archiveHouseholdPayment :: Int -> Handler ()
-    archiveHouseholdPayment householdPaymentId = liftIO $ D.archiveHouseholdPayment conn householdPaymentId
+    archiveHouseholdPayment :: Text -> Int -> Handler ()
+    archiveHouseholdPayment groupKey householdPaymentId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.archiveHouseholdPayment conn groupId householdPaymentId
 
     uploadProductCatalogue :: MultipartData -> Handler ()
     uploadProductCatalogue multipartData = do
@@ -243,11 +267,23 @@ module Main where
       liftIO $ createDirectoryIfMissing True "server/data/uploads/"
       date <- liftIO $ getCurrentTime
       let day = utctDay date
-      let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (unpack $ fdFileName file)
+      let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
       liftIO $copyFile (fdFilePath file) destFilePath
       liftIO $ importProductCatalogue conn date destFilePath
 
-    acceptCatalogueUpdates :: Int -> Int -> Handler ()
-    acceptCatalogueUpdates orderId householdId = do
+    acceptCatalogueUpdates :: Text -> Int -> Int -> Handler ()
+    acceptCatalogueUpdates groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
       date <- liftIO $ getCurrentTime
-      liftIO $ D.acceptCatalogueUpdates conn date orderId householdId
+      liftIO $ D.acceptCatalogueUpdates conn groupId date orderId householdId
+
+  findGroup :: ByteString -> Text -> IO (Maybe Int)
+  findGroup conn groupKey = do
+    rotaId <- D.getGroup conn (T.unpack groupKey)
+    return rotaId
+
+  findGroupOr404 :: ByteString -> Text -> (Int -> Handler a) -> Handler a
+  findGroupOr404 conn groupKey handler = do
+    groupId <- liftIO $ findGroup conn groupKey
+    case groupId of
+      Just id -> handler id
+      _ -> throwError err404

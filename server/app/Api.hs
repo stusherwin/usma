@@ -32,7 +32,7 @@ module Api where
     mimeRender _ = Prelude.id
  
   type AppAPI = 
-         "api" :> (
+         "api" :> Capture "rotaKey" Text :> (
               "query" :> QueryAPI
          :<|> "command" :> CommandAPI
          )

@@ -77,16 +77,12 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
           </h2>
           {!this.props.households.length &&
             <div>
-              <p className="mt-4 ml-20">Please enter some details about your household</p>
+              <p className="mt-2 ml-20">You're the first! Please enter some details about your household</p>
             </div>
           }
-          {!!this.props.households.length && !this.state.editing &&
+          {!!this.props.households.length &&
             <div>
               <p className="mt-4 ml-20">Choose your household to continue.</p>
-              <div className="mt-4 flex">
-                <p className="mt-2 mr-4">Not in the list?</p>
-                <button className="" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add your household</button>
-              </div>
             </div>
           }
         </div>
@@ -95,6 +91,10 @@ export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageSt
             {this.props.households.map((h, i) => 
               <RouterLink className={classNames('block', {'mt-2': i > 0})} key={h.id} path={`/households/${h.id}`}>{h.name}</RouterLink>
             )}
+            <div className="mt-4 flex">
+              <p className="mt-2 mr-4">Not in the list?</p>
+              <button className="" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add your household</button>
+            </div>
           </div>
         }
         {(!this.props.households.length || this.state.editing == 'new') &&

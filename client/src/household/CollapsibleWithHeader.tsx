@@ -34,12 +34,10 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
     if(prevProps.expanded != this.props.expanded) {
       this.animateHeight()
       if(this.props.expanded) {
-        console.log(this.props.headerText + ': expanding');
         if(this.props.onExpand) {
           this.props.onExpand()
         }
       } else {
-        console.log(this.props.headerText + ': collapsing');
         if(this.props.onCollapse) {
           this.props.onCollapse()
         }
@@ -73,12 +71,10 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
     }
 
     if(this.props.expanded) {
-      console.log(this.props.headerText + ': expanded');
       if(this.props.onExpanded) {
         this.props.onExpanded();
       }
     } else {
-      console.log(this.props.headerText + ': collapsed');
       if(this.props.onCollapsed) {
         this.props.onCollapsed();
       }
