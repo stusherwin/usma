@@ -3,7 +3,7 @@ import { Util } from './common/Util'
 
 const query = {
   collectiveOrder(): Promise<CollectiveOrder | null> {
-    return Http.get<CollectiveOrder | null>('/api/DEF/query/collective-order')
+    return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
       .then(res => { 
         if(res) {
           res.createdDate = new Date(res.createdDate)
@@ -13,82 +13,82 @@ const query = {
   },
 
   pastCollectiveOrders(): Promise<PastCollectiveOrder[]> {
-    return Http.get<PastCollectiveOrder[]>('/api/DEF/query/past-collective-orders')
+    return Http.get<PastCollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
       .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
   },
 
   householdOrders(): Promise<HouseholdOrder[]> {
-    return Http.get<HouseholdOrder[]>('/api/DEF/query/household-orders')
+    return Http.get<HouseholdOrder[]>(groupUrl('/query/household-orders'))
       .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
   },
 
   pastHouseholdOrders(): Promise<PastHouseholdOrder[]> {
-    return Http.get<PastHouseholdOrder[]>('/api/DEF/query/past-household-orders')
+    return Http.get<PastHouseholdOrder[]>(groupUrl('/query/past-household-orders'))
       .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
   },
 
   households(): Promise<Household[]> {
-    return Http.get<Household[]>('/api/DEF/query/households')
+    return Http.get<Household[]>(groupUrl('/query/households'))
       .then(res => { res.forEach(h => { h.totalPayments = -h.totalPayments; h.balance = -h.balance;}); return res })
   },
 
   householdPayments(): Promise<HouseholdPayment[]> {
-    return Http.get<HouseholdPayment[]>('/api/DEF/query/household-payments')
+    return Http.get<HouseholdPayment[]>(groupUrl('/query/household-payments'))
       .then(res => { res.forEach(hp => { hp.date = new Date(hp.date); hp.amount = -hp.amount;}); return res })
   },
 
   productCatalogue(): Promise<ProductCatalogueEntry[]> {
-    return Http.get<ProductCatalogueEntry[]>('/api/DEF/query/product-catalogue')
+    return Http.get<ProductCatalogueEntry[]>(groupUrl('/query/product-catalogue'))
   }
 }
 
 const command = {
   createOrder(householdId: number): Promise<number> {
-    return Http.post(`/api/DEF/command/create-order/${householdId}`, {})
+    return Http.post(groupUrl(`/command/create-order/${householdId}`), {})
   },
 
   deleteOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/DEF/command/delete-order/${orderId}`, {})
+    return Http.post(groupUrl(`/command/delete-order/${orderId}`), {})
   },
 
   placeOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/DEF/command/place-order/${orderId}`, {})
+    return Http.post(groupUrl(`/command/place-order/${orderId}`), {})
   },
 
   abandonOrder(orderId: number): Promise<number> {
-    return Http.post(`/api/DEF/command/abandon-order/${orderId}`, {})
+    return Http.post(groupUrl(`/command/abandon-order/${orderId}`), {})
   },
 
   createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/create-household-order/${orderId}/${householdId}`, {})
+    return Http.post(groupUrl(`/command/create-household-order/${orderId}/${householdId}`), {})
   },
 
   deleteHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/delete-household-order/${orderId}/${householdId}`, {})
+    return Http.post(groupUrl(`/command/delete-household-order/${orderId}/${householdId}`), {})
   },
 
   abandonHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/abandon-household-order/${orderId}/${householdId}`, {})
+    return Http.post(groupUrl(`/command/abandon-household-order/${orderId}/${householdId}`), {})
   },
 
   completeHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/complete-household-order/${orderId}/${householdId}`, {})
+    return Http.post(groupUrl(`/command/complete-household-order/${orderId}/${householdId}`), {})
   },
 
   reopenHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/reopen-household-order/${orderId}/${householdId}`, {})
+    return Http.post(groupUrl(`/command/reopen-household-order/${orderId}/${householdId}`), {})
   },
 
   ensureHouseholdOrderItem(orderId: number, householdId: number, productCode: string, quantity: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`, { hoidQuantity: quantity })
+    return Http.post(groupUrl(`/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`), { hoidQuantity: quantity })
   },
 
   removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/remove-household-order-item/${orderId}/${householdId}/${productId}`, {})
+    return Http.post(groupUrl(`/command/remove-household-order-item/${orderId}/${householdId}/${productId}`), {})
   },
 
   createHousehold(name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
-    return Http.post(`/api/DEF/command/create-household/`, { hdName: name
+    return Http.post(groupUrl(`/command/create-household/`), { hdName: name
                                                        , hdContactName: contactName
                                                        , hdContactEmail: contactEmail
                                                        , hdContactPhone: contactPhone 
@@ -96,7 +96,7 @@ const command = {
   },
 
   updateHousehold(id: number, name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
-    return Http.post(`/api/DEF/command/update-household/${id}`, { hdName: name
+    return Http.post(groupUrl(`/command/update-household/${id}`), { hdName: name
                                                             , hdContactName: contactName
                                                             , hdContactEmail: contactEmail
                                                             , hdContactPhone: contactPhone 
@@ -104,38 +104,46 @@ const command = {
   },
 
   archiveHousehold(id: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/archive-household/${id}`, {})
+    return Http.post(groupUrl(`/command/archive-household/${id}`), {})
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/DEF/command/create-household-payment/${householdId}`, { hpdDate: Util.dateString(date)
+    return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), { hpdDate: Util.dateString(date)
                                                                              , hpdAmount: amount
                                                                              })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
-    return Http.post(`/api/DEF/command/update-household-payment/${id}`, { hpdDate: Util.dateString(date)
+    return Http.post(groupUrl(`/command/update-household-payment/${id}`), { hpdDate: Util.dateString(date)
                                                                     , hpdAmount: amount
                                                                     })
   },
 
   archiveHouseholdPayment(id: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/archive-household-payment/${id}`, {})
+    return Http.post(groupUrl(`/command/archive-household-payment/${id}`), {})
   },
 
   uploadProductCatalogue(data: FormData): Promise<{}> {
-    return Http.postFormData(`/api/DEF/command/upload-product-catalogue/`, data)
+    return Http.postFormData(groupUrl(`/command/upload-product-catalogue/`), data)
   },
 
   acceptCatalogueUpdates(orderId: number, householdId: number): Promise<{}> {
-    return Http.post(`/api/DEF/command/accept-catalogue-updates/${orderId}/${householdId}`, {})
+    return Http.post(groupUrl(`/command/accept-catalogue-updates/${orderId}/${householdId}`), {})
   },
+}
+
+const groupUrl = (url: string) => {
+  const groupKey = window.location.href.split('/').filter(l => l.length).slice(3, 4).join('/')
+  return `/api/${groupKey}${url}`
 }
 
 export const ServerApi = {
   query,
   command,
-  url: (url: string) => `/api/DEF/${url}`
+  url: (url: string) => groupUrl(`/${url}`),
+  verifyGroup(groupKey: string | null): Promise<boolean> {
+    return Http.post(`/api/verify/${groupKey}`, {})
+  }
 }
 
 export class Http {

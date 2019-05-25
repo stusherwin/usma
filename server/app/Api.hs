@@ -32,10 +32,19 @@ module Api where
     mimeRender _ = Prelude.id
  
   type AppAPI = 
-         "api" :> Capture "rotaKey" Text :> (
+    "api" :> (
+           "verify" :> VerifyAPI
+      :<|> WithGroupAPI
+    )
+
+  type VerifyAPI =
+         Capture "groupKey" Text :> Post '[JSON] Bool
+
+  type WithGroupAPI =
+    Capture "rotaKey" Text :> (
               "query" :> QueryAPI
          :<|> "command" :> CommandAPI
-         )
+    )
 
   type QueryAPI =
          "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
@@ -70,6 +79,8 @@ module Api where
 
   type FullAPI =
          AppAPI
+    :<|> "g" :> Capture "groupKey" Text :> Raw
+    :<|> "g" :> Raw
     :<|> Raw
   
   fullAPI :: Proxy FullAPI

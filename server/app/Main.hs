@@ -104,9 +104,21 @@ module Main where
   app config = logStdoutDev
                $ serve fullAPI (server config)
            
+  -- server :: Config -> Server FullAPI
+  -- server config = appServer config
+  --            :<|> Tagged (staticPolicy (addBase "client/static") staticOrDefault)
+
   server :: Config -> Server FullAPI
   server config = appServer config
-             :<|> Tagged (staticPolicy (addBase "client/static") staticOrDefault)
+           :<|> serveFilesWithGroup
+           :<|> serveFiles
+           :<|> serveFiles
+    where
+    serveFilesWithGroup :: Text -> Server Raw
+    serveFilesWithGroup _ = serveFiles
+    
+    serveFiles :: Server Raw
+    serveFiles = Tagged (staticPolicy (addBase "client/static") staticOrDefault)
 
   staticOrDefault :: Application
   staticOrDefault req respond = respond $ 
@@ -117,9 +129,20 @@ module Main where
     Nothing
 
   appServer :: Config -> Server AppAPI
-  appServer config groupKey = queryServer config groupKey
-                         :<|> commandServer config groupKey
-  
+  appServer config = verifyServer config
+                :<|> withGroupServer config
+
+  verifyServer :: Config -> Server VerifyAPI
+  verifyServer config groupKey = do
+    group <- liftIO $ findGroup (connectionString config) groupKey
+    case group of
+      Just _ -> return True
+      _ -> return False
+
+  withGroupServer :: Config -> Server WithGroupAPI
+  withGroupServer config groupKey = queryServer config groupKey
+                             :<|> commandServer config groupKey
+
   queryServer :: Config -> Text -> Server QueryAPI
   queryServer config groupKey = collectiveOrder groupKey
                            :<|> pastCollectiveOrders groupKey

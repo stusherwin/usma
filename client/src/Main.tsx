@@ -23,6 +23,8 @@ export interface MainState { loading: boolean
                            , error: ApiError | null
                            , initialUrl: string
                            , url: string
+                           , groupKey: string | null
+                           , groupValid: boolean
                            , collectiveOrder: CollectiveOrder | null
                            , pastCollectiveOrders: PastCollectiveOrder[]
                            , householdOrders: HouseholdOrder[]
@@ -37,13 +39,15 @@ export class Main extends React.Component<MainProps, MainState> {
   constructor(props: MainProps) {
     super(props)
 
-    const url = '/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
-    Router.updateUrl(url)
+    const urlInfo = this.currentUrl()
+    Router.updateUrl(urlInfo.url)
 
     this.state = { loading: false
                  , error: null
-                 , initialUrl: url
-                 , url
+                 , initialUrl: urlInfo.url
+                 , url: urlInfo.url
+                 , groupKey: urlInfo.groupKey
+                 , groupValid: false
                  , collectiveOrder: null
                  , pastCollectiveOrders: []
                  , householdOrders: []
@@ -51,8 +55,21 @@ export class Main extends React.Component<MainProps, MainState> {
                  , productCatalogue: []
                  , households: []
                  , householdPayments: []
-                 , initialised: false
+                 , initialised: !urlInfo.groupKey
                  }
+  }
+
+  currentUrl = () => {
+    const url = window.location.href.split('/').filter(l => l.length).slice(2).join('/')
+    return this.parseUrl(url)
+  }
+
+  parseUrl = (url: string) => {
+    const urlParts = url.split('/').filter(l => l.length)
+    // console.log(urlParts)
+    const groupKey = urlParts.length > 1 && urlParts[0] == 'g' ? urlParts[1] : null;
+
+    return { url: '/' + urlParts.slice(2).join('/'), groupKey }
   }
 
   componentDidMount() {
@@ -61,24 +78,35 @@ export class Main extends React.Component<MainProps, MainState> {
     window.onpopstate = e => {
       // console.log('onpopstate')
       const url = e.state || this.state.initialUrl
-      Router.updateUrl(url)
-      this.setState({url});
+      const urlInfo = this.parseUrl(url)
+      Router.updateUrl(urlInfo.url)
+      this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});
     }
 
     (window as any).history.onpushstate = (state: any, title: any, url: string) => {
       // console.log('onpushstate')
-      Router.updateUrl(url)
-      this.setState({ url })
+      // console.log(url);
+      const urlInfo = this.parseUrl(url)
+      Router.updateUrl(urlInfo.url)
+      this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});
     }
-        
-    this.reload().then(() => 
-      this.setState({ initialised: true
-                    })
-    )
+
+    if(this.state.groupKey) {
+      this.request(ServerApi.verifyGroup(this.state.groupKey))
+      .then(groupValid => {
+        this.setState({ groupValid, initialised: !groupValid })
+        if(groupValid) {
+          this.reload().then(() => 
+            this.setState({ initialised: true
+                          })
+          )
+        }
+      })
+    }
     
-    const url = '/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
-    this.setState({url})
-    Router.updateUrl(url)
+    const urlInfo = this.currentUrl() //'/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
+    this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey})
+    Router.updateUrl(urlInfo.url)
   }
 
   reload = () =>
@@ -235,14 +263,19 @@ export class Main extends React.Component<MainProps, MainState> {
                        router={r} />
     })
 
-    router.route('/', _ => <WelcomePage households={this.state.households}
-                                             request={this.request}
-                                             reload={this.reload}
-                                             loading={this.state.loading }
-                                             error={this.state.error} />)
-
+    router.route('/households', _ => <WelcomePage households={this.state.households}
+                                         request={this.request}
+                                         reload={this.reload}
+                                         loading={this.state.loading }
+                                         error={this.state.error} />)
+    
+    router.route('/$', _ => <WelcomePage households={this.state.households}
+                                         request={this.request}
+                                         reload={this.reload}
+                                         loading={this.state.loading }
+                                         error={this.state.error} />)
     return this.state.initialised
-      ? router.resolve()
+      ? (this.state.groupKey && this.state.groupValid ? router.resolve() : <div>Group not found</div>)
       : (
         <div>
           {!!this.state.loading && 

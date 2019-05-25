@@ -53,6 +53,8 @@ export class Router {
       let component = r.component(identifierValues, new Router(r.route))
       if(component) {
         return component
+      } else {
+        return React.createElement('div', null, 'Page not found')
       }
     }
 
