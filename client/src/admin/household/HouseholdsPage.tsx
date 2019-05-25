@@ -45,7 +45,6 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
 
   confirmCreate = () => {
     const validated = this.state.form.validate()
-    console.log(validated)
     this.setState({ form: validated })
     if(validated.valid()) {
       this.props.request(ServerApi.command.createHousehold(validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))
@@ -69,7 +68,6 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
     if(typeof this.state.editing !== 'number') return
 
     const validated = this.state.form.validate()
-    console.log(validated)
     this.setState({ form: validated })
     if(validated.valid()) {
       this.props.request(ServerApi.command.updateHousehold(this.state.editing, validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))

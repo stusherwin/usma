@@ -56,7 +56,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   confirmEdit = () => {
-    console.log('confirmEdit');
     const validated = this.state.form.validate()
     console.log(validated)
     this.setState({ form: validated })
@@ -68,7 +67,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   cancelEdit = () => {
-    console.log('cancelEdit');
     this.toggle('household')()
     this.setState({ form: this.state.form.reset({ name: this.props.household.name
                                                 , contactName: this.props.household.contactName
@@ -79,8 +77,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   populateFields = () => { 
-    console.log('populateFields');
-
     this.setState({ form: this.state.form.reset({ name: this.props.household.name
                                                                      , contactName: this.props.household.contactName
                                                                      , contactEmail: this.props.household.contactEmail
@@ -90,7 +86,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
   }
 
   fieldChanged = (fieldName: string) => (value: string) => {
-    console.log('fieldChanged');
     this.setState({ form: this.state.form.update(fieldName, value) })
   }
 

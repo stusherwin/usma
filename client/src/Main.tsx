@@ -66,17 +66,13 @@ export class Main extends React.Component<MainProps, MainState> {
 
   parseUrl = (url: string) => {
     const urlParts = url.split('/').filter(l => l.length)
-    // console.log(urlParts)
     const groupKey = urlParts.length > 1 && urlParts[0] == 'g' ? urlParts[1] : null;
 
     return { url: '/' + urlParts.slice(2).join('/'), groupKey }
   }
 
   componentDidMount() {
-    // console.log('componentDidMount')
-
     window.onpopstate = e => {
-      // console.log('onpopstate')
       const url = e.state || this.state.initialUrl
       const urlInfo = this.parseUrl(url)
       Router.updateUrl(urlInfo.url)
@@ -84,8 +80,6 @@ export class Main extends React.Component<MainProps, MainState> {
     }
 
     (window as any).history.onpushstate = (state: any, title: any, url: string) => {
-      // console.log('onpushstate')
-      // console.log(url);
       const urlInfo = this.parseUrl(url)
       Router.updateUrl(urlInfo.url)
       this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});
