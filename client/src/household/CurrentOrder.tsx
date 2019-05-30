@@ -223,19 +223,19 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     return (
       <div className="bg-order-dark flex flex-wrap content-start items-start">
         {canLeaveOrder && 
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
         }
         {canReopenOrder &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.reopenOrder()}}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.reopenOrder()}}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
         }
         {canAbandonOrder &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.abandonOrder()}}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.abandonOrder()}}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
         }
         {canCompleteOrder && 
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.stopPropagation(); this.completeOrder()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.completeOrder()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
         }
         {canAddItem &&
-          <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={e => { e.stopPropagation(); this.startAdd()}}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
+          <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.startAdd()}}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
         }
       </div>
     )

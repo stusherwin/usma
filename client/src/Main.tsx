@@ -273,11 +273,15 @@ export class Main extends React.Component<MainProps, MainState> {
     
     // console.log(this.state)
     return this.state.initialised
-      ? (this.state.groupKey && this.state.groupValid ? router.resolve() : <div>Group not found</div>)
+      ? (
+          this.state.groupKey && this.state.groupValid 
+          ? router.resolve() 
+          : <div className="p-2">Group not found</div>
+        )
       : (
         <div>
           {!!this.state.loading && 
-            <div className="h-screen flex items-center justify-center text-grey-light">
+            <div className="h-screen flex items-center justify-center text-grey-lightest">
               <Icon type="loading" className="w-16 h-16 -mt-4 rotating fill-current" />
             </div>
           }
@@ -285,6 +289,6 @@ export class Main extends React.Component<MainProps, MainState> {
             <div>{this.state.error.error}: {this.state.error.message}</div>
           )}
         </div>
-    )
+        )
   }
 }

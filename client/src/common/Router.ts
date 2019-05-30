@@ -54,12 +54,12 @@ export class Router {
       if(component) {
         return component
       } else {
-        return React.createElement('div', null, 'Page not found')
+        return React.createElement('div', { className: "p-2" }, 'Page not found')
       }
     }
 
     console.log(this.basePath + ': Page not found for url: ' + url)
-    return React.createElement('div', null, 'Page not found')
+    return React.createElement('div', { className: "p-2" }, 'Page not found')
   }
 
   static navigate(url: string) {
