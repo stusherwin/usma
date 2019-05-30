@@ -14,7 +14,6 @@
 * Error message styling
 
 * household orders - items don't need to be sum()
-* cross through only on prices/amounts not whole row
 * crossed out amounts grey-darker
 * crossed out money separate component?
 * copy new styles to admin area
@@ -22,12 +21,9 @@
 * Make payment check a config setting
 * Payment section in admin, separate from households
 
-* Welcome screen list instead of dropdown?
 * Store current household in session
 
 * Current order stick to top when scrolling down in Add Product
-
-* Multiple collective orders (unique link), user can be in multiple orders
 
 * Back button should trigger a reload
 * Periodic reload (if no activity for a while)

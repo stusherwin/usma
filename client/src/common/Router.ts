@@ -1,12 +1,12 @@
 import * as React from 'react';
 
 export class Router {
-  private baseUrl: string
-  static url: string
+  private basePath: string
+  static path: string
   private routes: {route: string, component: (c: {[key: string]: number}, r: Router) => JSX.Element | undefined}[] = []
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl
+  constructor(basePath: string) {
+    this.basePath = basePath
   }
 
   route(route: string, component: (c: {[key: string]: number}, r: Router) => JSX.Element | undefined) {
@@ -22,8 +22,8 @@ export class Router {
   resolve(): JSX.Element | undefined {
     let identifierParseFail = false
     const identifierRegExp = /\{([^\}]+)\}/gi
-    const baseRouteRegExp = new RegExp('^' + this.baseUrl.replace(identifierRegExp, '([^/]+)'), "gi")
-    const url = Router.url.replace(baseRouteRegExp, '')
+    const baseRouteRegExp = new RegExp('^' + this.basePath.replace(identifierRegExp, '([^/]+)'), "gi")
+    const url = Router.path.replace(baseRouteRegExp, '')
 
     for(let r of this.routes) {
       const routeRegExp = new RegExp('^' + r.route.replace(identifierRegExp, '([^/]+)'), "gi")
@@ -58,7 +58,7 @@ export class Router {
       }
     }
 
-    console.log(this.baseUrl + ': Page not found for url: ' + url)
+    console.log(this.basePath + ': Page not found for url: ' + url)
     return React.createElement('div', null, 'Page not found')
   }
 
@@ -66,12 +66,12 @@ export class Router {
     window.history.pushState(url, url, url);
   }
 
-  static updateUrl(url: string) {
-    this.url = Router.normalise(url)
+  static updatePath(path: string) {
+    this.path = Router.normalise(path)
   }
 
-  static isCurrent(url: string) {
-    return this.url == Router.normalise(url)
+  static isCurrent(path: string) {
+    return this.path == Router.normalise(path)
   }
 
   private static normalise(url: string) {

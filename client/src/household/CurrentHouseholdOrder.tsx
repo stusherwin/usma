@@ -28,7 +28,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     const discontinuedItems = householdOrder.items.filter(i => i.productDiscontinued)
 
     return (
-      <table>
+      <table className="border-collapse w-full">
         { items.map(this.renderItem) }
         <tr hidden={!discontinuedItems.length}>
           <td colSpan={5} className="text-red font-bold pt-8 pb-2">

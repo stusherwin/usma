@@ -1,8 +1,6 @@
 import * as React from 'react';
 
 import { ServerApi, ApiError } from './ServerApi'
-import { Util } from './common/Util'
-import { RouterLink } from './common/RouterLink'
 import { Icon } from './common/Icon'
 import { Router } from './common/Router'
 
@@ -39,8 +37,8 @@ export class Main extends React.Component<MainProps, MainState> {
   constructor(props: MainProps) {
     super(props)
 
-    const urlInfo = this.currentUrl()
-    Router.updateUrl(urlInfo.url)
+    const urlInfo = this.parseUrl(this.currentUrl())
+    Router.updatePath(urlInfo.path)
 
     this.state = { loading: false
                  , error: null
@@ -60,28 +58,32 @@ export class Main extends React.Component<MainProps, MainState> {
   }
 
   currentUrl = () => {
-    const url = window.location.href.split('/').filter(l => l.length).slice(2).join('/')
-    return this.parseUrl(url)
+    return window.location.href.split('/').filter(l => l.length).slice(2).join('/')
   }
 
   parseUrl = (url: string) => {
+    // console.log('url: ' + url)
     const urlParts = url.split('/').filter(l => l.length)
+    // console.log('urlParts: ' + urlParts)
     const groupKey = urlParts.length > 1 && urlParts[0] == 'g' ? urlParts[1] : null;
-
-    return { url: '/' + urlParts.slice(2).join('/'), groupKey }
+    // console.log('groupKey: ' + groupKey)
+    return { url, path: '/' + urlParts.slice(2).join('/'), groupKey }
   }
 
   componentDidMount() {
     window.onpopstate = e => {
       const url = e.state || this.state.initialUrl
+      // console.log('onpopstate')
+      // console.log(e.state)
       const urlInfo = this.parseUrl(url)
-      Router.updateUrl(urlInfo.url)
+      Router.updatePath(urlInfo.path)
       this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});
     }
 
     (window as any).history.onpushstate = (state: any, title: any, url: string) => {
+      // console.log('onpushstate')
       const urlInfo = this.parseUrl(url)
-      Router.updateUrl(urlInfo.url)
+      Router.updatePath(urlInfo.path)
       this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});
     }
 
@@ -98,9 +100,9 @@ export class Main extends React.Component<MainProps, MainState> {
       })
     }
     
-    const urlInfo = this.currentUrl() //'/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
+    const urlInfo = this.parseUrl(this.currentUrl()) //'/' + window.location.href.split('/').filter(l => l.length).slice(2).join('/')
     this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey})
-    Router.updateUrl(urlInfo.url)
+    Router.updatePath(urlInfo.path)
   }
 
   reload = () =>
@@ -268,6 +270,8 @@ export class Main extends React.Component<MainProps, MainState> {
                                          reload={this.reload}
                                          loading={this.state.loading }
                                          error={this.state.error} />)
+    
+    // console.log(this.state)
     return this.state.initialised
       ? (this.state.groupKey && this.state.groupValid ? router.resolve() : <div>Group not found</div>)
       : (
