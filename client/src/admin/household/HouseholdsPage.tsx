@@ -92,8 +92,8 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
+        <TopNav className="bg-household-light text-household-dark hover:text-household-darker" />
         <div className="bg-household-light p-2">
-          <TopNav className="text-household-dark hover:text-household-darker" />
           <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="leading-none mb-2 -mt-1 text-household-darker">Households{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <div className="flex justify-start">
