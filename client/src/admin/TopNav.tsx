@@ -34,12 +34,18 @@ export const TopNav = ({className}: TopNavProps) => {
   ]
 
   return (
-    <nav className={classNames('flex', className)}>
+    <nav className={classNames('flex bg-grey-darker pt-1')}>
       {links.map((l, i) => 
-        <RouterLink path={l.path} className={classNames('flex-grow h-8 relative pl-8 no-underline flex justify-start items-center', l.className, {
+        <RouterLink path={l.path} className={classNames('flex-grow h-8 relative pl-6 no-underline flex justify-center items-center', l.className, {
+            'shadow-inner-bottom': !l.current,
+            'rounded-t-lg': true,
+            'ml-1': true,
+            // 'border-l border-grey-darker': i == 0,
+            // 'border-r border-grey-darker': i == links.length - 1,
+            'mr-1': i == links.length - 1,
           })}>
           <div className={classNames('absolute pin-l pin-t bg-no-repeat w-6 h-6 ml-1 mt-1', l.iconClassName)}></div>
-          <span className="ml-1">{l.text}</span>
+          <span className="">{l.text}</span>
         </RouterLink>
       )}
     </nav>
