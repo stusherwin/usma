@@ -9,37 +9,39 @@ export interface TopNavProps {
 }
 
 export const TopNav = ({className}: TopNavProps) => {
-  var links = [
-    { path: '/admin/orders',
-      link: <RouterLink className={classNames(className, 'ml-2 mr-2')} path="/admin/orders">Orders</RouterLink>,
-      icon: 'bg-img-order',
-      bg:   'bg-order-dark' },
-    { path: '/admin/products',
-      link: <RouterLink className={classNames(className, 'ml-2 mr-2')} path="/admin/products">Products</RouterLink>,
-      icon: 'bg-img-product',
-      bg:   'bg-product-light' },
-    { path: '/admin/households',
-      link: <RouterLink className={classNames(className, 'ml-2 mr-2')} path="/admin/households">Households</RouterLink>,
-      icon: 'bg-img-household',
-      bg:   'bg-household-light' }
-    ,
-    
+  const links = [
+    { 
+      text: 'Orders',
+      path: '/admin/orders',
+      iconClassName: 'bg-img-order',
+      className: 'bg-order-dark text-black hover:text-black',
+      current: Router.isCurrent('/admin/orders'),
+    },
+    { 
+      text: 'Products',
+      path: '/admin/products',
+      iconClassName: 'bg-img-product',
+      className: 'bg-product-light text-white hover:text-white',
+      current: Router.isCurrent('/admin/products'),
+    },
+    { 
+      text: 'Households',
+      path: '/admin/households',
+      iconClassName: 'bg-img-household',
+      className: 'bg-household-light',
+      current: Router.isCurrent('/admin/households'),
+    }
   ]
-  const currentIndex = links.findIndex(link => Router.isCurrent(link.path));
-  for(var i = 0; i < currentIndex; i++) {
-    const l = links.shift();
-    if(l) links.push(l);
-  }
+
   return (
-  <nav className={classNames('flex justify-between py-2 relative', className)}>
-    <div className="pl-8">
-      <div className={classNames('w-8 h-8 rounded-r-full absolute pin-l', links[1].bg)}><div className={classNames('bg-no-repeat w-6 h-6 ml-1 mt-1', links[1].icon)}></div></div>
-      <div className="pt-1">{links[1].link}&gt;</div>
-    </div>
-    <div className="pr-8">
-      <div className={classNames('w-8 h-8 rounded-l-full absolute pin-r', links[2].bg)}><div className={classNames('bg-no-repeat w-6 h-6 ml-1 mt-1', links[2].icon)}></div></div>
-      <div className="pt-1">&lt;{links[2].link}</div>
-    </div>
-  </nav>
+    <nav className={classNames('flex', className)}>
+      {links.map((l, i) => 
+        <RouterLink path={l.path} className={classNames('flex-grow h-8 relative pl-8 no-underline flex justify-start items-center', l.className, {
+          })}>
+          <div className={classNames('absolute pin-l pin-t bg-no-repeat w-6 h-6 ml-1 mt-1', l.iconClassName)}></div>
+          <span className="ml-1">{l.text}</span>
+        </RouterLink>
+      )}
+    </nav>
   )
 }
