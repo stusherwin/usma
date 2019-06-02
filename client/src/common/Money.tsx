@@ -2,9 +2,15 @@ import * as React from 'react';
 
 import { Util } from './Util'
 
-export const Money = (props: {amount: number, absolute?: boolean, className?: string}) => {
-  const absolute = props.absolute || false
-  const className = (!props.absolute && props.amount < 0 ? 'text-red ' : '') + props.className
+export interface MoneyProps {
+  amount: number
+  absolute?: boolean
+  className?: string
+}
 
-  return <span className={className}>{!absolute && props.amount < 0 && '-'}&pound;{ Util.formatMoney(props.amount, true) }</span>
+export const Money = ({amount, absolute, className}: MoneyProps) => {
+  absolute = absolute || false
+  className = (!absolute && amount < 0 ? 'text-red ' : '') + className
+  
+  return <span className={className}>{!absolute && amount < 0 && '-'}&pound;{ Util.formatMoney(amount, true) }</span>
 }

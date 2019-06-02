@@ -33,7 +33,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   }
 
   joinOrder = (orderId: number) => {
-    const date = new Date()
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
@@ -41,80 +40,82 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   
   render() {
     const currentOrder = this.props.currentHouseholdOrder
-    const pastOrders = this.props.pastHouseholdOrders
     const currentCollectiveOrder = this.props.currentCollectiveOrder
-
+    
     return (
       <div>
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <div className="bg-household-light p-2">
-          <TopNav className="text-household-dark hover:text-household-darker" />
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
-            <h2 className="leading-none mb-2 -mt-1 text-household-darker">{this.props.household.name}{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
-            <table className="border-collapse w-full text-household-darker">
-              <tbody>
-                <tr>
-                  <td>Total orders:</td>
-                  <td className="text-right"><Money amount={this.props.household.totalOrders} /></td>
-                </tr>
-                <tr>
-                  <td>Total payments:</td>
-                  <td className="text-right"><Money amount={this.props.household.totalPayments} /></td>
-                </tr>
-                <tr>
-                  <td>Balance:</td>
-                  <td className={classNames('text-right', {'text-red-dark': this.props.household.balance < 0})}><Money amount={this.props.household.balance} /></td>
-                </tr>
-              </tbody>
-            </table>
+        <TopNav className="text-household-dark hover:text-household-darker" />
+        <div className="bg-household-light min-h-screen">
+          <div className="p-2 text-black min-h-16">
+            <div className="bg-img-household bg-no-repeat w-16 h-16 absolute pin-l ml-2 mt-2"></div>
+            <div className="ml-20">
+              <h2 className="text-household-darker leading-none mt-2 relative flex">{this.props.household.name}</h2>
+              <table className="border-collapse w-full text-household-darker mt-2 mb-2">
+                <tbody>
+                  <tr>
+                    <td>Total orders:</td>
+                    <td className="text-right"><Money amount={this.props.household.totalOrders} /></td>
+                  </tr>
+                  <tr>
+                    <td>Total payments:</td>
+                    <td className="text-right"><Money amount={this.props.household.totalPayments} /></td>
+                  </tr>
+                  <tr>
+                    <td>Balance:</td>
+                    <td className="text-right"><Money amount={this.props.household.balance} /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-        <div>
-          {currentOrder
-          ? (
-            <div>
+          <div>
+            {currentOrder
+            ? (
+              <div>
+                <div className="bg-order-dark p-2">
+                  <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
+                    <h2>Current order</h2>
+                    <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
+                    <h3 className="font-normal">{currentOrder.status}</h3>
+                  </div>
+                </div>
+                <CurrentHouseholdOrder householdOrder={currentOrder}
+                                       products={this.props.products}
+                                       loading={this.props.loading}
+                                       reload={this.props.reload}
+                                       request={this.props.request} />
+              </div>
+            )
+            : currentCollectiveOrder
+            ? (
               <div className="bg-order-dark p-2">
-                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
+                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
                   <h2>Current order</h2>
-                  <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
-                  <h3 className="font-normal">{currentOrder.status}</h3>
+                  <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
+                  <button className="mt-2" onClick={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
                 </div>
               </div>
-              <CurrentHouseholdOrder householdOrder={currentOrder}
-                                     products={this.props.products}
-                                     loading={this.props.loading}
-                                     reload={this.props.reload}
-                                     request={this.props.request} />
-            </div>
-          )
-          : currentCollectiveOrder
-          ? (
-            <div className="bg-order-dark p-2">
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
-                <h2>Current order</h2>
-                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
-                <button className="mt-2" onClick={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
+            )
+            : (
+              <div className="bg-order-dark p-2">
+                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
+                  <h2>Current order</h2>
+                  <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
+                  <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
+                </div>
               </div>
-            </div>
-          )
-          : (
-            <div className="bg-order-dark p-2">
-              <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
-                <h2>Current order</h2>
-                <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
-                <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
-              </div>
-            </div>
-          )}
-          <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+            )}
+            <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                                 request={this.props.request}
+                                 reload={this.props.reload} />
+            <HouseholdPayments household={this.props.household}
+                               payments={this.props.payments}
                                request={this.props.request}
                                reload={this.props.reload} />
-          <HouseholdPayments household={this.props.household}
-                             payments={this.props.payments}
-                             request={this.props.request}
-                             reload={this.props.reload} />
+          </div>
         </div>
       </div>
     )

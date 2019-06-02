@@ -40,8 +40,6 @@ export const TopNav = ({className}: TopNavProps) => {
             'shadow-inner-bottom': !l.current,
             'rounded-t-lg': true,
             'ml-1': true,
-            // 'border-l border-grey-darker': i == 0,
-            // 'border-r border-grey-darker': i == links.length - 1,
             'mr-1': i == links.length - 1,
           })}>
           <div className={classNames('absolute pin-l pin-t bg-no-repeat w-6 h-6 ml-1 mt-1', l.iconClassName)}></div>

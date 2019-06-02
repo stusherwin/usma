@@ -71,7 +71,7 @@ export class Router {
   }
 
   static isCurrent(path: string) {
-    return this.path == Router.normalise(path)
+    return this.path.startsWith(Router.normalise(path))
   }
 
   private static normalise(url: string) {

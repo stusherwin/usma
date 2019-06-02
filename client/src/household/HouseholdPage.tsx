@@ -8,11 +8,10 @@ import { Router } from '../common/Router'
 import { CurrentOrder } from './CurrentOrder'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
-import { ServerApi, ApiError } from '../ServerApi'
-import { Form, Field, Validate } from '../common/Validation'
-import { TextField } from '../common/Field'
+import { ApiError } from '../ServerApi'
 import { CollapsibleWithHeader } from './CollapsibleWithHeader'
-import { RouterLink } from '../common/RouterLink';
+import { RouterLink } from '../common/RouterLink'
+import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentOrder: CollectiveOrder | null
@@ -30,63 +29,22 @@ export interface HouseholdOrdersPageProps { household: Household
                                           }
 type Section = 'orders' | 'past-orders' | 'payments' | 'household'
 export interface HouseholdOrdersPageState { expanded: Section | null
-                                          , form: Form
-                                          , editFocused: boolean
                                           }
 export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, HouseholdOrdersPageState> {  
-  nameInput: React.RefObject<HTMLInputElement>
+  editHousehold: React.RefObject<EditHousehold>
 
   constructor(props: HouseholdOrdersPageProps) {
     super(props)
+    
     this.state = { 
       expanded: 'orders', 
-      editFocused: false,
-      form: Form.create({ 
-        name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]),
-        contactName: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
-        contactEmail: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', []),
-        contactPhone: Field.create((v: string) => v.replace(/\s+/, '').length? v : null, (v: string | null) => v || '', [])
-      })
     }
-    this.nameInput = React.createRef();
+
+    this.editHousehold = React.createRef();
   }
 
   toggle = (toExpand: Section) => () => { 
     this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
-  }
-
-  confirmEdit = () => {
-    const validated = this.state.form.validate()
-    console.log(validated)
-    this.setState({ form: validated })
-    if(validated.valid()) {
-      this.props.request(ServerApi.command.updateHousehold(this.props.household.id, validated.fields.name.value, validated.fields.contactName.value, validated.fields.contactEmail.value, validated.fields.contactPhone.value))
-        .then(this.props.reload)
-        .then(_ => this.toggle('household')())
-    }
-  }
-
-  cancelEdit = () => {
-    this.toggle('household')()
-    this.setState({ form: this.state.form.reset({ name: this.props.household.name
-                                                , contactName: this.props.household.contactName
-                                                , contactEmail: this.props.household.contactEmail
-                                                , contactPhone: this.props.household.contactPhone
-                                                })
-                  })
-  }
-
-  populateFields = () => { 
-    this.setState({ form: this.state.form.reset({ name: this.props.household.name
-                                                                     , contactName: this.props.household.contactName
-                                                                     , contactEmail: this.props.household.contactEmail
-                                                                     , contactPhone: this.props.household.contactPhone
-                                                                     })
-                                       })
-  }
-
-  fieldChanged = (fieldName: string) => (value: string) => {
-    this.setState({ form: this.state.form.update(fieldName, value) })
   }
 
   render() {
@@ -106,58 +64,21 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                                      <RouterLink path="/households">Change household</RouterLink>
                                    </div>
                                    <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
-                                   {/* <table className="border-collapse w-full mt-1">
-                                     {this.props.household.contactName &&
-                                       <tr>
-                                         <th className="font-bold text-left pt-1 pl-20 pr-2">Contact:</th>
-                                         <td className="pt-1">{this.props.household.contactName}</td>
-                                       </tr>
-                                     } */}
-                                     {/* {this.props.household.contactEmail &&
-                                       <tr>
-                                         <th className="font-bold text-left pt-1 pr-2">Email:</th>
-                                         <td className="pt-1">{this.props.household.contactEmail}</td>
-                                       </tr>
-                                     }
-                                     {this.props.household.contactPhone &&
-                                       <tr>
-                                         <th className="font-bold text-left pt-1 pr-2">Phone:</th>
-                                         <td className="pt-1">{this.props.household.contactPhone}</td>
-                                       </tr>
-                                     } */}
-                                   {/* </table> */}
                                  </div>
                                )}
                                expanded={this.state.expanded == 'household'}
                                otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
                                toggle={this.toggle('household')}
-                               onExpand={this.populateFields}
-                               onCollapse={() => { if(this.nameInput.current) { this.nameInput.current.blur() } }}
-                               onExpanded={() => { if(this.nameInput.current) { this.nameInput.current.focus() } }}>
-          <div className="shadow-inner-top px-2 py-4 bg-household-lightest">
-            <h3 className="mb-4">Edit household</h3>
-            <TextField id="edit-name"
-                       label="Name"
-                       inputRef={this.nameInput}
-                       field={this.state.form.fields.name}
-                       valueOnChange={this.fieldChanged('name')} />
-            <TextField id="edit-contactName"
-                       label="Contact name"
-                       field={this.state.form.fields.contactName}
-                       valueOnChange={this.fieldChanged('contactName')} />
-            <TextField id="edit-contactEmail"
-                       label="Contact email"
-                       field={this.state.form.fields.contactEmail}
-                       valueOnChange={this.fieldChanged('contactEmail')} />
-            <TextField id="edit-contactPhone"
-                       label="Contact phone"
-                       field={this.state.form.fields.contactPhone}
-                       valueOnChange={this.fieldChanged('contactPhone')} />
-            <div className="flex justify-end">
-              <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-              <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
-            </div>
-          </div>
+                               onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
+                               onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
+                               onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}>
+          <EditHousehold ref={this.editHousehold}
+                         household={this.props.household}
+                         request={this.props.request}
+                         onConfirm={() => this.props.reload().then(this.toggle('household'))}
+                         onCancel={this.toggle('household')}
+            >
+          </EditHousehold>
         </CollapsibleWithHeader>
         <CurrentOrder household={this.props.household}
                       currentOrder={this.props.currentOrder}
