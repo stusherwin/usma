@@ -66,16 +66,13 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         )}
         <TopNav className="text-household-dark hover:text-household-darker" />
         <div className="bg-household-light min-h-screen">
-          <CollapsibleWithHeader className="min-h-28"
-                                 headerClassName="bg-household-light min-h-28"
+          <CollapsibleWithHeader className="min-h-24"
+                                 headerClassName="bg-household-light min-h-24"
                                  headingClassName="mt-2"
                                  headerImageClassName="bg-img-household mt-2"
                                  headerText={this.props.household.name}
                                  headerContent={() => (
                                    <div>
-                                     <div className="ml-20 mt-1">
-                                       <RouterLink path="/households">Change household</RouterLink>
-                                     </div>
                                      <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
                                    </div>
                                  )}

@@ -66,7 +66,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                              headerText="Payments"
                              headerContent={() => (
                                <div>
-                                 <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={this.props.household.totalPayments} /></span></h3>
+                                 <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
                                  {this.props.editable && 
                                    <div className="flex justify-start mt-4">
                                      <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>

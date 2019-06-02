@@ -27,3 +27,6 @@
 
 * Back button should trigger a reload
 * Periodic reload (if no activity for a while)
+
+* csv export
+* BGOFV flags
