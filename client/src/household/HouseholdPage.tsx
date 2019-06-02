@@ -1,8 +1,6 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
-import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Router } from '../common/Router'
 import { CurrentOrder } from './CurrentOrder'
@@ -12,6 +10,7 @@ import { ApiError } from '../ServerApi'
 import { CollapsibleWithHeader } from './CollapsibleWithHeader'
 import { RouterLink } from '../common/RouterLink'
 import { EditHousehold } from './EditHousehold'
+import { Loading } from './Loading'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentOrder: CollectiveOrder | null
@@ -35,7 +34,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
 
   constructor(props: HouseholdOrdersPageProps) {
     super(props)
-    
+
     this.state = { 
       expanded: 'orders', 
     }
@@ -108,15 +107,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         <div className="bg-household-light p-2 pl-20 text-black">
           <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={this.props.household.balance} /></span></h3>
         </div>
-        <div className={classNames('fixed pin bg-black flex items-center justify-center text-grey-lighter', {
-            'pointer-events-none': !this.props.loading
-          })} style={{
-            background: 'rgba(0,0,0,0.3)',
-            opacity: this.props.loading? 1 : 0,
-            transition: 'opacity 0.25s ease'
-          }}>
-          <Icon type="loading" className="w-16 h-16 -mt-4 rotating fill-current" />
-        </div>
+        <Loading loading={this.props.loading}></Loading>
       </div>
     )
   }

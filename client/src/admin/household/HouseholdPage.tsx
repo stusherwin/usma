@@ -1,31 +1,51 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../../Types'
 import { ServerApi, ApiError } from '../../ServerApi'
-import { Util } from '../../common/Util'
 import { RouterLink } from '../../common/RouterLink'
-import { Icon } from '../../common/Icon'
 import { Money } from '../../common/Money'
-import { Router } from '../../common/Router'
-import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { PastHouseholdOrders } from './PastHouseholdOrders'
-import { HouseholdPayments } from './HouseholdPayments'
+import { CurrentOrder } from '../../household/CurrentOrder'
+import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
+import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { TopNav } from '../TopNav'
+import { CollapsibleWithHeader } from '../../household/CollapsibleWithHeader'
+import { EditHousehold } from '../../household/EditHousehold'
+import { Loading } from '../../household/Loading'
 
 export interface HouseholdOrdersPageProps { household: Household
+                                          , currentOrder: CollectiveOrder | null
                                           , currentHouseholdOrder: HouseholdOrder | null
+                                          , currentHouseholdOrders: HouseholdOrder[]
                                           , pastHouseholdOrders: PastHouseholdOrder[]
-                                          , currentCollectiveOrder: CollectiveOrder | null
                                           , payments: HouseholdPayment[]
                                           , products: ProductCatalogueEntry[]
+                                          , households: Household[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
                                           , loading: boolean
                                           , error: ApiError | null
                                           }
+type Section = 'orders' | 'past-orders' | 'payments' | 'household'
+export interface HouseholdOrdersPageState { expanded: Section | null
+                                          }
 
-export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}> {
+export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, HouseholdOrdersPageState> {
+  editHousehold: React.RefObject<EditHousehold>
+
+  constructor(props: HouseholdOrdersPageProps) {
+    super(props)
+
+    this.state = { 
+      expanded: 'orders', 
+    }
+
+    this.editHousehold = React.createRef();
+  }
+
+  toggle = (toExpand: Section) => () => { 
+    this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
+  }
+
   newOrder = () => {
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createOrder(householdId))
@@ -39,9 +59,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
   }
   
   render() {
-    const currentOrder = this.props.currentHouseholdOrder
-    const currentCollectiveOrder = this.props.currentCollectiveOrder
-    
     return (
       <div>
         {!!this.props.error && (
@@ -49,74 +66,63 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, {}>
         )}
         <TopNav className="text-household-dark hover:text-household-darker" />
         <div className="bg-household-light min-h-screen">
-          <div className="p-2 text-black min-h-16">
-            <div className="bg-img-household bg-no-repeat w-16 h-16 absolute pin-l ml-2 mt-2"></div>
-            <div className="ml-20">
-              <h2 className="text-household-darker leading-none mt-2 relative flex">{this.props.household.name}</h2>
-              <table className="border-collapse w-full text-household-darker mt-2 mb-2">
-                <tbody>
-                  <tr>
-                    <td>Total orders:</td>
-                    <td className="text-right"><Money amount={this.props.household.totalOrders} /></td>
-                  </tr>
-                  <tr>
-                    <td>Total payments:</td>
-                    <td className="text-right"><Money amount={this.props.household.totalPayments} /></td>
-                  </tr>
-                  <tr>
-                    <td>Balance:</td>
-                    <td className="text-right"><Money amount={this.props.household.balance} /></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div>
-            {currentOrder
-            ? (
-              <div>
-                <div className="bg-order-dark p-2">
-                  <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative">
-                    <h2>Current order</h2>
-                    <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(currentOrder.orderCreatedDate)}</span><span><Money amount={currentOrder.totalIncVat} /></span></h3>
-                    <h3 className="font-normal">{currentOrder.status}</h3>
-                  </div>
-                </div>
-                <CurrentHouseholdOrder householdOrder={currentOrder}
-                                       products={this.props.products}
-                                       loading={this.props.loading}
-                                       reload={this.props.reload}
-                                       request={this.props.request} />
-              </div>
-            )
-            : currentCollectiveOrder
-            ? (
-              <div className="bg-order-dark p-2">
-                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
-                  <h2>Current order</h2>
-                  <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's an order currently in progress: <strong>{Util.formatDate(currentCollectiveOrder.createdDate)}</strong></p>
-                  <button className="mt-2" onClick={_ => this.joinOrder(currentCollectiveOrder.id)}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
-                </div>
-              </div>
-            )
-            : (
-              <div className="bg-order-dark p-2">
-                <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mb-1">
-                  <h2>Current order</h2>
-                  <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
-                  <button className="mt-2" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
-                </div>
-              </div>
-            )}
-            <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
-                                 request={this.props.request}
-                                 reload={this.props.reload} />
-            <HouseholdPayments household={this.props.household}
-                               payments={this.props.payments}
+          <CollapsibleWithHeader className="min-h-28"
+                                 headerClassName="bg-household-light min-h-28"
+                                 headingClassName="mt-2"
+                                 headerImageClassName="bg-img-household mt-2"
+                                 headerText={this.props.household.name}
+                                 headerContent={() => (
+                                   <div>
+                                     <div className="ml-20 mt-1">
+                                       <RouterLink path="/households">Change household</RouterLink>
+                                     </div>
+                                     <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                                   </div>
+                                 )}
+                                 expanded={this.state.expanded == 'household'}
+                                 otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
+                                 toggle={this.toggle('household')}
+                                 onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
+                                 onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
+                                 onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}>
+            <EditHousehold ref={this.editHousehold}
+                           household={this.props.household}
+                           request={this.props.request}
+                           onConfirm={() => this.props.reload().then(this.toggle('household'))}
+                           onCancel={this.toggle('household')}
+              >
+            </EditHousehold>
+          </CollapsibleWithHeader>
+          <CurrentOrder household={this.props.household}
+                        currentOrder={this.props.currentOrder}
+                        currentHouseholdOrder={this.props.currentHouseholdOrder}
+                        currentHouseholdOrders={this.props.currentHouseholdOrders}
+                        products={this.props.products}
+                        households={this.props.households}
+                        loading={this.props.loading}
+                        expanded={this.state.expanded == 'orders'}
+                        otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}
+                        toggle={this.toggle('orders')}
+                        request={this.props.request}
+                        reload={this.props.reload} />
+          <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                               expanded={this.state.expanded == 'past-orders'}
+                               otherExpanding={!!this.state.expanded && this.state.expanded != 'past-orders'}
+                               toggle={this.toggle('past-orders')}
                                request={this.props.request}
                                reload={this.props.reload} />
+          <HouseholdPayments household={this.props.household}
+                             payments={this.props.payments}
+                             expanded={this.state.expanded == 'payments'}
+                             otherExpanding={!!this.state.expanded && this.state.expanded != 'payments'}
+                             toggle={this.toggle('payments')}
+                             request={this.props.request}
+                             reload={this.props.reload} />
+          <div className="bg-household-light p-2 pl-20 text-black">
+            <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={this.props.household.balance} /></span></h3>
           </div>
         </div>
+        <Loading loading={this.props.loading}></Loading>
       </div>
     )
   }
