@@ -1,14 +1,11 @@
 import * as React from 'react';
 
-import { Household, HouseholdPayment, CollectiveOrder } from '../../Types'
-import { ServerApi, ApiError } from '../../ServerApi'
+import { Household, HouseholdPayment } from '../../Types'
+import { ServerApi } from '../../ServerApi'
 import { Util } from '../../common/Util'
-import { RouterLink } from '../../common/RouterLink'
 import { Icon } from '../../common/Icon'
 import { Money } from '../../common/Money'
-import { Router } from '../../common/Router'
-import { Form, Field, Validate } from '../../common/Validation'
-import { TextField, MoneyField } from '../../common/Field'
+import { HouseholdPaymentForm, PaymentData } from './HouseholdPaymentForm'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]
@@ -17,75 +14,37 @@ export interface HouseholdPaymentsProps { household: Household
                                         }
 
 export interface HouseholdPaymentsState { editing: 'new' | number | null
-                                        , form: Form
                                         }
 
 export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, HouseholdPaymentsState> {
   constructor(props: HouseholdPaymentsProps) {
     super(props)
 
-    this.state = { editing: null
-                 , form: Form.create({ date: Field.create((v: string) => new Date(Date.parse(v)), (v: Date) => Util.dateString(v),
-                                         [ Validate.required('Date is required')
-                                         , Validate.dateFormat('Date must be in the format YYYY-MM-DD')
-                                         , Validate.dateExists('Date must actually exist')
-                                         ])
-                                     , amount: Field.create((v: string) => Math.floor((parseFloat(v) || 0) * 100), (v: number) => (v / 100.0).toFixed(2),
-                                         [ Validate.required('Amount is required')
-                                         , Validate.decimal('Amount must be a number')
-                                         , Validate.twoDP('Amount can\'t have more than 2 decimal places')
-                                         , Validate.greaterThanZero('Amount must be more than zero')
-                                         ])
-                                     })
-                 }
+    this.state = { editing: null }
   }
   
-  startCreate = () => this.setState({ editing: 'new'
-                                    })
+  startCreate = () => this.setState({ editing: 'new' })
 
-  cancelCreate = () => this.setState({ editing: null
-                                     , form: this.state.form.reset({date: new Date(), amount: 0})
-                                     })
+  cancelCreate = () => this.setState({ editing: null })
 
-  confirmCreate = () => {
-    const validated = this.state.form.validate()
-    this.setState({ form: validated })
-
-    if(validated.valid()) {
-      this.props.request(ServerApi.command.createHouseholdPayment(this.props.household.id, validated.fields.date.value, validated.fields.amount.value))
+  confirmCreate = ({date, amount}: PaymentData) => 
+      this.props.request(ServerApi.command.createHouseholdPayment(this.props.household.id, date, amount))
         .then(this.props.reload)
-        .then(_ => this.setState({ editing: null
-                                 , form: this.state.form.reset({date: new Date(), amount: 0})
-                                 }))
-    }
-  }
+        .then(_ => this.setState({ editing: null }))
   
-  startEdit = (payment: HouseholdPayment) => this.setState({ editing: payment.id
-                                                           , form: this.state.form.reset({date: payment.date, amount: payment.amount})
-                                                           })
+  startEdit = (payment: HouseholdPayment) => this.setState({ editing: payment.id })
 
-  cancelEdit = () => this.setState({ editing: null
-                                   , form: this.state.form.reset({date: new Date(), amount: 0})
-                                   })
+  cancelEdit = () => this.setState({ editing: null })
 
-  confirmEdit = () => {
-    if(typeof this.state.editing !== 'number') return
+  confirmEdit = ({date, amount}: PaymentData) => {
+    if(typeof this.state.editing !== 'number')
+      return Promise.resolve()
 
-    const validated = this.state.form.validate()
-    this.setState({ form: validated })
-
-    if(validated.valid()) {
-      this.props.request(ServerApi.command.updateHouseholdPayment(this.state.editing, validated.fields.date.value, validated.fields.amount.value))
+    return this.props.request(ServerApi.command.updateHouseholdPayment(this.state.editing, date, amount))
         .then(this.props.reload)
-        .then(_ => this.setState({ editing: null
-                                 , form: this.state.form.reset({date: new Date(), amount: 0})
-                                 }))
-    }
+        .then(_ => this.setState({ editing: null }))
   }
 
-  fieldChanged = (fieldName: string) => (value: string) =>
-    this.setState({ form: this.state.form.update(fieldName, value) })
-  
   delete = (p: HouseholdPayment) => {
     this.props.request(ServerApi.command.archiveHouseholdPayment(p.id))
       .then(this.props.reload)
@@ -105,22 +64,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           </div>
         </div>
         {this.state.editing == 'new' &&
-          <div className="bg-payment-lightest p-2">
-            <h3 className="mb-4">Create new payment</h3>
-            <TextField id="create-date"
-                       label="Date"
-                       field={this.state.form.fields.date}
-                       autofocus
-                       valueOnChange={this.fieldChanged('date')} />
-            <MoneyField id="create-amount"
-                        label="Amount"
-                        field={this.state.form.fields.amount}
-                        valueOnChange={this.fieldChanged('amount')} />
-            <div className="flex justify-end">
-              <button className="ml-2" onClick={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-              <button className="ml-2" onClick={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
-            </div>
-          </div>
+          <HouseholdPaymentForm key="create"
+                                onCancel={this.cancelCreate}
+                                onConfirm={this.confirmCreate}>
+          </HouseholdPaymentForm>
         }
         {!this.props.payments.length && !this.state.editing &&
           <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet</div>
@@ -132,28 +79,19 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
               this.state.editing == p.id
               ? (
                 <tr key={p.id}>
-                  <td colSpan={3} className="bg-payment-lightest p-2">
-                    <h3 className="mb-4">Edit payment</h3>
-                    <TextField id="edit-date"
-                               label="Date"
-                               autofocus
-                               field={this.state.form.fields.date}
-                               valueOnChange={this.fieldChanged('date')} />
-                    <MoneyField id="edit-amount"
-                                label="Amount"
-                                field={this.state.form.fields.amount}
-                                valueOnChange={this.fieldChanged('amount')} />
-                    <div className="flex justify-end">
-                      <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-                      <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
-                    </div>
+                  <td colSpan={3}>
+                    <HouseholdPaymentForm key="edit"
+                                          payment={p}
+                                          onCancel={this.cancelEdit}
+                                          onConfirm={this.confirmEdit}>
+                    </HouseholdPaymentForm>
                   </td>
                 </tr>
               )
               : (
                 <tr key={p.id}>
                   <td className="pt-2 pl-2 pr-2 w-full">{ Util.formatDate(p.date) }</td>
-                  <td className="pt-2 pr-2 text-right"><Money amount={p.amount} /></td>
+                  <td className="pt-2 pr-2 text-right"><Money amount={-p.amount} /></td>
                   <td className="pt-2 pr-2 w-1 whitespace-no-wrap">
                     <button onClick={_ => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
                     <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
@@ -162,7 +100,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
               )) }
               <tr>
                 <td className="pt-2 pl-2 pr-2 font-bold">Total</td>
-                <td className="pt-2 pr-2 font-bold text-right"><Money amount={total} /></td>
+                <td className="pt-2 pr-2 font-bold text-right"><Money amount={-total} /></td>
                 <td className="pt-2 pr-2"></td>
               </tr>
             </tbody>

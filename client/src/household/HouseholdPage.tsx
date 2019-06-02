@@ -105,7 +105,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                            request={this.props.request}
                            reload={this.props.reload} />
         <div className="bg-household-light p-2 pl-20 text-black">
-          <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={this.props.household.balance} /></span></h3>
+          <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={-this.props.household.balance} /></span></h3>
         </div>
         <Loading loading={this.props.loading}></Loading>
       </div>

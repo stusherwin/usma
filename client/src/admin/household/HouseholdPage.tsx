@@ -6,7 +6,7 @@ import { RouterLink } from '../../common/RouterLink'
 import { Money } from '../../common/Money'
 import { CurrentOrder } from '../../household/CurrentOrder'
 import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
-import { HouseholdPayments } from '../../household/HouseholdPayments'
+import { HouseholdPayments } from './HouseholdPayments'
 import { TopNav } from '../TopNav'
 import { CollapsibleWithHeader } from '../../household/CollapsibleWithHeader'
 import { EditHousehold } from '../../household/EditHousehold'
@@ -113,13 +113,10 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                                reload={this.props.reload} />
           <HouseholdPayments household={this.props.household}
                              payments={this.props.payments}
-                             expanded={this.state.expanded == 'payments'}
-                             otherExpanding={!!this.state.expanded && this.state.expanded != 'payments'}
-                             toggle={this.toggle('payments')}
                              request={this.props.request}
                              reload={this.props.reload} />
           <div className="bg-household-light p-2 pl-20 text-black">
-            <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={this.props.household.balance} /></span></h3>
+            <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={-this.props.household.balance} /></span></h3>
           </div>
         </div>
         <Loading loading={this.props.loading}></Loading>

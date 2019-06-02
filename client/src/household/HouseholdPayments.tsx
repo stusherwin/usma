@@ -36,12 +36,12 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, {
                     { this.props.payments.map((p, i) =>
                       <tr key={p.id}>
                         <td className={classNames('pr-2 w-full', {'pt-2': i > 0})}>{ Util.formatDate(p.date) }</td>
-                        <td className={classNames('text-right whitespace-no-wrap', {'pt-2': i > 0})}><Money amount={p.amount} /></td>
+                        <td className={classNames('text-right whitespace-no-wrap', {'pt-2': i > 0})}><Money amount={-p.amount} /></td>
                       </tr>
                     ) }
                     <tr>
                       <td className="pt-2 pr-2 font-bold">Total:</td>
-                      <td className="pt-2 font-bold text-right whitespace-no-wrap"><Money amount={total} /></td>
+                      <td className="pt-2 font-bold text-right whitespace-no-wrap"><Money amount={-total} /></td>
                     </tr>
                   </tbody>
                 </table>
