@@ -40,7 +40,6 @@ export class HouseholdPaymentForm extends React.Component<HouseholdPaymentFormPr
   }
 
   componentDidMount() {
-    console.log('mount')
     this.reset()
   }
   
@@ -65,14 +64,13 @@ export class HouseholdPaymentForm extends React.Component<HouseholdPaymentFormPr
     this.setState({ form: this.state.form.update(fieldName, value) })
 
   reset = () => {
-    console.log(this.props.payment)
     this.setState({ form: this.state.form.reset(this.props.payment? {date: this.props.payment.date, amount: this.props.payment.amount}: {date: new Date(), amount: ''})
                   })
   }
   
   render() {
     return (
-      <div className="bg-payment-lightest p-2">
+      <div className="bg-payment-lightest px-2 py-4 shadow-inner-top">
         <h3 className="mb-4">{this.props.payment ? 'Edit payment' : 'Create new payment'}</h3>
         <TextField id={`${this.props.key}-date`}
                    label="Date"
