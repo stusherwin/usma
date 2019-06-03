@@ -121,11 +121,11 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
 
   render() {
     return (
-      <div>
+      <div className="bg-product-light min-h-screen">
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <TopNav className="bg-product-light text-white hover:text-white" />
+        <TopNav />
         <div className="bg-product-light p-2">
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>

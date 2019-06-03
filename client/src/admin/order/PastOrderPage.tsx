@@ -25,7 +25,7 @@ export class PastOrderPage extends React.Component<PastOrderPageProps, {}> {
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-grey-lighter p-2">
-          <TopNav className="text-grey-darkest hover:text-black" />
+          <TopNav />
           <div className="bg-img-order-bw bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-grey-darkest leading-none mb-2 -mt-1">Past order{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <h3 className="mt-0 flex justify-between"><span>{Util.formatDate(order.createdDate)}</span><span><Money amount={order.totalIncVat} /></span></h3>

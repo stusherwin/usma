@@ -4,11 +4,7 @@ import * as classNames from 'classnames'
 import { RouterLink } from '../common/RouterLink'
 import { Router } from '../common/Router'
 
-export interface TopNavProps {
-  className?: string
-}
-
-export const TopNav = ({className}: TopNavProps) => {
+export const TopNav = () => {
   const links = [
     { 
       text: 'Orders',

@@ -46,7 +46,7 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-order-dark p-2">
-          <TopNav className="text-grey-darkest hover:text-black" />
+          <TopNav />
           <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="leading-none mb-2 -mt-1">Place order{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <div>

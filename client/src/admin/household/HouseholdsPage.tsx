@@ -88,92 +88,90 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
 
   render() {
     return (
-      <div>
+      <div className="bg-household-light min-h-screen">
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <TopNav className="bg-household-light text-household-dark hover:text-household-darker" />
-        <div className="bg-household-light min-h-screen">
-          <div className="p-2 text-black min-h-16">
-            <div className="bg-img-household bg-no-repeat w-16 h-16 absolute mt-2"></div>
-            <h2 className="text-household-darker leading-none ml-20 mt-2 relative flex">Households</h2>
-            <div className="flex justify-start ml-20 mt-2 mb-2">
-              <button onClick={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New household</button>
+        <TopNav />
+        <div className="p-2 text-black min-h-16">
+          <div className="bg-img-household bg-no-repeat w-16 h-16 absolute mt-2"></div>
+          <h2 className="text-household-darker leading-none ml-20 mt-2 relative flex">Households</h2>
+          <div className="flex justify-start ml-20 mt-2 mb-2">
+            <button onClick={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New household</button>
+          </div>
+        </div>
+        <div className="bg-white shadow-inner-top">
+          {this.state.editing == 'new' &&
+            <div className="bg-household-lightest shadow-inner-top px-2 py-4">
+              <h3 className="mb-4">Create new household</h3>
+              <TextField id="create-name"
+                         label="Name"
+                         autofocus
+                         field={this.state.form.fields.name}
+                         valueOnChange={this.fieldChanged('name')} />
+              <TextField id="create-contactName"
+                         label="Contact name"
+                         field={this.state.form.fields.contactName}
+                         valueOnChange={this.fieldChanged('contactName')} />
+              <TextField id="create-contactEmail"
+                         label="Contact email"
+                         field={this.state.form.fields.contactEmail}
+                         valueOnChange={this.fieldChanged('contactEmail')} />
+              <TextField id="create-contactPhone"
+                         label="Contact phone"
+                         field={this.state.form.fields.contactPhone}
+                         valueOnChange={this.fieldChanged('contactPhone')} />
+              <div className="flex justify-end">
+                <button className="ml-2" onClick={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+                <button className="ml-2" onClick={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+              </div>
             </div>
-          </div>
-          <div className="bg-white shadow-inner-top">
-            {this.state.editing == 'new' &&
-              <div className="bg-household-lightest shadow-inner-top px-2 py-4">
-                <h3 className="mb-4">Create new household</h3>
-                <TextField id="create-name"
-                           label="Name"
-                           autofocus
-                           field={this.state.form.fields.name}
-                           valueOnChange={this.fieldChanged('name')} />
-                <TextField id="create-contactName"
-                           label="Contact name"
-                           field={this.state.form.fields.contactName}
-                           valueOnChange={this.fieldChanged('contactName')} />
-                <TextField id="create-contactEmail"
-                           label="Contact email"
-                           field={this.state.form.fields.contactEmail}
-                           valueOnChange={this.fieldChanged('contactEmail')} />
-                <TextField id="create-contactPhone"
-                           label="Contact phone"
-                           field={this.state.form.fields.contactPhone}
-                           valueOnChange={this.fieldChanged('contactPhone')} />
-                <div className="flex justify-end">
-                  <button className="ml-2" onClick={this.confirmCreate} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-                  <button className="ml-2" onClick={this.cancelCreate}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+          }
+          {!this.props.households.length && !this.state.editing
+          ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households created yet</div>
+          : (
+            <div>
+              { this.props.households.map((h, i) => 
+              this.state.editing == h.id
+              ? (
+                <div key={h.id} className={classNames('bg-household-lightest shadow-inner-top px-2 py-4', {'mt-4': i > 0})}>
+                  <h3 className="mb-4">Edit household</h3>
+                  <TextField id="edit-name"
+                             label="Name"
+                             autofocus
+                             field={this.state.form.fields.name}
+                             valueOnChange={this.fieldChanged('name')} />
+                  <TextField id="edit-contactName"
+                             label="Contact name"
+                             field={this.state.form.fields.contactName}
+                             valueOnChange={this.fieldChanged('contactName')} />
+                  <TextField id="edit-contactEmail"
+                             label="Contact email"
+                             field={this.state.form.fields.contactEmail}
+                             valueOnChange={this.fieldChanged('contactEmail')} />
+                  <TextField id="edit-contactPhone"
+                             label="Contact phone"
+                             field={this.state.form.fields.contactPhone}
+                             valueOnChange={this.fieldChanged('contactPhone')} />
+                  <div className="flex justify-end">
+                    <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
+                    <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+                  </div>
                 </div>
-              </div>
-            }
-            {!this.props.households.length && !this.state.editing
-            ? <div className="p-2 mb-4 text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households created yet</div>
-            : (
-              <div>
-                { this.props.households.map((h, i) => 
-                this.state.editing == h.id
-                ? (
-                  <div key={h.id} className={classNames('bg-household-lightest shadow-inner-top px-2 py-4', {'mt-4': i > 0})}>
-                    <h3 className="mb-4">Edit household</h3>
-                    <TextField id="edit-name"
-                               label="Name"
-                               autofocus
-                               field={this.state.form.fields.name}
-                               valueOnChange={this.fieldChanged('name')} />
-                    <TextField id="edit-contactName"
-                               label="Contact name"
-                               field={this.state.form.fields.contactName}
-                               valueOnChange={this.fieldChanged('contactName')} />
-                    <TextField id="edit-contactEmail"
-                               label="Contact email"
-                               field={this.state.form.fields.contactEmail}
-                               valueOnChange={this.fieldChanged('contactEmail')} />
-                    <TextField id="edit-contactPhone"
-                               label="Contact phone"
-                               field={this.state.form.fields.contactPhone}
-                               valueOnChange={this.fieldChanged('contactPhone')} />
-                    <div className="flex justify-end">
-                      <button className="ml-2" onClick={this.confirmEdit} disabled={!this.state.form.valid()}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Save</button>
-                      <button className="ml-2" onClick={this.cancelEdit}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
-                    </div>
-                  </div>
-                )
-                : (
-                  <div key={h.id} className={classNames("flex justify-between items-baseline px-2 pt-4", {
-                      "pb-4": i == this.props.households.length - 1
-                    })}>
-                    <RouterLink className="flex-grow" path={`/admin/households/${h.id}`}>{h.name}</RouterLink>
-                    <span className="flex-no-shrink flex-no-grow">
-                      <button className="ml-2" onClick={_ => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                      <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                    </span>
-                  </div>
-                )) }
-              </div>
-            )}
-          </div>
+              )
+              : (
+                <div key={h.id} className={classNames("flex justify-between items-baseline px-2 pt-4", {
+                    "pb-4": i == this.props.households.length - 1
+                  })}>
+                  <RouterLink className="flex-grow" path={`/admin/households/${h.id}`}>{h.name}</RouterLink>
+                  <span className="flex-no-shrink flex-no-grow">
+                    <button className="ml-2" onClick={_ => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                    <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                  </span>
+                </div>
+              )) }
+            </div>
+          )}
         </div>
         <Loading loading={this.props.loading}></Loading>
       </div>

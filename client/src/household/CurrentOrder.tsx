@@ -221,7 +221,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     if(!orderButtons.some(b => b)) return
 
     return (
-      <div className="bg-order-dark flex flex-wrap content-start items-start">
+      <div className="flex flex-wrap content-start items-start">
         {canLeaveOrder && 
           <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
         }
