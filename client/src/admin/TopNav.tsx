@@ -7,18 +7,18 @@ import { Router } from '../common/Router'
 export const TopNav = () => {
   const links = [
     { 
-      text: 'Orders',
+      text: 'Current',
       path: '/admin/orders',
       iconClassName: 'bg-img-order',
       className: 'bg-order-dark text-black hover:text-black',
       current: Router.isCurrent('/admin/orders'),
     },
     { 
-      text: 'Products',
-      path: '/admin/products',
-      iconClassName: 'bg-img-product',
-      className: 'bg-product-light text-white hover:text-white',
-      current: Router.isCurrent('/admin/products'),
+      text: 'Past',
+      path: '/admin/past-orders',
+      iconClassName: 'bg-img-order',
+      className: 'bg-past-order-lighter text-black hover:text-black',
+      current: Router.isCurrent('/admin/past-orders'),
     },
     { 
       text: 'Households',
@@ -26,6 +26,13 @@ export const TopNav = () => {
       iconClassName: 'bg-img-household',
       className: 'bg-household-light',
       current: Router.isCurrent('/admin/households'),
+    },
+    { 
+      text: 'Products',
+      path: '/admin/products',
+      iconClassName: 'bg-img-product',
+      className: 'bg-product-light text-white hover:text-white',
+      current: Router.isCurrent('/admin/products'),
     }
   ]
 
