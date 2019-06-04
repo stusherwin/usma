@@ -7,7 +7,7 @@ import { Icon } from '../../common/Icon'
 import { Money } from '../../common/Money'
 import { HouseholdOrders } from './HouseholdOrders'
 import { TopNav } from '../TopNav'
-import { CollapsibleWithHeader } from '../../household/CollapsibleWithHeader'
+import { Header } from '../../household/Header'
 import { Loading } from '../../household/Loading'
 
 export interface OrdersPageProps { currentOrder: CollectiveOrder | null
@@ -93,55 +93,50 @@ export class OrdersPage extends React.Component<OrdersPageProps, OrdersPageState
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <TopNav />
-        <CollapsibleWithHeader className="min-h-20"
-                               headerClassName="bg-order-dark min-h-20"
-                               headerImageClassName="bg-img-order"
-                               headerText="Current order"
-                               headerContent={() => (
-                                <div>
-                                  <h3 className="flex justify-between ml-20 mt-4 mb-4">
-                                    <span>Total:</span>
-                                    {this.renderTotal()}
-                                  </h3>
-                                  {this.renderMessages()}
-                                  {this.renderButtons(unusedHouseholds)}
-                                </div>
-                               )}
-                               expanded={this.state.expanded == 'order'}
-                               otherExpanding={!!this.state.expanded && this.state.expanded != 'order'}
-                               toggle={this.toggle('order')}>
-          <div className="bg-white shadow-inner-top">
-            {!currentOrder?
-              <div className="px-2 py-4">
-                <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
-                <div className="flex justify-start">
-                  <button onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</button>
-                </div>
+        <Header className="bg-order-dark min-h-20"
+                imageClassName="bg-img-order"
+                headingText="Current order"
+                content={() => (
+                 <div>
+                   <h3 className="flex justify-between ml-20 mt-4 mb-4">
+                     <span>Total:</span>
+                     {this.renderTotal()}
+                   </h3>
+                   {this.renderMessages()}
+                   {this.renderButtons(unusedHouseholds)}
+                 </div>
+                )} />
+        <div className="bg-white shadow-inner-top">
+          {!currentOrder?
+            <div className="px-2 py-4">
+              <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
+              <div className="flex justify-start">
+                <button onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</button>
               </div>
-            : this.state.addingHousehold?
-              <div className="bg-household-lightest shadow-inner-top px-2 py-4">
-                <h3 className="mb-4">Add household</h3>
-                <select className="mb-4 w-full" value={this.state.addingHousehold.id} onChange={this.addingHouseholdChanged}>
-                  {unusedHouseholds.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                </select>
-                <div className="flex justify-end">
-                  <button className="ml-2" onClick={this.confirmAddHousehold}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
-                  <button className="ml-2" onClick={this.cancelAddHousehold}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
-                </div>
+            </div>
+          : this.state.addingHousehold?
+            <div className="bg-household-lightest shadow-inner-top px-2 py-4">
+              <h3 className="mb-4">Add household</h3>
+              <select className="mb-4 w-full" value={this.state.addingHousehold.id} onChange={this.addingHouseholdChanged}>
+                {unusedHouseholds.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+              </select>
+              <div className="flex justify-end">
+                <button className="ml-2" onClick={this.confirmAddHousehold}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                <button className="ml-2" onClick={this.cancelAddHousehold}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
               </div>
-            : !this.props.currentHouseholdOrders.length?
-              <div className="px-2 py-4 text-grey-darker">
-                <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
-              </div>
-            : <HouseholdOrders order={currentOrder}
-                               householdOrders={this.props.currentHouseholdOrders}
-                               households={this.props.households}
-                               addingHousehold={this.state.addingHousehold}
-                               reload={this.props.reload}
-                               request={this.props.request} />
-            }
-          </div>
-        </CollapsibleWithHeader>
+            </div>
+          : !this.props.currentHouseholdOrders.length?
+            <div className="px-2 py-4 text-grey-darker">
+              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
+            </div>
+          : <HouseholdOrders order={currentOrder}
+                             householdOrders={this.props.currentHouseholdOrders}
+                             households={this.props.households}
+                             addingHousehold={this.state.addingHousehold}
+                             reload={this.props.reload}
+                             request={this.props.request} />
+          }
+        </div>
         <Loading loading={this.props.loading}></Loading>
       </div>
     )
