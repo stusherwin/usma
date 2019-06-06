@@ -3,6 +3,9 @@
 @tailwind utilities;
 @import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin);
 
+table, table tr, table td { border-collapse:collapse;border-spacing:0; }
+table, table tr, table td { padding:0;border:none; }
+
 a {
   @apply text-blue underline;
 }

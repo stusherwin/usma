@@ -7,7 +7,7 @@ import { CurrentOrder } from './CurrentOrder'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
 import { ApiError } from '../ServerApi'
-import { CollapsibleWithHeader } from './CollapsibleWithHeader'
+import { Collapsible, Header } from './CollapsibleWithHeader'
 import { RouterLink } from '../common/RouterLink'
 import { EditHousehold } from './EditHousehold'
 import { Loading } from './Loading'
@@ -52,25 +52,26 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <CollapsibleWithHeader className="min-h-28"
-                               headerClassName="bg-household-light min-h-28"
-                               headingClassName="mt-2"
-                               headerImageClassName="bg-img-household mt-2"
-                               headerText={this.props.household.name}
-                               headerContent={() => (
-                                 <div>
-                                   <div className="ml-20 mt-1">
-                                     <RouterLink path="/households">Change household</RouterLink>
-                                   </div>
-                                   <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
-                                 </div>
-                               )}
-                               expanded={this.state.expanded == 'household'}
-                               otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
-                               toggle={this.toggle('household')}
-                               onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
-                               onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
-                               onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}>
+        <Collapsible className="min-h-28"
+                     expanded={this.state.expanded == 'household'}
+                     otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
+                     toggle={this.toggle('household')}
+                     onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
+                     onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
+                     onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
+                     header={() =>
+          <Header headerClassName="bg-household-light min-h-28"
+                  headingClassName="mt-2"
+                  headerImageClassName="bg-img-household mt-2"
+                  headerText={this.props.household.name}
+                  headerContent={() => (
+                    <div>
+                      <div className="ml-20 mt-1">
+                        <RouterLink path="/households">Change household</RouterLink>
+                      </div>
+                      <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                    </div>
+                  )} /> }>
           <EditHousehold ref={this.editHousehold}
                          household={this.props.household}
                          request={this.props.request}
@@ -78,7 +79,7 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                          onCancel={this.toggle('household')}
             >
           </EditHousehold>
-        </CollapsibleWithHeader>
+        </Collapsible>
         <CurrentOrder household={this.props.household}
                       currentOrder={this.props.currentOrder}
                       currentHouseholdOrder={this.props.currentHouseholdOrder}

@@ -6,31 +6,28 @@ import { Icon } from '../common/Icon'
 const transitionTime = 0.25;
 const minHeight = '5rem';
 
-export interface CollapsibleWithHeaderProps { className?: string 
-                                            , headerClassName?: string 
-                                            , headingClassName?: string 
-                                            , headerImageClassName?: string
-                                            , headerText?: string
-                                            , headerContent?: () => JSX.Element
-                                            , expanded: boolean
-                                            , otherExpanding: boolean
-                                            , toggle: () => void
-                                            , onExpand?: () => void
-                                            , onCollapse?: () => void
-                                            , onExpanded?: () => void
-                                            , onCollapsed?: () => void
-                                            }
+export interface CollapsibleProps { className?: string 
+                                  , expanded: boolean
+                                  , otherExpanding: boolean
+                                  , visible?: boolean
+                                  , header: () => JSX.Element
+                                  , toggle: () => void
+                                  , onExpand?: () => void
+                                  , onCollapse?: () => void
+                                  , onExpanded?: () => void
+                                  , onCollapsed?: () => void
+                                  }
 
-export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeaderProps, {}> {
+export class Collapsible extends React.Component<CollapsibleProps, {}> {
   container: React.RefObject<HTMLDivElement>
 
-  constructor(props: CollapsibleWithHeaderProps) {
+  constructor(props: CollapsibleProps) {
     super(props)
 
     this.container = React.createRef();
   }
 
-  componentDidUpdate(prevProps: CollapsibleWithHeaderProps) {
+  componentDidUpdate(prevProps: CollapsibleProps) {
     if(prevProps.expanded != this.props.expanded) {
       this.animateHeight()
       if(this.props.expanded) {
@@ -80,25 +77,88 @@ export class CollapsibleWithHeader extends React.Component<CollapsibleWithHeader
       }
     }
   }
+
+  visible() {
+    if(this.props.visible == undefined) return true
+
+    return this.props.visible
+  }
   
   render() {
     return (
-      <div ref={this.container} className={this.props.className} style={{ 
-            overflow: 'hidden',
+      <div ref={this.container} className={classNames('relative overflow-hidden', this.props.className)} style={{ 
             height: minHeight,
             transition: `height ${transitionTime / 2}s ease`,
             transitionDelay: this.props.expanded? '0s' : (this.props.otherExpanding? `${transitionTime / 2}s` : '0s')
           }} onTransitionEnd={this.transitionEnded}>
-        <a href="#" onClick={e => { e.preventDefault(); this.props.toggle() }} className={classNames(
-            'p-2 block no-underline text-black hover:text-black hover:no-underline',
-            this.props.headerClassName)}>
-          <div className={classNames('bg-no-repeat w-16 h-16 absolute', this.props.headerImageClassName)}></div>
-          <h2 className={classNames('leading-none ml-20 relative flex', this.props.headingClassName)}>{this.props.headerText}
-            <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-1" />
-          </h2>
-          { this.props.headerContent && this.props.headerContent() }
+        <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.props.toggle() }}
+           className="block no-underline text-black hover:text-black hover:no-underline">
+           {this.visible() && 
+             <Icon type={this.props.expanded? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r mt-3 mr-2" />
+           }
+          { this.props.header() }
         </a>
         { this.props.children }
+      </div>
+    )
+  }
+}
+
+export interface HeaderProps { headerClassName?: string 
+                             , headingClassName?: string 
+                             , headerImageClassName?: string
+                             , headerText?: string
+                             , headerContent?: () => JSX.Element
+                             , visible?: boolean
+                             }
+
+export class Header extends React.Component<HeaderProps, {}> {
+  visible() {
+    if(this.props.visible == undefined) return true
+
+    return this.props.visible
+  }
+
+  render() {
+    return (
+      <div className={classNames('p-2', this.props.headerClassName)}>
+        {this.visible() &&
+          <div className={classNames('bg-no-repeat w-16 h-16 absolute', this.props.headerImageClassName)}></div>
+        }
+        <h2 className={classNames('leading-none ml-20 relative flex', this.props.headingClassName)}>
+          {this.props.headerText}
+        </h2>
+        { this.props.headerContent && this.props.headerContent() }
+      </div>
+    )
+  }
+}
+
+export interface SmallHeaderProps { headerClassName?: string 
+                                  , headingClassName?: string 
+                                  , headerImageClassName?: string
+                                  , headerText?: string
+                                  , headerContent?: () => JSX.Element
+                                  , visible?: boolean
+                                  }
+
+export class SmallHeader extends React.Component<SmallHeaderProps, {}> {
+  visible() {
+    if(this.props.visible == undefined) return true
+
+    return this.props.visible
+  }
+
+  render() {
+    return (
+      <div className={classNames('p-2', this.props.headerClassName)}>
+        {this.visible() &&
+          <div className={classNames('bg-no-repeat w-16 h-16 absolute', this.props.headerImageClassName)}></div>
+        }
+        <h3 className={classNames('leading-none ml-20 relative flex', this.props.headingClassName)}>
+          {this.props.headerText}
+        </h3>
+        { this.props.headerContent && this.props.headerContent() }
       </div>
     )
   }

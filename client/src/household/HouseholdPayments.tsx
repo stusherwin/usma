@@ -5,7 +5,7 @@ import { Household, HouseholdPayment } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { CollapsibleWithHeader } from './CollapsibleWithHeader'
+import { Collapsible, Header } from './CollapsibleWithHeader'
 import { HouseholdPaymentForm, PaymentData } from '../admin/household/HouseholdPaymentForm'
 import { ServerApi } from '../ServerApi'
 
@@ -60,21 +60,23 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     const total = this.props.payments.reduce((tot, p) => tot + p.amount, 0)
  
     return (
-      <CollapsibleWithHeader className="min-h-20"
-                             headerClassName="bg-payment-light min-h-20"
-                             headerImageClassName="bg-img-payment"
-                             headerText="Payments"
-                             headerContent={() => (
-                               <div>
-                                 <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
-                                 {this.props.editable && 
-                                   <div className="flex justify-start mt-4">
-                                     <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
-                                   </div>
-                                 }
-                               </div>
-                             )}
-                             {...this.props}>
+      <Collapsible className="min-h-20"
+                   {...this.props}
+                   header={() =>
+          <Header headerClassName="bg-payment-light min-h-20"
+                  headerImageClassName="bg-img-payment"
+                  headerText="Payments"
+                  headerContent={() => (
+                    <div>
+                      <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
+                      {this.props.editable && 
+                        <div className="flex justify-start mt-4">
+                          <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
+                        </div>
+                      }
+                    </div>
+                  )}
+                  {...this.props} /> }>
         <div className="shadow-inner-top bg-white">
           {this.state.editing == 'new' &&
             <HouseholdPaymentForm key="create"
@@ -127,7 +129,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
             </table>
           }
         </div>
-      </CollapsibleWithHeader>
+      </Collapsible>
     )
   }
 }

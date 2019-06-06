@@ -6,7 +6,7 @@ import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, Orde
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { CollapsibleWithHeader } from './CollapsibleWithHeader'
+import { Collapsible, Header } from './CollapsibleWithHeader'
 import { ServerApi } from '../ServerApi'
 import { AddProduct } from './AddProduct'
 
@@ -106,22 +106,24 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     let unusedProducts = this.unusedProducts()
 
     return (
-      <CollapsibleWithHeader className="min-h-20"
-                             headerClassName="bg-order-dark min-h-20"
-                             headerImageClassName="bg-img-order"
-                             headerText="Current order"
-                             headerContent={() => (
-                              <div>
-                                <h3 className="flex justify-between ml-20 mt-4 mb-4">
-                                  <span>Total:</span>
-                                  {this.renderTotal()}
-                                </h3>
-                                {this.renderMessages()}
-                                {this.renderButtons(unusedProducts)}
-                              </div>
-                             )}
-                             onCollapse={this.cancelAdd}
-                             {...this.props}>
+      <Collapsible className="min-h-20"
+                   onCollapse={this.cancelAdd}
+                   {...this.props}
+                   header={() => 
+        <Header headerClassName="bg-order-dark min-h-20"
+                headerImageClassName="bg-img-order"
+                headerText="Current order"
+                headerContent={() => (
+                 <div>
+                   <h3 className="flex justify-between ml-20 mt-4 mb-4">
+                     <span>Total:</span>
+                     {this.renderTotal()}
+                   </h3>
+                   {this.renderMessages()}
+                   {this.renderButtons(unusedProducts)}
+                 </div>
+                )}
+                {...this.props} /> }>
         { !order? 
           <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
@@ -147,7 +149,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                                    request={this.props.request} />
           </div>
         }
-      </CollapsibleWithHeader>
+      </Collapsible>
     )
   }
 

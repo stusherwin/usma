@@ -7,7 +7,7 @@ import { CurrentOrder } from '../../household/CurrentOrder'
 import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
 import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { TopNav } from '../TopNav'
-import { CollapsibleWithHeader } from '../../household/CollapsibleWithHeader'
+import { Collapsible, Header } from '../../household/CollapsibleWithHeader'
 import { EditHousehold } from '../../household/EditHousehold'
 import { Loading } from '../../household/Loading'
 
@@ -64,30 +64,29 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <TopNav />
-        <CollapsibleWithHeader className="min-h-24"
-                               headerClassName="bg-household-light min-h-24"
-                               headingClassName="mt-2"
-                               headerImageClassName="bg-img-household mt-2"
-                               headerText={this.props.household.name}
-                               headerContent={() => (
-                                 <div>
-                                   <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
-                                 </div>
-                               )}
-                               expanded={this.state.expanded == 'household'}
-                               otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
-                               toggle={this.toggle('household')}
-                               onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
-                               onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
-                               onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}>
+        <Collapsible className="min-h-24"
+                     expanded={this.state.expanded == 'household'}
+                     otherExpanding={!!this.state.expanded && this.state.expanded != 'household'}
+                     toggle={this.toggle('household')}
+                     onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
+                     onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
+                     onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
+                     header={() =>
+          <Header headerClassName="bg-household-light min-h-24"
+                  headingClassName="mt-2"
+                  headerImageClassName="bg-img-household mt-2"
+                  headerText={this.props.household.name}
+                  headerContent={() => (
+                    <div>
+                      <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                    </div>
+                  )} /> }>
           <EditHousehold ref={this.editHousehold}
                          household={this.props.household}
                          request={this.props.request}
                          onConfirm={() => this.props.reload().then(this.toggle('household'))}
-                         onCancel={this.toggle('household')}
-            >
-          </EditHousehold>
-        </CollapsibleWithHeader>
+                         onCancel={this.toggle('household')} />
+        </Collapsible>
         <CurrentOrder household={this.props.household}
                       currentOrder={this.props.currentOrder}
                       currentHouseholdOrder={this.props.currentHouseholdOrder}
