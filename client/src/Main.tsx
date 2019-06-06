@@ -6,7 +6,6 @@ import { Router } from './common/Router'
 
 import { OrdersPage as AdminOrdersPage } from './admin/order/OrdersPage'
 import { PastOrderPage as AdminPastOrderPage } from './admin/order/PastOrderPage'
-import { PastOrdersPage as AdminPastOrdersPage } from './admin/order/PastOrdersPage'
 import { HouseholdPage as AdminHouseholdPage } from './admin/household/HouseholdPage'
 import { PastHouseholdOrderPage as AdminPastHouseholdOrderPage } from './admin/household/PastHouseholdOrderPage'
 import { PlaceOrderPage as AdminPlaceOrderPage } from './admin/order/PlaceOrderPage'
@@ -178,22 +177,16 @@ export class Main extends React.Component<MainProps, MainState> {
     router.route('/admin/orders', c => {
       const currentOrder = this.state.collectiveOrder
       const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
+      const pastOrders = this.state.pastCollectiveOrders
 
       return <AdminOrdersPage currentOrder={currentOrder}
                               currentHouseholdOrders={currentHouseholdOrders}
                               households={this.state.households}
+                              pastOrders={pastOrders}
                               reload={this.reload}
                               request={this.request}
                               loading={this.state.loading}
                               error={this.state.error} />
-    })
-
-    router.route('/admin/past-orders', c => {
-      const pastOrders = this.state.pastCollectiveOrders
-
-      return <AdminPastOrdersPage pastOrders={pastOrders}
-                                  loading={this.state.loading}
-                                  error={this.state.error} />
     })
     
     router.route('/admin/products', _ => <AdminProductsPage products={this.state.productCatalogue}
