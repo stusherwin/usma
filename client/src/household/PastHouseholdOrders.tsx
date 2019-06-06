@@ -1,11 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder } from '../Types'
+import { PastHouseholdOrder, PastOrderItem } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { CollapsibleWithHeader } from './CollapsibleWithHeader'
+import { ServerApi } from '../ServerApi'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
                                           , expanded: boolean
@@ -76,14 +77,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                           <td colSpan={3}>
                             <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
                               <tbody>
-                                {ho.items.map(i =>
-                                  <tr key={i.productId}>  
-                                    <td className="pt-2 pl-2 pr-2">{i.productCode}</td>
-                                    <td className="pt-2 pr-2 w-full">{i.productName}</td>
-                                    <td className="pt-2 pr-2 whitespace-no-wrap">x {i.itemQuantity}</td>
-                                    <td className={classNames('pt-2 pr-2 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={i.itemTotalExcVat} /></td>
-                                  </tr>
-                                )}
+                                {ho.items.map(this.renderItem)}
                                 <tr>
                                   <td className="pt-2 pr-2 pl-2">VAT:</td>
                                   <td className="pt-2 pr-2"></td>
@@ -91,10 +85,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                   <td className={classNames('pt-2 pr-2 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></td>
                                 </tr>
                                 <tr>
-                                  <td className="pt-4 pb-2 pl-2 pr-2 font-bold">Total:</td>
-                                  <td className="pt-4 pb-2 pr-2"></td>
-                                  <td className="pt-4 pb-2 pr-2"></td>
-                                  <td className={classNames('pt-4 pr-2 pb-2 font-bold text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
+                                  <td className="pt-4 pb-4 pl-2 pr-2 font-bold">Total:</td>
+                                  <td className="pt-4 pb-4 pr-2"></td>
+                                  <td className="pt-4 pb-4 pr-2"></td>
+                                  <td className={classNames('pt-4 pr-2 pb-4 font-bold text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
                                 </tr>
                               </tbody>
                             </table>
@@ -116,4 +110,30 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       </CollapsibleWithHeader>
     )
   }
+
+  renderItem = (i: PastOrderItem, ix: number) => 
+    [
+    <tr key={i.productId + '-1'}>
+      <td className={classNames('pl-2 w-20 h-20 align-top', {'pt-4': ix == 0, 'pt-8': ix > 0})} rowSpan={3}>
+        <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${i.productCode}`)} />
+      </td>
+      <td className={classNames('pl-2 pb-2 font-bold align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0})}>
+        {i.productCode}
+      </td>
+      <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0})}>
+        x {i.itemQuantity}
+      </td>
+      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': ix == 0, 'pt-8': ix > 0})} colSpan={2}>
+        <Money amount={i.itemTotalExcVat} />
+      </td>
+    </tr>
+    ,
+    <tr key={i.productId + '-2'}>
+      <td className={classNames('pl-2 pb-2 pr-2 align-top')} colSpan={3}>{i.productName}</td>
+    </tr>
+    ,
+    <tr key={i.productId + '-3'}>
+      <td className={classNames('pl-2 pr-2 text-grey')} colSpan={3}>VAT: {i.productVatRate} rate</td>
+    </tr>
+    ]
 }
