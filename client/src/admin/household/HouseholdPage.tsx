@@ -107,7 +107,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                              reload={this.props.reload} />
         <HouseholdPayments household={this.props.household}
                            payments={this.props.payments}
-                           editable={true}
                            expanded={this.state.expanded == 'payments'}
                            otherExpanding={!!this.state.expanded && this.state.expanded != 'payments'}
                            toggle={this.toggle('payments')}

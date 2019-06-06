@@ -11,7 +11,7 @@ import { ServerApi } from '../ServerApi'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]
-                                        , editable: boolean
+                                        , readOnly?: boolean
                                         , expanded: boolean
                                         , otherExpanding: boolean
                                         , toggle: () => void
@@ -69,7 +69,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   headerContent={() => (
                     <div>
                       <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
-                      {this.props.editable && 
+                      {!this.props.readOnly && 
                         <div className="flex justify-start mt-4">
                           <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
                         </div>
@@ -108,7 +108,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   : (
                   <tr key={p.id}>
                     <td className={classNames('pt-4 pl-2 pr-2 whitespace-no-wrap')}>{ Util.formatDate(p.date) }</td>
-                    {this.props.editable && 
+                    {!this.props.readOnly && 
                       <td className={classNames("pt-4 pr-2 w-full whitespace-no-wrap")}>
                         <button onClick={_ => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
                         <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
@@ -120,7 +120,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                 ) }
                 <tr>
                   <td className="pt-4 pl-2 pr-2 pb-4 font-bold">Total:</td>
-                  {this.props.editable && 
+                  {!this.props.readOnly && 
                     <td className="pt-4 pr-2 pb-4"></td>
                   }
                   <td className={classNames("pt-4 pb-4 font-bold text-right whitespace-no-wrap pr-2")}><Money amount={-total} /></td>

@@ -77,7 +77,8 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                     : <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
                         <CurrentHouseholdOrder currentHouseholdOrder={ho}
                                                reload={this.props.reload}
-                                               request={this.props.request} />
+                                               request={this.props.request}
+                                               readOnly={true} />
                       </div>
                     }
                   </Collapsible>

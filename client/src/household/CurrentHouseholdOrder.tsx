@@ -7,6 +7,7 @@ import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 
 export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
+                                            , readOnly?: boolean
                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                             , reload: () => Promise<void>
                                             }
@@ -51,8 +52,8 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </td>
         </tr>
         <tr>
-          <td className={classNames('pt-2 align-baseline font-bold')} colSpan={2}>Total:</td>
-          <td className={classNames('pl-2 pt-2 text-right align-baseline font-bold whitespace-no-wrap')} colSpan={3}>
+          <td className={classNames('pt-4 align-baseline font-bold')} colSpan={2}>Total:</td>
+          <td className={classNames('pl-4 pt-2 text-right align-baseline font-bold whitespace-no-wrap')} colSpan={3}>
             {householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalIncVat != householdOrder.totalIncVat
               ? <span>
                   <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
@@ -75,7 +76,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       </td>
       <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': ix > 0, '': i.productDiscontinued})}>{i.productCode}</td>
       <td className={classNames('pl-2 pb-2 align-baseline', {'pt-8': ix > 0})}>
-        {this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued
+        {!this.props.readOnly && this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued
           ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
               {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
             </select>
@@ -105,7 +106,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
         }
       </td>
       <td className={classNames('pl-2 align-top text-right')}>
-        {this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued &&
+        {!this.props.readOnly && this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued &&
           <button className="ml-4" onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
         }
       </td>
