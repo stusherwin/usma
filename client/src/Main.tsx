@@ -177,12 +177,12 @@ export class Main extends React.Component<MainProps, MainState> {
     router.route('/admin/orders', c => {
       const currentOrder = this.state.collectiveOrder
       const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
-      const pastOrders = this.state.pastCollectiveOrders
 
       return <AdminOrdersPage currentOrder={currentOrder}
                               currentHouseholdOrders={currentHouseholdOrders}
                               households={this.state.households}
-                              pastOrders={pastOrders}
+                              pastOrders={this.state.pastCollectiveOrders}
+                              pastHouseholdOrders={this.state.pastHouseholdOrders}
                               reload={this.reload}
                               request={this.request}
                               loading={this.state.loading}

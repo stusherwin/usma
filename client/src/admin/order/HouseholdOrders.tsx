@@ -87,7 +87,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
             )}
           )}
           <tr>
-            <td className="pt-4 pb-4 pl-2 pr-2 font-bold">Total</td>
+            <td className="pt-4 pb-4 pl-2 pr-2 font-bold">Total:</td>
             <td className="pt-4 pb-4 pr-2"></td>
             <td className="pt-4 pb-4 pr-2 font-bold text-right"><Money amount={order.totalIncVat} /></td>
           </tr>
