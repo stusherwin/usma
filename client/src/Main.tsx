@@ -15,6 +15,7 @@ import { HomePage as AdminHomePage } from './admin/HomePage'
 import { WelcomePage } from './household/WelcomePage'
 import { HouseholdPage } from './household/HouseholdPage'
 import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
+import { Loading } from './household/Loading'
 
 export interface MainProps {}
 export interface MainState { loading: boolean
@@ -274,24 +275,22 @@ export class Main extends React.Component<MainProps, MainState> {
                                          loading={this.state.loading }
                                          error={this.state.error} />)
     
-    // console.log(this.state)
-    return this.state.initialised
-      ? (
-          this.state.groupKey && this.state.groupValid 
-          ? router.resolve() 
-          : <div className="p-2">Group not found</div>
-        )
-      : (
-        <div>
-          {!!this.state.loading && 
-            <div className="h-screen flex items-center justify-center text-grey-lightest">
-              <Icon type="loading" className="w-16 h-16 -mt-4 rotating fill-current" />
-            </div>
-          }
-          {!!this.state.error && (
-            <div>{this.state.error.error}: {this.state.error.message}</div>
-          )}
-        </div>
-        )
+    return (
+      <div>
+        {this.state.initialised
+        ? (
+            this.state.groupKey && this.state.groupValid 
+            ? router.resolve() 
+            : <div className="p-2">Group not found</div>
+          )
+        : <div>
+            {!!this.state.error && (
+              <div>{this.state.error.error}: {this.state.error.message}</div>
+            )}
+          </div>
+        }
+        <Loading loading={this.state.loading}></Loading>
+      </div>
+    )
   }
 }

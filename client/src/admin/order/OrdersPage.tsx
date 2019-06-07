@@ -3,7 +3,6 @@ import * as React from 'react';
 import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder, PastHouseholdOrder } from '../../Types'
 import { ApiError } from '../../ServerApi'
 import { TopNav } from '../TopNav'
-import { Loading } from '../../household/Loading'
 import { CurrentOrder } from './CurrentOrder'
 import { PastOrders } from './PastOrders'
 
@@ -48,7 +47,6 @@ export class OrdersPage extends React.Component<OrdersPageProps, OrdersPageState
                     otherExpanding={!!this.state.expanded && this.state.expanded != 'past-orders'}
                     toggle={this.toggle('past-orders')}
                     {...this.props} />
-        <Loading loading={this.props.loading}></Loading>
       </div>
     )
   }

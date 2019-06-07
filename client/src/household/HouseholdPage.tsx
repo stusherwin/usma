@@ -10,7 +10,6 @@ import { ApiError } from '../ServerApi'
 import { Collapsible, Header } from './CollapsibleWithHeader'
 import { RouterLink } from '../common/RouterLink'
 import { EditHousehold } from './EditHousehold'
-import { Loading } from './Loading'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentOrder: CollectiveOrder | null
@@ -109,7 +108,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         <div className="bg-household-light p-2 pl-20 text-black">
           <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={-this.props.household.balance} /></span></h3>
         </div>
-        <Loading loading={this.props.loading}></Loading>
       </div>
     )
   }

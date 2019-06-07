@@ -9,7 +9,6 @@ import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { TopNav } from '../TopNav'
 import { Collapsible, Header } from '../../household/CollapsibleWithHeader'
 import { EditHousehold } from '../../household/EditHousehold'
-import { Loading } from '../../household/Loading'
 
 export interface HouseholdOrdersPageProps { household: Household
                                           , currentOrder: CollectiveOrder | null
@@ -115,7 +114,6 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
         <div className="bg-household-light p-2 pl-20 text-black">
           <h3 className="mt-0 ml-2 flex justify-between"><span>Balance:</span><span><Money amount={-this.props.household.balance} /></span></h3>
         </div>
-        <Loading loading={this.props.loading}></Loading>
       </div>
     )
   }

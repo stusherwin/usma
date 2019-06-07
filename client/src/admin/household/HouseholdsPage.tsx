@@ -8,7 +8,6 @@ import { Icon } from '../../common/Icon'
 import { Form, Field, Validate } from '../../common/Validation'
 import { TopNav } from '../TopNav'
 import { TextField } from '../../common/Field'
-import { Loading } from '../../household/Loading'
 
 export interface HouseholdsPageProps { households: Household[]
                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -173,7 +172,6 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
             </div>
           )}
         </div>
-        <Loading loading={this.props.loading}></Loading>
       </div>
     )
   }
