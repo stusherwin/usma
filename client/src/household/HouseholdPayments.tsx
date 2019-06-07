@@ -69,7 +69,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                          Payments
                        </h2>
                        <div>
-                         <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
+                         <h3 className="flex justify-end ml-20 mt-4">
+                           <span>Total:</span>
+                           <span className="w-24 text-right"><Money amount={-this.props.household.totalPayments} /></span>
+                         </h3>
                          {!this.props.readOnly && 
                            <div className="flex justify-start mt-4">
                              <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
@@ -120,11 +123,12 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   )
                 ) }
                 <tr>
-                  <td className="pt-4 pl-2 pr-2 pb-4 font-bold">Total:</td>
-                  {!this.props.readOnly && 
-                    <td className="pt-4 pr-2 pb-4"></td>
-                  }
-                  <td className={classNames("pt-4 pb-4 font-bold text-right whitespace-no-wrap pr-2")}><Money amount={-total} /></td>
+                  <td className="pt-4 pl-2 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>
+                    <div className="flex justify-end">
+                      <span>Total:</span>
+                      <span className={classNames("w-24 font-bold text-right whitespace-no-wrap")}><Money amount={-total} /></span>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>

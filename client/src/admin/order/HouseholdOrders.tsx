@@ -77,6 +77,8 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                       </div>
                     : <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
                         <CurrentHouseholdOrder currentHouseholdOrder={ho}
+                                               currentHouseholdOrders={this.props.householdOrders}
+                                               currentOrder={this.props.order}
                                                reload={this.props.reload}
                                                request={this.props.request}
                                                readOnly={true} />

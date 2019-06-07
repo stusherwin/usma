@@ -53,7 +53,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                        <h2 className="leading-none ml-20 relative flex">
                          Past orders
                        </h2>
-                       <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={total} /></span></h3>
+                       <h3 className="flex justify-end ml-20 mt-4">
+                         <span>Total:</span>
+                         <span className="w-24 text-right"><Money amount={total} /></span>
+                       </h3>
                      </div>
                    }>
         { !pastOrders.length
@@ -100,10 +103,12 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                       ]
                   )) }
                   <tr>
-                    <td className="pt-4 pl-2 pr-2 pb-4 font-bold">Total:</td>
-                    {/* <td className="pt-2 pb-2 pr-2"></td> */}
-                    <td className="pt-4 pb-2 pr-2 pb-4"></td>
-                    <td className="pt-4 pr-2 pb-4 font-bold text-right"><Money amount={total} /></td>
+                    <td className="pt-4 pl-2 pr-2 pb-4 font-bold" colSpan={3}>
+                      <div className="flex justify-end">
+                        <span>Total:</span>
+                        <span className="w-24 font-bold text-right"><Money amount={total} /></span>
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>

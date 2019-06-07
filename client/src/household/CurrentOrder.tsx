@@ -87,12 +87,6 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       .then(this.props.reload)
   }
 
-  acceptUpdates = () => {
-    if(!this.props.currentHouseholdOrder) return
-    this.props.request(ServerApi.command.acceptCatalogueUpdates(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
-      .then(this.props.reload)
-  }
-
   unusedProducts = () => {
     if(!this.props.currentHouseholdOrder) return []
 
@@ -116,11 +110,13 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                          Current order
                        </h2>
                        <div>
-                         <h3 className="flex justify-between ml-20 mt-4 mb-4">
-                           <span>Total:</span>
-                           {this.renderTotal()}
+                         <h3 className="flex justify-between ml-20 mt-4 mb-2">
+                           {this.renderStatus()}
+                           <span className="flex justify-end">
+                             <span>Total:</span>
+                             <span className="w-24 text-right">{this.renderTotal()}</span>
+                           </span>
                          </h3>
-                         {this.renderMessages()}
                          {this.renderButtons(unusedProducts)}
                        </div>
                      </div>
@@ -144,8 +140,10 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet {!this.props.products.length && ' - the product catalogue is empty'}
           </div>
-        : <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+        : <div className="shadow-inner-top px-2 py-4 bg-white">
             <CurrentHouseholdOrder currentHouseholdOrder={householdOrder}
+                                   currentHouseholdOrders={this.props.currentHouseholdOrders}
+                                   currentOrder={this.props.currentOrder}
                                    reload={this.props.reload}
                                    request={this.props.request} />
           </div>
@@ -154,58 +152,32 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     )
   }
 
+  renderStatus = () => {
+    return (
+      <span>
+        {!this.props.currentHouseholdOrder?
+          <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Available</span>
+        : this.props.currentHouseholdOrder.isComplete?
+          <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
+        : this.props.currentHouseholdOrder.isAbandoned?
+          <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Abandoned</span>
+        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />In progress</span>
+        }
+      </span>
+    )
+  }
+
   renderTotal = () => {
     let householdOrder = this.props.currentHouseholdOrder
 
     return !householdOrder?
       <Money amount={0} />
-    : householdOrder.isAbandoned?
-      <Money amount={0} />
     : householdOrder.oldTotalIncVat === null || householdOrder.oldTotalIncVat == householdOrder.totalIncVat?
-      <Money amount={householdOrder.totalIncVat} />
+      <Money className={classNames({"line-through text-grey-darker": householdOrder.isAbandoned})} amount={householdOrder.totalIncVat} />
     : <span>
         <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
         <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
       </span>
-  }
-
-  renderMessages = () => {
-    let householdOrder = this.props.currentHouseholdOrder
-    if(!householdOrder) return
-
-    const allComplete = this.props.currentHouseholdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
-    // const householdsInOrder = this.props.households.filter(h => !!this.props.currentHouseholdOrders.find(oh => oh.householdId == h.id))
-    // const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
-    const allHouseholdsUpToDate = !!this.props.currentOrder && this.props.currentOrder.allHouseholdsUpToDate;
-    const orderMinimumReached = !!this.props.currentOrder && this.props.currentOrder.totalIncVat >= 25000
-
-    if(householdOrder.isAbandoned)
-      return <div className="bg-blue-lighter p-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order was abandoned</div>
-
-    if(!!householdOrder.oldTotalExcVat && householdOrder.oldTotalIncVat != householdOrder.totalIncVat)
-      return (
-        <div className="bg-red-lighter p-2"><Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.
-          <div className="flex justify-end mt-2"><button onClick={e => {e.stopPropagation(); this.acceptUpdates()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
-        </div>
-      )
-
-    if(!householdOrder.isComplete)
-      return
-
-    return (
-      <div><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Order complete
-      { !allHouseholdsUpToDate?
-        <span>, waiting for all households to accept latest catalogue updates</span>
-      : !orderMinimumReached?
-        <span>, waiting for minimum order to be reached. Current total is <Money amount={!!this.props.currentOrder && this.props.currentOrder.totalIncVat || 0} /> of &pound;250.00</span>
-      : !allComplete?
-        <span>, waiting for all orders to be completed</span>
-      // : !allPaid?
-      //   <span>, waiting for everyone to pay up</span>
-      : <span>, collective order can now be placed</span>
-      }
-      </div>
-    )
   }
 
   renderButtons = (unusedProducts: ProductCatalogueEntry[]) => {
