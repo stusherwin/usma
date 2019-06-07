@@ -4,7 +4,7 @@ import * as classNames from 'classnames'
 import { PastHouseholdOrder, PastCollectiveOrder, PastOrderItem } from '../../Types'
 import { Icon } from '../../common/Icon'
 import { Money } from '../../common/Money'
-import { Collapsible, SmallHeader } from '../../household/CollapsibleWithHeader'
+import { Collapsible } from '../../household/CollapsibleWithHeader'
 import { ServerApi } from '../../ServerApi'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
@@ -39,16 +39,17 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                otherExpanding={!!this.state.expanded && this.state.expanded != ho}
                                toggle={this.toggle(ho)}
                                header={() =>
-                    <SmallHeader headerClassName={classNames('bg-household-lighter min-h-24', {'shadow-inner-top': i == 0})}
-                                 headingClassName="mt-2"
-                                 headerImageClassName="bg-img-household mt-2"
-                                 headerText={ho.householdName}
-                                 headerContent={() => (
-                                    <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                                      <span>Total:</span>
-                                      <Money amount={ho.totalIncVat} />
-                                    </h4>
-                                 )} /> }>
+                                 <div className={classNames('p-2 bg-household-lighter min-h-24', {'shadow-inner-top': i == 0})}>
+                                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
+                                   <h3 className="leading-none ml-20 relative flex mt-2">
+                                     {ho.householdName}
+                                   </h3>
+                                   <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                                     <span>Total:</span>
+                                     <Money amount={ho.totalIncVat} />
+                                   </h4>
+                                 </div>
+                               }>
                     <div className="shadow-inner-top bg-white">
                       {!ho.items.length?
                         <div className="px-2 py-4 text-grey-darker">

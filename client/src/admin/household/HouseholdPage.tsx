@@ -7,7 +7,7 @@ import { CurrentOrder } from '../../household/CurrentOrder'
 import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
 import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { TopNav } from '../TopNav'
-import { Collapsible, Header } from '../../household/CollapsibleWithHeader'
+import { Collapsible } from '../../household/CollapsibleWithHeader'
 import { EditHousehold } from '../../household/EditHousehold'
 
 export interface HouseholdOrdersPageProps { household: Household
@@ -71,15 +71,16 @@ export class HouseholdPage extends React.Component<HouseholdOrdersPageProps, Hou
                      onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
                      onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
                      header={() =>
-          <Header headerClassName="bg-household-light min-h-24"
-                  headingClassName="mt-2"
-                  headerImageClassName="bg-img-household mt-2"
-                  headerText={this.props.household.name}
-                  headerContent={() => (
-                    <div>
-                      <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
-                    </div>
-                  )} /> }>
+                       <div className="p-2 bg-household-light min-h-24">
+                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
+                         <h2 className="leading-none ml-20 relative flex mt-2">
+                           {this.props.household.name}
+                         </h2>
+                         <div>
+                           <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                         </div>
+                       </div>
+                     }>
           <EditHousehold ref={this.editHousehold}
                          household={this.props.household}
                          request={this.props.request}

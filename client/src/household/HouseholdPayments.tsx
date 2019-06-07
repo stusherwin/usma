@@ -5,7 +5,7 @@ import { Household, HouseholdPayment } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible, Header } from './CollapsibleWithHeader'
+import { Collapsible } from './CollapsibleWithHeader'
 import { HouseholdPaymentForm, PaymentData } from '../admin/household/HouseholdPaymentForm'
 import { ServerApi } from '../ServerApi'
 
@@ -63,20 +63,21 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
       <Collapsible className="min-h-20"
                    {...this.props}
                    header={() =>
-          <Header headerClassName="bg-payment-light min-h-20"
-                  headerImageClassName="bg-img-payment"
-                  headerText="Payments"
-                  headerContent={() => (
-                    <div>
-                      <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
-                      {!this.props.readOnly && 
-                        <div className="flex justify-start mt-4">
-                          <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
-                        </div>
-                      }
-                    </div>
-                  )}
-                  {...this.props} /> }>
+                     <div className="p-2 bg-payment-light min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
+                       <h2 className="leading-none ml-20 relative flex">
+                         Payments
+                       </h2>
+                       <div>
+                         <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={-this.props.household.totalPayments} /></span></h3>
+                         {!this.props.readOnly && 
+                           <div className="flex justify-start mt-4">
+                             <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
+                           </div>
+                         }
+                       </div>
+                     </div>
+                   }>
         <div className="shadow-inner-top bg-white">
           {this.state.editing == 'new' &&
             <HouseholdPaymentForm key="create"

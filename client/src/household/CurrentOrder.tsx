@@ -6,7 +6,7 @@ import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, Orde
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible, Header } from './CollapsibleWithHeader'
+import { Collapsible } from './CollapsibleWithHeader'
 import { ServerApi } from '../ServerApi'
 import { AddProduct } from './AddProduct'
 
@@ -110,20 +110,21 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                    onCollapse={this.cancelAdd}
                    {...this.props}
                    header={() => 
-        <Header headerClassName="bg-order-dark min-h-20"
-                headerImageClassName="bg-img-order"
-                headerText="Current order"
-                headerContent={() => (
-                 <div>
-                   <h3 className="flex justify-between ml-20 mt-4 mb-4">
-                     <span>Total:</span>
-                     {this.renderTotal()}
-                   </h3>
-                   {this.renderMessages()}
-                   {this.renderButtons(unusedProducts)}
-                 </div>
-                )}
-                {...this.props} /> }>
+                     <div className="p-2 bg-order-dark min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                       <h2 className="leading-none ml-20 relative flex">
+                         Current order
+                       </h2>
+                       <div>
+                         <h3 className="flex justify-between ml-20 mt-4 mb-4">
+                           <span>Total:</span>
+                           {this.renderTotal()}
+                         </h3>
+                         {this.renderMessages()}
+                         {this.renderButtons(unusedProducts)}
+                       </div>
+                     </div>
+                   }>
         { !order? 
           <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>

@@ -5,7 +5,7 @@ import { PastHouseholdOrder, PastOrderItem } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible, Header } from './CollapsibleWithHeader'
+import { Collapsible } from './CollapsibleWithHeader'
 import { ServerApi } from '../ServerApi'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
@@ -48,13 +48,14 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       <Collapsible className="min-h-20"
                    {...this.props}
                    header={() => 
-        <Header headerClassName="bg-past-order-lighter min-h-20"
-                headerImageClassName="bg-img-order"
-                headerText="Past orders"
-                headerContent={() => (
-                  <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={total} /></span></h3>
-                )}
-                {...this.props} /> }>
+                     <div className="p-2 bg-past-order-lighter min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                       <h2 className="leading-none ml-20 relative flex">
+                         Past orders
+                       </h2>
+                       <h3 className="flex justify-between ml-20 mt-4"><span>Total:</span><span><Money amount={total} /></span></h3>
+                     </div>
+                   }>
         { !pastOrders.length
           ? <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders

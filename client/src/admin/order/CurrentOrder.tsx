@@ -5,7 +5,7 @@ import { ServerApi } from '../../ServerApi'
 import { Icon } from '../../common/Icon'
 import { Money } from '../../common/Money'
 import { Router } from '../../common/Router'
-import { Collapsible, Header } from '../../household/CollapsibleWithHeader'
+import { Collapsible } from '../../household/CollapsibleWithHeader'
 import { HouseholdOrders } from './HouseholdOrders'
 
 export interface CurrentOrderProps { currentOrder: CollectiveOrder | null
@@ -61,19 +61,21 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       <Collapsible className="min-h-20"
                    {...this.props}
                    header={() => 
-        <Header headerClassName="bg-order-dark min-h-20"
-                headerImageClassName="bg-img-order"
-                headerText="Current order"
-                headerContent={() => (
-                 <div>
-                   <h3 className="flex justify-between ml-20 mt-4 mb-4">
-                     <span>Total:</span>
-                     {this.renderTotal()}
-                   </h3>
-                   {this.renderMessages()}
-                   {this.renderButtons()}
-                 </div>
-                )} /> }>
+                     <div className="p-2 bg-order-dark min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                       <h2 className="leading-none ml-20 relative flex">
+                         Current order
+                       </h2>
+                       <div>
+                         <h3 className="flex justify-between ml-20 mt-4 mb-4">
+                           <span>Total:</span>
+                           {this.renderTotal()}
+                         </h3>
+                         {this.renderMessages()}
+                         {this.renderButtons()}
+                       </div>
+                     </div>
+                   }>
         <div className="bg-household-lighter shadow-inner-top">
           {!currentOrder?
             <div className="px-2 py-4">

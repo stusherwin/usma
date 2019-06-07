@@ -5,7 +5,7 @@ import { PastCollectiveOrder, PastHouseholdOrder, PastOrderItem } from '../../Ty
 import { Util } from '../../common/Util'
 import { Icon } from '../../common/Icon'
 import { Money } from '../../common/Money'
-import { Collapsible, Header, SmallHeader } from '../../household/CollapsibleWithHeader'
+import { Collapsible } from '../../household/CollapsibleWithHeader'
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 
 export interface PastOrdersProps { pastOrders: PastCollectiveOrder[]
@@ -36,9 +36,13 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
       <Collapsible className="min-h-20"
                    {...this.props}
                    header={() => 
-        <Header headerClassName="bg-past-order-lighter min-h-20"
-                headerImageClassName="bg-img-order"
-                headerText="Past orders" /> }>
+                     <div className="p-2 bg-past-order-lighter min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                       <h2 className="leading-none ml-20 relative flex">
+                         Past orders
+                       </h2>
+                     </div>
+                   }>
         <div className="bg-white shadow-inner-top">
           {!pastOrders.length
           ? <div className="px-2 py-4 text-grey-darker">
