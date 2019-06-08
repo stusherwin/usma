@@ -32,7 +32,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       <table className="border-collapse w-full">
         { items.map(this.renderItem(householdOrder)) }
         <tr hidden={!discontinuedItems.length}>
-          <td colSpan={5} className={classNames("text-red font-bold pb-2 pt-8 px-2")}>
+          <td colSpan={5} className={classNames("text-red font-bold pb-2 px-2", {"pt-4": !items.length, "pt-8": items.length})}>
             <span className="flex justify-start">
               <Icon type="alert" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><span>The following products were discontinued <br />and will be removed:</span>
             </span>
@@ -78,11 +78,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
   renderItem = (householdOrder: HouseholdOrder) => (i: OrderItem, ix: number) => 
     [
     <tr key={i.productId + '-1'}>
-      <td className={classNames('w-20 h-20 align-top pt-8 pl-2')} rowSpan={3}>
+      <td className={classNames('w-20 h-20 align-top pl-2', {'pt-4': ix == 0, 'pt-8': ix > 0})} rowSpan={3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${i.productCode}`)} />
       </td>
-      <td className={classNames('pb-2 pl-2 font-bold align-baseline', {'pt-8': ix > 0, '': i.productDiscontinued})}>{i.productCode}</td>
-      <td className={classNames('pl-2 pb-2 align-baseline', {'pt-8': ix > 0})}>
+      <td className={classNames('pb-2 pl-2 font-bold align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0, '': i.productDiscontinued})}>{i.productCode}</td>
+      <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0})}>
         {!this.props.readOnly && this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued
           ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
               {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
@@ -90,7 +90,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           : <span className={classNames({'': i.productDiscontinued})}>x {i.itemQuantity}</span>
         }
       </td>
-      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-8': ix > 0})} colSpan={2}>
+      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': ix == 0, 'pt-8': ix > 0})} colSpan={2}>
         {i.oldItemTotalExcVat !== null && i.oldItemTotalExcVat != i.itemTotalExcVat?
           <span>
             <span className="line-through"><Money amount={i.oldItemTotalExcVat} /></span> 

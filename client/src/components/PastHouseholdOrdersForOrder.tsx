@@ -31,6 +31,14 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
         <tbody>
           {this.props.pastHouseholdOrders.map((ho, i) => {
+            let status = 
+              <span>
+                {ho.isAbandoned?
+                  <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
+                : <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
+                }
+              </span>
+
             return (
               <tr key={ho.householdId}>
                 <td colSpan={2}>
@@ -44,9 +52,12 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                    <h3 className="leading-none ml-20 relative flex mt-2">
                                      {ho.householdName}
                                    </h3>
-                                   <h4 className="flex justify-end ml-20 mt-4 mb-4">
-                                     <span>Total:</span>
-                                     <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
+                                   <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                                     {status}
+                                     <span className="flex justify-end">
+                                       <span>Total:</span>
+                                       <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
+                                     </span>
                                    </h4>
                                  </div>
                                }>
