@@ -3,10 +3,10 @@ import * as React from 'react';
 import { RouterLink } from '../common/RouterLink'
 import { Icon } from '../common/Icon'
 
-export interface HomePageProps { 
-                               }
+export interface AdminHomePageProps { 
+                                    }
 
-export class HomePage extends React.Component<HomePageProps, {}> {
+export class AdminHomePage extends React.Component<AdminHomePageProps, {}> {
   render() {
     return (
       <div className="h-screen">

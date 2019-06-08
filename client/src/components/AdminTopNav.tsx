@@ -4,7 +4,7 @@ import * as classNames from 'classnames'
 import { RouterLink } from '../common/RouterLink'
 import { Router } from '../common/Router'
 
-export const TopNav = () => {
+export const AdminTopNav = () => {
   const links = [
     { 
       text: 'Orders',

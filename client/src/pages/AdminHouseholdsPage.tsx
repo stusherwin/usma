@@ -1,27 +1,27 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household } from '../../Types'
-import { ServerApi, ApiError } from '../../ServerApi'
-import { RouterLink } from '../../common/RouterLink'
-import { Icon } from '../../common/Icon'
-import { Form, Field, Validate } from '../../common/Validation'
-import { TopNav } from '../TopNav'
-import { TextField } from '../../common/Field'
+import { Household } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { RouterLink } from '../common/RouterLink'
+import { Icon } from '../common/Icon'
+import { Form, Field, Validate } from '../common/Validation'
+import { AdminTopNav } from '../components/AdminTopNav'
+import { TextField } from '../common/Field'
 
-export interface HouseholdsPageProps { households: Household[]
-                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                     , reload: () => Promise<void>
-                                     , loading: boolean
-                                     , error: ApiError | null
-                                     }
+export interface AdminHouseholdsPageProps { households: Household[]
+                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                          , reload: () => Promise<void>
+                                          , loading: boolean
+                                          , error: ApiError | null
+                                          }
 
-export interface HouseholdsPageState { editing: 'new' | number | null
-                                     , form: Form
-                                     }
+export interface AdminHouseholdsPageState { editing: 'new' | number | null
+                                          , form: Form
+                                          }
 
-export class HouseholdsPage extends React.Component<HouseholdsPageProps, HouseholdsPageState> {
-  constructor(props: HouseholdsPageProps) {
+export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProps, AdminHouseholdsPageState> {
+  constructor(props: AdminHouseholdsPageProps) {
     super(props)
 
     this.state = { editing: null
@@ -91,7 +91,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <TopNav />
+        <AdminTopNav />
         <div className="p-2 text-black min-h-16">
           <div className="bg-img-household bg-no-repeat w-16 h-16 absolute mt-2"></div>
           <h2 className="text-household-darker leading-none ml-20 mt-2 relative flex">Households</h2>

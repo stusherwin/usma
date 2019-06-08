@@ -1,26 +1,25 @@
 import * as React from 'react';
 
-import { CollectiveOrder } from '../../Types'
-import { ServerApi, ApiError } from '../../ServerApi'
-import { Util } from '../../common/Util'
-import { RouterLink } from '../../common/RouterLink'
-import { Money } from '../../common/Money'
-import { TopNav } from '../TopNav'
-import { Icon } from '../../common/Icon'
-import { Router } from '../../common/Router'
+import { CollectiveOrder } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Util } from '../common/Util'
+import { Money } from '../common/Money'
+import { AdminTopNav } from '../components/AdminTopNav'
+import { Icon } from '../common/Icon'
+import { Router } from '../common/Router'
 
-export interface PlaceOrderPageProps { currentOrder: CollectiveOrder
-                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                     , reload: () => Promise<void>
-                                     , loading: boolean
-                                     , error: ApiError | null
-                                     }
+export interface AdminPlaceOrderPageProps { currentOrder: CollectiveOrder
+                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                          , reload: () => Promise<void>
+                                          , loading: boolean
+                                          , error: ApiError | null
+                                          }
 
-export interface PlaceOrderPageState { view: "summary" | "codes"
+export interface AdminPlaceOrderPageState { view: "summary" | "codes"
                                      }
                                      
-export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOrderPageState> {
-  constructor(props: PlaceOrderPageProps) {
+export class AdminPlaceOrderPage extends React.Component<AdminPlaceOrderPageProps, AdminPlaceOrderPageState> {
+  constructor(props: AdminPlaceOrderPageProps) {
     super(props)
 
     this.state = { view: "summary"
@@ -46,7 +45,7 @@ export class PlaceOrderPage extends React.Component<PlaceOrderPageProps, PlaceOr
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
         <div className="bg-order-dark p-2">
-          <TopNav />
+          <AdminTopNav />
           <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="leading-none mb-2 -mt-1">Place order{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
             <div>

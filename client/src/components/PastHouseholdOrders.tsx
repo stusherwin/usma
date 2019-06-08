@@ -5,7 +5,7 @@ import { PastHouseholdOrder, PastOrderItem } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from './CollapsibleWithHeader'
+import { Collapsible } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]

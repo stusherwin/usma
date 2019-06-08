@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, Household, HouseholdOrder } from '../../Types'
-import { RouterLink } from '../../common/RouterLink'
-import { Icon } from '../../common/Icon'
-import { Money } from '../../common/Money'
-import { Collapsible } from '../../household/CollapsibleWithHeader'
-import { CurrentHouseholdOrder } from '../../household/CurrentHouseholdOrder'
+import { CollectiveOrder, Household, HouseholdOrder } from '../Types'
+import { RouterLink } from '../common/RouterLink'
+import { Icon } from '../common/Icon'
+import { Money } from '../common/Money'
+import { Collapsible } from '../common/Collapsible'
+import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
 
 export interface HouseholdOrdersProps { order: CollectiveOrder
                                       , householdOrders: HouseholdOrder[]

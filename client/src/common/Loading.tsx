@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Icon } from '../common/Icon'
+import { Icon } from './Icon'
 
 export interface LoadingProps {
   loading: boolean

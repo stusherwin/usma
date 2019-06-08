@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { CollectiveOrder, Household, HouseholdOrder } from '../../Types'
-import { ServerApi } from '../../ServerApi'
-import { Icon } from '../../common/Icon'
-import { Money } from '../../common/Money'
-import { Router } from '../../common/Router'
-import { Collapsible } from '../../household/CollapsibleWithHeader'
-import { HouseholdOrders } from './HouseholdOrders'
+import { CollectiveOrder, Household, HouseholdOrder } from '../Types'
+import { ServerApi } from '../ServerApi'
+import { Icon } from '../common/Icon'
+import { Money } from '../common/Money'
+import { Router } from '../common/Router'
+import { Collapsible } from '../common/Collapsible'
+import { HouseholdOrders } from './HouseholdOrdersForOrder'
 
 export interface CurrentOrderProps { currentOrder: CollectiveOrder | null
                                    , currentHouseholdOrders: HouseholdOrder[]

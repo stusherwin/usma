@@ -1,37 +1,33 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { ProductCatalogueEntry, VatRate } from '../../Types'
-import { ServerApi, ApiError } from '../../ServerApi'
-import { Util } from '../../common/Util'
-import { Icon } from '../../common/Icon'
-import { Money } from '../../common/Money'
-import { Form, Field, Validate } from '../../common/Validation'
-import { RouterLink } from '../../common/RouterLink'
-import { TopNav } from '../TopNav'
-import { TextField, MoneyField, DropDownField } from '../../common/Field'
-import { LoadMore } from '../../common/LoadMore'
+import { ProductCatalogueEntry, VatRate } from '../Types'
+import { ServerApi, ApiError } from '../ServerApi'
+import { Icon } from '../common/Icon'
+import { Money } from '../common/Money'
+import { AdminTopNav } from '../components/AdminTopNav'
+import { LoadMore } from '../common/LoadMore'
 
 const pageSize = 10
 
-export interface ProductsPageProps { products: ProductCatalogueEntry[]
-                                   , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                   , reload: () => Promise<void>
-                                   , loading: boolean
-                                   , error: ApiError | null
-                                   }
+export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
+                                        , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                        , reload: () => Promise<void>
+                                        , loading: boolean
+                                        , error: ApiError | null
+                                        }
 
-export interface ProductsPageState { products: ProductCatalogueEntry[]
-                                   , filteredProducts: ProductCatalogueEntry[]
-                                   , nextStartIndex: number
-                                   , searchString: string
-                                   , showLoadMore: boolean
-                                   , uploading: boolean
-                                   , uploadedFile: File | undefined
-                                   }
+export interface AdminProductsPageState { products: ProductCatalogueEntry[]
+                                        , filteredProducts: ProductCatalogueEntry[]
+                                        , nextStartIndex: number
+                                        , searchString: string
+                                        , showLoadMore: boolean
+                                        , uploading: boolean
+                                        , uploadedFile: File | undefined
+                                        }
 
-export class ProductsPage extends React.Component<ProductsPageProps, ProductsPageState> {
-  constructor(props: ProductsPageProps) {
+export class AdminProductsPage extends React.Component<AdminProductsPageProps, AdminProductsPageState> {
+  constructor(props: AdminProductsPageProps) {
     super(props)
 
     const filteredProducts = props.products
@@ -125,7 +121,7 @@ export class ProductsPage extends React.Component<ProductsPageProps, ProductsPag
         {!!this.props.error && (
           <div>{this.props.error.error}: {this.props.error.message}</div>
         )}
-        <TopNav />
+        <AdminTopNav />
         <div className="bg-product-light p-2">
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
             <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>

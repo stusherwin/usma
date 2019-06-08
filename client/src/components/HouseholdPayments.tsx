@@ -5,8 +5,8 @@ import { Household, HouseholdPayment } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from './CollapsibleWithHeader'
-import { HouseholdPaymentForm, PaymentData } from '../admin/household/HouseholdPaymentForm'
+import { Collapsible } from '../common/Collapsible'
+import { HouseholdPaymentForm, PaymentData } from './HouseholdPaymentForm'
 import { ServerApi } from '../ServerApi'
 
 export interface HouseholdPaymentsProps { household: Household

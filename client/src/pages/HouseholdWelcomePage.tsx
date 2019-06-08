@@ -9,20 +9,20 @@ import { Form, Field, Validate } from '../common/Validation'
 import { TextField } from '../common/Field'
 import { ServerApi, ApiError } from '../ServerApi'
 
-export interface WelcomePageProps { households: Household[]
-                                  , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                  , reload: () => Promise<void>
-                                  , loading: boolean
-                                  , error: ApiError | null
-                                  }
+export interface HouseholdWelcomePageProps { households: Household[]
+                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                           , reload: () => Promise<void>
+                                           , loading: boolean
+                                           , error: ApiError | null
+                                           }
 
-export interface WelcomePageState { selectedHouseholdId: number | undefined
-                                  , editing: 'new' | number | null
-                                  , form: Form
-                                  }
+export interface HouseholdWelcomePageState { selectedHouseholdId: number | undefined
+                                           , editing: 'new' | number | null
+                                           , form: Form
+                                           }
 
-export class WelcomePage extends React.Component<WelcomePageProps, WelcomePageState> {
-  constructor(props: WelcomePageProps) {
+export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePageProps, HouseholdWelcomePageState> {
+  constructor(props: HouseholdWelcomePageProps) {
     super(props)
 
     this.state = { selectedHouseholdId: props.households.length ? props.households[0].id : undefined

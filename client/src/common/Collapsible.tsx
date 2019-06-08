@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Icon } from '../common/Icon'
+import { Icon } from './Icon'
 
 const transitionTime = 0.25;
 const minHeight = '5rem';
