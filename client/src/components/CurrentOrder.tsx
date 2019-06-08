@@ -66,17 +66,17 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                        <h2 className="leading-none ml-20 relative flex">
                          Current order
                        </h2>
-                       <div>
-                         <h3 className="flex justify-between ml-20 mt-4 mb-4">
+                       <h3 className="flex justify-between ml-20 mt-4 mb-2">
+                         {this.renderStatus()}
+                         <span className="flex justify-end">
                            <span>Total:</span>
-                           {this.renderTotal()}
-                         </h3>
-                         {this.renderMessages()}
-                         {this.renderButtons()}
-                       </div>
+                           <span className="w-24 font-bold text-right">{this.renderTotal()}</span>
+                         </span>
+                       </h3>
+                       {this.renderButtons()}
                      </div>
                    }>
-        <div className="bg-household-lighter shadow-inner-top">
+        <div className="bg-white shadow-inner-top border-t">
           {!currentOrder?
             <div className="px-2 py-4">
               <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
@@ -88,14 +88,30 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
             <div className="px-2 py-4 text-grey-darker">
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
             </div>
-          : <HouseholdOrders order={currentOrder}
-                             householdOrders={this.props.currentHouseholdOrders}
-                             households={this.props.households}
-                             reload={this.props.reload}
-                             request={this.props.request} />
+          : <div>
+              {this.renderMessages()}
+              <HouseholdOrders order={currentOrder}
+                               householdOrders={this.props.currentHouseholdOrders}
+                               households={this.props.households}
+                               reload={this.props.reload}
+                               request={this.props.request} />
+            </div>
           }
         </div>
       </Collapsible>
+    )
+  }
+
+  renderStatus = () => {
+    return (
+      <span>
+        {!this.props.currentOrder?
+          <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Available</span>
+        : this.props.currentOrder.isComplete?
+          <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
+        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />In progress</span>
+        }
+      </span>
     )
   }
   
@@ -117,18 +133,22 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     const allComplete = householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
     const orderMinimumReached = order && order.totalIncVat >= 25000
+    const allHouseholdsUpToDate = !!this.props.currentOrder && this.props.currentOrder.allHouseholdsUpToDate;
 
     return (
-      <div>
-        {!householdOrders.length?
-            <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for households to join</span>
-          : !orderMinimumReached?
-            <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for &pound;250.00 order minimum</span>
-          : !allComplete?
-            <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for all orders to be completed</span>
+      <div className="flex text-black px-2 py-4">
+        <Icon type={householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
+        { !householdOrders.length?
+          <span>Waiting for households to join</span>
+        : !allHouseholdsUpToDate?
+          <span>Waiting for all households to accept latest catalogue updates</span>
+        : !orderMinimumReached?
+          <span>Waiting for &pound;250.00 order minimum</span>
+        : !allComplete?
+          <span>Waiting for all orders to be completed</span>
           // : !allPaid?
           //   <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
-          : <span className="text-green"><Icon type="ok" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Good to go</span>
+        : <span>Order can now be placed</span>
         }
       </div>
     )

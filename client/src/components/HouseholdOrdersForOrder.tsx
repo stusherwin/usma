@@ -60,14 +60,14 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                otherExpanding={!!this.state.expanded && this.state.expanded != ho}
                                toggle={this.toggle(ho)}
                                header={() =>
-                                 <div className={classNames('p-2 bg-household-lighter min-h-24', {'shadow-inner-top': i == 0})}>
+                                 <div className={classNames('p-2 bg-household-lighter min-h-24')}>
                                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
                                    <h3 className="leading-none ml-20 relative flex mt-2">
                                      {ho.householdName}
                                    </h3>
-                                   <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                                   <h4 className="flex justify-end ml-20 mt-4 mb-4">
                                      <span>Total:</span>
-                                     <Money amount={ho.totalIncVat} />
+                                     <span className="w-24 font-bold text-right"><Money amount={ho.totalIncVat} /></span>
                                    </h4>
                                  </div>
                                }>
@@ -77,8 +77,6 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                       </div>
                     : <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
                         <CurrentHouseholdOrder currentHouseholdOrder={ho}
-                                               currentHouseholdOrders={this.props.householdOrders}
-                                               currentOrder={this.props.order}
                                                reload={this.props.reload}
                                                request={this.props.request}
                                                readOnly={true} />
@@ -90,9 +88,12 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
             )}
           )}
           <tr>
-            <td className="pt-4 pb-4 pl-2 pr-2 font-bold">Total:</td>
-            <td className="pt-4 pb-4 pr-2"></td>
-            <td className="pt-4 pb-4 pr-2 font-bold text-right"><Money amount={order.totalIncVat} /></td>
+            <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={3}>
+              <div className="flex justify-end">
+                <span>Total:</span>
+                <span className="w-24 font-bold text-right"><Money amount={order.totalIncVat} /></span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>

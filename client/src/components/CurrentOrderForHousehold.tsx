@@ -94,6 +94,12 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     return this.props.products.filter(p => !items.find(i => i.productCode == p.code))
   }
 
+  acceptUpdates = () => {
+    if(!this.props.currentHouseholdOrder) return
+    this.props.request(ServerApi.command.acceptCatalogueUpdates(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+      .then(this.props.reload)
+  }
+
   render() {
     let order = this.props.currentOrder
     let householdOrder = this.props.currentHouseholdOrder
@@ -121,13 +127,14 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                        </div>
                      </div>
                    }>
+        <div className="shadow-inner-top bg-white">
         { !order? 
-          <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+          <div className="px-2 py-4 text-grey-darker">
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
             <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
           </div>
         : !householdOrder?
-          <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+          <div className="px-2 py-4 text-grey-darker">
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
             <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
           </div>
@@ -137,17 +144,17 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                       cancelAdd={this.cancelAdd}
                       confirmAdd={this.confirmAdd} />
         : !householdOrder.items.length?
-          <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+          <div className="px-2 py-4 text-grey-darker">
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet {!this.props.products.length && ' - the product catalogue is empty'}
           </div>
-        : <div className="shadow-inner-top px-2 py-4 bg-white">
+        : <div>
+            {this.renderMessages()}
             <CurrentHouseholdOrder currentHouseholdOrder={householdOrder}
-                                   currentHouseholdOrders={this.props.currentHouseholdOrders}
-                                   currentOrder={this.props.currentOrder}
                                    reload={this.props.reload}
                                    request={this.props.request} />
           </div>
         }
+        </div>
       </Collapsible>
     )
   }
@@ -211,6 +218,44 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
         }
         {canAddItem &&
           <button className="flex-no-grow flex-no-shrink ml-auto mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); this.startAdd()}}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
+        }
+      </div>
+    )
+  }
+  
+  renderMessages = () => {
+    let householdOrder = this.props.currentHouseholdOrder
+    if(!householdOrder) return
+
+    const allComplete = this.props.currentHouseholdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
+    // const householdsInOrder = this.props.households.filter(h => !!this.props.currentHouseholdOrders.find(oh => oh.householdId == h.id))
+    // const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
+    const allHouseholdsUpToDate = !!this.props.currentOrder && this.props.currentOrder.allHouseholdsUpToDate;
+    const orderMinimumReached = !!this.props.currentOrder && this.props.currentOrder.totalIncVat >= 25000
+
+    if(!!householdOrder.oldTotalExcVat && householdOrder.oldTotalIncVat != householdOrder.totalIncVat)
+      return (
+        <div className="flex bg-red-lighter p-2 mb-4">
+          <Icon type="alert" className="flex-no-shrink w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.
+          <div className="flex justify-end mt-2"><button onClick={e => {e.stopPropagation(); this.acceptUpdates()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
+        </div>
+      )
+
+    if(!householdOrder.isComplete)
+      return
+
+    return (
+      <div className="flex px-2 py-4 text-black">
+        <Icon type={allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 mr-2 fill-current nudge-d-2" />
+        { !allHouseholdsUpToDate?
+          <span>Waiting for all households to accept latest catalogue updates</span>
+        : !orderMinimumReached?
+          <span>Waiting for minimum order to be reached. Current total is <Money amount={!!this.props.currentOrder && this.props.currentOrder.totalIncVat || 0} /> of &pound;250.00</span>
+        : !allComplete?
+          <span>Waiting for all orders to be completed</span>
+        // : !allPaid?
+        //   <span>, waiting for everyone to pay up</span>
+        : <span>Waiting for admin to place order</span>
         }
       </div>
     )

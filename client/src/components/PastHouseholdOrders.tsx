@@ -85,16 +85,20 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                               <tbody>
                                 {ho.items.map(this.renderItem)}
                                 <tr>
-                                  <td className="pt-2 pr-2 pl-2">VAT:</td>
-                                  <td className="pt-2 pr-2"></td>
-                                  <td className="pt-2 pr-2"></td>
-                                  <td className={classNames('pt-2 pr-2 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></td>
+                                  <td className="pt-2 pr-2 pl-2" colSpan={4}>
+                                    <div className="flex justify-end">
+                                      <span>VAT:</span>
+                                      <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></span>
+                                    </div>
+                                  </td>
                                 </tr>
                                 <tr>
-                                  <td className="pt-4 pb-4 pl-2 pr-2 font-bold">Total:</td>
-                                  <td className="pt-4 pb-4 pr-2"></td>
-                                  <td className="pt-4 pb-4 pr-2"></td>
-                                  <td className={classNames('pt-4 pr-2 pb-4 font-bold text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
+                                  <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={4}>
+                                    <div className="flex justify-end">
+                                      <span>Total:</span>
+                                      <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
+                                    </div>
+                                  </td>
                                 </tr>
                               </tbody>
                             </table>
