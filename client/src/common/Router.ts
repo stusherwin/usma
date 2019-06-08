@@ -62,7 +62,9 @@ export class Router {
     return React.createElement('div', { className: "p-2" }, 'Page not found')
   }
 
-  static navigate(url: string) {
+  static navigate(path: string) {
+    const groupPart = window.location.href.split('/').filter(l => l.length).slice(2, 4).join('/')
+    const url = '/' + groupPart + path
     window.history.pushState(url, url, url);
   }
 
