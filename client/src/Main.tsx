@@ -5,7 +5,6 @@ import { Router } from './common/Router'
 
 import { AdminOrdersPage } from './pages/AdminOrdersPage'
 import { AdminHouseholdPage } from './pages/AdminHouseholdPage'
-import { AdminPlaceOrderPage } from './pages/AdminPlaceOrderPage'
 import { AdminProductsPage } from './pages/AdminProductsPage'
 import { AdminHouseholdsPage } from './pages/AdminHouseholdsPage'
 import { AdminHomePage } from './pages/AdminHomePage'
@@ -141,18 +140,6 @@ export class Main extends React.Component<MainProps, MainState> {
 
   render() {
     const router = new Router('')    
-    router.route('/admin/orders/place', _ => {
-      const currentOrder = this.state.collectiveOrder || undefined
-      const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
-
-      return currentOrder &&
-        <AdminPlaceOrderPage currentOrder={currentOrder}
-                             currentHouseholdOrders={currentHouseholdOrders}
-                             reload={this.reload}
-                             request={this.request}
-                             loading={this.state.loading}
-                             error={this.state.error} />
-    })
     
     router.route('/admin/orders', c => {
       const currentOrder = this.state.collectiveOrder

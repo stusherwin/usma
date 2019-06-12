@@ -214,7 +214,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
         inner join product p on p.id = hoi.product_id
         inner join vat_rate v on v.code = p.vat_rate
-        where ho.order_group_id = ?
+        where ho.order_group_id = ? and not ho.cancelled
         group by hoi.order_id, hoi.household_id, p.id, p.code, p.name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, p.vat_rate, hoi.item_total_exc_vat, hoi.item_total_inc_vat, p.discontinued, p.updated, ho.updated, p.price, v.multiplier
         order by p.code asc
       |] (Only groupId)

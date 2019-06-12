@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { CollectiveOrder, Household, HouseholdOrder } from '../Types'
 import { ServerApi } from '../ServerApi'
@@ -7,6 +8,8 @@ import { Money } from '../common/Money'
 import { Router } from '../common/Router'
 import { Collapsible } from '../common/Collapsible'
 import { HouseholdOrders } from './HouseholdOrdersForOrder'
+import { CurrentOrderItems } from './CurrentOrderItems'
+import { CurrentOrderProductCodes } from './CurrentOrderProductCodes'
 
 export interface CurrentOrderProps { currentOrder: CollectiveOrder | null
                                    , currentHouseholdOrders: HouseholdOrder[]
@@ -19,6 +22,7 @@ export interface CurrentOrderProps { currentOrder: CollectiveOrder | null
                                    }
 
 export interface CurrentOrderState { addingHousehold: Household | null
+                                   , tab: 'households' | 'product-list' | 'product-codes'
                                    }
 
 export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrderState> {
@@ -26,6 +30,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
     super(props)
 
     this.state = { addingHousehold: null
+                 , tab: 'households'
                  }
   }
 
@@ -43,14 +48,17 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
       .then(_ => Router.navigate(`/admin/orders`))
   }
 
-  placeOrder = () => {
-    Router.navigate('/admin/orders/place')
-  }
-
   abandonOrder = () => {
     if(!this.props.currentOrder) return
 
     this.props.request(ServerApi.command.abandonOrder(this.props.currentOrder.id))
+      .then(this.props.reload)
+  }
+
+  placeOrder = () => {
+    if(!this.props.currentOrder) return
+
+    this.props.request(ServerApi.command.placeOrder(this.props.currentOrder.id))
       .then(this.props.reload)
   }
 
@@ -77,25 +85,38 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                      </div>
                    }>
         <div className="bg-white shadow-inner-top border-t">
-          {!currentOrder?
+          { !currentOrder?
             <div className="px-2 py-4">
               <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
               <div className="flex justify-start">
                 <button onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</button>
               </div>
             </div>
-          : !this.props.currentHouseholdOrders.length?
-            <div className="px-2 py-4 text-grey-darker">
-              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
-            </div>
           : <div>
+              <div className="pt-2 flex bg-grey-light shadow-inner-top">
+                <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'households'})}} className={classNames("flex-grow text-center p-2 no-underline text-black hover:text-black ml-1 rounded-t-lg",      { "bg-white": this.state.tab == 'households', "bg-grey-lightest shadow-inner-bottom": this.state.tab != 'households' })}>Households</a>
+                <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-list'})}} className={classNames("flex-grow text-center p-2 no-underline text-black hover:text-black ml-1 rounded-t-lg",      { "bg-white": this.state.tab == 'product-list', "bg-grey-lightest shadow-inner-bottom": this.state.tab != 'product-list' })}>Product list</a>
+                <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-codes'})}} className={classNames("flex-grow text-center p-2 no-underline text-black hover:text-black ml-1 rounded-t-lg mr-1", { "bg-white": this.state.tab == 'product-codes', "bg-grey-lightest shadow-inner-bottom": this.state.tab != 'product-codes' })}>Product codes</a>
+              </div>
               {this.renderMessages()}
-              <HouseholdOrders order={currentOrder}
-                               householdOrders={this.props.currentHouseholdOrders}
-                               households={this.props.households}
-                               reload={this.props.reload}
-                               request={this.props.request} />
-            </div>
+              {this.state.tab == 'households' && (
+                !this.props.currentHouseholdOrders.length?
+                  <div className="px-2 py-4 text-grey-darker">
+                    <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
+                  </div>
+                : <HouseholdOrders order={currentOrder}
+                                   householdOrders={this.props.currentHouseholdOrders}
+                                   households={this.props.households}
+                                   reload={this.props.reload}
+                                   request={this.props.request} />
+              )}
+              {this.state.tab == 'product-list' && 
+                <CurrentOrderItems currentOrder={currentOrder} />
+              }
+              {this.state.tab == 'product-codes' && 
+                <CurrentOrderProductCodes currentOrder={currentOrder} />
+              }
+          </div>
           }
         </div>
       </Collapsible>
