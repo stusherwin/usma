@@ -21,6 +21,7 @@ library
                      , PastHouseholdOrder
                      , PastOrderItem
                      , OrderItem
+                     , HouseholdOrderItem
                      , Household
                      , Product
                      , HouseholdPayment

@@ -5,7 +5,7 @@ module HouseholdOrder where
   import Data.Aeson
   import GHC.Generics
   import Data.Time.Clock (UTCTime)
-  import OrderItem (OrderItem)
+  import HouseholdOrderItem (HouseholdOrderItem)
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
                                        , orderCreatedDate :: UTCTime
@@ -21,7 +21,7 @@ module HouseholdOrder where
                                        , oldTotalIncVat :: Maybe Int
                                        , totalExcVat :: Int
                                        , totalIncVat :: Int
-                                       , items :: [OrderItem]
+                                       , items :: [HouseholdOrderItem]
                                        } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrder
 
@@ -33,7 +33,7 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails
 
-  householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Maybe Int -> Maybe Int -> Int -> Int -> [OrderItem] -> HouseholdOrder
+  householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Maybe Int -> Maybe Int -> Int -> Int -> [HouseholdOrderItem] -> HouseholdOrder
   householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled totalExcVat totalIncVat newTotalExcVat newTotalIncVat items = 
     HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open status totalExcVat totalIncVat newTotalExcVat newTotalIncVat items 
     where

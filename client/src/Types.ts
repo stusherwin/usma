@@ -86,6 +86,22 @@ export type OrderItem = { productId: number
                         , itemTotalIncVat: number
                         }
 
+export type HouseholdOrderItem = { productId: number
+                                 , productCode: string
+                                 , productName: string
+                                 , oldProductPriceExcVat: number | null
+                                 , oldProductPriceIncVat: number | null
+                                 , productVatRate: VatRate
+                                 , itemQuantity: number
+                                 , oldItemTotalExcVat: number | null
+                                 , oldItemTotalIncVat: number | null
+                                 , productDiscontinued: boolean
+                                 , productPriceExcVat: number
+                                 , productPriceIncVat: number
+                                 , itemTotalExcVat: number
+                                 , itemTotalIncVat: number
+                                 }
+
 export type PastOrderItem = { productId: number
                             , productCode: string
                             , productName: string
