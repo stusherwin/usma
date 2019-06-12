@@ -13,8 +13,6 @@ const pageSize = 10
 export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                         , reload: () => Promise<void>
-                                        , loading: boolean
-                                        , error: ApiError | null
                                         }
 
 export interface AdminProductsPageState { products: ProductCatalogueEntry[]
@@ -118,13 +116,10 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
   render() {
     return (
       <div className="bg-product-light min-h-screen">
-        {!!this.props.error && (
-          <div>{this.props.error.error}: {this.props.error.message}</div>
-        )}
         <AdminTopNav />
         <div className="bg-product-light p-2">
           <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
-            <h2 className="text-white leading-none mb-2 -mt-1">Products{!!this.props.loading && <Icon type="loading" className="w-4 h-4 rotating ml-2 fill-current" />}</h2>
+            <h2 className="text-white leading-none mb-2 -mt-1">Products</h2>
             <div className="flex justify-start">
               <button onClick={this.startUpload} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Upload product list</button>
             </div>

@@ -16,7 +16,6 @@ export interface CurrentOrderProps { household: Household
                                    , currentHouseholdOrder: HouseholdOrder | null
                                    , products: ProductCatalogueEntry[]
                                    , households: Household[]
-                                   , loading: boolean
                                    , expanded: boolean
                                    , otherExpanding: boolean
                                    , toggle: () => void
@@ -140,7 +139,6 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           </div>
         : this.state.addingProduct?
           <AddProduct products={unusedProducts}
-                      loading={this.props.loading}
                       cancelAdd={this.cancelAdd}
                       confirmAdd={this.confirmAdd} />
         : !householdOrder.items.length?

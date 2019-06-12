@@ -20,8 +20,6 @@ export interface AdminHouseholdOrdersPageProps { household: Household
                                                , households: Household[]
                                                , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                                , reload: () => Promise<void>
-                                               , loading: boolean
-                                               , error: ApiError | null
                                                }
 type Section = 'orders' | 'past-orders' | 'payments' | 'household'
 export interface AdminHouseholdOrdersPageState { expanded: Section | null
@@ -59,9 +57,6 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
   render() {
     return (
       <div className="bg-household-light min-h-screen">
-        {!!this.props.error && (
-          <div>{this.props.error.error}: {this.props.error.message}</div>
-        )}
         <AdminTopNav />
         <Collapsible className="min-h-24"
                      expanded={this.state.expanded == 'household'}
@@ -93,7 +88,6 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                       currentHouseholdOrders={this.props.currentHouseholdOrders}
                       products={this.props.products}
                       households={this.props.households}
-                      loading={this.props.loading}
                       expanded={this.state.expanded == 'orders'}
                       otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}
                       toggle={this.toggle('orders')}

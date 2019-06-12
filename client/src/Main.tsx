@@ -12,6 +12,7 @@ import { HouseholdWelcomePage } from './pages/HouseholdWelcomePage'
 import { HouseholdPage } from './pages/HouseholdPage'
 import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Loading } from './common/Loading'
+import { Icon } from './common/Icon'
 
 export interface MainProps {}
 export interface MainState { loading: boolean
@@ -151,16 +152,12 @@ export class Main extends React.Component<MainProps, MainState> {
                               pastOrders={this.state.pastCollectiveOrders}
                               pastHouseholdOrders={this.state.pastHouseholdOrders}
                               reload={this.reload}
-                              request={this.request}
-                              loading={this.state.loading}
-                              error={this.state.error} />
+                              request={this.request} />
     })
     
     router.route('/admin/products', _ => <AdminProductsPage products={this.state.productCatalogue}
-                                                                 reload={this.reload}
-                                                                 request={this.request}
-                                                                 loading={this.state.loading}
-                                                                 error={this.state.error} />)
+                                                            reload={this.reload}
+                                                            request={this.request} />)
     
     router.route('/admin/households/{householdId}', c => {
       const household = this.state.households.find(h => h.id == c.householdId)
@@ -181,16 +178,12 @@ export class Main extends React.Component<MainProps, MainState> {
                             products={this.state.productCatalogue}
                             households={this.state.households}
                             reload={this.reload}
-                            request={this.request}
-                            loading={this.state.loading}
-                            error={this.state.error} />
+                            request={this.request} />
     })
     
     router.route('/admin/households', _ => <AdminHouseholdsPage households={this.state.households}
                                                                 reload={this.reload}
-                                                                request={this.request}
-                                                                loading={this.state.loading}
-                                                                error={this.state.error} />)
+                                                                request={this.request} />)
     
     router.route('/admin', _ => <AdminHomePage />)
 
@@ -214,38 +207,37 @@ export class Main extends React.Component<MainProps, MainState> {
                        households={this.state.households}
                        reload={this.reload}
                        request={this.request}
-                       loading={this.state.loading}
-                       error={this.state.error}
                        router={r} />
     })
 
     router.route('/households', _ => <HouseholdWelcomePage households={this.state.households}
                                                            request={this.request}
-                                                           reload={this.reload}
-                                                           loading={this.state.loading }
-                                                           error={this.state.error} />)
+                                                           reload={this.reload} />)
     
     router.route('/$', _ => <HouseholdWelcomePage households={this.state.households}
                                                   request={this.request}
-                                                  reload={this.reload}
-                                                  loading={this.state.loading }
-                                                  error={this.state.error} />)
+                                                  reload={this.reload} />)
     
     return (
       <div>
-        {this.state.initialised
-        ? (
-            this.state.groupKey && this.state.groupValid 
-            ? router.resolve() 
-            : <div className="p-2">Group not found</div>
-          )
-        : <div>
-            {!!this.state.error && (
-              <div>{this.state.error.error}: {this.state.error.message}</div>
-            )}
-          </div>
+        { !this.state.initialised?
+          <div className="fixed pin bg-grey-dark"></div>
+        : !this.state.groupKey || !this.state.groupValid? 
+          <div className="p-2">Group not found</div>
+        : router.resolve() 
         }
         <Loading loading={this.state.loading}></Loading>
+        {!!this.state.error && (
+          <div className="fixed pin p-2">
+            <div className="mx-auto" style={{ maxWidth: 600 }}>
+              <a href="#" onClick={e => { e.preventDefault(); this.setState({error: null}); }} className="shadow-md border block text-black hover:text-black no-underline hover:no-underline relative p-2 bg-white flex mx-2">
+                <Icon type="error" className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
+                <span>{this.state.error.error}: {this.state.error.message}</span>
+                <Icon type="close" className="flex-no-shrink ml-2 w-3 h-3 fill-current" />
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

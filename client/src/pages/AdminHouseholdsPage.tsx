@@ -12,8 +12,6 @@ import { TextField } from '../common/Field'
 export interface AdminHouseholdsPageProps { households: Household[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
-                                          , loading: boolean
-                                          , error: ApiError | null
                                           }
 
 export interface AdminHouseholdsPageState { editing: 'new' | number | null
@@ -88,9 +86,6 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
   render() {
     return (
       <div className="bg-household-light min-h-screen">
-        {!!this.props.error && (
-          <div>{this.props.error.error}: {this.props.error.message}</div>
-        )}
         <AdminTopNav />
         <div className="p-2 text-black min-h-16">
           <div className="bg-img-household bg-no-repeat w-16 h-16 absolute mt-2"></div>

@@ -12,8 +12,6 @@ import { ServerApi, ApiError } from '../ServerApi'
 export interface HouseholdWelcomePageProps { households: Household[]
                                            , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                            , reload: () => Promise<void>
-                                           , loading: boolean
-                                           , error: ApiError | null
                                            }
 
 export interface HouseholdWelcomePageState { selectedHouseholdId: number | undefined

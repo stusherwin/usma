@@ -10,7 +10,6 @@ import { ServerApi } from '../ServerApi'
 const pageSize = 10
 
 export interface AddProductProps { products: ProductCatalogueEntry[]
-                                 , loading: boolean
                                  , cancelAdd: () => void
                                  , confirmAdd: (p: ProductCatalogueEntry) => Promise<void>
                                  }
