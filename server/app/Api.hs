@@ -31,6 +31,14 @@ module Api where
   instance MimeRender Jpeg (L.ByteString) where
     mimeRender _ = Prelude.id
  
+  data Csv
+
+  instance Accept Csv where
+    contentType _ = "text" // "csv"
+
+  instance MimeRender Csv (L.ByteString) where
+    mimeRender _ = Prelude.id
+
   type AppAPI = 
     "api" :> (
            "verify" :> VerifyAPI
@@ -55,6 +63,7 @@ module Api where
     :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
     :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
     :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] L.ByteString
+    :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

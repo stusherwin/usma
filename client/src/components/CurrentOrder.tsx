@@ -156,6 +156,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
   renderButtons = () => {
     const order = this.props.currentOrder
+    if(!order) return;
+
     const householdOrders = this.props.currentHouseholdOrders
 
     const allComplete = householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
@@ -177,6 +179,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
         {placeOrderPossible &&
           <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); this.placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
         }
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); document.location.href = ServerApi.url("query/collective-order-download/")}}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
     </div>
     )
   }

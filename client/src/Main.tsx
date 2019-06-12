@@ -63,7 +63,7 @@ export class Main extends React.Component<MainProps, MainState> {
     // console.log('url: ' + url)
     const urlParts = url.split('/').filter(l => l.length)
     // console.log('urlParts: ' + urlParts)
-    const groupKey = urlParts.length > 1 && urlParts[0] == 'g' ? urlParts[1] : null;
+    const groupKey = urlParts.length > 1 && urlParts[0] == 'g' || urlParts[0] == 'api' ? urlParts[1] : null;
     // console.log('groupKey: ' + groupKey)
     return { url, path: '/' + urlParts.slice(2).join('/'), groupKey }
   }
@@ -72,7 +72,7 @@ export class Main extends React.Component<MainProps, MainState> {
     window.onpopstate = e => {
       const url = e.state || this.state.initialUrl
       // console.log('onpopstate')
-      // console.log(e.state)
+      // console.log(url)
       const urlInfo = this.parseUrl(url)
       Router.updatePath(urlInfo.path)
       this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});
@@ -80,6 +80,7 @@ export class Main extends React.Component<MainProps, MainState> {
 
     (window as any).history.onpushstate = (state: any, title: any, url: string) => {
       // console.log('onpushstate')
+      // console.log(url)
       const urlInfo = this.parseUrl(url)
       Router.updatePath(urlInfo.path)
       this.setState({url: urlInfo.url, groupKey: urlInfo.groupKey});

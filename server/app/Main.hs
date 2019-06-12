@@ -31,6 +31,8 @@ module Main where
   import Control.Monad (mzero, when, void)
   import Data.ByteString (ByteString)
   import Data.ByteString as B (unpack)
+  import Data.Csv as Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
+  import Data.Vector as V (fromList)
 
   import Api
   import qualified Database as D
@@ -43,6 +45,7 @@ module Main where
   import Config
   import ProductCatalogueImport
   import ProductCatalogueEntry
+  import OrderItem
 
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
@@ -51,6 +54,22 @@ module Main where
   import Data.Text.Encoding
   import System.IO (hFlush, stdout)
   import Control.Exception (handle, SomeException(..))
+  
+  instance ToNamedRecord OrderItem where
+    toNamedRecord (OrderItem { productName = name
+                             , productCode = code
+                             , productPriceIncVat = price
+                             , itemQuantity = qty
+                             , itemTotalIncVat = tot
+                             }) = namedRecord [ "Product" .= name
+                                              , "Code" .= code
+                                              , "Price" .= price'
+                                              , "Quantity" .= qty
+                                              , "Total" .= total' 
+                                              ]
+      where
+      price' = ((fromIntegral price) :: Double) / 100.0
+      total' = ((fromIntegral tot) :: Double) / 100.0
 
   data ProductData = ProductData { url :: String
                                  , title :: String
@@ -104,10 +123,6 @@ module Main where
   app config = logStdoutDev
                $ serve fullAPI (server config)
            
-  -- server :: Config -> Server FullAPI
-  -- server config = appServer config
-  --            :<|> Tagged (staticPolicy (addBase "client/static") staticOrDefault)
-
   server :: Config -> Server FullAPI
   server config = appServer config
            :<|> serveFilesWithGroup
@@ -152,6 +167,7 @@ module Main where
                            :<|> householdPayments groupKey
                            :<|> productCatalogue
                            :<|> productImage
+                           :<|> collectiveOrderDownload groupKey
     where
     conn = connectionString config
     
@@ -188,7 +204,14 @@ module Main where
       case image of
         Just i -> return i
         _ -> throwError err404
-      
+
+    collectiveOrderDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    collectiveOrderDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+      order <- liftIO $ D.getCollectiveOrder conn groupId
+      case order of
+        Nothing -> throwError err404
+        Just o -> return $ addHeader "attachment; filename=\"order.csv  \"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) (CollectiveOrder.items o)
+  
   commandServer :: Config -> Text -> Server CommandAPI
   commandServer config groupKey = createOrder groupKey
                              :<|> deleteOrder groupKey

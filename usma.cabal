@@ -66,6 +66,8 @@ executable usma
                      , tagsoup
                      , http-conduit
                      , http-media
+                     , cassava
+                     , vector
   default-language:    Haskell2010
 
 test-suite usma-test
