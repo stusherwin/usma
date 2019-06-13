@@ -71,7 +71,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                        <div>
                          <h3 className="flex justify-end ml-20 mt-4">
                            <span>Total:</span>
-                           <span className="w-24 text-right"><Money amount={-this.props.household.totalPayments} /></span>
+                           <span className="w-24 text-right"><Money amount={this.props.household.totalPayments} /></span>
                          </h3>
                          {!this.props.readOnly && 
                            <div className="flex justify-start mt-4">
@@ -118,7 +118,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                         <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                       </td>
                     }
-                    <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={-p.amount} /></td>
+                    <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={p.amount} /></td>
                   </tr>
                   )
                 ) }
@@ -126,7 +126,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   <td className="pt-4 pl-2 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>
                     <div className="flex justify-end">
                       <span>Total:</span>
-                      <span className={classNames("w-24 font-bold text-right whitespace-no-wrap")}><Money amount={-total} /></span>
+                      <span className={classNames("w-24 font-bold text-right whitespace-no-wrap")}><Money amount={total} /></span>
                     </div>
                   </td>
                 </tr>
