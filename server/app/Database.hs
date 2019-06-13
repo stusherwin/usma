@@ -526,14 +526,14 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     let quantity = hoidQuantity details
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
-      productId <- do
+      maybeProductId <- do
         ids <- query conn [sql|
           select id from product where code = ?
         |] (Only productCode)
         case ids of
-          (Only id):xs -> return id
+          ((Only id):_) -> return id
           _ -> do
-            [Only id] <- query conn [sql|
+            maybeIds <- query conn [sql|
               insert into product ("code", "name", price, vat_rate, discontinued, updated) 
               select ce.code
                    , concat_ws(' ', nullif(btrim(ce.brand), '')
@@ -548,27 +548,32 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
               where ce.code = ?
               returning id
             |] (Only productCode)
-            return (id :: Int)
-      exists <- query conn [sql|
-        select quantity from household_order_item where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
-      |] (orderId, householdId, productId, groupId)
-      case (exists :: [Only Int]) of 
-        [] -> 
-          execute conn [sql|
-            insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
-            select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, ?, p.price * ? as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) * ? as item_total_inc_vat
-            from product p
-            inner join vat_rate v on v.code = p.vat_rate
-            where p.id = ?
-          |] (groupId, orderId, householdId, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, productId)
-        [Only existingQuantity] ->
-          execute conn [sql|
-            update household_order_item hoi set 
-              quantity = ?, 
-              item_total_exc_vat = hoi.product_price_exc_vat * ?,
-              item_total_inc_vat = hoi.product_price_inc_vat * ?
-            where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
-          |] (maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, orderId, householdId, productId, groupId)  
+            case (maybeIds :: [Only Int]) of
+              ((Only id):_) -> return $ Just id
+              _ -> return Nothing
+      case maybeProductId of
+        Nothing -> return ()
+        (Just productId) -> do
+          exists <- query conn [sql|
+            select quantity from household_order_item where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+          |] (orderId, householdId, productId, groupId)
+          case (exists :: [Only Int]) of 
+            ((Only existingQuantity):_) -> do
+              void $ execute conn [sql|
+                update household_order_item hoi set 
+                  quantity = ?, 
+                  item_total_exc_vat = hoi.product_price_exc_vat * ?,
+                  item_total_inc_vat = hoi.product_price_inc_vat * ?
+                where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+              |] (maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, orderId, householdId, productId, groupId)  
+            _ -> do
+              void $ execute conn [sql|
+                insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
+                select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, ?, p.price * ? as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) * ? as item_total_inc_vat
+                from product p
+                inner join vat_rate v on v.code = p.vat_rate
+                where p.id = ?
+              |] (groupId, orderId, householdId, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, productId)
     close conn
 
   ensureAllItemsFromPastHouseholdOrder :: ByteString -> Int -> Int -> Int -> Int -> IO ()
