@@ -166,7 +166,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
         : this.props.currentHouseholdOrder.isAbandoned?
           <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Abandoned</span>
-        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />In progress</span>
+        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
         }
       </span>
     )

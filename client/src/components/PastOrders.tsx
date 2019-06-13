@@ -14,7 +14,7 @@ export interface PastOrdersProps { pastOrders: PastCollectiveOrder[]
                                  , otherExpanding: boolean
                                  , toggle: () => void
                                  }
-export interface PastOrdersState { expanded: PastCollectiveOrder | null }
+export interface PastOrdersState { expanded: number | null }
 
 export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState> {  
   constructor(props: PastOrdersProps) {
@@ -26,7 +26,7 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
   }
 
   toggle = (toExpand: PastCollectiveOrder) => () => { 
-    this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
+    this.setState(({expanded}) => ({expanded: toExpand.id == expanded? null : toExpand.id}));
   }
 
   render() {
@@ -53,16 +53,15 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
               <tbody>
                 { pastOrders.map((o, i) => ([
                   <tr key={o.id}>
-                    <td className={classNames('pl-2 pr-2 pt-4', {'pb-2': this.state.expanded == o, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o})}>
+                    <td className={classNames('pl-2 pr-2 pt-4', {'pb-2': this.state.expanded == o.id, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o.id})}>
                       <a href="#" onClick={e => {e.preventDefault(); this.toggle(o)()}}>{Util.formatDate(o.createdDate)}</a>
-                      <Icon type={this.state.expanded == o? 'collapse' : 'expand'} className="w-3 h-3 ml-2 text-grey-dark fill-current" />
+                      <Icon type={this.state.expanded == o.id? 'collapse' : 'expand'} className="w-3 h-3 ml-2 text-grey-dark fill-current" />
                     </td>
-                    {/* <td className={classNames('pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0})}>{itemCount(ho)}</td> */}
-                    <td className={classNames('pr-2 pt-4', {'pb-2': this.state.expanded == o, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o})}>{o.isAbandoned && 'Abandoned'}</td>
-                    <td className={classNames('pr-2 pt-4 text-right', {'pb-2': this.state.expanded == o, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o, 'line-through text-grey-dark': o.isAbandoned})}><Money amount={o.totalIncVat} /></td>
+                    <td className={classNames('pr-2 pt-4', {'pb-2': this.state.expanded == o.id, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o.id})}>{o.isAbandoned && 'Abandoned'}</td>
+                    <td className={classNames('pr-2 pt-4 text-right', {'pb-2': this.state.expanded == o.id, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o.id, 'line-through text-grey-dark': o.isAbandoned})}><Money amount={o.totalIncVat} /></td>
                   </tr>
                   ,
-                  this.state.expanded == o &&
+                  this.state.expanded == o.id &&
                     <tr>
                       <td colSpan={3}>
                         <PastHouseholdOrders pastOrder={o}

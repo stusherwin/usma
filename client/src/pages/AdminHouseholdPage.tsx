@@ -94,6 +94,7 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                       request={this.props.request}
                       reload={this.props.reload} />
         <PastHouseholdOrders householdOrders={this.props.pastHouseholdOrders}
+                             currentHouseholdOrder={this.props.currentHouseholdOrder}
                              expanded={this.state.expanded == 'past-orders'}
                              otherExpanding={!!this.state.expanded && this.state.expanded != 'past-orders'}
                              toggle={this.toggle('past-orders')}

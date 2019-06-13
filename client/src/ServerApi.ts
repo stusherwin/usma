@@ -79,8 +79,12 @@ const command = {
     return Http.post(groupUrl(`/command/reopen-household-order/${orderId}/${householdId}`), {})
   },
 
-  ensureHouseholdOrderItem(orderId: number, householdId: number, productCode: string, quantity: number): Promise<{}> {
+  ensureHouseholdOrderItem(orderId: number, householdId: number, productCode: string, quantity: number | null): Promise<{}> {
     return Http.post(groupUrl(`/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`), { hoidQuantity: quantity })
+  },
+
+  ensureAllItemsFromPastHouseholdOrder(orderId: number, householdId: number, pastOrderId: number): Promise<{}> {
+    return Http.post(groupUrl(`/command/ensure-all-past-order-items/${orderId}/${householdId}/${pastOrderId}`), {})
   },
 
   removeHouseholdOrderItem(orderId: number, householdId: number, productId: number): Promise<{}> {

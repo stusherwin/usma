@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder, PastOrderItem } from '../Types'
+import { PastHouseholdOrder, PastOrderItem, HouseholdOrder } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
@@ -9,6 +9,7 @@ import { Collapsible } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
+                                          , currentHouseholdOrder: HouseholdOrder | null
                                           , expanded: boolean
                                           , otherExpanding: boolean
                                           , toggle: () => void
@@ -16,7 +17,7 @@ export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[
                                           , reload: () => Promise<void>
                                           }
 
-export interface HouseholdPaymentsState { expanded: PastHouseholdOrder | null
+export interface HouseholdPaymentsState { expanded: number | null
                                         }
 
 export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, HouseholdPaymentsState> {
@@ -29,20 +30,30 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
   }
 
   expandOrder = (ho: PastHouseholdOrder) => {
-    if(this.state.expanded == ho) {
+    if(this.state.expanded == ho.orderId) {
       this.setState({expanded: null})
     } else {
-      this.setState({expanded: ho})
+      this.setState({expanded: ho.orderId})
     }
+  }
+
+  addToCurrentOrder = (item: PastOrderItem) => {
+    if(!this.props.currentHouseholdOrder) return;
+
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, null))
+      .then(this.props.reload)
+  }
+
+  addAllItemsToCurrentOrder = (ho: PastHouseholdOrder) => {
+    if(!this.props.currentHouseholdOrder) return;
+
+    this.props.request(ServerApi.command.ensureAllItemsFromPastHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, ho.orderId))
+      .then(this.props.reload)
   }
 
   render() {
     const pastOrders = this.props.householdOrders
     const total = this.props.householdOrders.filter(ho => !ho.isAbandoned).reduce((tot, ho) => tot + ho.totalIncVat, 0)
-    const itemCount = (ho: PastHouseholdOrder) => {
-      const sum = ho.items.reduce((tot, ho) => tot + ho.itemQuantity, 0)
-      return sum + (sum == 1 ? ' item' : ' items')
-    }
 
     return (
       <Collapsible className="min-h-20"
@@ -59,66 +70,95 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                        </h3>
                      </div>
                    }>
-        { !pastOrders.length
-          ? <div className="shadow-inner-top px-2 py-4 bg-white text-grey-darker">
+        <div className="shadow-inner-top bg-order-lightest">
+          { !pastOrders.length
+          ? <div className="px-2 py-4 text-grey-darker">
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
             </div>
-          : (
-            <div className="shadow-inner-top bg-white">
-              <table className="border-collapse w-full">
-                <tbody>
-                  { pastOrders.map((ho, i) => ([
-                      <tr key={ho.orderId}>
-                        <td className={classNames('pl-2 pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0, 'pt-4': i == 0})}>
-                          <a href="#" onClick={e => {e.preventDefault(); this.expandOrder(ho)}}>{Util.formatDate(ho.orderCreatedDate)}</a>
-                          <Icon type={this.state.expanded == ho? 'collapse' : 'expand'} className="w-3 h-3 ml-2 text-grey-dark fill-current" />
-                        </td>
-                        {/* <td className={classNames('pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0})}>{itemCount(ho)}</td> */}
-                        <td className={classNames('pr-2', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0, 'pt-4': i == 0})}>{ho.isAbandoned && 'Abandoned'}</td>
-                        <td className={classNames('pr-2 text-right', {'pb-2': this.state.expanded == ho, 'pt-2': i > 0, 'pt-4': i == 0, 'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></td>
-                      </tr>
-                      ,
-                      this.state.expanded == ho &&
-                        <tr>
-                          <td colSpan={3}>
-                            <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
-                              <tbody>
-                                {ho.items.map(this.renderItem)}
-                                <tr>
-                                  <td className="pt-2 pr-2 pl-2" colSpan={4}>
-                                    <div className="flex justify-end">
-                                      <span>VAT:</span>
-                                      <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></span>
-                                    </div>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={4}>
-                                    <div className="flex justify-end">
-                                      <span>Total:</span>
-                                      <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
-                                    </div>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </td>
-                        </tr>
-                      ]
-                  )) }
-                  <tr>
-                    <td className="pt-4 pl-2 pr-2 pb-4 font-bold" colSpan={3}>
-                      <div className="flex justify-end">
-                        <span>Total:</span>
-                        <span className="w-24 font-bold text-right"><Money amount={total} /></span>
-                      </div>
+          : <table className="border-collapse w-full">
+              <tbody>
+                { pastOrders.map((ho, i) => {
+                  let status = 
+                    <span>
+                      { ho.isAbandoned?
+                        <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
+                      : <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
+                      }
+                    </span>
+
+                  return (
+                    <tr key={ho.orderId}>
+                      <td>
+                        <Collapsible className="min-h-20"
+                                     expanded={this.state.expanded == ho.orderId}
+                                     otherExpanding={!!this.state.expanded && this.state.expanded != ho.orderId}
+                                     toggle={() => this.expandOrder(ho)}
+                                     header={() =>
+                                       <div className={classNames('p-2 bg-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
+                                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                                         <h3 className="leading-none ml-20 relative flex">
+                                           {Util.formatDate(ho.orderCreatedDate)}
+                                         </h3>
+                                         <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                                           {status}
+                                           <span className="flex justify-end">
+                                             <span>Total:</span>
+                                             <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
+                                           </span>
+                                         </h4>
+                                         {this.props.currentHouseholdOrder && this.props.currentHouseholdOrder.isOpen &&
+                                           <div className="flex justify-end pt-2">
+                                             <button onClick={e => {e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho)}}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add all items to current order</button>
+                                           </div>
+                                         }
+                                       </div>
+                                     }>
+                          <div className="shadow-inner-top bg-grey-lighter">
+                            {!ho.items.length?
+                              <div className="px-2 py-4 text-grey-darker">
+                                <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
+                              </div>
+                            : <div>
+                                <table className="border-collapse w-full">
+                                  <tbody>
+                                    {ho.items.map(this.renderItem)}
+                                    <tr>
+                                      <td className="pt-2 pr-2 pl-2" colSpan={4}>
+                                        <div className="flex justify-end">
+                                          <span>VAT:</span>
+                                          <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={4}>
+                                        <div className="flex justify-end">
+                                          <span>Total:</span>
+                                          <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            }
+                          </div>
+                        </Collapsible>
                     </td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
-          )
-        }
+                )}) }
+                <tr>
+                  <td className="pt-4 pl-2 pr-2 pb-4 font-bold">
+                    <div className="flex justify-end">
+                      <span>Total:</span>
+                      <span className="w-24 font-bold text-right"><Money amount={total} /></span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          }
+        </div>
       </Collapsible>
     )
   }
@@ -141,7 +181,12 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     </tr>
     ,
     <tr key={i.productId + '-2'}>
-      <td className={classNames('pl-2 pb-2 pr-2 align-top')} colSpan={3}>{i.productName}</td>
+      <td className={classNames('pl-2 pb-2 pr-2 align-top')} colSpan={2}>{i.productName}</td>
+      <td className={classNames('pl-2 pr-2 align-top text-right')}>
+        {this.props.currentHouseholdOrder && this.props.currentHouseholdOrder.isOpen &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => this.addToCurrentOrder(i)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
+        }
+      </td>
     </tr>
     ,
     <tr key={i.productId + '-3'}>

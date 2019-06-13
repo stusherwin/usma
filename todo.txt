@@ -30,3 +30,11 @@
 
 * csv export
 * BGOFV flags
+
+Investigate:
+Place order -> why does it create a new order by 123 front rd?
+All tabs should say No households/products yet
+No households joined this order yet
+Delete order button?
+Margins
+Available? should be something else

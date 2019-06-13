@@ -263,6 +263,7 @@ module Main where
                              :<|> completeHouseholdOrder groupKey
                              :<|> reopenHouseholdOrder groupKey
                              :<|> ensureHouseholdOrderItem groupKey
+                             :<|> ensureAllItemsFromPastHouseholdOrder groupKey
                              :<|> removeHouseholdOrderItem groupKey
                              :<|> createHousehold groupKey
                              :<|> updateHousehold groupKey
@@ -293,33 +294,37 @@ module Main where
       liftIO $ D.closeOrder conn groupId True orderId
 
     createHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    createHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId -> do
+    createHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
       date <- liftIO $ getCurrentTime
-      liftIO $ D.createHouseholdOrder conn groupId date householdId orderId
+      liftIO $ D.createHouseholdOrder conn groupId date orderId householdId
 
     deleteHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    deleteHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.deleteHouseholdOrder conn groupId householdId orderId
+    deleteHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.deleteHouseholdOrder conn groupId orderId householdId
 
     abandonHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    abandonHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.cancelHouseholdOrder conn groupId householdId orderId
+    abandonHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.cancelHouseholdOrder conn groupId orderId householdId
 
     completeHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    completeHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.completeHouseholdOrder conn groupId householdId orderId
+    completeHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.completeHouseholdOrder conn groupId orderId householdId
 
     reopenHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    reopenHouseholdOrder groupKey householdId orderId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.reopenHouseholdOrder conn groupId householdId orderId
+    reopenHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.reopenHouseholdOrder conn groupId orderId householdId
  
     ensureHouseholdOrderItem :: Text -> Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
-    ensureHouseholdOrderItem groupKey householdId orderId productCode details = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.ensureHouseholdOrderItem conn groupId householdId orderId productCode details
+    ensureHouseholdOrderItem groupKey orderId householdId productCode details = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.ensureHouseholdOrderItem conn groupId orderId householdId productCode details
+
+    ensureAllItemsFromPastHouseholdOrder :: Text -> Int -> Int -> Int -> Handler ()
+    ensureAllItemsFromPastHouseholdOrder groupKey orderId householdId pastOrderId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.ensureAllItemsFromPastHouseholdOrder conn groupId orderId householdId pastOrderId
 
     removeHouseholdOrderItem :: Text -> Int -> Int -> Int -> Handler ()
-    removeHouseholdOrderItem groupKey householdId orderId productId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.removeHouseholdOrderItem conn groupId householdId orderId productId
+    removeHouseholdOrderItem groupKey orderId householdId productId = findGroupOr404 conn groupKey $ \groupId ->
+      liftIO $ D.removeHouseholdOrderItem conn groupId orderId householdId productId
 
     createHousehold :: Text -> HouseholdDetails -> Handler Int
     createHousehold groupKey details = findGroupOr404 conn groupKey $ \groupId ->

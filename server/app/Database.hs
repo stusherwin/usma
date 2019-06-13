@@ -7,7 +7,7 @@
 module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
                 , createOrder, deleteOrder, closeOrder
                 , createHouseholdOrder, deleteHouseholdOrder, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
-                , ensureHouseholdOrderItem, removeHouseholdOrderItem
+                , ensureHouseholdOrderItem, ensureAllItemsFromPastHouseholdOrder, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 , replaceProductCatalogue, acceptCatalogueUpdates
@@ -550,24 +550,54 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
             |] (Only productCode)
             return (id :: Int)
       exists <- query conn [sql|
-        select 1 from household_order_item where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+        select quantity from household_order_item where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
       |] (orderId, householdId, productId, groupId)
-      if null (exists :: [Only Int]) then
-        execute conn [sql|
-          insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
-          select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, ?, p.price * ? as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) * ? as item_total_inc_vat
-          from product p
-          inner join vat_rate v on v.code = p.vat_rate
-          where p.id = ?
-        |] (groupId, orderId, householdId, quantity, quantity, quantity, productId)
-      else
-        execute conn [sql|
-          update household_order_item hoi set 
-            quantity = ?, 
-            item_total_exc_vat = hoi.product_price_exc_vat * ?,
-            item_total_inc_vat = hoi.product_price_inc_vat * ?
-          where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
-        |] (quantity, quantity, quantity, orderId, householdId, productId, groupId)  
+      case (exists :: [Only Int]) of 
+        [] -> 
+          execute conn [sql|
+            insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
+            select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, ?, p.price * ? as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) * ? as item_total_inc_vat
+            from product p
+            inner join vat_rate v on v.code = p.vat_rate
+            where p.id = ?
+          |] (groupId, orderId, householdId, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, productId)
+        [Only existingQuantity] ->
+          execute conn [sql|
+            update household_order_item hoi set 
+              quantity = ?, 
+              item_total_exc_vat = hoi.product_price_exc_vat * ?,
+              item_total_inc_vat = hoi.product_price_inc_vat * ?
+            where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+          |] (maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, orderId, householdId, productId, groupId)  
+    close conn
+
+  ensureAllItemsFromPastHouseholdOrder :: ByteString -> Int -> Int -> Int -> Int -> IO ()
+  ensureAllItemsFromPastHouseholdOrder connectionString groupId orderId householdId pastOrderId = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      execute conn [sql|
+        insert into product ("code", "name", price, vat_rate, discontinued, updated) 
+        select ce.code
+             , concat_ws(' ', nullif(btrim(ce.brand), '')
+                            , nullif(btrim(ce."description"), '')
+                            , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                            , nullif(btrim(ce."text"), ''))
+             , ce.price
+             , ce.vat_rate
+             , false
+             , ce.updated
+        from catalogue_entry ce
+        inner join past_household_order_item phoi on ce.code = phoi.product_code
+        where phoi.order_group_id = ? and phoi.order_id = ? and phoi.household_id = ? and phoi.product_code not in (select code from product)
+      |] (groupId, pastOrderId, householdId)
+      execute conn [sql|
+        insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
+        select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, 1, p.price as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) as item_total_inc_vat
+        from past_household_order_item phoi
+        inner join product p on p.code = phoi.product_code
+        inner join vat_rate v on v.code = p.vat_rate
+        where phoi.order_group_id = ? and phoi.order_id = ? and phoi.household_id = ? and p.id not in (select product_id from household_order_item where order_group_id = ? and order_id = ? and household_id = ?)
+      |] (groupId, orderId, householdId, groupId, pastOrderId, householdId, groupId, orderId, householdId)
     close conn
 
   removeHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> Int -> IO ()
@@ -706,7 +736,6 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         )
       |] (orderId, householdId, groupId)
     close conn
-    
     
   getGroup :: ByteString -> String -> IO (Maybe Int)
   getGroup connectionString key = do

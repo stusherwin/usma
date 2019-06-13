@@ -128,7 +128,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Available</span>
         : this.props.currentOrder.isComplete?
           <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
-        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />In progress</span>
+        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
         }
       </span>
     )

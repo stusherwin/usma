@@ -28,7 +28,7 @@ module HouseholdOrder where
   data HouseholdOrderStatus = Open | Complete | Abandoned deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderStatus
       
-  data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidQuantity :: Int
+  data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidQuantity :: Maybe Int
                                                              } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails

@@ -11,7 +11,7 @@ export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder
                                           , pastHouseholdOrders: PastHouseholdOrder[]
                                           }
 
-export interface PastHouseholdOrdersState { expanded: PastHouseholdOrder | null }
+export interface PastHouseholdOrdersState { expanded: number | null }
 
 export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, PastHouseholdOrdersState> {
   constructor(props: PastHouseholdOrdersProps) {
@@ -23,7 +23,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
   }
 
   toggle = (toExpand: PastHouseholdOrder) => () => { 
-    this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
+    this.setState(({expanded}) => ({expanded: toExpand.householdId == expanded? null : toExpand.householdId}));
   }
 
   render() {
@@ -43,8 +43,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
               <tr key={ho.householdId}>
                 <td colSpan={2}>
                   <Collapsible className="min-h-24"
-                               expanded={this.state.expanded == ho}
-                               otherExpanding={!!this.state.expanded && this.state.expanded != ho}
+                               expanded={this.state.expanded == ho.householdId}
+                               otherExpanding={!!this.state.expanded && this.state.expanded != ho.householdId}
                                toggle={this.toggle(ho)}
                                header={() =>
                                  <div className={classNames('p-2 bg-household-lighter min-h-24', {'shadow-inner-top': i == 0})}>

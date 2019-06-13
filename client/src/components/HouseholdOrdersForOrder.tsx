@@ -15,7 +15,7 @@ export interface HouseholdOrdersProps { order: CollectiveOrder
                                       , reload: () => Promise<void>
                                       }
 
-export interface HouseholdOrdersState { expanded: HouseholdOrder | null }
+export interface HouseholdOrdersState { expanded: number | null }
 
 export class HouseholdOrders extends React.Component<HouseholdOrdersProps, HouseholdOrdersState> {
   constructor(props: HouseholdOrdersProps) {
@@ -27,7 +27,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
   }
 
   toggle = (toExpand: HouseholdOrder) => () => { 
-    this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
+    this.setState(({expanded}) => ({expanded: toExpand.householdId == expanded? null : toExpand.householdId}));
   }
 
   render() {
@@ -51,21 +51,21 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                       <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
                     : ho.isAbandoned?
                       <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
-                    : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-2 mr-2" />In progress</span>
+                    : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Open</span>
                     }
                   </span>
 
                 return (
                   <tr key={ho.householdId}>
                     <td colSpan={3}>
-                      <Collapsible className="min-h-24"
-                                   expanded={this.state.expanded == ho}
-                                   otherExpanding={!!this.state.expanded && this.state.expanded != ho}
+                      <Collapsible className="min-h-20"
+                                   expanded={this.state.expanded == ho.householdId}
+                                   otherExpanding={!!this.state.expanded && this.state.expanded != ho.householdId}
                                    toggle={this.toggle(ho)}
                                    header={() =>
-                                     <div className={classNames('p-2 bg-household-lighter min-h-24')}>
-                                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
-                                       <h3 className="leading-none ml-20 relative flex mt-2">
+                                     <div className={classNames('p-2 bg-household-lighter min-h-20')}>
+                                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                                       <h3 className="leading-none ml-20 relative flex">
                                          {ho.householdName}
                                        </h3>
                                        <h4 className="flex justify-between ml-20 mt-4 mb-4">
