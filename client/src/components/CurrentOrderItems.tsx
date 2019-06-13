@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, HouseholdOrder, OrderItem } from '../Types'
-import { ServerApi, ApiError } from '../ServerApi'
+import { CollectiveOrder, OrderItem } from '../Types'
+import { ServerApi } from '../ServerApi'
 import { Money } from '../common/Money'
-import { AdminTopNav } from './AdminTopNav'
 import { Icon } from '../common/Icon'
 
 export interface CurrentOrderItemsProps { currentOrder: CollectiveOrder
@@ -18,27 +17,32 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
     const currentOrder = this.props.currentOrder
   
     return (
-      <table className="border-collapse w-full">
-        {this.props.currentOrder.items.map(this.renderItem)}
-        <tr>
-          <td className={classNames('pt-4 align-baseline px-2')} colSpan={5}>
-            <div className="flex justify-end">
-              <span>VAT:</span>
-              <span className={classNames('w-24 text-right')}>
-                <span><Money amount={currentOrder.totalIncVat - currentOrder.totalExcVat} /></span>
+      <div>
+        <div className="flex justify-end mr-2 mb-2">
+          <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+        </div>
+        <table className="border-collapse w-full">
+          {this.props.currentOrder.items.map(this.renderItem)}
+          <tr>
+            <td className={classNames('pt-4 align-baseline px-2')} colSpan={5}>
+              <div className="flex justify-end">
+                <span>VAT:</span>
+                <span className={classNames('w-24 text-right')}>
+                  <span><Money amount={currentOrder.totalIncVat - currentOrder.totalExcVat} /></span>
+                </span>
+              </div>
+            </td>
+          </tr>
+          <td className={classNames('pt-4 align-baseline px-2 pb-4')} colSpan={5}>
+            <div className="flex justify-end font-bold">
+              <span>Total:</span>
+              <span className="w-24 text-right">
+                <Money className="flex-no-shrink flex-no-grow text-right" amount={currentOrder.totalIncVat} />
               </span>
             </div>
           </td>
-        </tr>
-        <td className={classNames('pt-4 align-baseline px-2 pb-4')} colSpan={5}>
-          <div className="flex justify-end font-bold">
-            <span>Total:</span>
-            <span className="w-24 text-right">
-              <Money className="flex-no-shrink flex-no-grow text-right" amount={currentOrder.totalIncVat} />
-            </span>
-          </div>
-        </td>
-      </table>
+        </table>
+      </div>
     )
   }
 

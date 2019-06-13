@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Main where
   
@@ -46,6 +47,7 @@ module Main where
   import ProductCatalogueImport
   import ProductCatalogueEntry
   import OrderItem
+  import HouseholdOrderItem
 
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
@@ -54,19 +56,29 @@ module Main where
   import Data.Text.Encoding
   import System.IO (hFlush, stdout)
   import Control.Exception (handle, SomeException(..))
+
+  data CsvItem = CsvItem { csvName :: String
+                         , csvCode :: String
+                         , csvPrice :: Int
+                         , csvQuantity :: Int
+                         , csvTotal :: Int
+                         , csvReference :: String
+                         }
   
-  instance ToNamedRecord OrderItem where
-    toNamedRecord (OrderItem { productName = name
-                             , productCode = code
-                             , productPriceIncVat = price
-                             , itemQuantity = qty
-                             , itemTotalIncVat = tot
-                             }) = namedRecord [ "Product" .= name
-                                              , "Code" .= code
-                                              , "Price" .= price'
-                                              , "Quantity" .= qty
-                                              , "Total" .= total' 
-                                              ]
+  instance ToNamedRecord CsvItem where
+    toNamedRecord (CsvItem { csvName = name
+                           , csvCode = code
+                           , csvPrice = price
+                           , csvQuantity = qty
+                           , csvTotal = tot
+                           , csvReference = ref
+                           }) = namedRecord [ "Product" .= name
+                                            , "Code" .= code
+                                            , "Price" .= price'
+                                            , "Quantity" .= qty
+                                            , "Total" .= total' 
+                                            , "Reference" .= ref 
+                                            ]
       where
       price' = ((fromIntegral price) :: Double) / 100.0
       total' = ((fromIntegral tot) :: Double) / 100.0
@@ -168,6 +180,7 @@ module Main where
                            :<|> productCatalogue
                            :<|> productImage
                            :<|> collectiveOrderDownload groupKey
+                           :<|> householdOrdersDownload groupKey
     where
     conn = connectionString config
     
@@ -208,9 +221,36 @@ module Main where
     collectiveOrderDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
     collectiveOrderDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
       order <- liftIO $ D.getCollectiveOrder conn groupId
+      let items = case order of
+                    Nothing -> []
+                    Just o -> map toCsvItem $ CollectiveOrder.items o
+      return $ addHeader "attachment; filename=\"order.csv  \"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
+      where
+      toCsvItem (OrderItem { OrderItem.productName = name
+                           , OrderItem.productCode = code
+                           , OrderItem.productPriceExcVat = price
+                           , OrderItem.itemQuantity = qty
+                           , OrderItem.itemTotalExcVat = total
+                           }) = CsvItem name code price qty total ""
+  
+    householdOrdersDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    householdOrdersDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+      order <- liftIO $ D.getCollectiveOrder conn groupId
       case order of
         Nothing -> throwError err404
-        Just o -> return $ addHeader "attachment; filename=\"order.csv  \"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) (CollectiveOrder.items o)
+        Just o -> do
+          householdOrders <- liftIO $ D.getHouseholdOrders conn groupId
+          let items = (map toCsvItem) . concat . withHouseholdName . (forOrder o) $ householdOrders
+          return $ addHeader "attachment; filename=\"order.csv  \"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
+      where
+      forOrder o = filter ((== CollectiveOrder.id o) . HouseholdOrder.orderId)
+      withHouseholdName = map (\(HouseholdOrder { HouseholdOrder.householdName = n, HouseholdOrder.items = is }) -> map (n,) is)
+      toCsvItem (householdName, HouseholdOrderItem { HouseholdOrderItem.productName = name
+                                                   , HouseholdOrderItem.productCode = code
+                                                   , HouseholdOrderItem.productPriceExcVat = price
+                                                   , HouseholdOrderItem.itemQuantity = qty
+                                                   , HouseholdOrderItem.itemTotalExcVat = total
+                                                   }) = CsvItem name code price qty total householdName
   
   commandServer :: Config -> Text -> Server CommandAPI
   commandServer config groupKey = createOrder groupKey
