@@ -94,6 +94,12 @@ create table product
 , "name"       text      not null
 , price        int       not null
 , vat_rate     char      not null
+-- , biodynamic   boolean   not null
+-- , fair_trade   boolean   not null
+-- , gluten_free  boolean   not null
+-- , organic      boolean   not null
+-- , added_sugar  boolean   not null
+-- , vegan        boolean   not null
 , old_price    int       null
 , discontinued boolean   not null
 , updated      timestamptz not null

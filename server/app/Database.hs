@@ -64,7 +64,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     fromRow = ProductCatalogueData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
   instance ToRow ProductCatalogueData where
-    toRow e = [toField $ ProductCatalogueData.code e, toField $ category e, toField $ brand e, toField $ description e, toField $ text e, toField $ size e, toField $ ProductCatalogueData.price e, toField $ ProductCatalogueData.vatRate e, toField $ rrp e, toField $ biodynamic e, toField $ fairTrade e, toField $ glutenFree e, toField $ organic e, toField $ addedSugar e, toField $ vegan e, toField $ updated e]
+    toRow e = [toField $ ProductCatalogueData.code e, toField $ ProductCatalogueData.category e, toField $ ProductCatalogueData.brand e, toField $ ProductCatalogueData.description e, toField $ ProductCatalogueData.text e, toField $ ProductCatalogueData.size e, toField $ ProductCatalogueData.price e, toField $ ProductCatalogueData.vatRate e, toField $ ProductCatalogueData.rrp e, toField $ ProductCatalogueData.biodynamic e, toField $ ProductCatalogueData.fairTrade e, toField $ ProductCatalogueData.glutenFree e, toField $ ProductCatalogueData.organic e, toField $ ProductCatalogueData.addedSugar e, toField $ ProductCatalogueData.vegan e, toField $ updated e]
 
   data HouseholdOrderItemData = HouseholdOrderItemData {
     hoi_orderId :: Int,
@@ -138,6 +138,23 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
 
   instance FromRow HouseholdOrderData where
     fromRow = HouseholdOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+  data ProductCatalogueEntryData = ProductCatalogueEntryData {
+    pce_code :: String,
+    pce_name :: String,
+    pce_priceExcVat :: Int,
+    pce_priceIncVat :: Int,
+    pce_vatRate :: VatRate,
+    pce_biodynamic :: Bool,
+    pce_fairTrade :: Bool,
+    pce_glutenFree :: Bool,
+    pce_organic :: Bool,
+    pce_addedSugar :: Bool,
+    pce_vegan :: Bool
+  }
+
+  instance FromRow ProductCatalogueEntryData where
+    fromRow = ProductCatalogueEntryData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
@@ -681,11 +698,17 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
            , ce.price as price_exc_vat
            , cast(round(ce.price * v.multiplier) as int) as price_inc_vat
            , ce.vat_rate
+           , ce.biodynamic
+           , ce.fair_trade
+           , ce.gluten_free
+           , ce.organic
+           , ce.added_sugar
+           , ce.vegan
       from catalogue_entry ce
       inner join vat_rate v on ce.vat_rate = v.code
     |]
     close conn
-    return $ (rEntries :: [(String, String, Int, Int, VatRate)]) <&> \(code, name, priceExcVat, priceIncVat, vatRate) -> ProductCatalogueEntry code name priceExcVat priceIncVat vatRate
+    return $ (rEntries :: [ProductCatalogueEntryData]) <&> \(ProductCatalogueEntryData { pce_code, pce_name, pce_priceExcVat, pce_priceIncVat, pce_vatRate, pce_biodynamic, pce_fairTrade, pce_glutenFree, pce_organic, pce_addedSugar, pce_vegan }) -> ProductCatalogueEntry pce_code pce_name pce_priceExcVat pce_priceIncVat pce_vatRate pce_biodynamic pce_fairTrade pce_glutenFree pce_organic pce_addedSugar pce_vegan
 
   replaceProductCatalogue :: ByteString -> UTCTime -> [ProductCatalogueData] -> IO ()
   replaceProductCatalogue connectionString date entries = do
@@ -706,6 +729,12 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                                                                                , nullif(btrim(ce."text"), '')) end
           , price = coalesce(ce.price, p.price)
           , vat_rate = coalesce(ce.vat_rate, p.vat_rate)
+          -- , biodynamic = ce.biodynamic
+          -- , fair_trade = ce.fair_trade
+          -- , gluten_free = ce.gluten_free
+          -- , organic = ce.organic
+          -- , added_sugar = ce.added_sugar
+          -- , vegan = ce.vegan
           , discontinued = (ce.code is null)
           , updated = case when ce.price <> p.price or ce.code is null then ? else p.updated end
         from product p

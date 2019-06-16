@@ -169,14 +169,22 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
                   </tr>
                   ,
                   <tr key={p.code + '-2'}>
-                    <td className={classNames('pb-2 align-top')} colSpan={2}>{p.name}</td>
-                    <td className={classNames('pl-2 align-top text-right whitespace-no-wrap')} colSpan={2}>
+                    <td className={classNames('pb-2 align-top')} colSpan={3}>{p.name}</td>
+                    <td className={classNames('pl-2 align-top text-right whitespace-no-wrap')} colSpan={1}>
                       {/* <button className="ml-2" onClick={_ => this.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button> */}
                     </td>
                   </tr>
                   ,
                   <tr key={p.code + '-3'}>
-                    <td className={classNames('text-grey')} colSpan={3}>VAT: {p.vatRate} rate</td>
+                    <td className={classNames('text-grey')} colSpan={2}>
+                      <span className={classNames("inline-block mr-1 w-4 h-4 text-center nudge-d-2", { "text-white bg-grey-dark": p.biodynamic, "text-grey": !p.biodynamic })}><span className="inline-block nudge-u-2">B</span></span>
+                      <span className={classNames("inline-block mr-1 w-4 h-4 text-center nudge-d-2", { "text-white bg-grey-dark": p.glutenFree, "text-grey": !p.glutenFree })}><span className="inline-block nudge-u-2">G</span></span>
+                      <span className={classNames("inline-block mr-1 w-4 h-4 text-center nudge-d-2", { "text-white bg-grey-dark": p.organic,    "text-grey": !p.organic    })}><span className="inline-block nudge-u-2">O</span></span>
+                      <span className={classNames("inline-block mr-1 w-4 h-4 text-center nudge-d-2", { "text-white bg-grey-dark": p.fairTrade,  "text-grey": !p.fairTrade  })}><span className="inline-block nudge-u-2">F</span></span>
+                      <span className={classNames("inline-block mr-1 w-4 h-4 text-center nudge-d-2", { "text-white bg-grey-dark": p.vegan,      "text-grey": !p.vegan      })}><span className="inline-block nudge-u-2">V</span></span>
+                      <span className={classNames("inline-block mr-1 w-4 h-4 text-center nudge-d-2", { "text-white bg-grey-dark": p.addedSugar, "text-grey": !p.addedSugar })}><span className="inline-block nudge-u-2">S</span></span>
+                    </td>
+                    <td className={classNames('text-grey')} colSpan={1}>VAT: {p.vatRate} rate</td>
                     <td className={classNames('pl-2')}>&nbsp;</td>
                   </tr>
                   ])

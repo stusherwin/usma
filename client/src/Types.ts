@@ -5,6 +5,12 @@ export type ProductCatalogueEntry = { code: string
                                     , priceExcVat: number
                                     , priceIncVat: number
                                     , vatRate: VatRate
+                                    , biodynamic: boolean
+                                    , fairTrade: boolean
+                                    , glutenFree: boolean
+                                    , organic: boolean
+                                    , addedSugar: boolean
+                                    , vegan: boolean
                                     }
 
 export type Household = { id: number

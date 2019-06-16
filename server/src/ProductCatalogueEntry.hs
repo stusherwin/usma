@@ -11,6 +11,12 @@ module ProductCatalogueEntry where
                                                      , priceExcVat :: Int
                                                      , priceIncVat :: Int
                                                      , vatRate :: VatRate
+                                                     , biodynamic :: Bool
+                                                     , fairTrade :: Bool
+                                                     , glutenFree :: Bool
+                                                     , organic :: Bool
+                                                     , addedSugar :: Bool
+                                                     , vegan :: Bool
                                                      } deriving (Eq, Show, Generic)
   instance ToJSON ProductCatalogueEntry
   instance FromJSON ProductCatalogueEntry

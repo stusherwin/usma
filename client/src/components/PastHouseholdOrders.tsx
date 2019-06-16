@@ -106,7 +106,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                              <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
                                            </span>
                                          </h4>
-                                         {this.props.currentHouseholdOrder && this.props.currentHouseholdOrder.isOpen &&
+                                         {this.props.currentHouseholdOrder && this.props.currentHouseholdOrder.isOpen && ho.items.length &&
                                            <div className="flex justify-end pt-2">
                                              <button onClick={e => {e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho)}}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add all items to current order</button>
                                            </div>
