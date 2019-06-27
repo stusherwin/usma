@@ -126,6 +126,7 @@ export class Main extends React.Component<MainProps, MainState> {
 
   request = <T extends {}>(p: Promise<T>) => {
     this.setState({ loading: true })
+    
     p.then(_ => this.setState({ loading: false }))
      .then()
      .catch(err => {

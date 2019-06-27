@@ -7,13 +7,42 @@ export interface LoadingProps {
   loading: boolean
 }
 
-export const Loading = ({loading}: LoadingProps) => 
-  <div className={classNames('fixed pin bg-black flex items-center justify-center text-grey-lighter', {
-      'pointer-events-none': !loading
-    })} style={{
-      background: 'rgba(0,0,0,0.3)',
-      opacity: loading? 1 : 0,
-      transition: 'opacity 0.25s ease'
-    }}>
-    <Icon type="loading" className="w-16 h-16 -mt-4 rotating fill-current" />
-  </div>
+export interface LoadingState {
+  loading: boolean
+}
+
+export class Loading extends React.Component<LoadingProps, LoadingState> {
+  constructor(props: LoadingProps) {
+    super(props)
+
+    this.state = { loading: false }
+  }
+
+  loading = () => this.props.loading || this.state.loading
+
+  componentDidUpdate(prevProps: LoadingProps) {
+    if(!prevProps.loading && this.props.loading) {
+      this.setState({ loading: true })
+    }
+  }
+
+  transitionEnded = () => {
+    if(!this.props.loading) {
+      this.setState({ loading: false })
+    }
+  }
+
+  render() {
+    return (
+      <div className={classNames('fixed pin bg-black flex items-center justify-center text-grey-lighter', {
+          'pointer-events-none': !this.loading()
+        })} style={{
+          background: 'rgba(0,0,0,0.3)',
+          opacity: this.props.loading? 1 : 0,
+          transition: 'opacity 0.25s ease'
+        }} onTransitionEnd={this.transitionEnded}>
+        <Icon type="loading" className={classNames("w-16 h-16 -mt-4 fill-current", {"rotating": this.loading()})} />
+      </div>
+    )
+  }
+}

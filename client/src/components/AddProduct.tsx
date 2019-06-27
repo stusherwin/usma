@@ -1,11 +1,9 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, ProductCatalogueEntry, OrderItem } from '../Types'
+import { ProductCatalogueEntry } from '../Types'
 import { Icon } from '../common/Icon'
-import { Money } from '../common/Money'
-import { LoadMore } from '../common/LoadMore'
-import { ServerApi } from '../ServerApi'
+import { ProductList } from '../components/ProductList'
 
 const pageSize = 10
 
@@ -16,10 +14,7 @@ export interface AddProductProps { products: ProductCatalogueEntry[]
 
 export interface AddProductState { products: ProductCatalogueEntry[]
                                  , filteredProducts: ProductCatalogueEntry[]
-                                 , nextStartIndex: number
                                  , searchString: string
-                                 , showLoadMore: boolean
-                                 , loadMoreScrollElement: HTMLElement | null
                                  }
 
 export class AddProduct extends React.Component<AddProductProps, AddProductState> {
@@ -30,28 +25,8 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
 
     this.state = { filteredProducts
                  , products: filteredProducts.slice(0, pageSize)
-                 , nextStartIndex: pageSize
                  , searchString: ''
-                 , showLoadMore: false
-                 , loadMoreScrollElement: null
                  }
-  }
-
-  componentDidMount() {
-    this.setState({ showLoadMore: true
-                  , loadMoreScrollElement: document.body
-                  })
-  }
-
-  loadMore = () => {
-    const start = this.state.nextStartIndex
-    const end = start + pageSize
-    const moreProducts = this.state.filteredProducts.slice(start, end)
-
-    this.setState({ products: [...this.state.products, ...moreProducts]
-                  , nextStartIndex: end
-                  , showLoadMore: moreProducts.length >= pageSize
-                  })
   }
 
   searchChanged = (value: string) => {
@@ -74,8 +49,6 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
     this.setState({ filteredProducts
                   , searchString
                   , products: filteredProducts.slice(0, pageSize)
-                  , nextStartIndex: pageSize
-                  , showLoadMore: filteredProducts.length >= pageSize
                   })
   }
 
@@ -99,39 +72,9 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
             <button onClick={this.props.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Close</button>
           </div>
         </div>
-        <div className="py-4 px-2 shadow-inner-top bg-white">
-          { !this.state.products.length
-            ? <div className="text-grey-darker">
-                <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No products found
-              </div>
-            : <table className="border-collapse w-full">
-                {this.state.products.map((p, i) => 
-                  [
-                  <tr key={p.code + '-1'}>
-                    <td className={classNames('w-20 h-20 align-top', {'pt-8': i > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${p.code}`)} /></td>
-                    <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': i > 0})} colSpan={3}>{p.code}</td>
-                    <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': i > 0})}><Money amount={p.priceExcVat} /></td>
-                  </tr>
-                  ,
-                  <tr key={p.code + '-2'}>
-                    <td className={classNames('pb-2 align-top')} colSpan={2}>{p.name}</td>
-                    <td className={classNames('pl-2 align-top text-right whitespace-no-wrap')} colSpan={2}>
-                      <button className="ml-2" onClick={_ => this.confirmAdd(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
-                    </td>
-                  </tr>
-                  ,
-                  <tr key={p.code + '-3'}>
-                    <td className={classNames('text-grey')} colSpan={3}>VAT: {p.vatRate} rate</td>
-                    <td className={classNames('pl-2')}>&nbsp;</td>
-                  </tr>
-                  ])
-                }
-              </table>
-          }
-        </div>
-        {this.state.showLoadMore && this.state.loadMoreScrollElement &&
-          <LoadMore scrollElement={this.state.loadMoreScrollElement} loadMore={this.loadMore} />
-        }
+        <ProductList products={this.state.filteredProducts}
+                     cataloguePopulated={!!this.props.products.length}
+                     addProduct={this.confirmAdd} />
       </div>
     )
   }
