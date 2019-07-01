@@ -36,23 +36,28 @@ export class FilteredProducts {
   }
 
   private applyFilters = (searchString: string, flags: ProductFlags, productFilter?: (p: ProductCatalogueEntry) => boolean) => {
-    if(!searchString.length && !flags['b'] && !flags['g'] && !flags['o'] && !flags['f'] && !flags['v'] && !flags['s'] && !productFilter) {
-      return new FilteredProducts(this.allProducts);
+    var filteredProducts = this.allProducts
+
+    if(searchString.length) {
+      filteredProducts = filteredProducts.filter((p: ProductCatalogueEntry) => {
+        const code = p.code.toLowerCase()
+        const name = p.name.toLowerCase()
+        const searchWords = searchString.split(' ')
+        
+        return searchWords.every(w => code.includes(w) || name.includes(w))
+      })
     }
-      
-    var filteredProducts = this.allProducts.filter((p: ProductCatalogueEntry) => {
-      const code = p.code.toLowerCase()
-      const name = p.name.toLowerCase()
-      const searchWords = searchString.split(' ')
-      
-      return searchWords.every(w => code.includes(w) || name.includes(w))
-          && (!flags['b'] || p.biodynamic)
-          && (!flags['g'] || p.glutenFree)
-          && (!flags['o'] || p.organic)
-          && (!flags['f'] || p.fairTrade)
-          && (!flags['v'] || p.vegan)
-          && (!flags['s'] || p.addedSugar)
-    })
+    
+    if(flags['b'] || flags['g'] || flags['o'] || flags['f'] || flags['v'] || flags['s']) {
+      filteredProducts = filteredProducts.filter((p: ProductCatalogueEntry) => 
+               (!flags['b'] || p.biodynamic)
+            && (!flags['g'] || p.glutenFree)
+            && (!flags['o'] || p.organic)
+            && (!flags['f'] || p.fairTrade)
+            && (!flags['v'] || p.vegan)
+            && (!flags['s'] || p.addedSugar)
+      )
+    }
 
     if(productFilter) {
       filteredProducts = filteredProducts.filter(productFilter)

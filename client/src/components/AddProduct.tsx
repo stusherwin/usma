@@ -49,11 +49,11 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
   render() {
     return (
       <div id="add-container">
-        <div className="bg-product-light text-white p-2 relative">
+        <div className="bg-product-light text-white p-2 relative shadow-inner-top">
           <div className="bg-img-product bg-no-repeat w-16 h-16 absolute"></div>
-          <h2 className="leading-none ml-20 pb-8">Add items</h2>
-          <div className="absolute pin-r pin-t mt-2 mr-2">
-            <button onClick={this.props.cancelAdd}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Close</button>
+          <h2 className="leading-none ml-20">Add items</h2>
+          <div className="ml-20 mt-3">
+            <button onClick={this.props.cancelAdd}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>
           </div>
         </div>
         <ProductFilters searchString={this.state.filteredProducts.searchString}
