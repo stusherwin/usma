@@ -7,6 +7,7 @@ import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Collapsible } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
+import { ProductFlags } from './ProductList'
 
 export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
                                           , currentHouseholdOrder: HouseholdOrder | null
@@ -190,7 +191,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     </tr>
     ,
     <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2 pr-2 text-grey')} colSpan={3}>VAT: {i.productVatRate} rate</td>
+      <td className={classNames('pl-2 pr-2')} colSpan={3}>
+        <ProductFlags p={i} />
+        <span className="text-grey pl-4 whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
+      </td>
     </tr>
     ]
 }

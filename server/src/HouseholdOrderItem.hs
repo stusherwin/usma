@@ -20,5 +20,11 @@ module HouseholdOrderItem where
                                                , productPriceIncVat :: Int
                                                , itemTotalExcVat :: Int
                                                , itemTotalIncVat :: Int
+                                               , biodynamic :: Bool
+                                               , fairTrade :: Bool
+                                               , glutenFree :: Bool
+                                               , organic :: Bool
+                                               , addedSugar :: Bool
+                                               , vegan :: Bool
                                                } deriving (Eq, Show, Generic)
   instance ToJSON HouseholdOrderItem

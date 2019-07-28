@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as classNames from 'classnames'
 
 import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, OrderItem } from '../Types'
+import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, HouseholdOrderItem } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'

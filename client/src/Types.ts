@@ -76,22 +76,6 @@ export type PastHouseholdOrder = { orderId: number
                                  , items: PastOrderItem[]
                                  }
 
-export type OrderItem = { productId: number
-                        , productCode: string
-                        , productName: string
-                        , oldProductPriceExcVat: number | null
-                        , oldProductPriceIncVat: number | null
-                        , productVatRate: VatRate
-                        , itemQuantity: number
-                        , oldItemTotalExcVat: number | null
-                        , oldItemTotalIncVat: number | null
-                        , productDiscontinued: boolean
-                        , productPriceExcVat: number
-                        , productPriceIncVat: number
-                        , itemTotalExcVat: number
-                        , itemTotalIncVat: number
-                        }
-
 export type HouseholdOrderItem = { productId: number
                                  , productCode: string
                                  , productName: string
@@ -106,7 +90,35 @@ export type HouseholdOrderItem = { productId: number
                                  , productPriceIncVat: number
                                  , itemTotalExcVat: number
                                  , itemTotalIncVat: number
+                                 , biodynamic: boolean
+                                 , fairTrade: boolean
+                                 , glutenFree: boolean
+                                 , organic: boolean
+                                 , addedSugar: boolean
+                                 , vegan: boolean
                                  }
+
+export type OrderItem = { productId: number
+                        , productCode: string
+                        , productName: string
+                        , oldProductPriceExcVat: number | null
+                        , oldProductPriceIncVat: number | null
+                        , productVatRate: VatRate
+                        , itemQuantity: number
+                        , oldItemTotalExcVat: number | null
+                        , oldItemTotalIncVat: number | null
+                        , productDiscontinued: boolean
+                        , productPriceExcVat: number
+                        , productPriceIncVat: number
+                        , itemTotalExcVat: number
+                        , itemTotalIncVat: number
+                        , biodynamic: boolean
+                        , fairTrade: boolean
+                        , glutenFree: boolean
+                        , organic: boolean
+                        , addedSugar: boolean
+                        , vegan: boolean
+                        }
 
 export type PastOrderItem = { productId: number
                             , productCode: string
@@ -117,6 +129,12 @@ export type PastOrderItem = { productId: number
                             , itemQuantity: number
                             , itemTotalExcVat: number
                             , itemTotalIncVat: number
+                            , biodynamic: boolean
+                            , fairTrade: boolean
+                            , glutenFree: boolean
+                            , organic: boolean
+                            , addedSugar: boolean
+                            , vegan: boolean                            
                             }
 
 export type HouseholdPayment = { id: number 

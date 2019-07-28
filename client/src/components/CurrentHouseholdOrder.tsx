@@ -1,10 +1,11 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, OrderItem } from '../Types'
+import { HouseholdOrder, HouseholdOrderItem } from '../Types'
 import { ServerApi } from '../ServerApi'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
+import { ProductFlags } from './ProductList'
 
 export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
                                             , readOnly?: boolean
@@ -13,12 +14,12 @@ export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOr
                                             }
 
 export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
-  removeItem = (item: OrderItem) => {
+  removeItem = (item: HouseholdOrderItem) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productId))
       .then(this.props.reload)
   }
 
-  editQuantity = (item: OrderItem, quantity: number) => {
+  editQuantity = (item: HouseholdOrderItem, quantity: number) => {
     this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, quantity))
       .then(this.props.reload)
   }
@@ -75,7 +76,7 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     )
   }
 
-  renderItem = (householdOrder: HouseholdOrder) => (i: OrderItem, ix: number) => 
+  renderItem = (householdOrder: HouseholdOrder) => (i: HouseholdOrderItem, ix: number) => 
     [
     <tr key={i.productId + '-1'}>
       <td className={classNames('w-20 h-20 align-top pl-2', {'pt-4': ix == 0, 'pt-8': ix > 0})} rowSpan={3}>
@@ -120,7 +121,10 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     </tr>
     ,
     <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2 text-grey', {'': i.productDiscontinued})} colSpan={3}>VAT: {i.productVatRate} rate</td>
+      <td className={classNames('pl-2')} colSpan={3}>
+        <ProductFlags p={i} />
+        <span className="text-grey pl-4 whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
+      </td>
       <td className={classNames('pl-2 pr-2')}>&nbsp;</td>
     </tr>
     ]

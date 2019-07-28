@@ -5,6 +5,7 @@ import { CollectiveOrder, OrderItem } from '../Types'
 import { ServerApi } from '../ServerApi'
 import { Money } from '../common/Money'
 import { Icon } from '../common/Icon'
+import { ProductFlags } from './ProductList'
 
 export interface CurrentOrderItemsProps { currentOrder: CollectiveOrder
                                         }
@@ -70,7 +71,10 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
     </tr>
     ,
     <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2 text-grey')} colSpan={3}>VAT: {i.productVatRate} rate</td>
+      <td className={classNames('pl-2')} colSpan={3}>
+        <ProductFlags p={i} />
+        <span className="text-grey pl-4 whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
+      </td>   
       <td className={classNames('pl-2 pr-2')}>&nbsp;</td>
     </tr>
     ]
