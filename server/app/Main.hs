@@ -182,6 +182,7 @@ module Main where
                            :<|> collectiveOrderDownload groupKey
                            :<|> householdOrdersDownload groupKey
                            :<|> productCatalogueCategories
+                           :<|> productCatalogueBrands
     where
     conn = connectionString config
     
@@ -252,9 +253,13 @@ module Main where
                                                    , HouseholdOrderItem.itemQuantity = qty
                                                    , HouseholdOrderItem.itemTotalExcVat = total
                                                    }) = CsvItem name code price qty total householdName
+
     productCatalogueCategories :: Handler [String]
     productCatalogueCategories = liftIO $ D.getProductCatalogueCategories conn
   
+    productCatalogueBrands :: Handler [String]
+    productCatalogueBrands = liftIO $ D.getProductCatalogueBrands conn
+
   commandServer :: Config -> Text -> Server CommandAPI
   commandServer config groupKey = createOrder groupKey
                              :<|> deleteOrder groupKey

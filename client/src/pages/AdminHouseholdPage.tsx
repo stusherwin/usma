@@ -18,6 +18,7 @@ export interface AdminHouseholdOrdersPageProps { household: Household
                                                , payments: HouseholdPayment[]
                                                , products: ProductCatalogueEntry[]
                                                , categories: string[]
+                                               , brands: string[]
                                                , households: Household[]
                                                , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                                , reload: () => Promise<void>
@@ -89,6 +90,7 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                       currentHouseholdOrders={this.props.currentHouseholdOrders}
                       products={this.props.products}
                       categories={this.props.categories}
+                      brands={this.props.brands}
                       households={this.props.households}
                       expanded={this.state.expanded == 'orders'}
                       otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}

@@ -8,23 +8,32 @@ export interface ProductFiltersProps { searchString: string
                                      , flags: ProductFlags
                                      , category: string | null
                                      , categories: string[]
+                                     , brand: string | null
+                                     , brands: string[]
                                      , searchChanged: (value: string) => void
                                      , flagChanged: (changedFlag: string) => void
                                      , categoryChanged: (changedCategory: string | null) => void
+                                     , brandChanged: (changedBrand: string | null) => void
                                      }
 
-export const ProductFilters = ({searchString, flags, categories, searchChanged, flagChanged, categoryChanged}: ProductFiltersProps) => (
+export const ProductFilters = ({searchString, flags, categories, brands, searchChanged, flagChanged, categoryChanged, brandChanged}: ProductFiltersProps) => (
   <div className="bg-product-light p-2">
     <label htmlFor="search" className="text-white">Search for a particular product:</label>
     <div className="relative mt-2">
       <span className="absolute text-grey-darker" style={{bottom: '0px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
       <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={searchString} onChange={e => searchChanged(e.target.value)} />
     </div>
-    <div className="relative mt-2">
-        <select onChange={e => categoryChanged(e.target.value)}>
-          <option key="" value="">All categories</option>          
-          {categories.map(o => 
-            <option key={o} value={o}>{Util.toTitleCase(o.replace(';', ','))}</option>
+    <div className="relative mt-2 flex space-between">
+        <select className="mr-1 flex-no-shrink flex-grow" onChange={e => categoryChanged(e.target.value)}>
+          <option key="" value="">All categories</option>
+          {categories.filter(c => !/^\s*$/.test(c)).map(c => 
+            <option key={c} value={c}>{Util.toTitleCase(c.replace(';', ','))}</option>
+          )}
+        </select>
+        <select className="ml-1 flex-no-shrink flex-grow" onChange={e => brandChanged(e.target.value)}>
+          <option key="" value="">All brands</option>
+          {brands.filter(b => !/^\s*$/.test(b)).map(b => 
+            <option key={b} value={b}>{Util.toTitleCase(b.replace(';', ','))}</option>
           )}
         </select>
     </div>

@@ -11,7 +11,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 , replaceProductCatalogue, acceptCatalogueUpdates
-                , getProductCatalogueCategories
+                , getProductCatalogueCategories, getProductCatalogueBrands
                 , getGroup
                 ) where
   import Control.Monad (mzero, when, void)
@@ -870,6 +870,17 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       select distinct category
       from catalogue_entry ce
       order by category
+    |]
+    close conn
+    return $ fmap fromOnly $ (results :: [Only String])
+
+  getProductCatalogueBrands :: ByteString -> IO [String]
+  getProductCatalogueBrands connectionString = do
+    conn <- connectPostgreSQL connectionString
+    results <- query_ conn [sql|
+      select distinct brand
+      from catalogue_entry ce
+      order by brand
     |]
     close conn
     return $ fmap fromOnly $ (results :: [Only String])

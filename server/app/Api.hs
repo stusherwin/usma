@@ -66,6 +66,7 @@ module Api where
     :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
     :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
     :<|> "product-catalogue-categories" :> Get '[JSON] [String]
+    :<|> "product-catalogue-brands" :> Get '[JSON] [String]
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

@@ -10,6 +10,7 @@ import { ProductFilters } from '../components/ProductFilters'
 
 export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
                                         , categories: string[]
+                                        , brands: string[]
                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                         , reload: () => Promise<void>
                                         }
@@ -23,7 +24,7 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
   constructor(props: AdminProductsPageProps) {
     super(props)
 
-    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories)
+    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories, this.props.brands)
                  , uploading: false
                  , uploadedFile: undefined
                  }
@@ -43,10 +44,14 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
     this.setState({ filteredProducts: this.state.filteredProducts.byCategory(changedCategory) });
   }
 
+  brandChanged = (changedBrand: string | null) => {
+    this.setState({ filteredProducts: this.state.filteredProducts.byBrand(changedBrand) });
+  }
+
   startUpload = () => {
     this.setState({ uploading: true
                   , uploadedFile: undefined
-                  , filteredProducts: new FilteredProducts(this.props.products, this.props.categories)
+                  , filteredProducts: new FilteredProducts(this.props.products, this.props.categories, this.props.brands)
                   })
   }
 
@@ -61,7 +66,7 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
       .then(_ => {
         this.setState({ uploading: false
                       , uploadedFile: undefined
-                      , filteredProducts: new FilteredProducts(this.props.products, this.props.categories)
+                      , filteredProducts: new FilteredProducts(this.props.products, this.props.categories, this.props.brands)
                       })
       })
   }
@@ -93,9 +98,12 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
                           flags={this.state.filteredProducts.flags}
                           categories={this.state.filteredProducts.allCategories}
                           category={this.state.filteredProducts.category}
+                          brands={this.state.filteredProducts.allBrands}
+                          brand={this.state.filteredProducts.brand}
                           searchChanged={this.searchChanged}
                           flagChanged={this.flagChanged}
-                          categoryChanged={this.categoryChanged} />
+                          categoryChanged={this.categoryChanged}
+                          brandChanged={this.brandChanged} />
         }
         {this.state.uploading && 
           <div className="bg-product-lightest px-2 py-4 shadow-inner-top">

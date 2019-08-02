@@ -10,6 +10,7 @@ const pageSize = 10
 
 export interface AddProductProps { products: ProductCatalogueEntry[]
                                  , categories: string[]
+                                 , brands: string[]
                                  , cancelAdd: () => void
                                  , confirmAdd: (p: ProductCatalogueEntry) => Promise<void>
                                  }
@@ -22,7 +23,7 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
   constructor(props: AddProductProps) {
     super(props)
 
-    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories)
+    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories, props.brands)
                  , addedProductCodes: []
                  }
   }
@@ -39,6 +40,10 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
 
   categoryChanged = (changedCategory: string | null) => {
     this.setState({ filteredProducts: this.state.filteredProducts.byCategory(changedCategory) });
+  }
+
+  brandChanged = (changedBrand: string | null) => {
+    this.setState({ filteredProducts: this.state.filteredProducts.byBrand(changedBrand) });
   }
 
   confirmAdd = (p: ProductCatalogueEntry) => {
@@ -64,10 +69,13 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
         <ProductFilters searchString={this.state.filteredProducts.searchString}
                         flags={this.state.filteredProducts.flags}
                         categories={this.state.filteredProducts.allCategories}
+                        brands={this.state.filteredProducts.allBrands}
                         category={this.state.filteredProducts.category}
+                        brand={this.state.filteredProducts.brand}
                         searchChanged={this.searchChanged}
                         flagChanged={this.flagChanged}
-                        categoryChanged={this.categoryChanged} />
+                        categoryChanged={this.categoryChanged}
+                        brandChanged={this.brandChanged} />
         <ProductList products={this.state.filteredProducts.products}
                      cataloguePopulated={!!this.props.products.length}
                      addProduct={this.confirmAdd} />
