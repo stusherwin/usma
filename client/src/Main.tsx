@@ -26,6 +26,7 @@ export interface MainState { loading: boolean
                            , householdOrders: HouseholdOrder[]
                            , pastHouseholdOrders: PastHouseholdOrder[]
                            , productCatalogue: ProductCatalogueEntry[]
+                           , categories: string[]
                            , households: Household[]
                            , householdPayments: HouseholdPayment[]
                            , initialised: boolean
@@ -49,6 +50,7 @@ export class Main extends React.Component<MainProps, MainState> {
                  , householdOrders: []
                  , pastHouseholdOrders: []
                  , productCatalogue: []
+                 , categories: []
                  , households: []
                  , householdPayments: []
                  , initialised: !urlInfo.groupKey
@@ -112,8 +114,9 @@ export class Main extends React.Component<MainProps, MainState> {
                              , ServerApi.query.households()
                              , ServerApi.query.householdPayments()
                              , ServerApi.query.productCatalogue()
+                             , ServerApi.query.productCatalogueCategories()
                              ]))
-    .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue]) => {
+    .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue, categories]) => {
       this.setState({ collectiveOrder
                     , pastCollectiveOrders
                     , householdOrders
@@ -121,6 +124,7 @@ export class Main extends React.Component<MainProps, MainState> {
                     , households
                     , householdPayments
                     , productCatalogue
+                    , categories
                     })
     })
 
@@ -157,6 +161,7 @@ export class Main extends React.Component<MainProps, MainState> {
     })
     
     router.route('/admin/products', _ => <AdminProductsPage products={this.state.productCatalogue}
+                                                            categories={this.state.categories}
                                                             reload={this.reload}
                                                             request={this.request} />)
     
@@ -177,6 +182,7 @@ export class Main extends React.Component<MainProps, MainState> {
                             pastHouseholdOrders={pastHouseholdOrders}
                             payments={householdPayments}
                             products={this.state.productCatalogue}
+                            categories={this.state.categories}
                             households={this.state.households}
                             reload={this.reload}
                             request={this.request} />
@@ -205,6 +211,7 @@ export class Main extends React.Component<MainProps, MainState> {
                        pastHouseholdOrders={pastHouseholdOrders}
                        payments={householdPayments}
                        products={this.state.productCatalogue}
+                       categories={this.state.categories}
                        households={this.state.households}
                        reload={this.reload}
                        request={this.request}

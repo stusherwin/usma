@@ -8,18 +8,22 @@ export class FilteredProducts {
   products: ProductCatalogueEntry[]
   searchString: string
   flags: ProductFlags
+  category: string | null
+  allCategories: string[]
   productFilter?: (p: ProductCatalogueEntry) => boolean
 
-  constructor(allProducts: ProductCatalogueEntry[], products?: ProductCatalogueEntry[], searchString: string = '', flags: ProductFlags = emptyFlags, productFilter?: (p: ProductCatalogueEntry) => boolean) {
+  constructor(allProducts: ProductCatalogueEntry[], allCategories: string[], products?: ProductCatalogueEntry[], searchString: string = '', flags: ProductFlags = emptyFlags, category: string | null = null, productFilter?: (p: ProductCatalogueEntry) => boolean) {
     this.allProducts = allProducts;
+    this.allCategories = allCategories;
     this.products = products || allProducts;
     this.searchString = searchString;
     this.flags = flags;
+    this.category = category;
     this.productFilter = productFilter
   }
 
   search = (searchString: string) => {
-    return this.applyFilters(searchString.toLowerCase(), this.flags, this.productFilter);
+    return this.applyFilters(searchString.toLowerCase(), this.flags, this.category, this.productFilter);
   }
 
   toggleFlag = (changedFlag: string) => {
@@ -28,14 +32,18 @@ export class FilteredProducts {
       flags[f] = f == changedFlag? !this.flags[f] : this.flags[f]
     }
 
-    return this.applyFilters(this.searchString, flags, this.productFilter);
-  } 
-
-  filter = (productFilter: (p: ProductCatalogueEntry) => boolean) => {
-    return this.applyFilters(this.searchString, this.flags, productFilter)
+    return this.applyFilters(this.searchString, flags, this.category, this.productFilter);
   }
 
-  private applyFilters = (searchString: string, flags: ProductFlags, productFilter?: (p: ProductCatalogueEntry) => boolean) => {
+  byCategory = (category: string | null) => {
+    return this.applyFilters(this.searchString, this.flags, category, this.productFilter);
+  }
+
+  filter = (productFilter: (p: ProductCatalogueEntry) => boolean) => {
+    return this.applyFilters(this.searchString, this.flags, this.category, productFilter)
+  }
+
+  private applyFilters = (searchString: string, flags: ProductFlags, category: string | null, productFilter?: (p: ProductCatalogueEntry) => boolean) => {
     var filteredProducts = this.allProducts
 
     if(searchString.length) {
@@ -59,10 +67,14 @@ export class FilteredProducts {
       )
     }
 
+    if(category) {
+      filteredProducts = filteredProducts.filter(p => p.category === category)
+    }
+
     if(productFilter) {
       filteredProducts = filteredProducts.filter(productFilter)
     }
 
-    return new FilteredProducts(this.allProducts, filteredProducts, searchString, flags, productFilter)
+    return new FilteredProducts(this.allProducts, this.allCategories, filteredProducts, searchString, flags, category, productFilter)
   }
 }

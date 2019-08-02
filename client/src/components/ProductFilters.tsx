@@ -2,19 +2,31 @@ import * as React from 'react';
 
 import { ProductFlags } from '../common/FilteredProducts'
 import { Icon } from '../common/Icon'
+import { Util } from '../common/Util'
 
 export interface ProductFiltersProps { searchString: string
                                      , flags: ProductFlags
+                                     , category: string | null
+                                     , categories: string[]
                                      , searchChanged: (value: string) => void
                                      , flagChanged: (changedFlag: string) => void
+                                     , categoryChanged: (changedCategory: string | null) => void
                                      }
 
-export const ProductFilters = ({searchString, flags, searchChanged, flagChanged}: ProductFiltersProps) => (
+export const ProductFilters = ({searchString, flags, categories, searchChanged, flagChanged, categoryChanged}: ProductFiltersProps) => (
   <div className="bg-product-light p-2">
     <label htmlFor="search" className="text-white">Search for a particular product:</label>
     <div className="relative mt-2">
       <span className="absolute text-grey-darker" style={{bottom: '0px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>
       <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={searchString} onChange={e => searchChanged(e.target.value)} />
+    </div>
+    <div className="relative mt-2">
+        <select onChange={e => categoryChanged(e.target.value)}>
+          <option key="" value="">All categories</option>          
+          {categories.map(o => 
+            <option key={o} value={o}>{Util.toTitleCase(o.replace(';', ','))}</option>
+          )}
+        </select>
     </div>
     <div className="mt-2 flex justify-between">
       <span className="whitespace-no-wrap" style={{flexBasis: '33.3%'}}><input type="checkbox" id="b" value="b" checked={flags['b']} className="mr-1 nudge-d-1" onChange={e => flagChanged(e.target.value)} /><label htmlFor="b" className="text-white"><span className="inline-block text-center nudge-d-2 w-4 h-4" style={{ marginRight: 3, color: '#992f83', backgroundColor: '#eeabe0' }}><span className="nudge-u-2">B</span></span>iodynamic</label></span>

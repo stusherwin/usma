@@ -9,6 +9,7 @@ import { ProductFilters } from '../components/ProductFilters'
 const pageSize = 10
 
 export interface AddProductProps { products: ProductCatalogueEntry[]
+                                 , categories: string[]
                                  , cancelAdd: () => void
                                  , confirmAdd: (p: ProductCatalogueEntry) => Promise<void>
                                  }
@@ -21,7 +22,7 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
   constructor(props: AddProductProps) {
     super(props)
 
-    this.state = { filteredProducts: new FilteredProducts(props.products)
+    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories)
                  , addedProductCodes: []
                  }
   }
@@ -34,6 +35,10 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
   flagChanged = (changedFlag: string) => {
     this.setState({ filteredProducts: this.state.filteredProducts.toggleFlag(changedFlag)
                   })
+  }
+
+  categoryChanged = (changedCategory: string | null) => {
+    this.setState({ filteredProducts: this.state.filteredProducts.byCategory(changedCategory) });
   }
 
   confirmAdd = (p: ProductCatalogueEntry) => {
@@ -58,8 +63,11 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
         </div>
         <ProductFilters searchString={this.state.filteredProducts.searchString}
                         flags={this.state.filteredProducts.flags}
+                        categories={this.state.filteredProducts.allCategories}
+                        category={this.state.filteredProducts.category}
                         searchChanged={this.searchChanged}
-                        flagChanged={this.flagChanged} />
+                        flagChanged={this.flagChanged}
+                        categoryChanged={this.categoryChanged} />
         <ProductList products={this.state.filteredProducts.products}
                      cataloguePopulated={!!this.props.products.length}
                      addProduct={this.confirmAdd} />

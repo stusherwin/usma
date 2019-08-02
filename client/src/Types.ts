@@ -11,6 +11,8 @@ export type ProductCatalogueEntry = { code: string
                                     , organic: boolean
                                     , addedSugar: boolean
                                     , vegan: boolean
+                                    , category: string
+                                    , brand: string
                                     }
 
 export type Household = { id: number

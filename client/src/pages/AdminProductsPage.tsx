@@ -9,6 +9,7 @@ import { FilteredProducts } from '../common/FilteredProducts'
 import { ProductFilters } from '../components/ProductFilters'
 
 export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
+                                        , categories: string[]
                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                         , reload: () => Promise<void>
                                         }
@@ -22,7 +23,7 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
   constructor(props: AdminProductsPageProps) {
     super(props)
 
-    this.state = { filteredProducts: new FilteredProducts(props.products)
+    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories)
                  , uploading: false
                  , uploadedFile: undefined
                  }
@@ -38,10 +39,14 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
                   })
   }
 
+  categoryChanged = (changedCategory: string | null) => {
+    this.setState({ filteredProducts: this.state.filteredProducts.byCategory(changedCategory) });
+  }
+
   startUpload = () => {
     this.setState({ uploading: true
                   , uploadedFile: undefined
-                  , filteredProducts: new FilteredProducts(this.props.products)
+                  , filteredProducts: new FilteredProducts(this.props.products, this.props.categories)
                   })
   }
 
@@ -56,7 +61,7 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
       .then(_ => {
         this.setState({ uploading: false
                       , uploadedFile: undefined
-                      , filteredProducts: new FilteredProducts(this.props.products)
+                      , filteredProducts: new FilteredProducts(this.props.products, this.props.categories)
                       })
       })
   }
@@ -86,8 +91,11 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
         {!this.state.uploading && 
           <ProductFilters searchString={this.state.filteredProducts.searchString}
                           flags={this.state.filteredProducts.flags}
+                          categories={this.state.filteredProducts.allCategories}
+                          category={this.state.filteredProducts.category}
                           searchChanged={this.searchChanged}
-                          flagChanged={this.flagChanged} />
+                          flagChanged={this.flagChanged}
+                          categoryChanged={this.categoryChanged} />
         }
         {this.state.uploading && 
           <div className="bg-product-lightest px-2 py-4 shadow-inner-top">

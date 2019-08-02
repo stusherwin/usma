@@ -17,6 +17,8 @@ module ProductCatalogueEntry where
                                                      , organic :: Bool
                                                      , addedSugar :: Bool
                                                      , vegan :: Bool
+                                                     , category :: String
+                                                     , brand :: String
                                                      } deriving (Eq, Show, Generic)
   instance ToJSON ProductCatalogueEntry
   instance FromJSON ProductCatalogueEntry

@@ -6,7 +6,6 @@ import { Router } from '../common/Router'
 import { CurrentOrder } from '../components/CurrentOrderForHousehold'
 import { PastHouseholdOrders } from '../components/PastHouseholdOrders'
 import { HouseholdPayments } from '../components/HouseholdPayments'
-import { ApiError } from '../ServerApi'
 import { Collapsible } from '../common/Collapsible'
 import { RouterLink } from '../common/RouterLink'
 import { EditHousehold } from '../components/EditHousehold'
@@ -18,6 +17,7 @@ export interface HouseholdPageProps { household: Household
                                     , pastHouseholdOrders: PastHouseholdOrder[]
                                     , payments: HouseholdPayment[]
                                     , products: ProductCatalogueEntry[]
+                                    , categories: string[]
                                     , households: Household[]
                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                     , reload: () => Promise<void>
@@ -80,6 +80,7 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                       currentHouseholdOrder={this.props.currentHouseholdOrder}
                       currentHouseholdOrders={this.props.currentHouseholdOrders}
                       products={this.props.products}
+                      categories={this.props.categories}
                       households={this.props.households}
                       expanded={this.state.expanded == 'orders'}
                       otherExpanding={!!this.state.expanded && this.state.expanded != 'orders'}

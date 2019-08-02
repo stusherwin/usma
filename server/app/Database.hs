@@ -11,6 +11,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 , replaceProductCatalogue, acceptCatalogueUpdates
+                , getProductCatalogueCategories
                 , getGroup
                 ) where
   import Control.Monad (mzero, when, void)
@@ -190,11 +191,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     pce_glutenFree :: Bool,
     pce_organic :: Bool,
     pce_addedSugar :: Bool,
-    pce_vegan :: Bool
+    pce_vegan :: Bool,
+    pce_category :: String,
+    pce_brand :: String
   }
 
   instance FromRow ProductCatalogueEntryData where
-    fromRow = ProductCatalogueEntryData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+    fromRow = ProductCatalogueEntryData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
@@ -780,11 +783,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
            , ce.organic
            , ce.added_sugar
            , ce.vegan
+           , ce.category
+           , ce.brand
       from catalogue_entry ce
       inner join vat_rate v on ce.vat_rate = v.code
     |]
     close conn
-    return $ (rEntries :: [ProductCatalogueEntryData]) <&> \(ProductCatalogueEntryData { pce_code, pce_name, pce_priceExcVat, pce_priceIncVat, pce_vatRate, pce_biodynamic, pce_fairTrade, pce_glutenFree, pce_organic, pce_addedSugar, pce_vegan }) -> ProductCatalogueEntry pce_code pce_name pce_priceExcVat pce_priceIncVat pce_vatRate pce_biodynamic pce_fairTrade pce_glutenFree pce_organic pce_addedSugar pce_vegan
+    return $ (rEntries :: [ProductCatalogueEntryData]) <&> \(ProductCatalogueEntryData { pce_code, pce_name, pce_priceExcVat, pce_priceIncVat, pce_vatRate, pce_biodynamic, pce_fairTrade, pce_glutenFree, pce_organic, pce_addedSugar, pce_vegan, pce_category, pce_brand }) -> ProductCatalogueEntry pce_code pce_name pce_priceExcVat pce_priceIncVat pce_vatRate pce_biodynamic pce_fairTrade pce_glutenFree pce_organic pce_addedSugar pce_vegan pce_category pce_brand
 
   replaceProductCatalogue :: ByteString -> UTCTime -> [ProductCatalogueData] -> IO ()
   replaceProductCatalogue connectionString date entries = do
@@ -857,3 +862,14 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       (Only key)
     close conn
     return $ listToMaybe $ fmap fromOnly $ (result :: [Only Int])
+
+  getProductCatalogueCategories :: ByteString -> IO [String]
+  getProductCatalogueCategories connectionString = do
+    conn <- connectPostgreSQL connectionString
+    results <- query_ conn [sql|
+      select distinct category
+      from catalogue_entry ce
+      order by category
+    |]
+    close conn
+    return $ fmap fromOnly $ (results :: [Only String])

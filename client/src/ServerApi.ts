@@ -39,6 +39,10 @@ const query = {
 
   productCatalogue(): Promise<ProductCatalogueEntry[]> {
     return Http.get<ProductCatalogueEntry[]>(groupUrl('/query/product-catalogue'))
+  },
+
+  productCatalogueCategories(): Promise<string[]> {
+    return Http.get<string[]>(groupUrl('/query/product-catalogue-categories'))
   }
 }
 

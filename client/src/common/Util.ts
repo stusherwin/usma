@@ -16,4 +16,8 @@ export class Util {
     
     return amount.toFixed(2)
   }
+
+  static toTitleCase(str: string): string {
+    return str.split(/\s+/).map(s => s.substr(0, 1).toUpperCase() + s.substr(1).toLowerCase()).join(' ');
+  }
 }
