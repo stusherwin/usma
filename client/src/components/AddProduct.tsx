@@ -68,8 +68,8 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
         </div>
         <ProductFilters searchString={this.state.filteredProducts.searchString}
                         flags={this.state.filteredProducts.flags}
-                        categories={this.state.filteredProducts.allCategories}
-                        brands={this.state.filteredProducts.allBrands}
+                        categories={this.state.filteredProducts.categories}
+                        brands={this.state.filteredProducts.brands}
                         category={this.state.filteredProducts.category}
                         brand={this.state.filteredProducts.brand}
                         searchChanged={this.searchChanged}

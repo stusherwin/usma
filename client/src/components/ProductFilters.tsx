@@ -24,13 +24,13 @@ export const ProductFilters = ({searchString, flags, categories, brands, searchC
       <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={searchString} onChange={e => searchChanged(e.target.value)} />
     </div>
     <div className="relative mt-2 flex space-between">
-        <select className="mr-1 flex-no-shrink flex-grow" onChange={e => categoryChanged(e.target.value)}>
+        <select className="mr-1" style={{flexBasis: '50%'}} onChange={e => categoryChanged(e.target.value)}>
           <option key="" value="">All categories</option>
           {categories.filter(c => !/^\s*$/.test(c)).map(c => 
             <option key={c} value={c}>{Util.toTitleCase(c.replace(';', ','))}</option>
           )}
         </select>
-        <select className="ml-1 flex-no-shrink flex-grow" onChange={e => brandChanged(e.target.value)}>
+        <select className="ml-1" style={{flexBasis: '50%'}} onChange={e => brandChanged(e.target.value)}>
           <option key="" value="">All brands</option>
           {brands.filter(b => !/^\s*$/.test(b)).map(b => 
             <option key={b} value={b}>{Util.toTitleCase(b.replace(';', ','))}</option>

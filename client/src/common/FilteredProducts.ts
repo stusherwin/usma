@@ -12,9 +12,11 @@ export class FilteredProducts {
   brand: string | null
   allCategories: string[]
   allBrands: string[]
+  categories: string[]
+  brands: string[]
   productFilter?: (p: ProductCatalogueEntry) => boolean
 
-  constructor(allProducts: ProductCatalogueEntry[], allCategories: string[], allBrands: string[], products?: ProductCatalogueEntry[], searchString: string = '', flags: ProductFlags = emptyFlags, category: string | null = null, brand: string | null = null, productFilter?: (p: ProductCatalogueEntry) => boolean) {
+  constructor(allProducts: ProductCatalogueEntry[], allCategories: string[], allBrands: string[], products?: ProductCatalogueEntry[], searchString: string = '', flags: ProductFlags = emptyFlags, category: string | null = null, brand: string | null = null, productFilter?: (p: ProductCatalogueEntry) => boolean, categories?: string[], brands?: string[]) {
     this.allProducts = allProducts;
     this.allCategories = allCategories;
     this.allBrands = allBrands;
@@ -24,6 +26,8 @@ export class FilteredProducts {
     this.category = category;
     this.brand = brand;
     this.productFilter = productFilter
+    this.categories = categories || allCategories
+    this.brands = brands || allBrands
   }
 
   search = (searchString: string) => {
@@ -48,10 +52,10 @@ export class FilteredProducts {
   }
 
   filter = (productFilter: (p: ProductCatalogueEntry) => boolean) => {
-    return this.applyFilters(this.searchString, this.flags, this.category, this.brand, productFilter)
+    return this.applyFilters(this.searchString, this.flags, this.category, this.brand, productFilter);
   }
 
-  private applyFilters = (searchString: string, flags: ProductFlags, category: string | null, brand: string | null, productFilter?: (p: ProductCatalogueEntry) => boolean) => {
+  private applyFilters = (searchString: string, flags: ProductFlags, category: string | null, brand: string | null, productFilter: ((p: ProductCatalogueEntry) => boolean) | undefined) => {
     var filteredProducts = this.allProducts
 
     if(searchString.length) {
@@ -87,6 +91,11 @@ export class FilteredProducts {
       filteredProducts = filteredProducts.filter(productFilter)
     }
 
-    return new FilteredProducts(this.allProducts, this.allCategories, this.allBrands, filteredProducts, searchString, flags, category, brand, productFilter)
+    let brandProducts = (category? this.allProducts : filteredProducts).filter(p => !brand || p.brand === brand);
+    let categories = brandProducts.map(p => p.category).reduce((cs, c) => cs.indexOf(c) === -1? [...cs, c] : cs, <string[]>[]).sort();
+    let categoryProducts = (brand? this.allProducts : filteredProducts).filter(p => !category || p.category === category);
+    let brands = categoryProducts.map(p => p.brand).reduce((bs, b) => bs.indexOf(b) === -1? [...bs, b] : bs, <string[]>[]).sort() ;
+
+    return new FilteredProducts(this.allProducts, this.allCategories, this.allBrands, filteredProducts, searchString, flags, category, brand, productFilter, categories, brands)
   }
 }
