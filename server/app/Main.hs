@@ -30,8 +30,10 @@ module Main where
   import Data.Time.Calendar (Day)
   import System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
   import Control.Monad (mzero, when, void)
-  import Data.ByteString (ByteString)
-  import Data.ByteString as B (unpack)
+  import qualified Data.ByteString as B (ByteString)
+  import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, writeFile, readFile)
+  import qualified Data.ByteString.Lazy.Char8 as C (unpack)
+
   import Data.Csv as Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
   import Data.Vector as V (fromList)
 
@@ -51,11 +53,10 @@ module Main where
 
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
-  import qualified Data.ByteString.Lazy as L
-  import qualified Data.ByteString.Lazy.Char8 as C
   import Data.Text.Encoding
   import System.IO (hFlush, stdout)
   import Control.Exception (handle, SomeException(..))
+
 
   data CsvItem = CsvItem { csvName :: String
                          , csvCode :: String
@@ -106,25 +107,26 @@ module Main where
     handleException :: HttpException -> IO (Maybe ProductData)
     handleException _ = return Nothing
 
-  fetchProductImage :: String -> IO (Maybe L.ByteString)
-  fetchProductImage code = handle handleException $ do 
-    let dir = "client/static/product-images/"
-    let file = dir ++ code ++ ".jpg"
-    exists <- doesFileExist file 
-    when (not exists) $ do
-      createDirectoryIfMissing True dir
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          imageData <- simpleHttp (imageUrl r)
-          L.writeFile file imageData
-        _ -> return ()
-    exists <- doesFileExist file 
-    image <- L.readFile $ if exists then file else "client/static/img/404.jpg"
-    return $ Just image
+  fetchProductImage :: B.ByteString -> String -> IO (Maybe L.ByteString)
+  fetchProductImage conn code = handle handleException $ do 
+    image <- D.getProductImage conn code
+    case image of
+      Just i -> return $ Just $ L.fromStrict i
+      _ -> do
+        productData <- fetchProductData code
+        case productData of
+          Just r -> do
+            imageData <- simpleHttp (imageUrl r)
+            D.saveProductImage conn code $ L.toStrict imageData
+            return $ Just $ imageData
+          _ -> do
+            img <- L.readFile "client/static/img/404.jpg"
+            return $ Just $ img
     where
     handleException :: HttpException -> IO (Maybe L.ByteString)
-    handleException _ = return Nothing
+    handleException _ = do
+      img <- L.readFile "client/static/img/404.jpg"
+      return $ Just $ img
   
   main :: IO ()
   main = do
@@ -215,7 +217,7 @@ module Main where
 
     productImage :: String -> Handler L.ByteString
     productImage code = do
-      image <- liftIO $ fetchProductImage code
+      image <- liftIO $ fetchProductImage conn code
       case image of
         Just i -> return i
         _ -> throwError err404
@@ -375,12 +377,12 @@ module Main where
       date <- liftIO $ getCurrentTime
       liftIO $ D.acceptCatalogueUpdates conn groupId date orderId householdId
 
-  findGroup :: ByteString -> Text -> IO (Maybe Int)
+  findGroup :: B.ByteString -> Text -> IO (Maybe Int)
   findGroup conn groupKey = do
     rotaId <- D.getGroup conn (T.unpack groupKey)
     return rotaId
 
-  findGroupOr404 :: ByteString -> Text -> (Int -> Handler a) -> Handler a
+  findGroupOr404 :: B.ByteString -> Text -> (Int -> Handler a) -> Handler a
   findGroupOr404 conn groupKey handler = do
     groupId <- liftIO $ findGroup conn groupKey
     case groupId of

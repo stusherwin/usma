@@ -11,7 +11,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
                 , replaceProductCatalogue, acceptCatalogueUpdates
-                , getProductCatalogueCategories, getProductCatalogueBrands
+                , getProductCatalogueCategories, getProductCatalogueBrands, getProductImage, saveProductImage
                 , getGroup
                 ) where
   import Control.Monad (mzero, when, void)
@@ -19,7 +19,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   import Database.PostgreSQL.Simple
   import Database.PostgreSQL.Simple.ToField
   import Database.PostgreSQL.Simple.ToRow
-  import Database.PostgreSQL.Simple.FromField
+  import Database.PostgreSQL.Simple.FromField (FromField(..))
   import Database.PostgreSQL.Simple.FromRow
   import Database.PostgreSQL.Simple.Time (Unbounded(..))
   import Database.PostgreSQL.Simple.SqlQQ
@@ -884,3 +884,24 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     |]
     close conn
     return $ fmap fromOnly $ (results :: [Only String])
+
+  getProductImage :: ByteString -> String -> IO (Maybe ByteString)
+  getProductImage connectionString code = do
+    conn <- connectPostgreSQL connectionString
+    results <- query conn [sql|
+      select image
+      from product_image
+      where code = ?
+    |] (Only code)
+    close conn
+    return $ listToMaybe $ fmap fromOnly $ (results :: [Only ByteString])
+
+  saveProductImage :: ByteString -> String -> ByteString -> IO ()
+  saveProductImage connectionString code image = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      insert into product_image (code, image)
+      values (?, ?)
+      ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
+    |] (code, Binary image)
+    close conn
