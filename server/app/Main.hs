@@ -228,7 +228,7 @@ module Main where
       let items = case order of
                     Nothing -> []
                     Just o -> map toCsvItem $ CollectiveOrder.items o
-      return $ addHeader "attachment; filename=\"order.csv  \"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
+      return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
       where
       toCsvItem (OrderItem { OrderItem.productName = name
                            , OrderItem.productCode = code
@@ -245,7 +245,7 @@ module Main where
         Just o -> do
           householdOrders <- liftIO $ D.getHouseholdOrders conn groupId
           let items = (map toCsvItem) . concat . withHouseholdName . (forOrder o) $ householdOrders
-          return $ addHeader "attachment; filename=\"order.csv  \"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
+          return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
       where
       forOrder o = filter ((== CollectiveOrder.id o) . HouseholdOrder.orderId)
       withHouseholdName = map (\(HouseholdOrder { HouseholdOrder.householdName = n, HouseholdOrder.items = is }) -> map (n,) is)
