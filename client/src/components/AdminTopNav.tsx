@@ -24,7 +24,7 @@ export const AdminTopNav = () => {
       text: 'Households',
       path: '/admin/households',
       iconClassName: 'bg-img-household',
-      className: 'bg-household-light',
+      className: 'bg-household-light text-black hover:text-black',
       current: Router.isCurrent('/admin/households'),
     }
   ]
