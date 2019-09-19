@@ -18,8 +18,8 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
     const currentOrder = this.props.currentOrder
   
     return (
-      <div>
-        <div className="flex justify-end mr-2 mb-2">
+      <div className="bg-white shadow-inner-top border-t">
+        <div className="flex justify-end mr-2 mt-4 mb-2">
           <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
         </div>
         <table className="border-collapse w-full">

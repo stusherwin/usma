@@ -63,7 +63,8 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
   }
 
   render() {
-    const currentOrder = this.props.currentOrder
+    const order = this.props.currentOrder
+    const householdOrders = this.props.currentHouseholdOrders
 
     return (
       <Collapsible className="min-h-20"
@@ -74,131 +75,195 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                        <h2 className="leading-none ml-20 relative flex">
                          Current order
                        </h2>
-                       <h3 className="flex justify-between ml-20 mt-4 mb-2">
-                         {this.renderStatus()}
-                         <span className="flex justify-end">
-                           <span>Total:</span>
-                           <span className="w-24 font-bold text-right">{this.renderTotal()}</span>
-                         </span>
+                       <h3 className="flex justify-between ml-20 mt-4">
+                         <CurrentOrderStatus order={order} householdOrders={householdOrders} />
+                         <CurrentOrderTotal order={order} householdOrders={householdOrders} />
                        </h3>
-                       {this.renderButtons()}
+                       <CurrentOrderButtons order={order} householdOrders={householdOrders} />
+                       <CurrentOrderMessages order={order} householdOrders={householdOrders} />
+                       <CurrentOrderTabs order={order} tab={this.state.tab} setTab={tab => this.setState({tab})} />
                      </div>
                    }>
-        <div className="bg-grey-light shadow-inner-top border-t">
-          { !currentOrder?
-            <div className="px-2 py-4">
-              <div className="my-2"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order currently in progress</div>
-              <div className="flex justify-start">
-                <button onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New order</button>
-              </div>
-            </div>
-          : <div>
-              {this.renderMessages()}
-              <div className="flex">
-                <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'households'})}} className={classNames("flex-grow text-center p-2 no-underline text-black hover:text-black ml-1 rounded-t-lg",      { "bg-white": this.state.tab == 'households', "bg-grey-lightest shadow-inner-bottom": this.state.tab != 'households' })}>Households</a>
-                <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-list'})}} className={classNames("flex-grow text-center p-2 no-underline text-black hover:text-black ml-1 rounded-t-lg",      { "bg-white": this.state.tab == 'product-list', "bg-grey-lightest shadow-inner-bottom": this.state.tab != 'product-list' })}>Product list</a>
-                <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-codes'})}} className={classNames("flex-grow text-center p-2 no-underline text-black hover:text-black ml-1 rounded-t-lg mr-1", { "bg-white": this.state.tab == 'product-codes', "bg-grey-lightest shadow-inner-bottom": this.state.tab != 'product-codes' })}>Product codes</a>
-              </div>
-              <div className="bg-white pt-2">
-                {this.state.tab == 'households' &&
-                  <HouseholdOrders order={currentOrder}
-                                   householdOrders={this.props.currentHouseholdOrders}
-                                   households={this.props.households}
-                                   reload={this.props.reload}
-                                   request={this.props.request} />
-                }
-                {this.state.tab == 'product-list' && 
-                  <CurrentOrderItems currentOrder={currentOrder} />
-                }
-                {this.state.tab == 'product-codes' && 
-                  <CurrentOrderProductCodes currentOrder={currentOrder} />
-                }
-              </div>
-          </div>
-          }
-        </div>
+          { order && (
+              this.state.tab == 'households'?
+              <HouseholdOrders order={order}
+                               householdOrders={householdOrders}
+                               households={this.props.households}
+                               reload={this.props.reload}
+                               request={this.props.request} />
+            : this.state.tab == 'product-list'?
+              <CurrentOrderItems currentOrder={order} />
+            : <CurrentOrderProductCodes currentOrder={order} />
+          )}
       </Collapsible>
     )
   }
+}
 
-  renderStatus = () => {
-    return (
-      <span>
-        {!this.props.currentOrder?
-          <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Available</span>
-        : this.props.currentOrder.isComplete?
-          <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
-        : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
-        }
-      </span>
-    )
-  }
-  
-  renderTotal = () => {
-    const order = this.props.currentOrder
-    return !order?
-      <Money amount={0} />
-    : order.oldTotalIncVat === null || order.oldTotalIncVat == order.totalIncVat?
-      <Money amount={order.totalIncVat} />
-    : <span>
-        <span className="line-through"><Money amount={order.oldTotalIncVat} /></span> 
-        <Money className="text-red font-bold" amount={order.totalIncVat} />
-      </span>
+interface Props {
+  order: CollectiveOrder | null
+  householdOrders: HouseholdOrder[]
+}
+
+interface CurrentOrderTabsProps {
+  order: CollectiveOrder | null
+  tab: 'households' | 'product-list' | 'product-codes'
+  setTab: (tab: 'households' | 'product-list' | 'product-codes') => void
+}
+
+const CurrentOrderTabs = ({order, tab, setTab}: CurrentOrderTabsProps) => {
+  if(!order) {
+    return <span></span>;
   }
 
-  renderMessages = () => {
-    const order = this.props.currentOrder
-    const householdOrders = this.props.currentHouseholdOrders
-
-    const allComplete = householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
-    const orderMinimumReached = order && order.totalIncVat >= 25000
-    const allHouseholdsUpToDate = !!this.props.currentOrder && this.props.currentOrder.allHouseholdsUpToDate;
-
-    return (
-      <div className="flex text-black px-2 py-4">
-        <Icon type={householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
-        { !householdOrders.length?
-          <span>Waiting for households to join</span>
-        : !allHouseholdsUpToDate?
-          <span>Waiting for all households to accept latest catalogue updates</span>
-        : !orderMinimumReached?
-          <span>Waiting for &pound;250.00 order minimum</span>
-        : !allComplete?
-          <span>Waiting for all orders to be completed</span>
-          // : !allPaid?
-          //   <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
-        : <span>Order can now be placed</span>
-        }
-      </div>
-    )
-  }
-
-  renderButtons = () => {
-    const order = this.props.currentOrder
-    if(!order) return;
-
-    const householdOrders = this.props.currentHouseholdOrders
-
-    const allComplete = householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
-    const orderMinimumReached = order && order.totalIncVat >= 25000
-
-    const deleteOrderPossible = !householdOrders.length
-    const placeOrderPossible = !!householdOrders.length
-    const placeOrderAllowed = allComplete /*&& allPaid*/ && orderMinimumReached
-    const abandonOrderPossible = !!householdOrders.length
-
-    return (
-      <div className="flex flex-wrap content-start items-start">
-        {deleteOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
-        }
-        {abandonOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
-        }
-        {placeOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); this.placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
-        }
+  /* <div className="flex justify-end">
+    <div className="p-1 border border-order-darker rounded-full flex justify-end items-baseline overflow-hidden bg-grey-lighter shadow-inner-top">
+      <a href="#" className={classNames("px-2 py-1 rounded-full text-xs uppercase tracking-wide no-underline text-black hover:text-black hover:no-underline hover:bg-order-dark hover:border hover:border-order-darker", { 
+        "bg-order-dark border border-order-darker": this.state.tab == 'households', 
+        "b": this.state.tab != 'households' 
+      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'households'})}}>Households</a>
+      <a href="#" className={classNames("px-2 py-1 rounded-full text-xs uppercase tracking-wide uppercase no-underline text-black hover:text-black hover:no-underline hover:bg-order-dark hover:border hover:border-order-darker", { 
+        "bg-order-dark border border-order-darker": this.state.tab == 'product-list', 
+        "b": this.state.tab != 'product-list' 
+      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-list'})}}>Product list</a>
+      <a href="#" className={classNames("px-2 py-1 rounded-full text-xs uppercase tracking-wide uppercase no-underline text-black hover:text-black hover:no-underline hover:bg-order-dark hover:border hover:border-order-darker", {
+        "bg-order-dark border border-order-darker": this.state.tab == 'product-codes', 
+        "b": this.state.tab != 'product-codes' 
+      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-codes'})}}>Product codes</a>
     </div>
-    )
+  </div> */
+  /* <div className="flex justify-end">
+    View: 
+    <input type="radio" name="tab" id="households" checked={this.state.tab == 'households'} className="ml-4 mr-1 nudge-d-1"
+           onClick={e => e.stopPropagation() } onChange={e => { if(e.target.checked) { this.setState({tab: 'households'}); }}} />
+    <label onClick={e => e.stopPropagation() } htmlFor="households">Households</label>
+    <input type="radio" name="tab" id="product-list" checked={this.state.tab == 'product-list'} className="ml-4 mr-1 nudge-d-1" 
+           onClick={e => e.stopPropagation() } onChange={e => { if(e.target.checked) { this.setState({tab: 'product-list'}); }}} />
+    <label onClick={e => e.stopPropagation() } htmlFor="product-list">Product list</label>
+    <input type="radio" name="tab" id="product-codes" checked={this.state.tab == 'product-codes'} className="ml-4 mr-1 nudge-d-1"
+           onClick={e => e.stopPropagation() } onChange={e => { if(e.target.checked) {  this.setState({tab: 'product-codes'}); }}} />
+    <label onClick={e => e.stopPropagation() } htmlFor="product-codes">Product codes</label>
+  </div> */
+  /* <div className="flex justify-end items-baseline">
+    <span className="mr-2">View:</span>
+    <a href="#" className={classNames("border rounded-l-sm px-2 py-1 no-underline hover:no-underline", {
+        "bg-white border-order-darker text-black shadow-sm-inner-top hover:text-black": this.state.tab == 'households', 
+        "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": this.state.tab != 'households' 
+      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'households'}); }}>Households</a>
+    <a href="#" className={classNames("border px-2 py-1 no-underline hover:no-underline", {
+        "bg-white border-order-darker text-black shadow-sm-inner-top hover:text-black": this.state.tab == 'product-list', 
+        "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": this.state.tab != 'product-list' 
+      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-list'}); }}>Product list</a>
+    <a href="#" className={classNames("border rounded-r-sm px-2 py-1 no-underline hover:no-underline", {
+        "bg-white border-order-darker text-black shadow-sm-inner-top hover:text-black": this.state.tab == 'product-codes', 
+        "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": this.state.tab != 'product-codes' 
+      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-codes'}); }}>Product codes</a>
+  </div> */
+  return (
+    <div className="mt-4 flex justify-end items-baseline">
+      <div className="flex justify-end rounded-sm items-baseline border border-order-darker p-1 bg-white shadow-sm-inner-top">
+        <a href="#" className={classNames("border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
+            "bg-white border-none text-black hover:text-black": tab == 'households', 
+            "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'households' 
+          })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('households'); }}>Households</a>
+        <a href="#" className={classNames("ml-1 border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
+            "bg-white border-none text-black hover:text-black": tab == 'product-list', 
+            "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'product-list' 
+          })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-list'); }}>Product list</a>
+        <a href="#" className={classNames("ml-1 border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
+            "bg-white border-none text-black hover:text-black": tab == 'product-codes', 
+            "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'product-codes' 
+          })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-codes'); }}>Product codes</a>
+      </div>
+    </div> 
+  )
+}
+
+const CurrentOrderStatus = ({order}: Props) => {
+  return (
+    <span>
+      {!order?
+        <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />No current order</span>
+      : order.isComplete?
+        <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
+      : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
+      }
+    </span>
+  )
+}
+
+const CurrentOrderTotal = ({order}: Props) => {
+  if(!order) {
+    return <span></span>;
   }
+
+  return (
+    <span className="flex justify-end">
+      <span>Total:</span>
+      <span className="w-24 font-bold text-right">
+      { order.oldTotalIncVat === null || order.oldTotalIncVat == order.totalIncVat?
+        <Money amount={order.totalIncVat} />
+      : <span>
+          <span className="line-through"><Money amount={order.oldTotalIncVat} /></span> 
+          <Money className="text-red font-bold" amount={order.totalIncVat} />
+        </span>
+      }
+      </span>
+    </span>
+  );
+}
+
+const CurrentOrderMessages = ({order, householdOrders}: Props) => {
+  if(!order) {
+    return <span></span>;
+  }
+
+  const allComplete = householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
+  const orderMinimumReached = !!order && order.totalIncVat >= 25000
+  const allHouseholdsUpToDate = !!order && order.allHouseholdsUpToDate;
+
+  return (
+    <div className="mt-4 bg-blue-lighter border border-blue-light flex text-black px-2 py-1">
+      <Icon type={householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
+      { !householdOrders.length?
+        <span>Waiting for households to join</span>
+      : !allHouseholdsUpToDate?
+        <span>Waiting for all households to accept latest catalogue updates</span>
+      : !orderMinimumReached?
+        <span>Waiting for &pound;250.00 order minimum</span>
+      : !allComplete?
+        <span>Waiting for all orders to be completed</span>
+        // : !allPaid?
+        //   <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
+      : <span>Order can now be placed</span>
+      }
+    </div>
+  )
+}
+
+const CurrentOrderButtons = ({order, householdOrders}: Props) => {
+  const allComplete = householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
+  const orderMinimumReached = order && order.totalIncVat >= 25000
+
+  const deleteOrderPossible = !householdOrders.length
+  const placeOrderPossible = !!householdOrders.length
+  const placeOrderAllowed = allComplete /*&& allPaid*/ && orderMinimumReached
+  const abandonOrderPossible = !!householdOrders.length
+
+  return (
+    <div className="mt-2 flex flex-wrap content-start items-start">
+      {!order?
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start new order</button>
+      : [
+        deleteOrderPossible &&
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
+        ,
+        abandonOrderPossible &&
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
+        ,
+        placeOrderPossible &&
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); this.placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
+      ]}
+  </div>
+  )
 }
