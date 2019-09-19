@@ -15,10 +15,13 @@ export interface CurrentOrderItemsState {
                                      
 export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, CurrentOrderItemsState> {
   render() {
-    const currentOrder = this.props.currentOrder
+    const order = this.props.currentOrder
   
-    return (
-      <div className="bg-white shadow-inner-top border-t">
+    return !order.items.length?
+      <div className="px-2 py-4 text-grey-darker">
+        <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet
+      </div>
+    : <div>
         <div className="flex justify-end mr-2 mt-4 mb-2">
           <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
         </div>
@@ -29,7 +32,7 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
               <div className="flex justify-end">
                 <span>VAT:</span>
                 <span className={classNames('w-24 text-right')}>
-                  <span><Money amount={currentOrder.totalIncVat - currentOrder.totalExcVat} /></span>
+                  <span><Money amount={order.totalIncVat - order.totalExcVat} /></span>
                 </span>
               </div>
             </td>
@@ -38,13 +41,12 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
             <div className="flex justify-end font-bold">
               <span>Total:</span>
               <span className="w-24 text-right">
-                <Money className="flex-no-shrink flex-no-grow text-right" amount={currentOrder.totalIncVat} />
+                <Money className="flex-no-shrink flex-no-grow text-right" amount={order.totalIncVat} />
               </span>
             </div>
           </td>
         </table>
       </div>
-    )
   }
 
   renderItem = (i: OrderItem, ix: number) => 

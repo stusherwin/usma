@@ -34,16 +34,18 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
     const order = this.props.order
 
     return (
-      <div className="bg-household-lighter shadow-inner-top border-t">
-        {!this.props.householdOrders.length?
+      // <div className="bg-household-lighter shadow-inner-top border-t">
+        !this.props.householdOrders.length?
           <div className="px-2 py-4 text-grey-darker">
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
           </div>
         : <div> 
-            <div className="flex justify-end mt-4 mb-4 mr-2">
-              <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
-            </div>
-            <table className="border-collapse w-full">
+            {!!order.items.length &&
+              <div className="flex justify-end mt-4 mr-2">
+                <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+              </div>
+            }
+            <table className="mt-4 border-collapse w-full">
               <tbody>
                 {this.props.householdOrders.map((ho, i) => {
                   let status = 
@@ -64,7 +66,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                      otherExpanding={!!this.state.expanded && this.state.expanded != ho.householdId}
                                      toggle={this.toggle(ho)}
                                      header={() =>
-                                       <div className={classNames('p-2 bg-household-light min-h-16')}>
+                                       <div className={classNames('p-2 bg-household-lighter min-h-16')}>
                                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
                                          <h3 className="leading-none ml-20 relative flex">
                                            {ho.householdName}
@@ -105,8 +107,8 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
               </tbody>
             </table>
           </div>
-        }
-      </div>
+        // }
+      // </div>
     )
   }
 }

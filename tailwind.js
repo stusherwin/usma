@@ -50,8 +50,8 @@ let colors = {
   'household-dark': '#2f6671',
   'household': '#34a8c0',
   'household-light': '#7dd5e2',
-  'household-lighter': '#caeff4',
-  'household-lightest': '#dff2f5',
+  'household-lighter': '#c3e6eb', //'#caeff4',
+  'household-lightest': '#e3f1f4', //'#dff2f5',
 
   'order': '#f0faa0', //#fff07e ?
   'order-dark': '#ffe85c',

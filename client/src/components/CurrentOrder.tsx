@@ -79,22 +79,29 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                          <CurrentOrderStatus order={order} householdOrders={householdOrders} />
                          <CurrentOrderTotal order={order} householdOrders={householdOrders} />
                        </h3>
-                       <CurrentOrderButtons order={order} householdOrders={householdOrders} />
-                       <CurrentOrderMessages order={order} householdOrders={householdOrders} />
-                       <CurrentOrderTabs order={order} tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                       <CurrentOrderButtons order={order} householdOrders={householdOrders}
+                          newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
+              <CurrentOrderTabs order={order} tab={this.state.tab} setTab={tab => this.setState({tab})} />
                      </div>
                    }>
-          { order && (
-              this.state.tab == 'households'?
-              <HouseholdOrders order={order}
-                               householdOrders={householdOrders}
-                               households={this.props.households}
-                               reload={this.props.reload}
-                               request={this.props.request} />
-            : this.state.tab == 'product-list'?
-              <CurrentOrderItems currentOrder={order} />
-            : <CurrentOrderProductCodes currentOrder={order} />
-          )}
+          { order && 
+            <div className={classNames("shadow-inner-top border-t", {
+              "bg-household-lightest": this.state.tab == 'households',
+              "bg-white": this.state.tab != 'households'
+            })}>
+              <CurrentOrderMessages order={order} householdOrders={householdOrders} />
+              { this.state.tab == 'households'?
+                <HouseholdOrders order={order}
+                                 householdOrders={householdOrders}
+                                 households={this.props.households}
+                                 reload={this.props.reload}
+                                 request={this.props.request} />
+              : this.state.tab == 'product-list'?
+                <CurrentOrderItems currentOrder={order} />
+              : <CurrentOrderProductCodes currentOrder={order} />
+              }
+            </div>
+          }
       </Collapsible>
     )
   }
@@ -223,7 +230,7 @@ const CurrentOrderMessages = ({order, householdOrders}: Props) => {
   const allHouseholdsUpToDate = !!order && order.allHouseholdsUpToDate;
 
   return (
-    <div className="mt-4 bg-blue-lighter border border-blue-light flex text-black px-2 py-1">
+    <div className="mt-4 mx-2 bg-blue-lighter border border-blue-light flex text-black px-2 py-1">
       <Icon type={householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
       { !householdOrders.length?
         <span>Waiting for households to join</span>
@@ -241,7 +248,16 @@ const CurrentOrderMessages = ({order, householdOrders}: Props) => {
   )
 }
 
-const CurrentOrderButtons = ({order, householdOrders}: Props) => {
+interface CurrentOrderButtonsProps {
+  order: CollectiveOrder | null
+  householdOrders: HouseholdOrder[]
+  newOrder: () => void
+  deleteOrder: () => void
+  abandonOrder: () => void
+  placeOrder: () => void
+}
+
+const CurrentOrderButtons = ({order, householdOrders, newOrder, deleteOrder, abandonOrder, placeOrder}: CurrentOrderButtonsProps) => {
   const allComplete = householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
   const orderMinimumReached = order && order.totalIncVat >= 25000
 
@@ -253,16 +269,16 @@ const CurrentOrderButtons = ({order, householdOrders}: Props) => {
   return (
     <div className="mt-2 flex flex-wrap content-start items-start">
       {!order?
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start new order</button>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new order</button>
       : [
         deleteOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
         ,
         abandonOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
         ,
         placeOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); this.placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
+          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
       ]}
   </div>
   )
