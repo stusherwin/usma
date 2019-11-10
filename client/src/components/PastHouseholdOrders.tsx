@@ -124,18 +124,20 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                   <tbody>
                                     {ho.items.map(this.renderItem)}
                                     <tr>
-                                      <td className="pt-2 pr-2 pl-2" colSpan={4}>
-                                        <div className="flex justify-end">
+                                      <td></td>
+                                      <td className="pt-2 pr-2 pl-2" colSpan={3}>
+                                        <div className="flex justify-between">
                                           <span>VAT:</span>
-                                          <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></span>
+                                          <span className={classNames('text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></span>
                                         </div>
                                       </td>
                                     </tr>
                                     <tr>
-                                      <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={4}>
-                                        <div className="flex justify-end">
+                                      <td></td>
+                                      <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={3}>
+                                        <div className="flex justify-between">
                                           <span>Total:</span>
-                                          <span className={classNames('w-24 text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
+                                          <span className={classNames('text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
                                         </div>
                                       </td>
                                     </tr>
@@ -149,8 +151,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                   </tr>
                 )}) }
                 <tr>
-                  <td className="pt-4 pl-2 pr-2 pb-4 font-bold">
-                    <div className="flex justify-end">
+                  <td className="pt-4 pl-20 pr-2 pb-4 font-bold">
+                    <div className="pl-2 flex justify-between">
                       <span>Total:</span>
                       <span className="w-24 font-bold text-right"><Money amount={total} /></span>
                     </div>
@@ -192,8 +194,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     ,
     <tr key={i.productId + '-3'}>
       <td className={classNames('pl-2 pr-2')} colSpan={3}>
-        <ProductFlags p={i} />
-        <span className="text-grey pl-4 whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
+        <span className="pr-2">
+          <ProductFlags p={i} />
+        </span>
+        <span className="text-grey whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
       </td>
     </tr>
     ]

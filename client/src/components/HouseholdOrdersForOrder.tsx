@@ -97,8 +97,8 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                   )}
                 )}
                 <tr>
-                  <td className="pt-4 pb-4 pl-2 pr-2 font-bold text-black" colSpan={3}>
-                    <div className="flex justify-end">
+                  <td className="pt-4 pb-4 pl-20 pr-2 font-bold text-black" colSpan={3}>
+                    <div className="pl-2 flex justify-between">
                       <span>Total:</span>
                       <span className="w-24 font-bold text-right"><Money amount={order.totalIncVat} /></span>
                     </div>

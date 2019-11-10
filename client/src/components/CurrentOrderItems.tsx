@@ -28,23 +28,27 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
         <table className="border-collapse w-full">
           {this.props.currentOrder.items.map(this.renderItem)}
           <tr>
-            <td className={classNames('pt-4 align-baseline px-2')} colSpan={5}>
-              <div className="flex justify-end">
+            <td></td>
+            <td className={classNames('pt-4 align-baseline px-2')} colSpan={4}>
+              <div className="flex justify-between">
                 <span>VAT:</span>
-                <span className={classNames('w-24 text-right')}>
+                <span className={classNames('text-right')}>
                   <span><Money amount={order.totalIncVat - order.totalExcVat} /></span>
                 </span>
               </div>
             </td>
           </tr>
-          <td className={classNames('pt-4 align-baseline px-2 pb-4')} colSpan={5}>
-            <div className="flex justify-end font-bold">
-              <span>Total:</span>
-              <span className="w-24 text-right">
-                <Money className="flex-no-shrink flex-no-grow text-right" amount={order.totalIncVat} />
-              </span>
-            </div>
-          </td>
+          <tr>
+            <td></td>
+            <td className={classNames('pt-4 align-baseline px-2 pb-4')} colSpan={4}>
+              <div className="flex justify-between font-bold">
+                <span>Total:</span>
+                <span className="text-right">
+                  <Money className="flex-no-shrink flex-no-grow text-right" amount={order.totalIncVat} />
+                </span>
+              </div>
+            </td>
+          </tr>
         </table>
       </div>
   }
@@ -73,11 +77,13 @@ export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, C
     </tr>
     ,
     <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2')} colSpan={3}>
-        <ProductFlags p={i} />
-        <span className="text-grey pl-4 whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
+      <td className={classNames('pl-2')} colSpan={4}>
+        <span className="pr-2">
+          <ProductFlags p={i} />
+        </span>
+        <span className="text-grey whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
       </td>   
-      <td className={classNames('pl-2 pr-2')}>&nbsp;</td>
+      {/* <td className={classNames('pl-2 pr-2')}>&nbsp;</td> */}
     </tr>
     ]
 }

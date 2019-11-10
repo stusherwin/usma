@@ -41,10 +41,11 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
         </tr>
         { discontinuedItems.map(this.renderItem(householdOrder)) }
         <tr>
-          <td className={classNames('pt-8 align-baseline px-2')} colSpan={5}>
-            <div className="flex justify-end">
+          <td></td>
+          <td className={classNames('pt-8 align-baseline px-2')} colSpan={4}>
+            <div className="flex justify-between">
               <span>VAT:</span>
-              <span className={classNames('w-24 text-right align-baseline whitespace-no-wrap')}>
+              <span className={classNames('text-right align-baseline whitespace-no-wrap')}>
                 {householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalExcVat !== null && householdOrder.oldTotalIncVat - householdOrder.oldTotalExcVat != householdOrder.totalIncVat - householdOrder.totalExcVat?
                   <span>
                     <span className="line-through"><Money amount={householdOrder.oldTotalIncVat - householdOrder.oldTotalExcVat} /></span> 
@@ -57,8 +58,9 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </td>
         </tr>
         <tr>
-          <td className={classNames('pt-4 pb-4 px-2 align-baseline font-bold')} colSpan={5}>
-            <div className="flex justify-end">
+          <td></td>
+          <td className={classNames('pt-4 pb-4 px-2 align-baseline font-bold')} colSpan={4}>
+            <div className="flex justify-between">
               <span>Total:</span>
               <span className={classNames('w-24 text-right align-baseline font-bold whitespace-no-wrap')}>
                 {householdOrder.oldTotalIncVat !== null && householdOrder.oldTotalIncVat != householdOrder.totalIncVat?
@@ -121,11 +123,13 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     </tr>
     ,
     <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2')} colSpan={3}>
+      <td className={classNames('pl-2')} colSpan={4}>
+        <span className="pr-2">
         <ProductFlags p={i} />
-        <span className="text-grey pl-4 whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
+        </span>
+        <span className="text-grey whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
       </td>
-      <td className={classNames('pl-2 pr-2')}>&nbsp;</td>
+      {/* <td className={classNames('pl-2 pr-2')}>&nbsp;</td> */}
     </tr>
     ]
 }
