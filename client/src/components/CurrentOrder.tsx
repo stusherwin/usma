@@ -206,7 +206,7 @@ const CurrentOrderTotal = ({order}: Props) => {
 
   return (
     <span className="flex justify-end">
-      <span>Total:</span>
+      {/* <span>Total:</span> */}
       <span className="w-24 font-bold text-right">
       { order.oldTotalIncVat === null || order.oldTotalIncVat == order.totalIncVat?
         <Money amount={order.totalIncVat} />
@@ -231,7 +231,7 @@ const CurrentOrderMessages = ({order, householdOrders}: Props) => {
 
   return (
     <div className="mt-4 mx-2 bg-blue-lighter border border-blue-light flex text-black px-2 py-1">
-      <Icon type={householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
+      <Icon type={!!householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
       { !householdOrders.length?
         <span>Waiting for households to join</span>
       : !allHouseholdsUpToDate?

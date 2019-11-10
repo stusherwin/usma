@@ -70,7 +70,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                        </h2>
                        <div>
                          <h3 className="flex justify-end ml-20 mt-4">
-                           <span>Total:</span>
+                           {/* <span>Total:</span> */}
                            <span className="w-24 text-right"><Money amount={this.props.household.totalPayments} /></span>
                          </h3>
                          {!this.props.readOnly && 
@@ -93,7 +93,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet
             </div>
           }
-          { this.props.payments.length &&
+          {!!this.props.payments.length &&
             <table className="border-collapse w-full">
               <tbody>
                 { this.props.payments.map((p, i) =>

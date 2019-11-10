@@ -23,7 +23,7 @@ export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePagePr
   constructor(props: HouseholdWelcomePageProps) {
     super(props)
 
-    this.state = { selectedHouseholdId: props.households.length ? props.households[0].id : undefined
+    this.state = { selectedHouseholdId: !!props.households.length ? props.households[0].id : undefined
                  , editing: null
                  , form: Form.create({ 
                      name: Field.create((v: string) => v, (v: string) => v, [Validate.required('Name is required')]),

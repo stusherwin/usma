@@ -74,7 +74,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                          <h4 className="flex justify-between ml-20 mt-4 mb-4">
                                            {status}
                                            <span className="flex justify-end">
-                                             <span>Total:</span>
+                                             {/* <span>Total:</span> */}
                                              <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
                                            </span>
                                          </h4>

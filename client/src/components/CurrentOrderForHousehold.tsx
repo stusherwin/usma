@@ -120,7 +120,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                          <h3 className="flex justify-between ml-20 mt-4 mb-2">
                            {this.renderStatus()}
                            <span className="flex justify-end">
-                             <span>Total:</span>
+                             {/* <span>Total:</span> */}
                              <span className="w-24 text-right">{this.renderTotal()}</span>
                            </span>
                          </h3>
