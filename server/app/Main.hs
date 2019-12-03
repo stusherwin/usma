@@ -50,6 +50,7 @@ module Main where
   import ProductCatalogueEntry
   import OrderItem
   import HouseholdOrderItem
+  import PastOrderItem
 
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
@@ -183,6 +184,7 @@ module Main where
                            :<|> productImage
                            :<|> collectiveOrderDownload groupKey
                            :<|> householdOrdersDownload groupKey
+                           :<|> pastHouseholdOrdersDownload groupKey
                            :<|> productCatalogueCategories
                            :<|> productCatalogueBrands
     where
@@ -254,6 +256,23 @@ module Main where
                                                    , HouseholdOrderItem.productPriceExcVat = price
                                                    , HouseholdOrderItem.itemQuantity = qty
                                                    , HouseholdOrderItem.itemTotalExcVat = total
+                                                   }) = CsvItem name code price qty total householdName
+
+    pastHouseholdOrdersDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastHouseholdOrdersDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+      orders <- liftIO $ D.getPastCollectiveOrders conn groupId
+      let o = head orders
+      householdOrders <- liftIO $ D.getPastHouseholdOrders conn groupId
+      let items = (map toCsvItem) . concat . withHouseholdName . (forOrder o) $ householdOrders
+      return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
+      where
+      forOrder o = filter ((== PastCollectiveOrder.id o) . PastHouseholdOrder.orderId)
+      withHouseholdName = map (\(PastHouseholdOrder { PastHouseholdOrder.householdName = n, PastHouseholdOrder.items = is }) -> map (n,) is)
+      toCsvItem (householdName, PastOrderItem { PastOrderItem.productName = name
+                                                   , PastOrderItem.productCode = code
+                                                   , PastOrderItem.productPriceExcVat = price
+                                                   , PastOrderItem.itemQuantity = qty
+                                                   , PastOrderItem.itemTotalExcVat = total
                                                    }) = CsvItem name code price qty total householdName
 
     productCatalogueCategories :: Handler [String]

@@ -65,6 +65,7 @@ module Api where
     :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] L.ByteString
     :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
     :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    :<|> "past-household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
     :<|> "product-catalogue-categories" :> Get '[JSON] [String]
     :<|> "product-catalogue-brands" :> Get '[JSON] [String]
  

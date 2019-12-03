@@ -1,3 +1,11 @@
+* Can't update prices - server error
+* Images not loading properly - server error (investigate - e.g. HJ160)
+* Go from order summary straight to household order
+* Auto update catalogue
+* Splitting items
+* Reconciling orders with delivery note, price changes, items missing etc
+* Lembas, other suppliers
+
 * Clone past orders -> add to current order, or create a new current order if none exists
 * Abandoned order total? 
 * What happens if you unabandon a past order? (can't)
