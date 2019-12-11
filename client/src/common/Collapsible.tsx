@@ -4,9 +4,9 @@ import * as classNames from 'classnames'
 import { Icon } from './Icon'
 
 const transitionTime = 0.25;
-const minHeight = '5rem';
 
 export interface CollapsibleProps { className?: string 
+                                  , minHeight?: number
                                   , expanded: boolean
                                   , otherExpanding: boolean
                                   , toggle: () => void
@@ -19,11 +19,13 @@ export interface CollapsibleProps { className?: string
 
 export class Collapsible extends React.Component<CollapsibleProps, {}> {
   container: React.RefObject<HTMLDivElement>
+  minHeight: string;
 
   constructor(props: CollapsibleProps) {
     super(props)
 
     this.container = React.createRef();
+    this.minHeight = ((props.minHeight || 20) / 4) + 'rem';
   }
 
   componentDidUpdate(prevProps: CollapsibleProps) {
@@ -54,7 +56,7 @@ export class Collapsible extends React.Component<CollapsibleProps, {}> {
     } else {
       el.style.height = el.scrollHeight + 'px';
       el.offsetHeight; // trigger reflow
-      el.style.height = minHeight;
+      el.style.height = this.minHeight;
     }
   }
 
@@ -80,7 +82,7 @@ export class Collapsible extends React.Component<CollapsibleProps, {}> {
   render() {
     return (
       <div ref={this.container} className={classNames('relative overflow-hidden', this.props.className)} style={{ 
-            height: minHeight,
+            height: this.minHeight,
             transition: `height ${transitionTime / 2}s ease`,
             transitionDelay: this.props.expanded? '0s' : (this.props.otherExpanding? `${transitionTime / 2}s` : '0s')
           }} onTransitionEnd={this.transitionEnded}>

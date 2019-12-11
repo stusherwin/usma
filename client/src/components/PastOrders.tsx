@@ -49,29 +49,40 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
             </div> 
           : (
-            <table className="border-collapse w-full">
-              <tbody>
-                { pastOrders.map((o, i) => ([
-                  <tr key={o.id}>
-                    <td className={classNames('pl-2 pr-2 pt-4', {'pb-2': this.state.expanded == o.id, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o.id})}>
-                      <a href="#" onClick={e => {e.preventDefault(); this.toggle(o)()}}>{Util.formatDate(o.createdDate)}</a>
-                      <Icon type={this.state.expanded == o.id? 'collapse' : 'expand'} className="w-3 h-3 ml-2 text-grey-dark fill-current" />
-                    </td>
-                    <td className={classNames('pr-2 pt-4', {'pb-2': this.state.expanded == o.id, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o.id})}>{o.isAbandoned && 'Abandoned'}</td>
-                    <td className={classNames('pr-2 pt-4 text-right', {'pb-2': this.state.expanded == o.id, 'pb-4': i == pastOrders.length - 1 && this.state.expanded != o.id, 'line-through text-grey-dark': o.isAbandoned})}><Money amount={o.totalIncVat} /></td>
-                  </tr>
-                  ,
-                  this.state.expanded == o.id &&
-                    <tr>
-                      <td colSpan={3}>
+            <div>
+              { pastOrders.map((o, i) => 
+                <Collapsible className="min-h-20"
+                   expanded={this.state.expanded == o.id}
+                   otherExpanding={!!this.state.expanded && this.state.expanded != o.id}
+                   toggle={this.toggle(o)}
+                   header={() => 
+                     <div className={classNames('p-2 bg-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                       <h3 className="leading-none ml-20 relative flex">
+                         {Util.formatDate(o.createdDate)}
+                       </h3>
+                       <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                         <span>
+                           { o.isAbandoned?
+                             <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
+                           : <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
+                           }
+                         </span>
+                         <span className="flex justify-end">
+                           <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': o.isAbandoned})}><Money amount={o.totalIncVat} /></span>
+                         </span>
+                       </h4>
+                     </div>
+                   }>
+                    <div>
+                      <div>
                         <PastHouseholdOrders pastOrder={o}
                                              pastHouseholdOrders={this.props.pastHouseholdOrders.filter(ho => ho.orderId == o.id)} />
-                      </td>
-                    </tr>
-                  ]
-                )) }
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                </Collapsible>
+              )}
+            </div>
           )}
         </div>
       </Collapsible>
