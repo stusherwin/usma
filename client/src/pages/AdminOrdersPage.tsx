@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder, PastHouseholdOrder } from '../Types'
-import { ApiError } from '../ServerApi'
 import { AdminTopNav } from '../components/AdminTopNav'
 import { CurrentOrder } from '../components/CurrentOrder'
 import { PastOrders } from '../components/PastOrders'
+import { CollapsibleState } from '../common/Collapsible'
 
 export interface AdminOrdersPageProps { currentOrder: CollectiveOrder | null
                                       , currentHouseholdOrders: HouseholdOrder[]
@@ -15,32 +15,26 @@ export interface AdminOrdersPageProps { currentOrder: CollectiveOrder | null
                                       , reload: () => Promise<void>
                                       }
 type Section = 'order' | 'past-orders'
-export interface AdminOrdersPageState { expanded: Section | null }
+export interface AdminOrdersPageState { collapsibleState: CollapsibleState }
 
 export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, AdminOrdersPageState> {  
   constructor(props: AdminOrdersPageProps) {
     super(props)
 
     this.state = { 
-      expanded: 'order', 
+      collapsibleState: new CollapsibleState('order', collapsibleState => {console.log('hi'); this.setState({collapsibleState})})
     }
-  }
-
-  toggle = (toExpand: Section) => () => { 
-    this.setState(({expanded}) => ({expanded: toExpand == expanded? null : toExpand}));
   }
 
   render() {
     return (
       <div className="bg-order-dark min-h-screen">
         <AdminTopNav />
-        <CurrentOrder expanded={this.state.expanded == 'order'}
-                      otherExpanding={!!this.state.expanded && this.state.expanded != 'order'}
-                      toggle={this.toggle('order')}
+        <CurrentOrder collapsibleKey="order"
+                      collapsibleState={this.state.collapsibleState}
                       {...this.props} />
-        <PastOrders expanded={this.state.expanded == 'past-orders'}
-                    otherExpanding={!!this.state.expanded && this.state.expanded != 'past-orders'}
-                    toggle={this.toggle('past-orders')}
+        <PastOrders collapsibleKey="past-orders"
+                    collapsibleState={this.state.collapsibleState}
                     {...this.props} />
       </div>
     )

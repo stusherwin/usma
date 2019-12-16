@@ -6,7 +6,7 @@ import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, Hous
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from '../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
 import { AddProduct } from './AddProduct'
 
@@ -18,9 +18,8 @@ export interface CurrentOrderProps { household: Household
                                    , categories: string[]
                                    , brands: string[]
                                    , households: Household[]
-                                   , expanded: boolean
-                                   , otherExpanding: boolean
-                                   , toggle: () => void
+                                   , collapsibleKey: string
+                                   , collapsibleState: CollapsibleState
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
                                    }
@@ -108,9 +107,11 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     return (
       <Collapsible className="min-h-20"
+                   collapsibleKey={this.props.collapsibleKey}
+                   collapsibleState={this.props.collapsibleState}
                    onCollapse={this.cancelAdd}
                    {...this.props}
-                   header={() => 
+                   header={
                      <div className="p-2 bg-order-dark min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <h2 className="leading-none ml-20 relative flex">
@@ -141,10 +142,9 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
           </div>
         : this.state.addingProduct?
           <AddProduct products={unusedProducts}
-                      categories={this.props.categories}
-                      brands={this.props.brands}
                       cancelAdd={this.cancelAdd}
-                      confirmAdd={this.confirmAdd} />
+                      confirmAdd={this.confirmAdd}
+                      {...this.props} />
         : !householdOrder.items.length?
           <div className="px-2 py-4 text-grey-darker">
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet {!this.props.products.length && ' - the product catalogue is empty'}

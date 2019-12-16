@@ -6,17 +6,17 @@ import { ServerApi } from '../ServerApi'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Router } from '../common/Router'
-import { Collapsible } from '../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { HouseholdOrders } from './HouseholdOrdersForOrder'
 import { CurrentOrderItems } from './CurrentOrderItems'
 import { CurrentOrderProductCodes } from './CurrentOrderProductCodes'
+import { OrderTabs } from './OrderTabs'
 
 export interface CurrentOrderProps { currentOrder: CollectiveOrder | null
                                    , currentHouseholdOrders: HouseholdOrder[]
                                    , households: Household[]
-                                   , expanded: boolean
-                                   , otherExpanding: boolean
-                                   , toggle: () => void
+                                   , collapsibleKey: string
+                                   , collapsibleState: CollapsibleState
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                    , reload: () => Promise<void>
                                    }
@@ -68,8 +68,10 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 
     return (
       <Collapsible className="min-h-20"
+                   collapsibleKey={this.props.collapsibleKey}
+                   collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={() => 
+                   header={
                      <div className="p-2 bg-order-dark min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <h2 className="leading-none ml-20 relative flex">
@@ -81,7 +83,10 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
                        </h3>
                        <CurrentOrderButtons order={order} householdOrders={householdOrders}
                           newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
-              <CurrentOrderTabs order={order} tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                       {!!order
+                       ? <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                       : <span></span>
+                       }
                      </div>
                    }>
           { order && 
@@ -93,9 +98,7 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
               { this.state.tab == 'households'?
                 <HouseholdOrders order={order}
                                  householdOrders={householdOrders}
-                                 households={this.props.households}
-                                 reload={this.props.reload}
-                                 request={this.props.request} />
+                                 {...this.props} />
               : this.state.tab == 'product-list'?
                 <CurrentOrderItems currentOrder={order} />
               : <CurrentOrderProductCodes currentOrder={order} />
@@ -110,80 +113,6 @@ export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrde
 interface Props {
   order: CollectiveOrder | null
   householdOrders: HouseholdOrder[]
-}
-
-interface CurrentOrderTabsProps {
-  order: CollectiveOrder | null
-  tab: 'households' | 'product-list' | 'product-codes'
-  setTab: (tab: 'households' | 'product-list' | 'product-codes') => void
-}
-
-const CurrentOrderTabs = ({order, tab, setTab}: CurrentOrderTabsProps) => {
-  if(!order) {
-    return <span></span>;
-  }
-
-  /* <div className="flex justify-end">
-    <div className="p-1 border border-order-darker rounded-full flex justify-end items-baseline overflow-hidden bg-grey-lighter shadow-inner-top">
-      <a href="#" className={classNames("px-2 py-1 rounded-full text-xs uppercase tracking-wide no-underline text-black hover:text-black hover:no-underline hover:bg-order-dark hover:border hover:border-order-darker", { 
-        "bg-order-dark border border-order-darker": this.state.tab == 'households', 
-        "b": this.state.tab != 'households' 
-      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'households'})}}>Households</a>
-      <a href="#" className={classNames("px-2 py-1 rounded-full text-xs uppercase tracking-wide uppercase no-underline text-black hover:text-black hover:no-underline hover:bg-order-dark hover:border hover:border-order-darker", { 
-        "bg-order-dark border border-order-darker": this.state.tab == 'product-list', 
-        "b": this.state.tab != 'product-list' 
-      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-list'})}}>Product list</a>
-      <a href="#" className={classNames("px-2 py-1 rounded-full text-xs uppercase tracking-wide uppercase no-underline text-black hover:text-black hover:no-underline hover:bg-order-dark hover:border hover:border-order-darker", {
-        "bg-order-dark border border-order-darker": this.state.tab == 'product-codes', 
-        "b": this.state.tab != 'product-codes' 
-      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-codes'})}}>Product codes</a>
-    </div>
-  </div> */
-  /* <div className="flex justify-end">
-    View: 
-    <input type="radio" name="tab" id="households" checked={this.state.tab == 'households'} className="ml-4 mr-1 nudge-d-1"
-           onClick={e => e.stopPropagation() } onChange={e => { if(e.target.checked) { this.setState({tab: 'households'}); }}} />
-    <label onClick={e => e.stopPropagation() } htmlFor="households">Households</label>
-    <input type="radio" name="tab" id="product-list" checked={this.state.tab == 'product-list'} className="ml-4 mr-1 nudge-d-1" 
-           onClick={e => e.stopPropagation() } onChange={e => { if(e.target.checked) { this.setState({tab: 'product-list'}); }}} />
-    <label onClick={e => e.stopPropagation() } htmlFor="product-list">Product list</label>
-    <input type="radio" name="tab" id="product-codes" checked={this.state.tab == 'product-codes'} className="ml-4 mr-1 nudge-d-1"
-           onClick={e => e.stopPropagation() } onChange={e => { if(e.target.checked) {  this.setState({tab: 'product-codes'}); }}} />
-    <label onClick={e => e.stopPropagation() } htmlFor="product-codes">Product codes</label>
-  </div> */
-  /* <div className="flex justify-end items-baseline">
-    <span className="mr-2">View:</span>
-    <a href="#" className={classNames("border rounded-l-sm px-2 py-1 no-underline hover:no-underline", {
-        "bg-white border-order-darker text-black shadow-sm-inner-top hover:text-black": this.state.tab == 'households', 
-        "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": this.state.tab != 'households' 
-      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'households'}); }}>Households</a>
-    <a href="#" className={classNames("border px-2 py-1 no-underline hover:no-underline", {
-        "bg-white border-order-darker text-black shadow-sm-inner-top hover:text-black": this.state.tab == 'product-list', 
-        "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": this.state.tab != 'product-list' 
-      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-list'}); }}>Product list</a>
-    <a href="#" className={classNames("border rounded-r-sm px-2 py-1 no-underline hover:no-underline", {
-        "bg-white border-order-darker text-black shadow-sm-inner-top hover:text-black": this.state.tab == 'product-codes', 
-        "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": this.state.tab != 'product-codes' 
-      })} onClick={e => { e.preventDefault(); e.stopPropagation(); this.setState({tab: 'product-codes'}); }}>Product codes</a>
-  </div> */
-  return (
-    <div className="mt-4 flex justify-end items-baseline">
-      <div className="flex justify-end rounded-sm items-baseline border border-order-darker p-1 bg-white shadow-sm-inner-top">
-        <a href="#" className={classNames("border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
-            "bg-white border-none text-black hover:text-black": tab == 'households', 
-            "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'households' 
-          })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('households'); }}>Households</a>
-        <a href="#" className={classNames("ml-1 border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
-            "bg-white border-none text-black hover:text-black": tab == 'product-list', 
-            "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'product-list' 
-          })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-list'); }}>Product list</a>
-        <a href="#" className={classNames("ml-1 border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
-            "bg-white border-none text-black hover:text-black": tab == 'product-codes', 
-            "bg-grey-light border-grey text-grey-darkest hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'product-codes' 
-          })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-codes'); }}>Product codes</a>
-      </div>
-    </div> 
-  )
 }
 
 const CurrentOrderStatus = ({order}: Props) => {

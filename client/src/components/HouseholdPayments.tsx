@@ -5,16 +5,15 @@ import { Household, HouseholdPayment } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from '../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { HouseholdPaymentForm, PaymentData } from './HouseholdPaymentForm'
 import { ServerApi } from '../ServerApi'
 
 export interface HouseholdPaymentsProps { household: Household
                                         , payments: HouseholdPayment[]
                                         , readOnly?: boolean
-                                        , expanded: boolean
-                                        , otherExpanding: boolean
-                                        , toggle: () => void
+                                        , collapsibleKey: string
+                                        , collapsibleState: CollapsibleState
                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                         , reload: () => Promise<void>
                                         }
@@ -61,8 +60,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
  
     return (
       <Collapsible className="min-h-20"
+                   collapsibleKey={this.props.collapsibleKey}
+                   collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={() =>
+                   header={
                      <div className="p-2 bg-payment-light min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
                        <h2 className="leading-none ml-20 relative flex">

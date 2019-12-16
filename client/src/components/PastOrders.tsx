@@ -5,28 +5,27 @@ import { PastCollectiveOrder, PastHouseholdOrder, PastOrderItem } from '../Types
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from '../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { PastHouseholdOrders } from './PastHouseholdOrdersForOrder';
+import { OrderTabs } from './OrderTabs'
 
 export interface PastOrdersProps { pastOrders: PastCollectiveOrder[]
                                  , pastHouseholdOrders: PastHouseholdOrder[]
-                                 , expanded: boolean
-                                 , otherExpanding: boolean
-                                 , toggle: () => void
+                                 , collapsibleKey: string
+                                 , collapsibleState: CollapsibleState
                                  }
-export interface PastOrdersState { expanded: number | null }
+export interface PastOrdersState { collapsibleState: CollapsibleState
+                                 , tab: 'households' | 'product-list' | 'product-codes'
+                                 }
 
 export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState> {  
   constructor(props: PastOrdersProps) {
     super(props)
 
     this.state = { 
-      expanded: null, 
+      collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState})),
+      tab: 'households'
     }
-  }
-
-  toggle = (toExpand: PastCollectiveOrder) => () => { 
-    this.setState(({expanded}) => ({expanded: toExpand.id == expanded? null : toExpand.id}));
   }
 
   render() {
@@ -34,8 +33,10 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
 
     return (
       <Collapsible className="min-h-20"
+                   collapsibleKey={this.props.collapsibleKey}
+                   collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={() => 
+                   header={
                      <div className="p-2 bg-past-order-lighter min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <h2 className="leading-none ml-20 relative flex">
@@ -52,10 +53,9 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
             <div>
               { pastOrders.map((o, i) => 
                 <Collapsible className="min-h-20"
-                   expanded={this.state.expanded == o.id}
-                   otherExpanding={!!this.state.expanded && this.state.expanded != o.id}
-                   toggle={this.toggle(o)}
-                   header={() => 
+                   collapsibleKey={o.id}
+                   collapsibleState={this.state.collapsibleState}
+                   header={
                      <div className={classNames('p-2 bg-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <h3 className="leading-none ml-20 relative flex">
@@ -72,6 +72,7 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
                            <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': o.isAbandoned})}><Money amount={o.totalIncVat} /></span>
                          </span>
                        </h4>
+                       <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                      </div>
                    }>
                     <div>

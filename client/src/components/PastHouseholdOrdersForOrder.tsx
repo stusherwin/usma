@@ -4,7 +4,7 @@ import * as classNames from 'classnames'
 import { PastHouseholdOrder, PastCollectiveOrder, PastOrderItem } from '../Types'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from '../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
 import { ProductFlags } from './ProductList'
 
@@ -12,19 +12,15 @@ export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder
                                           , pastHouseholdOrders: PastHouseholdOrder[]
                                           }
 
-export interface PastHouseholdOrdersState { expanded: number | null }
+export interface PastHouseholdOrdersState { collapsibleState: CollapsibleState }
 
 export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, PastHouseholdOrdersState> {
   constructor(props: PastHouseholdOrdersProps) {
     super(props)
 
     this.state = { 
-      expanded: null, 
+      collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState}))
     }
-  }
-
-  toggle = (toExpand: PastHouseholdOrder) => () => { 
-    this.setState(({expanded}) => ({expanded: toExpand.householdId == expanded? null : toExpand.householdId}));
   }
 
   render() {
@@ -44,10 +40,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
               <tr key={ho.householdId}>
                 <td colSpan={2}>
                   <Collapsible className="min-h-24"
-                               expanded={this.state.expanded == ho.householdId}
-                               otherExpanding={!!this.state.expanded && this.state.expanded != ho.householdId}
-                               toggle={this.toggle(ho)}
-                               header={() =>
+                               collapsibleKey={ho.householdId}
+                               collapsibleState={this.state.collapsibleState}
+                               header={
                                  <div className={classNames('p-2 bg-household-lighter min-h-24', {'shadow-inner-top': i == 0})}>
                                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
                                    <h3 className="leading-none ml-20 relative flex mt-2">

@@ -5,20 +5,19 @@ import { PastHouseholdOrder, PastOrderItem, HouseholdOrder } from '../Types'
 import { Util } from '../common/Util'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { Collapsible } from '../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
 import { ProductFlags } from './ProductList'
 
-export interface PastHouseholdOrdersProps { householdOrders: PastHouseholdOrder[]
+export interface PastHouseholdOrdersProps { pastHouseholdOrders: PastHouseholdOrder[]
                                           , currentHouseholdOrder: HouseholdOrder | null
-                                          , expanded: boolean
-                                          , otherExpanding: boolean
-                                          , toggle: () => void
+                                          , collapsibleKey: string
+                                          , collapsibleState: CollapsibleState
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                           , reload: () => Promise<void>
                                           }
 
-export interface HouseholdPaymentsState { expanded: number | null
+export interface HouseholdPaymentsState { collapsibleState: CollapsibleState
                                         }
 
 export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProps, HouseholdPaymentsState> {
@@ -26,15 +25,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     super(props)
 
     this.state = {
-      expanded: null,
-    }
-  }
-
-  expandOrder = (ho: PastHouseholdOrder) => {
-    if(this.state.expanded == ho.orderId) {
-      this.setState({expanded: null})
-    } else {
-      this.setState({expanded: ho.orderId})
+      collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState}))
     }
   }
 
@@ -53,13 +44,15 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
   }
 
   render() {
-    const pastOrders = this.props.householdOrders
-    const total = this.props.householdOrders.filter(ho => !ho.isAbandoned).reduce((tot, ho) => tot + ho.totalIncVat, 0)
+    const pastOrders = this.props.pastHouseholdOrders
+    const total = pastOrders.filter(ho => !ho.isAbandoned).reduce((tot, ho) => tot + ho.totalIncVat, 0)
 
     return (
       <Collapsible className="min-h-20"
+                   collapsibleKey={this.props.collapsibleKey}
+                   collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={() => 
+                   header={
                      <div className="p-2 bg-past-order-lighter min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <h2 className="leading-none ml-20 relative flex">
@@ -91,10 +84,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                     <tr key={ho.orderId}>
                       <td>
                         <Collapsible className="min-h-20"
-                                     expanded={this.state.expanded == ho.orderId}
-                                     otherExpanding={!!this.state.expanded && this.state.expanded != ho.orderId}
-                                     toggle={() => this.expandOrder(ho)}
-                                     header={() =>
+                                     collapsibleKey={ho.orderId}
+                                     collapsibleState={this.state.collapsibleState}
+                                     header={
                                        <div className={classNames('p-2 bg-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
                                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                                          <h3 className="leading-none ml-20 relative flex">

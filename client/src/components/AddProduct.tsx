@@ -4,7 +4,7 @@ import { ProductCatalogueEntry } from '../Types'
 import { Icon } from '../common/Icon'
 import { ProductList } from './ProductList'
 import { FilteredProducts } from '../common/FilteredProducts'
-import { ProductFilters } from '../components/ProductFilters'
+import { ProductFilters } from './ProductFilters'
 
 const pageSize = 10
 
