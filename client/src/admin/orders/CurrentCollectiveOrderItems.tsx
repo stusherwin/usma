@@ -5,6 +5,7 @@ import { CollectiveOrder, OrderItem } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
 import { Money } from '../../util/Money'
 import { Icon } from '../../util/Icon'
+
 import { ProductFlags } from '../../product/ProductList'
 
 export interface CurrentCollectiveOrderItemsProps { currentOrder: CollectiveOrder

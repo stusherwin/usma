@@ -7,7 +7,7 @@ import { Icon } from '../util/Icon'
 import { Router } from '../util/Router'
 import { Form, Field, Validate } from '../util/Validation'
 import { TextField } from '../util/Field'
-import { ServerApi, ApiError } from '../util/ServerApi'
+import { ServerApi } from '../util/ServerApi'
 
 export interface HouseholdWelcomePageProps { households: Household[]
                                            , request: <T extends {}>(p: Promise<T>) => Promise<T>

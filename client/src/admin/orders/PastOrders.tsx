@@ -1,11 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder, PastHouseholdOrder, PastOrderItem } from '../../util/Types'
+import { PastCollectiveOrder, PastHouseholdOrder } from '../../util/Types'
 import { Util } from '../../util/Util'
 import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 

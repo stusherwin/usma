@@ -1,14 +1,15 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry, HouseholdOrderItem } from '../util/Types'
+import { Household, HouseholdOrder, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
 import { Util } from '../util/Util'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
+
 import { AddProduct } from './AddProduct'
+import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
 
 export interface CurrentCollectiveOrderProps { household: Household
                                    , currentOrder: CollectiveOrder | null

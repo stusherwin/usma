@@ -7,6 +7,7 @@ import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Router } from '../../util/Router'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+
 import { HouseholdOrders } from './CurrentHouseholdOrders'
 import { CurrentCollectiveOrderItems } from './CurrentCollectiveOrderItems'
 import { CurrentCollectiveOrderProductCodes } from './CurrentCollectiveOrderProductCodes'

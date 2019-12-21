@@ -6,6 +6,7 @@ import { ServerApi } from '../../util/ServerApi'
 import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+
 import { CurrentHouseholdOrder } from '../../household/CurrentHouseholdOrder'
 
 export interface HouseholdOrdersProps { order: CollectiveOrder

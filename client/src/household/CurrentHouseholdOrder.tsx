@@ -5,6 +5,7 @@ import { HouseholdOrder, HouseholdOrderItem } from '../util/Types'
 import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
+
 import { ProductFlags } from '../product/ProductList'
 
 export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
