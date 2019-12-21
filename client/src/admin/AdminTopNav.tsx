@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { RouterLink } from '../common/RouterLink'
-import { Router } from '../common/Router'
+import { RouterLink } from '../util/RouterLink'
+import { Router } from '../util/Router'
 
 export const AdminTopNav = () => {
   const links = [

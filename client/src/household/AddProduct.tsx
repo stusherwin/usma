@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { ProductCatalogueEntry } from '../util/Types'
-import { Icon } from '../common/Icon'
+import { Icon } from '../util/Icon'
 import { ProductList } from '../product/ProductList'
 import { FilteredProducts } from '../product/FilteredProducts'
 import { ProductFilters } from '../product/ProductFilters'
