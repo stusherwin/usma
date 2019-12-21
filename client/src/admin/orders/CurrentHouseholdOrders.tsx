@@ -9,17 +9,16 @@ import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
 import { CurrentHouseholdOrder } from '../../household/CurrentHouseholdOrder'
 
-export interface HouseholdOrdersProps { order: CollectiveOrder
-                                      , householdOrders: HouseholdOrder[]
+export interface CurrentHouseholdOrdersProps { order: CollectiveOrder
                                       , households: Household[]
                                       , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                       , reload: () => Promise<void>
                                       }
 
-export interface HouseholdOrdersState { collapsibleState: CollapsibleState }
+export interface CurrentHouseholdOrdersState { collapsibleState: CollapsibleState }
 
-export class HouseholdOrders extends React.Component<HouseholdOrdersProps, HouseholdOrdersState> {
-  constructor(props: HouseholdOrdersProps) {
+export class CurrentHouseholdOrders extends React.Component<CurrentHouseholdOrdersProps, CurrentHouseholdOrdersState> {
+  constructor(props: CurrentHouseholdOrdersProps) {
     super(props)
 
     this.state = { 
@@ -31,7 +30,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
     const order = this.props.order
 
     return (
-        !this.props.householdOrders.length?
+        !this.props.order.householdOrders.length?
           <div className="px-2 py-4 text-grey-darker">
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order yet
           </div>
@@ -42,7 +41,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
               </div>
             }
             <div className="mt-4">
-                {this.props.householdOrders.map((ho, i) => {
+                {this.props.order.householdOrders.map((ho, i) => {
                   let status = 
                     <span>
                       { ho.isComplete?

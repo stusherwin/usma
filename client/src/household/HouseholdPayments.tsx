@@ -11,7 +11,6 @@ import { ServerApi } from '../util/ServerApi'
 import { HouseholdPaymentForm, PaymentData } from './HouseholdPaymentForm'
 
 export interface HouseholdPaymentsProps { household: Household
-                                        , payments: HouseholdPayment[]
                                         , readOnly?: boolean
                                         , collapsibleKey: string
                                         , collapsibleState: CollapsibleState
@@ -57,7 +56,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
   }
 
   render() {
-    const total = this.props.payments.reduce((tot, p) => tot + p.amount, 0)
+    const total = this.props.household.householdPayments.reduce((tot, p) => tot + p.amount, 0)
  
     return (
       <Collapsible className="min-h-20"
@@ -90,15 +89,15 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                                   onConfirm={this.confirmCreate}>
             </HouseholdPaymentForm>
           }
-          {!this.props.payments.length && !this.state.editing &&
+          {!this.props.household.householdPayments.length && !this.state.editing &&
             <div className="px-2 py-4 text-grey-darker">
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet
             </div>
           }
-          {!!this.props.payments.length &&
+          {!!this.props.household.householdPayments.length &&
             <table className="border-collapse w-full">
               <tbody>
-                { this.props.payments.map((p, i) =>
+                { this.props.household.householdPayments.map((p, i) =>
                   this.state.editing == p.id
                   ? (
                     <tr key={p.id}>

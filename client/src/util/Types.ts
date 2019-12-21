@@ -23,6 +23,9 @@ export type Household = { id: number
                         , totalOrders: number
                         , totalPayments: number
                         , balance: number
+                        , currentHouseholdOrder: HouseholdOrder | null
+                        , pastHouseholdOrders: PastHouseholdOrder[]
+                        , householdPayments: HouseholdPayment[]
                         }
 
 export type CollectiveOrder = { id: number
@@ -37,6 +40,7 @@ export type CollectiveOrder = { id: number
                               , totalIncVat: number
                               , allHouseholdsUpToDate: boolean
                               , items: OrderItem[]
+                              , householdOrders: HouseholdOrder[]
                               }
 
 export type PastCollectiveOrder = { id: number
@@ -47,6 +51,7 @@ export type PastCollectiveOrder = { id: number
                                   , totalExcVat: number
                                   , totalIncVat: number
                                   , items: PastOrderItem[]
+                                  , pastHouseholdOrders: PastHouseholdOrder[]
                                   }
 
 export type HouseholdOrder = { orderId: number

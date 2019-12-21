@@ -8,10 +8,8 @@ import { AdminTopNav } from '../AdminTopNav'
 import { CurrentCollectiveOrder } from './CurrentCollectiveOrder'
 import { PastOrders } from './PastOrders'
 
-export interface AdminOrdersPageProps { currentOrder: CollectiveOrder | null
-                                      , currentHouseholdOrders: HouseholdOrder[]
+export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | null
                                       , pastOrders: PastCollectiveOrder[]
-                                      , pastHouseholdOrders: PastHouseholdOrder[]
                                       , households: Household[]
                                       , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                       , reload: () => Promise<void>
@@ -33,8 +31,8 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       <div className="bg-order-dark min-h-screen">
         <AdminTopNav />
         <CurrentCollectiveOrder collapsibleKey="order"
-                      collapsibleState={this.state.collapsibleState}
-                      {...this.props} />
+                                collapsibleState={this.state.collapsibleState}
+                                {...this.props} />
         <PastOrders collapsibleKey="past-orders"
                     collapsibleState={this.state.collapsibleState}
                     {...this.props} />

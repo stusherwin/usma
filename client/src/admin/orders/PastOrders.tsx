@@ -11,7 +11,6 @@ import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 
 export interface PastOrdersProps { pastOrders: PastCollectiveOrder[]
-                                 , pastHouseholdOrders: PastHouseholdOrder[]
                                  , collapsibleKey: string
                                  , collapsibleState: CollapsibleState
                                  }
@@ -79,8 +78,7 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
                    }>
                     <div>
                       <div>
-                        <PastHouseholdOrders pastOrder={o}
-                                             pastHouseholdOrders={this.props.pastHouseholdOrders.filter(ho => ho.orderId == o.id)} />
+                        <PastHouseholdOrders pastOrder={o} />
                       </div>
                     </div>
                 </Collapsible>

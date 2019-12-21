@@ -1,52 +1,103 @@
 import { Household, CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Util } from './Util'
 
+export interface Data { collectiveOrder: CollectiveOrder | null
+                      , pastCollectiveOrders: PastCollectiveOrder[]
+                      , householdOrders: HouseholdOrder[]
+                      , pastHouseholdOrders: PastHouseholdOrder[]
+                      , productCatalogue: ProductCatalogueEntry[]
+                      , categories: string[]
+                      , brands: string[]
+                      , households: Household[]
+                      , householdPayments: HouseholdPayment[]
+}
+
+function getCollectiveOrder(): Promise<CollectiveOrder | null> {
+  return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
+    .then(res => { 
+      if(res) {
+        res.createdDate = new Date(res.createdDate)
+      }
+      return res;
+    })
+}
+
+function getPastCollectiveOrders(): Promise<PastCollectiveOrder[]> {
+  return Http.get<PastCollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
+    .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
+}
+
+function getHouseholdOrders(): Promise<HouseholdOrder[]> {
+  return Http.get<HouseholdOrder[]>(groupUrl('/query/household-orders'))
+    .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
+}
+
+function getPastHouseholdOrders(): Promise<PastHouseholdOrder[]> {
+  return Http.get<PastHouseholdOrder[]>(groupUrl('/query/past-household-orders'))
+    .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
+}
+
+function getHouseholds(): Promise<Household[]> {
+  return Http.get<Household[]>(groupUrl('/query/households'))
+    .then(res => { res.forEach(h => { }); return res })
+}
+
+function getHouseholdPayments(): Promise<HouseholdPayment[]> {
+  return Http.get<HouseholdPayment[]>(groupUrl('/query/household-payments'))
+    .then(res => { res.forEach(hp => { hp.date = new Date(hp.date);}); return res })
+}
+
+function getProductCatalogue(): Promise<ProductCatalogueEntry[]> {
+  return Http.get<ProductCatalogueEntry[]>(groupUrl('/query/product-catalogue'))
+}
+
+function getProductCatalogueCategories(): Promise<string[]> {
+  return Http.get<string[]>(groupUrl('/query/product-catalogue-categories'))
+}
+
+function getProductCatalogueBrands(): Promise<string[]> {
+  return Http.get<string[]>(groupUrl('/query/product-catalogue-brands'))
+}
+
 const query = {
-  collectiveOrder(): Promise<CollectiveOrder | null> {
-    return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
-      .then(res => { 
-        if(res) {
-          res.createdDate = new Date(res.createdDate)
+  getData(): Promise<Data> {
+    return Promise.all([ getCollectiveOrder()
+                       , getPastCollectiveOrders()
+                       , getHouseholdOrders()
+                       , getPastHouseholdOrders()
+                       , getHouseholds()
+                       , getHouseholdPayments()
+                       , getProductCatalogue()
+                       , getProductCatalogueCategories()
+                       , getProductCatalogueBrands()
+                       ])
+      .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue, categories, brands]) => {
+        if(collectiveOrder) {
+          collectiveOrder.householdOrders = householdOrders.filter(ho => ho.orderId == collectiveOrder.id)
         }
-        return res;
+
+        for(let h of households) {
+          h.pastHouseholdOrders = pastHouseholdOrders.filter(pho => pho.householdId == h.id)
+          h.currentHouseholdOrder = collectiveOrder && (householdOrders.filter(ho => ho.householdId == h.id && ho.orderId == collectiveOrder.id)[0] || null)
+          h.householdPayments = householdPayments.filter(p => p.householdId == h.id)
+        }
+
+        for(let po of pastCollectiveOrders) {
+          po.pastHouseholdOrders = pastHouseholdOrders.filter(ho => ho.orderId == po.id)
+        }
+
+        return {
+          collectiveOrder,
+          pastCollectiveOrders,
+          householdOrders,
+          pastHouseholdOrders,
+          households,
+          householdPayments,
+          productCatalogue,
+          categories,
+          brands
+        }                               
       })
-  },
-
-  pastCollectiveOrders(): Promise<PastCollectiveOrder[]> {
-    return Http.get<PastCollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
-      .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
-  },
-
-  householdOrders(): Promise<HouseholdOrder[]> {
-    return Http.get<HouseholdOrder[]>(groupUrl('/query/household-orders'))
-      .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
-  },
-
-  pastHouseholdOrders(): Promise<PastHouseholdOrder[]> {
-    return Http.get<PastHouseholdOrder[]>(groupUrl('/query/past-household-orders'))
-      .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
-  },
-
-  households(): Promise<Household[]> {
-    return Http.get<Household[]>(groupUrl('/query/households'))
-      .then(res => { res.forEach(h => { }); return res })
-  },
-
-  householdPayments(): Promise<HouseholdPayment[]> {
-    return Http.get<HouseholdPayment[]>(groupUrl('/query/household-payments'))
-      .then(res => { res.forEach(hp => { hp.date = new Date(hp.date);}); return res })
-  },
-
-  productCatalogue(): Promise<ProductCatalogueEntry[]> {
-    return Http.get<ProductCatalogueEntry[]>(groupUrl('/query/product-catalogue'))
-  },
-
-  productCatalogueCategories(): Promise<string[]> {
-    return Http.get<string[]>(groupUrl('/query/product-catalogue-categories'))
-  },
-
-  productCatalogueBrands(): Promise<string[]> {
-    return Http.get<string[]>(groupUrl('/query/product-catalogue-brands'))
   }
 }
 

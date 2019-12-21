@@ -8,19 +8,18 @@ import { Money } from '../../util/Money'
 import { Router } from '../../util/Router'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
-import { HouseholdOrders } from './CurrentHouseholdOrders'
+import { CurrentHouseholdOrders } from './CurrentHouseholdOrders'
 import { CurrentCollectiveOrderItems } from './CurrentCollectiveOrderItems'
 import { CurrentCollectiveOrderProductCodes } from './CurrentCollectiveOrderProductCodes'
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 
-export interface CurrentCollectiveOrderProps { currentOrder: CollectiveOrder | null
-                                   , currentHouseholdOrders: HouseholdOrder[]
-                                   , households: Household[]
-                                   , collapsibleKey: string
-                                   , collapsibleState: CollapsibleState
-                                   , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                   , reload: () => Promise<void>
-                                   }
+export interface CurrentCollectiveOrderProps { collectiveOrder: CollectiveOrder | null
+                                             , households: Household[]
+                                             , collapsibleKey: string
+                                             , collapsibleState: CollapsibleState
+                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                             , reload: () => Promise<void>
+                                             }
 
 export interface CurrentCollectiveOrderState { addingHousehold: Household | null
                                    , tab: 'households' | 'product-list' | 'product-codes'
@@ -42,30 +41,29 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   }
 
   deleteOrder = () => {
-    if(!this.props.currentOrder) return
+    if(!this.props.collectiveOrder) return
 
-    this.props.request(ServerApi.command.deleteOrder(this.props.currentOrder.id))
+    this.props.request(ServerApi.command.deleteOrder(this.props.collectiveOrder.id))
       .then(this.props.reload)
       .then(_ => Router.navigate(`/admin/orders`))
   }
 
   abandonOrder = () => {
-    if(!this.props.currentOrder) return
+    if(!this.props.collectiveOrder) return
 
-    this.props.request(ServerApi.command.abandonOrder(this.props.currentOrder.id))
+    this.props.request(ServerApi.command.abandonOrder(this.props.collectiveOrder.id))
       .then(this.props.reload)
   }
 
   placeOrder = () => {
-    if(!this.props.currentOrder) return
+    if(!this.props.collectiveOrder) return
 
-    this.props.request(ServerApi.command.placeOrder(this.props.currentOrder.id))
+    this.props.request(ServerApi.command.placeOrder(this.props.collectiveOrder.id))
       .then(this.props.reload)
   }
 
   render() {
-    const order = this.props.currentOrder
-    const householdOrders = this.props.currentHouseholdOrders
+    const order = this.props.collectiveOrder
 
     return (
       <Collapsible className="min-h-20"
@@ -79,10 +77,10 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
                          Current order
                        </h2>
                        <h3 className="flex justify-between ml-20 mt-4">
-                         <CurrentOrderStatus order={order} householdOrders={householdOrders} />
-                         <CurrentOrderTotal order={order} householdOrders={householdOrders} />
+                         <CurrentOrderStatus order={order} />
+                         <CurrentOrderTotal order={order} />
                        </h3>
-                       <CurrentOrderButtons order={order} householdOrders={householdOrders}
+                       <CurrentOrderButtons order={order}
                           newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
                        {!!order
                        ? <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
@@ -95,14 +93,13 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
               "bg-household-lightest": this.state.tab == 'households',
               "bg-white": this.state.tab != 'households'
             })}>
-              <CurrentOrderMessages order={order} householdOrders={householdOrders} />
+              <CurrentOrderMessages order={order} />
               { this.state.tab == 'households'?
-                <HouseholdOrders order={order}
-                                 householdOrders={householdOrders}
-                                 {...this.props} />
+                <CurrentHouseholdOrders order={order}
+                                        {...this.props} />
               : this.state.tab == 'product-list'?
-                <CurrentCollectiveOrderItems currentOrder={order} />
-              : <CurrentCollectiveOrderProductCodes currentOrder={order} />
+                <CurrentCollectiveOrderItems collectiveOrder={order} />
+              : <CurrentCollectiveOrderProductCodes collectiveOrder={order} />
               }
             </div>
           }
@@ -113,7 +110,6 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
 
 interface Props {
   order: CollectiveOrder | null
-  householdOrders: HouseholdOrder[]
 }
 
 const CurrentOrderStatus = ({order}: Props) => {
@@ -150,19 +146,19 @@ const CurrentOrderTotal = ({order}: Props) => {
   );
 }
 
-const CurrentOrderMessages = ({order, householdOrders}: Props) => {
+const CurrentOrderMessages = ({order}: Props) => {
   if(!order) {
     return <span></span>;
   }
 
-  const allComplete = householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
-  const orderMinimumReached = !!order && order.totalIncVat >= 25000
-  const allHouseholdsUpToDate = !!order && order.allHouseholdsUpToDate;
+  const allComplete = order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
+  const orderMinimumReached = order.totalIncVat >= 25000
+  const allHouseholdsUpToDate = order.allHouseholdsUpToDate;
 
   return (
     <div className="mt-4 mx-2 bg-blue-lighter border border-blue-light flex text-black px-2 py-1">
-      <Icon type={!!householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
-      { !householdOrders.length?
+      <Icon type={!!order.householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
+      { !order.householdOrders.length?
         <span>Waiting for households to join</span>
       : !allHouseholdsUpToDate?
         <span>Waiting for all households to accept latest catalogue updates</span>
@@ -180,21 +176,20 @@ const CurrentOrderMessages = ({order, householdOrders}: Props) => {
 
 interface CurrentOrderButtonsProps {
   order: CollectiveOrder | null
-  householdOrders: HouseholdOrder[]
   newOrder: () => void
   deleteOrder: () => void
   abandonOrder: () => void
   placeOrder: () => void
 }
 
-const CurrentOrderButtons = ({order, householdOrders, newOrder, deleteOrder, abandonOrder, placeOrder}: CurrentOrderButtonsProps) => {
-  const allComplete = householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
-  const orderMinimumReached = order && order.totalIncVat >= 25000
+const CurrentOrderButtons = ({order, newOrder, deleteOrder, abandonOrder, placeOrder}: CurrentOrderButtonsProps) => {
+  const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
+  const orderMinimumReached = !!order && order.totalIncVat >= 25000
 
-  const deleteOrderPossible = !householdOrders.length
-  const placeOrderPossible = !!householdOrders.length
+  const deleteOrderPossible = !!order && !order.householdOrders.length
+  const placeOrderPossible = !!order && !!order.householdOrders.length
   const placeOrderAllowed = allComplete /*&& allPaid*/ && orderMinimumReached
-  const abandonOrderPossible = !!householdOrders.length
+  const abandonOrderPossible = !!order && !!order.householdOrders.length
 
   return (
     <div className="mt-2 flex flex-wrap content-start items-start">

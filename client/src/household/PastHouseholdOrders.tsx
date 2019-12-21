@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder, PastOrderItem, HouseholdOrder } from '../util/Types'
+import { PastHouseholdOrder, PastOrderItem, Household } from '../util/Types'
 import { Util } from '../util/Util'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
@@ -10,8 +10,7 @@ import { ServerApi } from '../util/ServerApi'
 
 import { ProductFlags } from '../product/ProductList'
 
-export interface PastHouseholdOrdersProps { pastHouseholdOrders: PastHouseholdOrder[]
-                                          , currentHouseholdOrder: HouseholdOrder | null
+export interface PastHouseholdOrdersProps { household: Household
                                           , collapsibleKey: string
                                           , collapsibleState: CollapsibleState
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -31,21 +30,21 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
   }
 
   addToCurrentOrder = (item: PastOrderItem) => {
-    if(!this.props.currentHouseholdOrder) return;
+    if(!this.props.household.currentHouseholdOrder) return;
 
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, null))
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, item.productCode, null))
       .then(this.props.reload)
   }
 
   addAllItemsToCurrentOrder = (ho: PastHouseholdOrder) => {
-    if(!this.props.currentHouseholdOrder) return;
+    if(!this.props.household.currentHouseholdOrder) return;
 
-    this.props.request(ServerApi.command.ensureAllItemsFromPastHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, ho.orderId))
+    this.props.request(ServerApi.command.ensureAllItemsFromPastHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, ho.orderId))
       .then(this.props.reload)
   }
 
   render() {
-    const pastOrders = this.props.pastHouseholdOrders
+    const pastOrders = this.props.household.pastHouseholdOrders
     const total = pastOrders.filter(ho => !ho.isAbandoned).reduce((tot, ho) => tot + ho.totalIncVat, 0)
 
     return (
@@ -100,7 +99,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                              <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
                                            </span>
                                          </h4>
-                                         {this.props.currentHouseholdOrder && this.props.currentHouseholdOrder.isOpen && !!ho.items.length &&
+                                         {this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && !!ho.items.length &&
                                            <div className="flex justify-end pt-2">
                                              <button onClick={e => {e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho)}}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add all items to current order</button>
                                            </div>
@@ -179,7 +178,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     <tr key={i.productId + '-2'}>
       <td className={classNames('pl-2 pb-2 pr-2 align-top')} colSpan={2}>{i.productName}</td>
       <td className={classNames('pl-2 pr-2 align-top text-right')}>
-        {this.props.currentHouseholdOrder && this.props.currentHouseholdOrder.isOpen &&
+        {this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen &&
           <button className="ml-4 whitespace-no-wrap" onClick={() => this.addToCurrentOrder(i)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
         }
       </td>

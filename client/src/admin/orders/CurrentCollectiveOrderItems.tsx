@@ -8,7 +8,7 @@ import { Icon } from '../../util/Icon'
 
 import { ProductFlags } from '../../product/ProductList'
 
-export interface CurrentCollectiveOrderItemsProps { currentOrder: CollectiveOrder
+export interface CurrentCollectiveOrderItemsProps { collectiveOrder: CollectiveOrder
                                         }
 
 export interface CurrentCollectiveOrderItemsState {
@@ -16,7 +16,7 @@ export interface CurrentCollectiveOrderItemsState {
                                      
 export class CurrentCollectiveOrderItems extends React.Component<CurrentCollectiveOrderItemsProps, CurrentCollectiveOrderItemsState> {
   render() {
-    const order = this.props.currentOrder
+    const order = this.props.collectiveOrder
   
     return !order.items.length?
       <div className="px-2 py-4 text-grey-darker">
@@ -27,7 +27,7 @@ export class CurrentCollectiveOrderItems extends React.Component<CurrentCollecti
           <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
         </div>
         <table className="border-collapse w-full">
-          {this.props.currentOrder.items.map(this.renderItem)}
+          {this.props.collectiveOrder.items.map(this.renderItem)}
           <tr>
             <td></td>
             <td className={classNames('pt-4 align-baseline px-2')} colSpan={4}>

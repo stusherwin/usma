@@ -3,7 +3,7 @@ import * as React from 'react';
 import { CollectiveOrder } from '../../util/Types'
 import { Icon } from '../../util/Icon'
 
-export interface CurrentCollectiveOrderProductCodesProps { currentOrder: CollectiveOrder
+export interface CurrentCollectiveOrderProductCodesProps { collectiveOrder: CollectiveOrder
                                                }
 
 export interface CurrentCollectiveOrderProductCodesState {}
@@ -18,7 +18,7 @@ export class CurrentCollectiveOrderProductCodes extends React.Component<CurrentC
   }
 
   render() {
-    const order = this.props.currentOrder
+    const order = this.props.collectiveOrder
   
     return !order.items.length?
       <div className="px-2 py-4 text-grey-darker">

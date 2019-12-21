@@ -109,28 +109,18 @@ export class Main extends React.Component<MainProps, MainState> {
   }
 
   reload = () =>
-    this.request(Promise.all([ ServerApi.query.collectiveOrder()
-                             , ServerApi.query.pastCollectiveOrders()
-                             , ServerApi.query.householdOrders()
-                             , ServerApi.query.pastHouseholdOrders()
-                             , ServerApi.query.households()
-                             , ServerApi.query.householdPayments()
-                             , ServerApi.query.productCatalogue()
-                             , ServerApi.query.productCatalogueCategories()
-                             , ServerApi.query.productCatalogueBrands()
-                             ]))
-    .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue, categories, brands]) => {
-      this.setState({ collectiveOrder
-                    , pastCollectiveOrders
-                    , householdOrders
-                    , pastHouseholdOrders
-                    , households
-                    , householdPayments
-                    , productCatalogue
-                    , categories
-                    , brands
-                    })
-    })
+    this.request(ServerApi.query.getData())
+        .then(data => this.setState({ collectiveOrder: data.collectiveOrder
+                                    , pastCollectiveOrders: data.pastCollectiveOrders
+                                    , householdOrders: data.householdOrders
+                                    , pastHouseholdOrders: data.pastHouseholdOrders
+                                    , households: data.households
+                                    , householdPayments: data.householdPayments
+                                    , productCatalogue: data.productCatalogue
+                                    , categories: data.categories
+                                    , brands: data.brands
+                                    })
+    )
 
   request = <T extends {}>(p: Promise<T>) => {
     this.setState({ loading: true })
@@ -152,14 +142,9 @@ export class Main extends React.Component<MainProps, MainState> {
     const router = new Router('')    
     
     router.route('/admin/orders', c => {
-      const currentOrder = this.state.collectiveOrder
-      const currentHouseholdOrders = this.state.householdOrders.filter(o => currentOrder && o.orderId == currentOrder.id)
-
-      return <AdminOrdersPage currentOrder={currentOrder}
-                              currentHouseholdOrders={currentHouseholdOrders}
+      return <AdminOrdersPage collectiveOrder={this.state.collectiveOrder}
                               households={this.state.households}
                               pastOrders={this.state.pastCollectiveOrders}
-                              pastHouseholdOrders={this.state.pastHouseholdOrders}
                               reload={this.reload}
                               request={this.request} />
     })
@@ -172,20 +157,10 @@ export class Main extends React.Component<MainProps, MainState> {
     
     router.route('/admin/households/{householdId}', c => {
       const household = this.state.households.find(h => h.id == c.householdId)
-      const householdOrders = this.state.householdOrders.filter(o => o.householdId == c.householdId)
-      const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
-      const currentOrder = this.state.collectiveOrder
-      const currentHouseholdOrder = currentOrder && (householdOrders.filter(o => o.orderId == currentOrder.id)[0] || null)
-      const currentHouseholdOrders = currentOrder && householdOrders.filter(o => o.orderId == currentOrder.id) || []
-      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
       
       return household && 
         <AdminHouseholdPage household={household}
-                            currentOrder={currentOrder}
-                            currentHouseholdOrder={currentHouseholdOrder}
-                            currentHouseholdOrders={currentHouseholdOrders}
-                            pastHouseholdOrders={pastHouseholdOrders}
-                            payments={householdPayments}
+                            collectiveOrder={this.state.collectiveOrder}
                             products={this.state.productCatalogue}
                             categories={this.state.categories}
                             brands={this.state.brands}
@@ -202,20 +177,10 @@ export class Main extends React.Component<MainProps, MainState> {
 
     router.route('/households/{householdId}', (c, r) => {
       const household = this.state.households.find(h => h.id == c.householdId)
-      const householdOrders = this.state.householdOrders
-      const pastHouseholdOrders = this.state.pastHouseholdOrders.filter(o => o.householdId == c.householdId)
-      const currentOrder = this.state.collectiveOrder
-      const currentHouseholdOrder = currentOrder && (householdOrders.filter(o => o.householdId == c.householdId && o.orderId == currentOrder.id)[0] || null)
-      const currentHouseholdOrders = currentOrder && householdOrders.filter(o => o.orderId == currentOrder.id) || []
-      const householdPayments = this.state.householdPayments.filter(o => o.householdId == c.householdId)
       
       return household && 
         <HouseholdPage household={household}
-                       currentOrder={currentOrder}
-                       currentHouseholdOrder={currentHouseholdOrder}
-                       currentHouseholdOrders={currentHouseholdOrders}
-                       pastHouseholdOrders={pastHouseholdOrders}
-                       payments={householdPayments}
+                       collectiveOrder={this.state.collectiveOrder}
                        products={this.state.productCatalogue}
                        categories={this.state.categories}
                        brands={this.state.brands}

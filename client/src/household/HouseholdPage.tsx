@@ -12,11 +12,7 @@ import { HouseholdPayments } from './HouseholdPayments'
 import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdPageProps { household: Household
-                                    , currentOrder: CollectiveOrder | null
-                                    , currentHouseholdOrder: HouseholdOrder | null
-                                    , currentHouseholdOrders: HouseholdOrder[]
-                                    , pastHouseholdOrders: PastHouseholdOrder[]
-                                    , payments: HouseholdPayment[]
+                                    , collectiveOrder: CollectiveOrder | null
                                     , products: ProductCatalogueEntry[]
                                     , categories: string[]
                                     , brands: string[]
@@ -70,8 +66,8 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                          onCancel={this.state.collapsibleState.toggle('household')} />
         </Collapsible>
         <CurrentCollectiveOrder collapsibleKey="orders"
-                      collapsibleState={this.state.collapsibleState}
-                      {...this.props} />
+                                collapsibleState={this.state.collapsibleState}
+                                {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"
                              collapsibleState={this.state.collapsibleState}
                              {...this.props} />

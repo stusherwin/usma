@@ -13,15 +13,11 @@ import { EditHousehold } from '../../household/EditHousehold'
 import { AdminTopNav } from '../AdminTopNav'
 
 export interface AdminHouseholdOrdersPageProps { household: Household
-                                               , currentOrder: CollectiveOrder | null
-                                               , currentHouseholdOrder: HouseholdOrder | null
-                                               , currentHouseholdOrders: HouseholdOrder[]
-                                               , pastHouseholdOrders: PastHouseholdOrder[]
-                                               , payments: HouseholdPayment[]
+                                               , collectiveOrder: CollectiveOrder | null
                                                , products: ProductCatalogueEntry[]
+                                               , households: Household[]
                                                , categories: string[]
                                                , brands: string[]
-                                               , households: Household[]
                                                , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                                , reload: () => Promise<void>
                                                }
@@ -80,8 +76,8 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                          {...this.props} />
         </Collapsible>
         <CurrentCollectiveOrder collapsibleKey="orders"
-                      collapsibleState={this.state.collapsibleState}
-                      {...this.props} />
+                                collapsibleState={this.state.collapsibleState}
+                                {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"
                              collapsibleState={this.state.collapsibleState}
                              {...this.props} />

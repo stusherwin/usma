@@ -12,13 +12,11 @@ import { AddProduct } from './AddProduct'
 import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
 
 export interface CurrentCollectiveOrderProps { household: Household
-                                   , currentOrder: CollectiveOrder | null
-                                   , currentHouseholdOrders: HouseholdOrder[]
-                                   , currentHouseholdOrder: HouseholdOrder | null
+                                   , collectiveOrder: CollectiveOrder | null
+                                   , households: Household[]
                                    , products: ProductCatalogueEntry[]
                                    , categories: string[]
                                    , brands: string[]
-                                   , households: Household[]
                                    , collapsibleKey: string
                                    , collapsibleState: CollapsibleState
                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -42,9 +40,9 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
 
   confirmAdd = (product: ProductCatalogueEntry) => {
     if(!this.state.addingProduct) return Promise.resolve();
-    if(!this.props.currentHouseholdOrder) return Promise.resolve();
+    if(!this.props.household.currentHouseholdOrder) return Promise.resolve();
 
-    return this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, product.code, 1))
+    return this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, product.code, 1))
       .then(this.props.reload)
   }
 
@@ -55,55 +53,66 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   }
 
   joinOrder = () => {
-    if(!this.props.currentOrder)
+    if(!this.props.household.currentHouseholdOrder)
       return
 
-    const orderId = this.props.currentOrder.id
+    const orderId = this.props.household.currentHouseholdOrder.orderId
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
   }
 
   abandonOrder = () => {
-    if(!this.props.currentHouseholdOrder) return
-    this.props.request(ServerApi.command.abandonHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+    if(!this.props.household.currentHouseholdOrder)
+      return
+
+    this.props.request(ServerApi.command.abandonHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
       .then(this.props.reload)
   }
 
   completeOrder = () => {
-    if(!this.props.currentHouseholdOrder) return
-    this.props.request(ServerApi.command.completeHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+    if(!this.props.household.currentHouseholdOrder)
+      return
+
+    this.props.request(ServerApi.command.completeHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
       .then(this.props.reload)
   }
 
   reopenOrder = () => {
-    if(!this.props.currentHouseholdOrder) return
-    this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+    if(!this.props.household.currentHouseholdOrder)
+      return
+
+    this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
       .then(this.props.reload)
   }
 
   leaveOrder = () => {
-    if(!this.props.currentHouseholdOrder) return
-    this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+    if(!this.props.household.currentHouseholdOrder)
+      return
+
+    this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
       .then(this.props.reload)
   }
 
   unusedProducts = () => {
-    if(!this.props.currentHouseholdOrder) return []
+    if(!this.props.household.currentHouseholdOrder)
+      return []
 
-    const items = this.props.currentHouseholdOrder.items
+    const items = this.props.household.currentHouseholdOrder.items
     return this.props.products.filter(p => !items.find(i => i.productCode == p.code))
   }
 
   acceptUpdates = () => {
-    if(!this.props.currentHouseholdOrder) return
-    this.props.request(ServerApi.command.acceptCatalogueUpdates(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId))
+    if(!this.props.household.currentHouseholdOrder)
+      return
+
+    this.props.request(ServerApi.command.acceptCatalogueUpdates(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
       .then(this.props.reload)
   }
 
   render() {
-    let order = this.props.currentOrder
-    let householdOrder = this.props.currentHouseholdOrder
+    let order = this.props.collectiveOrder
+    let householdOrder = this.props.household.currentHouseholdOrder
     let unusedProducts = this.unusedProducts()
 
     return (
@@ -165,11 +174,11 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   renderStatus = () => {
     return (
       <span>
-        {!this.props.currentHouseholdOrder?
+        {!this.props.household.currentHouseholdOrder?
           <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Available</span>
-        : this.props.currentHouseholdOrder.isComplete?
+        : this.props.household.currentHouseholdOrder.isComplete?
           <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
-        : this.props.currentHouseholdOrder.isAbandoned?
+        : this.props.household.currentHouseholdOrder.isAbandoned?
           <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Abandoned</span>
         : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
         }
@@ -178,7 +187,7 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   }
 
   renderTotal = () => {
-    let householdOrder = this.props.currentHouseholdOrder
+    let householdOrder = this.props.household.currentHouseholdOrder
 
     return !householdOrder?
       <Money amount={0} />
@@ -191,7 +200,7 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   }
 
   renderButtons = (unusedProducts: ProductCatalogueEntry[]) => {
-    let householdOrder = this.props.currentHouseholdOrder
+    let householdOrder = this.props.household.currentHouseholdOrder
     if(!householdOrder) return
 
     if(this.state.addingProduct) return
@@ -227,14 +236,14 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   }
   
   renderMessages = () => {
-    let householdOrder = this.props.currentHouseholdOrder
+    let householdOrder = this.props.household.currentHouseholdOrder
     if(!householdOrder) return
 
-    const allComplete = this.props.currentHouseholdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
+    const allComplete = !!this.props.collectiveOrder && this.props.collectiveOrder.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
     // const householdsInOrder = this.props.households.filter(h => !!this.props.currentHouseholdOrders.find(oh => oh.householdId == h.id))
     // const allPaid = householdsInOrder.reduce((paid, h) => paid && h.balance > 0, true)
-    const allHouseholdsUpToDate = !!this.props.currentOrder && this.props.currentOrder.allHouseholdsUpToDate;
-    const orderMinimumReached = !!this.props.currentOrder && this.props.currentOrder.totalIncVat >= 25000
+    const allHouseholdsUpToDate = !!this.props.collectiveOrder && this.props.collectiveOrder.allHouseholdsUpToDate;
+    const orderMinimumReached = !!this.props.collectiveOrder && this.props.collectiveOrder.totalIncVat >= 25000
 
     if(!!householdOrder.oldTotalExcVat && householdOrder.oldTotalIncVat != householdOrder.totalIncVat)
       return (
@@ -253,7 +262,7 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
         { !allHouseholdsUpToDate?
           <span>Waiting for all households to accept latest catalogue updates</span>
         : !orderMinimumReached?
-          <span>Waiting for minimum order to be reached. Current total is <Money amount={!!this.props.currentOrder && this.props.currentOrder.totalIncVat || 0} /> of &pound;250.00</span>
+          <span>Waiting for minimum order to be reached. Current total is <Money amount={!!this.props.collectiveOrder && this.props.collectiveOrder.totalIncVat || 0} /> of &pound;250.00</span>
         : !allComplete?
           <span>Waiting for all orders to be completed</span>
         // : !allPaid?

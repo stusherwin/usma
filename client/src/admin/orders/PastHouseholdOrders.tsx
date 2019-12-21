@@ -10,7 +10,6 @@ import { ServerApi } from '../../util/ServerApi'
 import { ProductFlags } from '../../product/ProductList'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
-                                          , pastHouseholdOrders: PastHouseholdOrder[]
                                           }
 
 export interface PastHouseholdOrdersState { collapsibleState: CollapsibleState }
@@ -28,7 +27,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     return (
       <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
         <tbody>
-          {this.props.pastHouseholdOrders.map((ho, i) => {
+          {this.props.pastOrder.pastHouseholdOrders.map((ho, i) => {
             let status = 
               <span>
                 {ho.isAbandoned?
