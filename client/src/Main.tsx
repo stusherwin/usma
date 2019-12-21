@@ -6,11 +6,12 @@ import { Router } from './util/Router'
 import { Loading } from './util/Loading'
 import { Icon } from './util/Icon'
 
-import { AdminOrdersPage } from './admin/orders/AdminOrdersPage'
-import { AdminHouseholdPage } from './admin/households/AdminHouseholdPage'
-import { AdminProductsPage } from './admin/products/AdminProductsPage'
-import { AdminHouseholdsPage } from './admin/households/AdminHouseholdsPage'
 import { AdminHomePage } from './admin/AdminHomePage'
+import { AdminOrdersPage } from './admin/orders/AdminOrdersPage'
+import { AdminProductsPage } from './admin/products/AdminProductsPage'
+import { AdminHouseholdPage } from './admin/households/AdminHouseholdPage'
+import { AdminHouseholdsPage } from './admin/households/AdminHouseholdsPage'
+
 import { HouseholdWelcomePage } from './household/HouseholdWelcomePage'
 import { HouseholdPage } from './household/HouseholdPage'
 
@@ -21,6 +22,7 @@ export interface MainState { loading: boolean
                            , url: string
                            , groupKey: string | null
                            , groupValid: boolean
+                           , initialised: boolean
                            , collectiveOrder: CollectiveOrder | null
                            , pastCollectiveOrders: PastCollectiveOrder[]
                            , householdOrders: HouseholdOrder[]
@@ -30,7 +32,6 @@ export interface MainState { loading: boolean
                            , brands: string[]
                            , households: Household[]
                            , householdPayments: HouseholdPayment[]
-                           , initialised: boolean
                            }
 
 export class Main extends React.Component<MainProps, MainState> {
