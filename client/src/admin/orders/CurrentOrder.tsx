@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, Household, HouseholdOrder } from '../../Types'
-import { ServerApi } from '../../ServerApi'
-import { Icon } from '../../common/Icon'
-import { Money } from '../../common/Money'
-import { Router } from '../../common/Router'
-import { Collapsible, CollapsibleState } from '../../common/Collapsible'
+import { CollectiveOrder, Household, HouseholdOrder } from '../../util/Types'
+import { ServerApi } from '../../util/ServerApi'
+import { Icon } from '../../util/Icon'
+import { Money } from '../../util/Money'
+import { Router } from '../../util/Router'
+import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { HouseholdOrders } from './HouseholdOrdersForOrder'
 import { CurrentOrderItems } from './CurrentOrderItems'
 import { CurrentOrderProductCodes } from './CurrentOrderProductCodes'

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { ServerApi, ApiError } from './ServerApi'
-import { Router } from './common/Router'
+import { ServerApi, ApiError } from './util/ServerApi'
+import { Router } from './util/Router'
 
 import { AdminOrdersPage } from './admin/orders/AdminOrdersPage'
 import { AdminHouseholdPage } from './admin/households/AdminHouseholdPage'
@@ -10,9 +10,9 @@ import { AdminHouseholdsPage } from './admin/households/AdminHouseholdsPage'
 import { AdminHomePage } from './admin/AdminHomePage'
 import { HouseholdWelcomePage } from './household/HouseholdWelcomePage'
 import { HouseholdPage } from './household/HouseholdPage'
-import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './Types'
-import { Loading } from './common/Loading'
-import { Icon } from './common/Icon'
+import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './util/Types'
+import { Loading } from './util/Loading'
+import { Icon } from './util/Icon'
 
 export interface MainProps {}
 export interface MainState { loading: boolean

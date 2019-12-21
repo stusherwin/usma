@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder, PastHouseholdOrder } from '../../Types'
+import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder, PastHouseholdOrder } from '../../util/Types'
 import { AdminTopNav } from '../AdminTopNav'
 import { CurrentOrder } from './CurrentOrder'
 import { PastOrders } from './PastOrders'
-import { CollapsibleState } from '../../common/Collapsible'
+import { CollapsibleState } from '../../util/Collapsible'
 
 export interface AdminOrdersPageProps { currentOrder: CollectiveOrder | null
                                       , currentHouseholdOrders: HouseholdOrder[]

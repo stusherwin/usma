@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, HouseholdOrderItem } from '../Types'
-import { ServerApi } from '../ServerApi'
+import { HouseholdOrder, HouseholdOrderItem } from '../util/Types'
+import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { ProductFlags } from '../product/ProductList'

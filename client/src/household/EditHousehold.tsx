@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { Household } from '../Types'
+import { Household } from '../util/Types'
 import { Form, Field, Validate } from '../common/Validation'
 import { TextField } from '../common/Field'
-import { ServerApi } from '../ServerApi'
+import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../common/Icon'
 
 export interface EditHouseholdProps { household: Household

@@ -1,5 +1,5 @@
 import { Household, CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
-import { Util } from './common/Util'
+import { Util } from './Util'
 
 const query = {
   collectiveOrder(): Promise<CollectiveOrder | null> {

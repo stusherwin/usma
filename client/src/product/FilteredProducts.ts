@@ -1,4 +1,4 @@
-import { ProductCatalogueEntry } from '../Types'
+import { ProductCatalogueEntry } from '../util/Types'
 
 const emptyFlags = {'b': false, 'g': false, 'o': false, 'f': false, 'v': false, 's': false}
 export interface ProductFlags {[key: string]: boolean }

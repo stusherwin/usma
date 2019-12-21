@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../../Types'
-import { ServerApi, ApiError } from '../../ServerApi'
-import { Money } from '../../common/Money'
+import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../../util/Types'
+import { ServerApi, ApiError } from '../../util/ServerApi'
+import { Money } from '../../util/Money'
 import { CurrentOrder } from '../../household/CurrentOrderForHousehold'
 import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
 import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { AdminTopNav } from '../AdminTopNav'
-import { Collapsible, CollapsibleState } from '../../common/Collapsible'
+import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { EditHousehold } from '../../household/EditHousehold'
 
 export interface AdminHouseholdOrdersPageProps { household: Household

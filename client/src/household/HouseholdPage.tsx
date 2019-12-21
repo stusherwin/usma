@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
-import { Money } from '../common/Money'
-import { Router } from '../common/Router'
+import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../util/Types'
+import { Money } from '../util/Money'
+import { Router } from '../util/Router'
 import { CurrentOrder } from './CurrentOrderForHousehold'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
-import { Collapsible, CollapsibleState } from '../common/Collapsible'
-import { RouterLink } from '../common/RouterLink'
+import { Collapsible, CollapsibleState } from '../util/Collapsible'
+import { RouterLink } from '../util/RouterLink'
 import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdPageProps { household: Household

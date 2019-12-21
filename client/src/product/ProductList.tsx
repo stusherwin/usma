@@ -1,11 +1,11 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { ProductCatalogueEntry } from '../Types'
-import { ServerApi} from '../ServerApi'
-import { Icon } from '../common/Icon'
-import { Money } from '../common/Money'
-import { LoadMore } from '../common/LoadMore'
+import { ProductCatalogueEntry } from '../util/Types'
+import { ServerApi} from '../util/ServerApi'
+import { Icon } from '../util/Icon'
+import { Money } from '../util/Money'
+import { LoadMore } from '../util/LoadMore'
 
 const pageSize = 10
 

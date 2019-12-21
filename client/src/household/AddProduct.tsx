@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ProductCatalogueEntry } from '../Types'
+import { ProductCatalogueEntry } from '../util/Types'
 import { Icon } from '../common/Icon'
 import { ProductList } from '../product/ProductList'
 import { FilteredProducts } from '../product/FilteredProducts'

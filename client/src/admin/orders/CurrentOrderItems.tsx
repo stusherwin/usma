@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, OrderItem } from '../../Types'
-import { ServerApi } from '../../ServerApi'
+import { CollectiveOrder, OrderItem } from '../../util/Types'
+import { ServerApi } from '../../util/ServerApi'
 import { Money } from '../../common/Money'
 import { Icon } from '../../common/Icon'
 import { ProductFlags } from '../../product/ProductList'
