@@ -5,7 +5,7 @@ import { HouseholdOrder, HouseholdOrderItem } from '../Types'
 import { ServerApi } from '../ServerApi'
 import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
-import { ProductFlags } from './ProductList'
+import { ProductFlags } from '../product/ProductList'
 
 export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
                                             , readOnly?: boolean

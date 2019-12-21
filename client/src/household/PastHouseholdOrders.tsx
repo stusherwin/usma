@@ -7,7 +7,7 @@ import { Icon } from '../common/Icon'
 import { Money } from '../common/Money'
 import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { ServerApi } from '../ServerApi'
-import { ProductFlags } from './ProductList'
+import { ProductFlags } from '../product/ProductList'
 
 export interface PastHouseholdOrdersProps { pastHouseholdOrders: PastHouseholdOrder[]
                                           , currentHouseholdOrder: HouseholdOrder | null

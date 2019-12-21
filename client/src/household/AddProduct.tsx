@@ -2,9 +2,9 @@ import * as React from 'react';
 
 import { ProductCatalogueEntry } from '../Types'
 import { Icon } from '../common/Icon'
-import { ProductList } from './ProductList'
-import { FilteredProducts } from '../common/FilteredProducts'
-import { ProductFilters } from './ProductFilters'
+import { ProductList } from '../product/ProductList'
+import { FilteredProducts } from '../product/FilteredProducts'
+import { ProductFilters } from '../product/ProductFilters'
 
 const pageSize = 10
 

@@ -1,11 +1,11 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, OrderItem } from '../Types'
-import { ServerApi } from '../ServerApi'
-import { Money } from '../common/Money'
-import { Icon } from '../common/Icon'
-import { ProductFlags } from './ProductList'
+import { CollectiveOrder, OrderItem } from '../../Types'
+import { ServerApi } from '../../ServerApi'
+import { Money } from '../../common/Money'
+import { Icon } from '../../common/Icon'
+import { ProductFlags } from '../../product/ProductList'
 
 export interface CurrentOrderItemsProps { currentOrder: CollectiveOrder
                                         }

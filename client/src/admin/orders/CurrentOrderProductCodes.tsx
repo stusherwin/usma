@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { CollectiveOrder } from '../Types'
-import { Icon } from '../common/Icon'
+import { CollectiveOrder } from '../../Types'
+import { Icon } from '../../common/Icon'
 
 export interface CurrentOrderProductCodesProps { currentOrder: CollectiveOrder
                                                }

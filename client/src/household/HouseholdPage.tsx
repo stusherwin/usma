@@ -3,12 +3,12 @@ import * as React from 'react';
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../Types'
 import { Money } from '../common/Money'
 import { Router } from '../common/Router'
-import { CurrentOrder } from '../components/CurrentOrderForHousehold'
-import { PastHouseholdOrders } from '../components/PastHouseholdOrders'
-import { HouseholdPayments } from '../components/HouseholdPayments'
+import { CurrentOrder } from './CurrentOrderForHousehold'
+import { PastHouseholdOrders } from './PastHouseholdOrders'
+import { HouseholdPayments } from './HouseholdPayments'
 import { Collapsible, CollapsibleState } from '../common/Collapsible'
 import { RouterLink } from '../common/RouterLink'
-import { EditHousehold } from '../components/EditHousehold'
+import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdPageProps { household: Household
                                     , currentOrder: CollectiveOrder | null
