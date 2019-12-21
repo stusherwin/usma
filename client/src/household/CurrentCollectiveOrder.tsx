@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
 import { AddProduct } from './AddProduct'
 
-export interface CurrentOrderProps { household: Household
+export interface CurrentCollectiveOrderProps { household: Household
                                    , currentOrder: CollectiveOrder | null
                                    , currentHouseholdOrders: HouseholdOrder[]
                                    , currentHouseholdOrder: HouseholdOrder | null
@@ -24,11 +24,11 @@ export interface CurrentOrderProps { household: Household
                                    , reload: () => Promise<void>
                                    }
 
-export interface CurrentOrderState { addingProduct: boolean
+export interface CurrentCollectiveOrderState { addingProduct: boolean
                                    }
 
-export class CurrentOrder extends React.Component<CurrentOrderProps, CurrentOrderState> {
-  constructor(props: CurrentOrderProps) {
+export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrderProps, CurrentCollectiveOrderState> {
+  constructor(props: CurrentCollectiveOrderProps) {
     super(props)
 
     this.state = { addingProduct: false

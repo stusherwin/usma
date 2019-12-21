@@ -3,17 +3,17 @@ import * as classNames from 'classnames'
 
 import { CollectiveOrder, OrderItem } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
-import { Money } from '../../common/Money'
-import { Icon } from '../../common/Icon'
+import { Money } from '../../util/Money'
+import { Icon } from '../../util/Icon'
 import { ProductFlags } from '../../product/ProductList'
 
-export interface CurrentOrderItemsProps { currentOrder: CollectiveOrder
+export interface CurrentCollectiveOrderItemsProps { currentOrder: CollectiveOrder
                                         }
 
-export interface CurrentOrderItemsState {
+export interface CurrentCollectiveOrderItemsState {
                                         }
                                      
-export class CurrentOrderItems extends React.Component<CurrentOrderItemsProps, CurrentOrderItemsState> {
+export class CurrentCollectiveOrderItems extends React.Component<CurrentCollectiveOrderItemsProps, CurrentCollectiveOrderItemsState> {
   render() {
     const order = this.props.currentOrder
   

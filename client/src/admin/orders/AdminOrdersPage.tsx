@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { CollectiveOrder, HouseholdOrder, Household, PastCollectiveOrder, PastHouseholdOrder } from '../../util/Types'
 import { AdminTopNav } from '../AdminTopNav'
-import { CurrentOrder } from './CurrentOrder'
+import { CurrentCollectiveOrder } from './CurrentCollectiveOrder'
 import { PastOrders } from './PastOrders'
 import { CollapsibleState } from '../../util/Collapsible'
 
@@ -30,7 +30,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     return (
       <div className="bg-order-dark min-h-screen">
         <AdminTopNav />
-        <CurrentOrder collapsibleKey="order"
+        <CurrentCollectiveOrder collapsibleKey="order"
                       collapsibleState={this.state.collapsibleState}
                       {...this.props} />
         <PastOrders collapsibleKey="past-orders"

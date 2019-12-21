@@ -1,17 +1,17 @@
 import * as React from 'react';
 
 import { CollectiveOrder } from '../../util/Types'
-import { Icon } from '../../common/Icon'
+import { Icon } from '../../util/Icon'
 
-export interface CurrentOrderProductCodesProps { currentOrder: CollectiveOrder
+export interface CurrentCollectiveOrderProductCodesProps { currentOrder: CollectiveOrder
                                                }
 
-export interface CurrentOrderProductCodesState {}
+export interface CurrentCollectiveOrderProductCodesState {}
                                      
-export class CurrentOrderProductCodes extends React.Component<CurrentOrderProductCodesProps, CurrentOrderProductCodesState> {
+export class CurrentCollectiveOrderProductCodes extends React.Component<CurrentCollectiveOrderProductCodesProps, CurrentCollectiveOrderProductCodesState> {
   textArea: React.RefObject<HTMLTextAreaElement>
 
-  constructor(props: CurrentOrderProductCodesProps) {
+  constructor(props: CurrentCollectiveOrderProductCodesProps) {
     super(props)
 
     this.textArea = React.createRef();

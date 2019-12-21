@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-export interface OrderTabsProps {
+export interface CollectiveOrderTabsProps {
   tab: 'households' | 'product-list' | 'product-codes'
   setTab: (tab: 'households' | 'product-list' | 'product-codes') => void
 }
 
-export const OrderTabs = ({tab, setTab}: OrderTabsProps) => 
+export const CollectiveOrderTabs = ({tab, setTab}: CollectiveOrderTabsProps) => 
   <div className="mt-4 flex justify-end items-baseline">
     <div className="flex justify-end rounded-sm items-baseline border border-order-darker p-1 bg-white shadow-sm-inner-top">
       <a href="#" className={classNames("border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../util/Types'
 import { Money } from '../util/Money'
 import { Router } from '../util/Router'
-import { CurrentOrder } from './CurrentOrderForHousehold'
+import { CurrentCollectiveOrder } from './CurrentCollectiveOrder'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
@@ -68,7 +68,7 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                          onConfirm={() => this.props.reload().then(this.state.collapsibleState.toggle('household'))}
                          onCancel={this.state.collapsibleState.toggle('household')} />
         </Collapsible>
-        <CurrentOrder collapsibleKey="orders"
+        <CurrentCollectiveOrder collapsibleKey="orders"
                       collapsibleState={this.state.collapsibleState}
                       {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"

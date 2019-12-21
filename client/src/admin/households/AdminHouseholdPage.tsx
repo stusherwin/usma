@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../../util/Types'
 import { ServerApi, ApiError } from '../../util/ServerApi'
 import { Money } from '../../util/Money'
-import { CurrentOrder } from '../../household/CurrentOrderForHousehold'
+import { CurrentCollectiveOrder } from '../../household/CurrentCollectiveOrder'
 import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
 import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { AdminTopNav } from '../AdminTopNav'
@@ -77,7 +77,7 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                          onCancel={this.state.collapsibleState.toggle('household')}
                          {...this.props} />
         </Collapsible>
-        <CurrentOrder collapsibleKey="orders"
+        <CurrentCollectiveOrder collapsibleKey="orders"
                       collapsibleState={this.state.collapsibleState}
                       {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"

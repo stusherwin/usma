@@ -6,8 +6,8 @@ import { Util } from '../../util/Util'
 import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
-import { PastHouseholdOrders } from './PastHouseholdOrdersForOrder';
-import { OrderTabs } from './OrderTabs'
+import { PastHouseholdOrders } from './PastHouseholdOrders';
+import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 
 export interface PastOrdersProps { pastOrders: PastCollectiveOrder[]
                                  , pastHouseholdOrders: PastHouseholdOrder[]
@@ -73,7 +73,7 @@ export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState
                            <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': o.isAbandoned})}><Money amount={o.totalIncVat} /></span>
                          </span>
                        </h4>
-                       <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                       <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                      </div>
                    }>
                     <div>
