@@ -98,9 +98,7 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
           <ProductFilters searchString={this.state.filteredProducts.searchString}
                           flags={this.state.filteredProducts.flags}
                           categories={this.state.filteredProducts.categories}
-                          category={this.state.filteredProducts.category}
                           brands={this.state.filteredProducts.brands}
-                          brand={this.state.filteredProducts.brand}
                           searchChanged={this.searchChanged}
                           flagChanged={this.flagChanged}
                           categoryChanged={this.categoryChanged}

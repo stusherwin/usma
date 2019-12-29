@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Household, HouseholdOrder, PastHouseholdOrder, CollectiveOrder, HouseholdPayment, ProductCatalogueEntry } from '../../util/Types'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'

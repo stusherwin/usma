@@ -7,8 +7,6 @@ import { ProductList } from '../product/ProductList'
 import { FilteredProducts } from '../product/FilteredProducts'
 import { ProductFilters } from '../product/ProductFilters'
 
-const pageSize = 10
-
 export interface AddProductProps { products: ProductCatalogueEntry[]
                                  , categories: string[]
                                  , brands: string[]
@@ -71,8 +69,6 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
                         flags={this.state.filteredProducts.flags}
                         categories={this.state.filteredProducts.categories}
                         brands={this.state.filteredProducts.brands}
-                        category={this.state.filteredProducts.category}
-                        brand={this.state.filteredProducts.brand}
                         searchChanged={this.searchChanged}
                         flagChanged={this.flagChanged}
                         categoryChanged={this.categoryChanged}

@@ -1,17 +1,19 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, Household, HouseholdOrder } from '../../util/Types'
+import { CollectiveOrder, Household } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
-import { Icon } from '../../util/Icon'
-import { Money } from '../../util/Money'
 import { Router } from '../../util/Router'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
+import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 import { CurrentHouseholdOrders } from './CurrentHouseholdOrders'
 import { CurrentCollectiveOrderItems } from './CurrentCollectiveOrderItems'
 import { CurrentCollectiveOrderProductCodes } from './CurrentCollectiveOrderProductCodes'
-import { CollectiveOrderTabs } from './CollectiveOrderTabs'
+import { CurrentCollectiveOrderButtons } from './CurrentCollectiveOrderButtons'
+import { CurrentCollectiveOrderMessages } from './CurrentCollectiveOrderMessages'
+import { CurrentCollectiveOrderTotal } from './CurrentCollectiveOrderTotal'
+import { CurrentCollectiveOrderStatus } from './CurrentCollectiveOrderStatus'
 
 export interface CurrentCollectiveOrderProps { collectiveOrder: CollectiveOrder | null
                                              , households: Household[]
@@ -77,10 +79,10 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
                          Current order
                        </h2>
                        <h3 className="flex justify-between ml-20 mt-4">
-                         <CurrentOrderStatus order={order} />
-                         <CurrentOrderTotal order={order} />
+                         <CurrentCollectiveOrderStatus order={order} />
+                         <CurrentCollectiveOrderTotal order={order} />
                        </h3>
-                       <CurrentOrderButtons order={order}
+                       <CurrentCollectiveOrderButtons order={order}
                           newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
                        {!!order
                        ? <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
@@ -93,7 +95,7 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
               "bg-household-lightest": this.state.tab == 'households',
               "bg-white": this.state.tab != 'households'
             })}>
-              <CurrentOrderMessages order={order} />
+              <CurrentCollectiveOrderMessages order={order} />
               { this.state.tab == 'households'?
                 <CurrentHouseholdOrders order={order}
                                         {...this.props} />
@@ -106,105 +108,4 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
       </Collapsible>
     )
   }
-}
-
-interface Props {
-  order: CollectiveOrder | null
-}
-
-const CurrentOrderStatus = ({order}: Props) => {
-  return (
-    <span>
-      {!order?
-        <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />No current order</span>
-      : order.isComplete?
-        <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
-      : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
-      }
-    </span>
-  )
-}
-
-const CurrentOrderTotal = ({order}: Props) => {
-  if(!order) {
-    return <span></span>;
-  }
-
-  return (
-    <span className="flex justify-end">
-      {/* <span>Total:</span> */}
-      <span className="w-24 font-bold text-right">
-      { order.oldTotalIncVat === null || order.oldTotalIncVat == order.totalIncVat?
-        <Money amount={order.totalIncVat} />
-      : <span>
-          <span className="line-through"><Money amount={order.oldTotalIncVat} /></span> 
-          <Money className="text-red font-bold" amount={order.totalIncVat} />
-        </span>
-      }
-      </span>
-    </span>
-  );
-}
-
-const CurrentOrderMessages = ({order}: Props) => {
-  if(!order) {
-    return <span></span>;
-  }
-
-  const allComplete = order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
-  const orderMinimumReached = order.totalIncVat >= 25000
-  const allHouseholdsUpToDate = order.allHouseholdsUpToDate;
-
-  return (
-    <div className="mt-4 mx-2 bg-blue-lighter border border-blue-light flex text-black px-2 py-1">
-      <Icon type={!!order.householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2 nudge-d-2" />
-      { !order.householdOrders.length?
-        <span>Waiting for households to join</span>
-      : !allHouseholdsUpToDate?
-        <span>Waiting for all households to accept latest catalogue updates</span>
-      : !orderMinimumReached?
-        <span>Waiting for &pound;250.00 order minimum</span>
-      : !allComplete?
-        <span>Waiting for all orders to be completed</span>
-        // : !allPaid?
-        //   <span className="text-blue"><Icon type="info" className="w-4 h-4 fill-current mr-1 nudge-d-2" />Waiting for everyone to pay up</span>
-      : <span>Order can now be placed</span>
-      }
-    </div>
-  )
-}
-
-interface CurrentOrderButtonsProps {
-  order: CollectiveOrder | null
-  newOrder: () => void
-  deleteOrder: () => void
-  abandonOrder: () => void
-  placeOrder: () => void
-}
-
-const CurrentOrderButtons = ({order, newOrder, deleteOrder, abandonOrder, placeOrder}: CurrentOrderButtonsProps) => {
-  const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
-  const orderMinimumReached = !!order && order.totalIncVat >= 25000
-
-  const deleteOrderPossible = !!order && !order.householdOrders.length
-  const placeOrderPossible = !!order && !!order.householdOrders.length
-  const placeOrderAllowed = allComplete /*&& allPaid*/ && orderMinimumReached
-  const abandonOrderPossible = !!order && !!order.householdOrders.length
-
-  return (
-    <div className="mt-2 flex flex-wrap content-start items-start">
-      {!order?
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new order</button>
-      : [
-        deleteOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
-        ,
-        abandonOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
-        ,
-        placeOrderPossible &&
-          <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
-      ]}
-  </div>
-  )
 }

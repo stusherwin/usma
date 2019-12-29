@@ -6,9 +6,7 @@ import { Util } from '../util/Util'
 
 export interface ProductFiltersProps { searchString: string
                                      , flags: ProductFlags
-                                     , category: string | null
                                      , categories: string[]
-                                     , brand: string | null
                                      , brands: string[]
                                      , searchChanged: (value: string) => void
                                      , flagChanged: (changedFlag: string) => void

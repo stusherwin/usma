@@ -6,7 +6,7 @@ import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
-import { ProductFlags } from '../product/ProductList'
+import { CurrentHouseholdOrderItem } from './CurrentHouseholdOrderItem'
 
 export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
                                             , readOnly?: boolean
@@ -32,7 +32,13 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
 
     return (
       <table className="border-collapse w-full">
-        { items.map(this.renderItem(householdOrder)) }
+        { items.map((item, index) => 
+          <CurrentHouseholdOrderItem householdOrder={householdOrder} 
+                                     item={item} 
+                                     index={index} 
+                                     editQuantity={this.editQuantity}
+                                     removeItem={this.removeItem} />
+        )}
         <tr hidden={!discontinuedItems.length}>
           <td colSpan={5} className={classNames("text-red font-bold pb-2 px-2", {"pt-4": !items.length, "pt-8": items.length})}>
             <span className="flex justify-start">
@@ -40,7 +46,14 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
             </span>
           </td>
         </tr>
-        { discontinuedItems.map(this.renderItem(householdOrder)) }
+        { discontinuedItems.map((item, index) => 
+          <CurrentHouseholdOrderItem householdOrder={householdOrder}
+                                     item={item} 
+                                     index={index} 
+                                     editQuantity={this.editQuantity}
+                                     readOnly={this.props.readOnly}
+                                     removeItem={this.removeItem} />
+        )}
         <tr>
           <td></td>
           <td className={classNames('pt-8 align-baseline px-2')} colSpan={4}>
@@ -78,59 +91,4 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
       </table>
     )
   }
-
-  renderItem = (householdOrder: HouseholdOrder) => (i: HouseholdOrderItem, ix: number) => 
-    [
-    <tr key={i.productId + '-1'}>
-      <td className={classNames('w-20 h-20 align-top pl-2', {'pt-4': ix == 0, 'pt-8': ix > 0})} rowSpan={3}>
-        <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${i.productCode}`)} />
-      </td>
-      <td className={classNames('pb-2 pl-2 font-bold align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0, '': i.productDiscontinued})}>{i.productCode}</td>
-      <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0})}>
-        {!this.props.readOnly && this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued
-          ? <select className="border" value={i.itemQuantity} onChange={e => this.editQuantity(i, parseInt(e.target.value))}>
-              {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
-            </select>
-          : <span className={classNames({'': i.productDiscontinued})}>x {i.itemQuantity}</span>
-        }
-      </td>
-      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': ix == 0, 'pt-8': ix > 0})} colSpan={2}>
-        {i.oldItemTotalExcVat !== null && i.oldItemTotalExcVat != i.itemTotalExcVat?
-          <span>
-            <span className="line-through"><Money amount={i.oldItemTotalExcVat} /></span> 
-            {!i.productDiscontinued && 
-              <Money className="text-red font-bold" amount={i.itemTotalExcVat} />
-            }
-          </span>
-        : <span className={classNames({"line-through text-grey-dark": householdOrder.isAbandoned})}><Money amount={i.itemTotalExcVat} /></span>
-        }
-      </td>
-    </tr>
-    ,
-    <tr key={i.productId + '-2'}>
-      <td className={classNames('pb-2 pl-2 align-top')} colSpan={3}>
-        {i.productDiscontinued
-          ? <span>
-              <span className="">{i.productName}</span><br />
-            </span>
-          : i.productName
-        }
-      </td>
-      <td className={classNames('pl-2 pr-2 align-top text-right')}>
-        {!this.props.readOnly && this.props.currentHouseholdOrder.isOpen && !i.productDiscontinued &&
-          <button className="ml-4" onClick={() => this.removeItem(i)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-        }
-      </td>
-    </tr>
-    ,
-    <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2')} colSpan={4}>
-        <span className="pr-2">
-        <ProductFlags p={i} />
-        </span>
-        <span className="text-grey whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
-      </td>
-      {/* <td className={classNames('pl-2 pr-2')}>&nbsp;</td> */}
-    </tr>
-    ]
 }

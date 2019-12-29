@@ -8,7 +8,7 @@ import { Money } from '../util/Money'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
 
-import { ProductFlags } from '../product/ProductList'
+import { PastHouseholdOrderItem } from './PastHouseholdOrderItem'
 
 export interface PastHouseholdOrdersProps { household: Household
                                           , collapsibleKey: string
@@ -114,7 +114,12 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                             : <div>
                                 <table className="border-collapse w-full">
                                   <tbody>
-                                    {ho.items.map(this.renderItem)}
+                                    {ho.items.map((item, index) => 
+                                      <PastHouseholdOrderItem item={item} 
+                                                              index={index} 
+                                                              currentHouseholdOrder={this.props.household.currentHouseholdOrder}
+                                                              addToCurrentOrder={this.addToCurrentOrder} />
+                                    )}
                                     <tr>
                                       <td></td>
                                       <td className="pt-2 pr-2 pl-2" colSpan={3}>
@@ -157,40 +162,4 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       </Collapsible>
     )
   }
-
-  renderItem = (i: PastOrderItem, ix: number) => 
-    [
-    <tr key={i.productId + '-1'}>
-      <td className={classNames('pl-2 w-20 h-20 align-top', {'pt-4': ix == 0, 'pt-8': ix > 0})} rowSpan={3}>
-        <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${i.productCode}`)} />
-      </td>
-      <td className={classNames('pl-2 pb-2 font-bold align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0})}>
-        {i.productCode}
-      </td>
-      <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': ix == 0, 'pt-8': ix > 0})}>
-        x {i.itemQuantity}
-      </td>
-      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': ix == 0, 'pt-8': ix > 0})} colSpan={2}>
-        <Money amount={i.itemTotalExcVat} />
-      </td>
-    </tr>
-    ,
-    <tr key={i.productId + '-2'}>
-      <td className={classNames('pl-2 pb-2 pr-2 align-top')} colSpan={2}>{i.productName}</td>
-      <td className={classNames('pl-2 pr-2 align-top text-right')}>
-        {this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => this.addToCurrentOrder(i)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
-        }
-      </td>
-    </tr>
-    ,
-    <tr key={i.productId + '-3'}>
-      <td className={classNames('pl-2 pr-2')} colSpan={3}>
-        <span className="pr-2">
-          <ProductFlags p={i} />
-        </span>
-        <span className="text-grey whitespace-no-wrap">VAT: {i.productVatRate} rate</span>
-      </td>
-    </tr>
-    ]
 }
