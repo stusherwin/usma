@@ -117,7 +117,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                     {ho.items.map((item, index) => 
                                       <PastHouseholdOrderItem item={item} 
                                                               index={index} 
-                                                              currentHouseholdOrder={this.props.household.currentHouseholdOrder}
+                                                              orderAbandoned={ho.isAbandoned}
+                                                              canAddToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen}
                                                               addToCurrentOrder={this.addToCurrentOrder} />
                                     )}
                                     <tr>
