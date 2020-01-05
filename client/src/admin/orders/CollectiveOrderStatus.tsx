@@ -3,11 +3,11 @@ import * as React from 'react';
 import { CollectiveOrder } from '../../util/Types'
 import { Icon } from '../../util/Icon'
 
-interface CurrentCollectiveOrderStatusProps {
+interface CollectiveOrderStatusProps {
   order: CollectiveOrder | null
 }
 
-export const CurrentCollectiveOrderStatus = ({order}: CurrentCollectiveOrderStatusProps) => {
+export const CollectiveOrderStatus = ({order}: CollectiveOrderStatusProps) => {
   return (
     <span>
       {!order?

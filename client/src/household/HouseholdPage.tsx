@@ -1,29 +1,30 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
+import { Household, CollectiveOrder as Order, ProductCatalogueEntry } from '../util/Types'
 import { Money } from '../util/Money'
 import { Router } from '../util/Router'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { RouterLink } from '../util/RouterLink'
 
-import { CurrentCollectiveOrder } from './CurrentCollectiveOrder'
+import { CollectiveOrder } from './CollectiveOrder'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
 import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdPageProps { household: Household
-                                    , collectiveOrder: CollectiveOrder | null
-                                    , products: ProductCatalogueEntry[]
-                                    , categories: string[]
-                                    , brands: string[]
-                                    , households: Household[]
-                                    , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                    , reload: () => Promise<void>
-                                    , router: Router
+                                      collectiveOrder: Order | null
+                                      products: ProductCatalogueEntry[]
+                                      categories: string[]
+                                      brands: string[]
+                                      households: Household[]
+                                      request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                      reload: () => Promise<void>
+                                      router: Router
                                     }
-type Section = 'orders' | 'past-orders' | 'payments' | 'household'
+
 export interface HouseholdPageState { collapsibleState: CollapsibleState
                                     }
+
 export class HouseholdPage extends React.Component<HouseholdPageProps, HouseholdPageState> {  
   editHousehold: React.RefObject<EditHousehold>
 
@@ -65,7 +66,7 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                          onConfirm={() => this.props.reload().then(this.state.collapsibleState.toggle('household'))}
                          onCancel={this.state.collapsibleState.toggle('household')} />
         </Collapsible>
-        <CurrentCollectiveOrder collapsibleKey="orders"
+        <CollectiveOrder collapsibleKey="orders"
                                 collapsibleState={this.state.collapsibleState}
                                 {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"

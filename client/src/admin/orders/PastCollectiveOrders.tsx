@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder, PastHouseholdOrder } from '../../util/Types'
+import { PastCollectiveOrder } from '../../util/Types'
 import { Util } from '../../util/Util'
 import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
@@ -10,17 +10,17 @@ import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 
-export interface PastOrdersProps { pastOrders: PastCollectiveOrder[]
-                                 , collapsibleKey: string
-                                 , collapsibleState: CollapsibleState
-                                 }
+export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
+                                             collapsibleKey: string
+                                             collapsibleState: CollapsibleState
+                                           }
                                  
-export interface PastOrdersState { collapsibleState: CollapsibleState
-                                 , tab: 'households' | 'product-list' | 'product-codes'
-                                 }
+export interface PastCollectiveOrdersState { collapsibleState: CollapsibleState
+                                             tab: 'households' | 'product-list' | 'product-codes'
+                                           }
 
-export class PastOrders extends React.Component<PastOrdersProps, PastOrdersState> {  
-  constructor(props: PastOrdersProps) {
+export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersProps, PastCollectiveOrdersState> {  
+  constructor(props: PastCollectiveOrdersProps) {
     super(props)
 
     this.state = { 

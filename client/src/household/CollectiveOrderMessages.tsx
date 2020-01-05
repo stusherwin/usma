@@ -4,12 +4,12 @@ import { HouseholdOrder, CollectiveOrder } from '../util/Types'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
-interface CurrentCollectiveOrderMessagesProps { householdOrder: HouseholdOrder | null
-                                              , collectiveOrder: CollectiveOrder
-                                              , acceptUpdates: () => void
-                                              }
+interface CollectiveOrderMessagesProps { householdOrder: HouseholdOrder | null
+                                         collectiveOrder: CollectiveOrder
+                                         acceptUpdates: () => void
+                                       }
 
-export const CurrentCollectiveOrderMessages = ({householdOrder, collectiveOrder, acceptUpdates}: CurrentCollectiveOrderMessagesProps) => {
+export const CollectiveOrderMessages = ({householdOrder, collectiveOrder, acceptUpdates}: CollectiveOrderMessagesProps) => {
   if(!householdOrder)
     return null
 
@@ -30,7 +30,7 @@ export const CurrentCollectiveOrderMessages = ({householdOrder, collectiveOrder,
 
   return (
     <div className="flex px-2 py-4 text-black">
-      <Icon type={allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 mr-2 fill-current nudge-d-2" />
+      <Icon type={allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 mr-2 fill-current" />
       { !allHouseholdsUpToDate?
         <span>Waiting for all households to accept latest catalogue updates</span>
       : !orderMinimumReached?

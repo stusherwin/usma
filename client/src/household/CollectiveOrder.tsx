@@ -1,35 +1,35 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
+import { Household, CollectiveOrder as Order, ProductCatalogueEntry } from '../util/Types'
 import { Util } from '../util/Util'
 import { Icon } from '../util/Icon'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
 
 import { AddProduct } from './AddProduct'
-import { CurrentHouseholdOrder } from './CurrentHouseholdOrder'
-import { CurrentHouseholdOrderButtons } from './CurrentHouseholdOrderButtons'
-import { CurrentCollectiveOrderMessages } from './CurrentCollectiveOrderMessages'
-import { CurrentHouseholdOrderStatus } from './CurrentHouseholdOrderStatus'
-import { CurrentHouseholdOrderTotal } from './CurrentHouseholdOrderTotal'
+import { HouseholdOrder } from './HouseholdOrder'
+import { HouseholdOrderButtons } from './HouseholdOrderButtons'
+import { CollectiveOrderMessages } from './CollectiveOrderMessages'
+import { HouseholdOrderStatus } from './HouseholdOrderStatus'
+import { HouseholdOrderTotal } from './HouseholdOrderTotal'
 
-export interface CurrentCollectiveOrderProps { household: Household
-                                   , collectiveOrder: CollectiveOrder | null
-                                   , households: Household[]
-                                   , products: ProductCatalogueEntry[]
-                                   , categories: string[]
-                                   , brands: string[]
-                                   , collapsibleKey: string
-                                   , collapsibleState: CollapsibleState
-                                   , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                   , reload: () => Promise<void>
-                                   }
+export interface CollectiveOrderProps { household: Household
+                                        collectiveOrder: Order | null
+                                        households: Household[]
+                                        products: ProductCatalogueEntry[]
+                                        categories: string[]
+                                        brands: string[]
+                                        collapsibleKey: string
+                                        collapsibleState: CollapsibleState
+                                        request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                        reload: () => Promise<void>
+                                      }
 
-export interface CurrentCollectiveOrderState { addingProduct: boolean
-                                   }
+export interface CollectiveOrderState { addingProduct: boolean
+                                      }
 
-export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrderProps, CurrentCollectiveOrderState> {
-  constructor(props: CurrentCollectiveOrderProps) {
+export class CollectiveOrder extends React.Component<CollectiveOrderProps, CollectiveOrderState> {
+  constructor(props: CollectiveOrderProps) {
     super(props)
 
     this.state = { addingProduct: false
@@ -131,14 +131,14 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
                        </h2>
                        <div>
                          <h3 className="flex justify-between ml-20 mt-4 mb-2">
-                           <CurrentHouseholdOrderStatus currentHouseholdOrder={householdOrder} />
+                           <HouseholdOrderStatus currentHouseholdOrder={householdOrder} />
                            <span className="flex justify-end">
                              {/* <span>Total:</span> */}
-                             <span className="w-24 text-right"><CurrentHouseholdOrderTotal currentHouseholdOrder={householdOrder} /></span>
+                             <span className="w-24 text-right"><HouseholdOrderTotal currentHouseholdOrder={householdOrder} /></span>
                            </span>
                          </h3>
                          {!this.state.addingProduct &&
-                           <CurrentHouseholdOrderButtons unusedProducts={unusedProducts} 
+                           <HouseholdOrderButtons unusedProducts={unusedProducts} 
                                                          currentHouseholdOrder={householdOrder} 
                                                          leaveOrder={this.leaveOrder} 
                                                          reopenOrder={this.reopenOrder}
@@ -170,10 +170,10 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet {!this.props.products.length && ' - the product catalogue is empty'}
           </div>
         : <div>
-            <CurrentCollectiveOrderMessages householdOrder={householdOrder} 
+            <CollectiveOrderMessages householdOrder={householdOrder} 
                                             collectiveOrder={order} 
                                             acceptUpdates={this.acceptUpdates} />
-            <CurrentHouseholdOrder currentHouseholdOrder={householdOrder}
+            <HouseholdOrder currentHouseholdOrder={householdOrder}
                                    reload={this.props.reload}
                                    request={this.props.request} />
           </div>

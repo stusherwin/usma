@@ -3,16 +3,16 @@ import * as React from 'react';
 import { HouseholdOrder, ProductCatalogueEntry } from '../util/Types'
 import { Icon } from '../util/Icon'
 
-export interface CurrentHouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEntry[]
-                                                   , currentHouseholdOrder: HouseholdOrder | null
-                                                   , leaveOrder: () => void
-                                                   , reopenOrder: () => void
-                                                   , abandonOrder: () => void
-                                                   , completeOrder: () => void
-                                                   , startAdd: () => void
-                                                   }
+export interface HouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEntry[]
+                                              currentHouseholdOrder: HouseholdOrder | null
+                                              leaveOrder: () => void
+                                              reopenOrder: () => void
+                                              abandonOrder: () => void
+                                              completeOrder: () => void
+                                              startAdd: () => void
+                                            }
 
-export const CurrentHouseholdOrderButtons = (props: CurrentHouseholdOrderButtonsProps) => {
+export const HouseholdOrderButtons = (props: HouseholdOrderButtonsProps) => {
   if(!props.currentHouseholdOrder)
     return null
 

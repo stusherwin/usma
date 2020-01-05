@@ -1,34 +1,34 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, Household } from '../../util/Types'
+import { CollectiveOrder as Order, Household } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
 import { Router } from '../../util/Router'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
-import { CurrentHouseholdOrders } from './CurrentHouseholdOrders'
-import { CurrentCollectiveOrderItems } from './CurrentCollectiveOrderItems'
-import { CurrentCollectiveOrderProductCodes } from './CurrentCollectiveOrderProductCodes'
-import { CurrentCollectiveOrderButtons } from './CurrentCollectiveOrderButtons'
-import { CurrentCollectiveOrderMessages } from './CurrentCollectiveOrderMessages'
-import { CurrentCollectiveOrderTotal } from './CurrentCollectiveOrderTotal'
-import { CurrentCollectiveOrderStatus } from './CurrentCollectiveOrderStatus'
+import { HouseholdOrders } from './HouseholdOrders'
+import { CollectiveOrderItems } from './CollectiveOrderItems'
+import { CollectiveOrderProductCodes } from './CollectiveOrderProductCodes'
+import { CollectiveOrderButtons } from './CollectiveOrderButtons'
+import { CollectiveOrderMessages } from './CollectiveOrderMessages'
+import { CollectiveOrderTotal } from './CollectiveOrderTotal'
+import { CollectiveOrderStatus } from './CollectiveOrderStatus'
 
-export interface CurrentCollectiveOrderProps { collectiveOrder: CollectiveOrder | null
-                                             , households: Household[]
-                                             , collapsibleKey: string
-                                             , collapsibleState: CollapsibleState
-                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                             , reload: () => Promise<void>
-                                             }
+export interface CollectiveOrderProps { collectiveOrder: Order | null
+                                        households: Household[]
+                                        collapsibleKey: string
+                                        collapsibleState: CollapsibleState
+                                        request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                        reload: () => Promise<void>
+                                      }
 
-export interface CurrentCollectiveOrderState { addingHousehold: Household | null
-                                   , tab: 'households' | 'product-list' | 'product-codes'
-                                   }
+export interface CollectiveOrderState { addingHousehold: Household | null
+                                        tab: 'households' | 'product-list' | 'product-codes'
+                                      }
 
-export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrderProps, CurrentCollectiveOrderState> {
-  constructor(props: CurrentCollectiveOrderProps) {
+export class CollectiveOrder extends React.Component<CollectiveOrderProps, CollectiveOrderState> {
+  constructor(props: CollectiveOrderProps) {
     super(props)
 
     this.state = { addingHousehold: null
@@ -79,10 +79,10 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
                          Current order
                        </h2>
                        <h3 className="flex justify-between ml-20 mt-4">
-                         <CurrentCollectiveOrderStatus order={order} />
-                         <CurrentCollectiveOrderTotal order={order} />
+                         <CollectiveOrderStatus order={order} />
+                         <CollectiveOrderTotal order={order} />
                        </h3>
-                       <CurrentCollectiveOrderButtons order={order}
+                       <CollectiveOrderButtons order={order}
                           newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
                        {!!order
                        ? <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
@@ -95,13 +95,13 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
               "bg-household-lightest": this.state.tab == 'households',
               "bg-white": this.state.tab != 'households'
             })}>
-              <CurrentCollectiveOrderMessages order={order} />
+              <CollectiveOrderMessages order={order} />
               { this.state.tab == 'households'?
-                <CurrentHouseholdOrders order={order}
+                <HouseholdOrders order={order}
                                         {...this.props} />
               : this.state.tab == 'product-list'?
-                <CurrentCollectiveOrderItems collectiveOrder={order} />
-              : <CurrentCollectiveOrderProductCodes collectiveOrder={order} />
+                <CollectiveOrderItems order={order} />
+              : <CollectiveOrderProductCodes order={order} />
               }
             </div>
           }

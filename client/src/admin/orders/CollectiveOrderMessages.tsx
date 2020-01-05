@@ -3,11 +3,11 @@ import * as React from 'react';
 import { CollectiveOrder, HouseholdOrder } from '../../util/Types'
 import { Icon } from '../../util/Icon'
 
-export interface CurrentCollectiveOrderMessagesProps {
+export interface CollectiveOrderMessagesProps {
   order: CollectiveOrder | null
 }
 
-export const CurrentCollectiveOrderMessages = ({order}: CurrentCollectiveOrderMessagesProps) => {
+export const CollectiveOrderMessages = ({order}: CollectiveOrderMessagesProps) => {
   if(!order) {
     return <span></span>;
   }

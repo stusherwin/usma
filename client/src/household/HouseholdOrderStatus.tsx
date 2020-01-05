@@ -3,7 +3,7 @@ import * as React from 'react';
 import { HouseholdOrder } from '../util/Types'
 import { Icon } from '../util/Icon'
 
-export const CurrentHouseholdOrderStatus = ({currentHouseholdOrder}: {currentHouseholdOrder: HouseholdOrder | null}) => {
+export const HouseholdOrderStatus = ({currentHouseholdOrder}: {currentHouseholdOrder: HouseholdOrder | null}) => {
   return (
     <span>
       {!currentHouseholdOrder?

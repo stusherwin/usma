@@ -3,22 +3,20 @@ import * as React from 'react';
 import { CollectiveOrder } from '../../util/Types'
 import { Icon } from '../../util/Icon'
 
-export interface CurrentCollectiveOrderProductCodesProps { collectiveOrder: CollectiveOrder
-                                               }
+export interface CollectiveOrderProductCodesProps { order: CollectiveOrder
+                                                  }
 
-export interface CurrentCollectiveOrderProductCodesState {}
-                                     
-export class CurrentCollectiveOrderProductCodes extends React.Component<CurrentCollectiveOrderProductCodesProps, CurrentCollectiveOrderProductCodesState> {
+export class CollectiveOrderProductCodes extends React.Component<CollectiveOrderProductCodesProps, {}> {
   textArea: React.RefObject<HTMLTextAreaElement>
 
-  constructor(props: CurrentCollectiveOrderProductCodesProps) {
+  constructor(props: CollectiveOrderProductCodesProps) {
     super(props)
 
     this.textArea = React.createRef();
   }
 
   render() {
-    const order = this.props.collectiveOrder
+    const order = this.props.order
   
     return !order.items.length?
       <div className="px-2 py-4 text-grey-darker">

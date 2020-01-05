@@ -3,7 +3,7 @@ import * as React from 'react';
 import { CollectiveOrder, HouseholdOrder } from '../../util/Types'
 import { Icon } from '../../util/Icon'
 
-interface CurrentCollectiveOrderButtonsProps {
+interface CollectiveOrderButtonsProps {
   order: CollectiveOrder | null
   newOrder: () => void
   deleteOrder: () => void
@@ -11,7 +11,7 @@ interface CurrentCollectiveOrderButtonsProps {
   placeOrder: () => void
 }
 
-export const CurrentCollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrder, placeOrder}: CurrentCollectiveOrderButtonsProps) => {
+export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrder, placeOrder}: CollectiveOrderButtonsProps) => {
   const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
   const orderMinimumReached = !!order && order.totalIncVat >= 25000
 

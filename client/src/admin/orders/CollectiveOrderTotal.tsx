@@ -3,18 +3,17 @@ import * as React from 'react';
 import { CollectiveOrder } from '../../util/Types'
 import { Money } from '../../util/Money'
 
-export interface CurrentCollectiveOrderMessagesProps {
+export interface CollectiveOrderMessagesProps {
   order: CollectiveOrder | null
 }
 
-export const CurrentCollectiveOrderTotal = ({order}: CurrentCollectiveOrderMessagesProps) => {
+export const CollectiveOrderTotal = ({order}: CollectiveOrderMessagesProps) => {
   if(!order) {
     return <span></span>;
   }
 
   return (
     <span className="flex justify-end">
-      {/* <span>Total:</span> */}
       <span className="w-24 font-bold text-right">
       { order.oldTotalIncVat === null || order.oldTotalIncVat === undefined || order.oldTotalIncVat == order.totalIncVat?
         <Money amount={order.totalIncVat} />

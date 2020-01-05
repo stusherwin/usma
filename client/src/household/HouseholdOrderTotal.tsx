@@ -4,7 +4,7 @@ import * as classNames from 'classnames'
 import { HouseholdOrder } from '../util/Types'
 import { Money } from '../util/Money'
 
-export const CurrentHouseholdOrderTotal = ({currentHouseholdOrder}: {currentHouseholdOrder: HouseholdOrder | null}) => {
+export const HouseholdOrderTotal = ({currentHouseholdOrder}: {currentHouseholdOrder: HouseholdOrder | null}) => {
   return !currentHouseholdOrder?
     <Money amount={0} />
   : currentHouseholdOrder.oldTotalIncVat === null || currentHouseholdOrder.oldTotalIncVat === undefined || currentHouseholdOrder.oldTotalIncVat == currentHouseholdOrder.totalIncVat?

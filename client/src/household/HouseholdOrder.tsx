@@ -1,20 +1,20 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, OrderItem as Item } from '../util/Types'
+import { HouseholdOrder as Order, OrderItem as Item } from '../util/Types'
 import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
 import { OrderItem } from './OrderItem'
 
-export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
+export interface CurrentHouseholdOrderProps { currentHouseholdOrder: Order
                                             , readOnly?: boolean
                                             , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                             , reload: () => Promise<void>
                                             }
 
-export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
+export class HouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
   removeItem = (item: Item) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productId))
       .then(this.props.reload)

@@ -1,24 +1,24 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, Household, HouseholdOrder } from '../../util/Types'
+import { CollectiveOrder, Household } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
 import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
-import { CurrentHouseholdOrder } from '../../household/CurrentHouseholdOrder'
+import { HouseholdOrder } from '../../household/HouseholdOrder'
 
-export interface CurrentHouseholdOrdersProps { order: CollectiveOrder
-                                      , households: Household[]
-                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                      , reload: () => Promise<void>
+export interface HouseholdOrdersProps { order: CollectiveOrder
+                                        households: Household[]
+                                        request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                        reload: () => Promise<void>
                                       }
 
-export interface CurrentHouseholdOrdersState { collapsibleState: CollapsibleState }
+export interface HouseholdOrdersState { collapsibleState: CollapsibleState }
 
-export class CurrentHouseholdOrders extends React.Component<CurrentHouseholdOrdersProps, CurrentHouseholdOrdersState> {
-  constructor(props: CurrentHouseholdOrdersProps) {
+export class HouseholdOrders extends React.Component<HouseholdOrdersProps, HouseholdOrdersState> {
+  constructor(props: HouseholdOrdersProps) {
     super(props)
 
     this.state = { 
@@ -77,7 +77,7 @@ export class CurrentHouseholdOrders extends React.Component<CurrentHouseholdOrde
                             <div className="px-2 py-4 text-grey-darker">
                               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet
                             </div>
-                          : <CurrentHouseholdOrder currentHouseholdOrder={ho}
+                          : <HouseholdOrder currentHouseholdOrder={ho}
                                                    readOnly={true}
                                                    {...this.props} />
                           }
