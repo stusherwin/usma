@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, HouseholdOrderItem } from '../util/Types'
+import { HouseholdOrder, OrderItem } from '../util/Types'
 import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
@@ -15,12 +15,12 @@ export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOr
                                             }
 
 export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
-  removeItem = (item: HouseholdOrderItem) => {
+  removeItem = (item: OrderItem) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productId))
       .then(this.props.reload)
   }
 
-  editQuantity = (item: HouseholdOrderItem, quantity: number) => {
+  editQuantity = (item: OrderItem, quantity: number) => {
     this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, quantity))
       .then(this.props.reload)
   }
@@ -33,10 +33,12 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     return (
       <table className="border-collapse w-full">
         { items.map((item, index) => 
-          <CurrentHouseholdOrderItem householdOrder={householdOrder} 
-                                     item={item} 
+          <CurrentHouseholdOrderItem item={item} 
                                      index={index} 
+                                     orderAbandoned={householdOrder.isAbandoned}
+                                     canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
                                      editQuantity={this.editQuantity}
+                                     canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
                                      removeItem={this.removeItem} />
         )}
         <tr hidden={!discontinuedItems.length}>
@@ -47,11 +49,12 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </td>
         </tr>
         { discontinuedItems.map((item, index) => 
-          <CurrentHouseholdOrderItem householdOrder={householdOrder}
-                                     item={item} 
-                                     index={index} 
+          <CurrentHouseholdOrderItem item={item} 
+                                     index={index}
+                                     orderAbandoned={householdOrder.isAbandoned}
+                                     canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
                                      editQuantity={this.editQuantity}
-                                     readOnly={this.props.readOnly}
+                                     canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
                                      removeItem={this.removeItem} />
         )}
         <tr>

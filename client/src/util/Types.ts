@@ -50,7 +50,7 @@ export type PastCollectiveOrder = { id: number
                                   , isAbandoned: boolean
                                   , totalExcVat: number
                                   , totalIncVat: number
-                                  , items: PastOrderItem[]
+                                  , items: OrderItem[]
                                   , pastHouseholdOrders: PastHouseholdOrder[]
                                   }
 
@@ -80,29 +80,7 @@ export type PastHouseholdOrder = { orderId: number
                                  , isAbandoned: boolean
                                  , totalExcVat: number
                                  , totalIncVat: number
-                                 , items: PastOrderItem[]
-                                 }
-
-export type HouseholdOrderItem = { productId: number
-                                 , productCode: string
-                                 , productName: string
-                                 , oldProductPriceExcVat: number | null
-                                 , oldProductPriceIncVat: number | null
-                                 , productVatRate: VatRate
-                                 , itemQuantity: number
-                                 , oldItemTotalExcVat: number | null
-                                 , oldItemTotalIncVat: number | null
-                                 , productDiscontinued: boolean
-                                 , productPriceExcVat: number
-                                 , productPriceIncVat: number
-                                 , itemTotalExcVat: number
-                                 , itemTotalIncVat: number
-                                 , biodynamic: boolean
-                                 , fairTrade: boolean
-                                 , glutenFree: boolean
-                                 , organic: boolean
-                                 , addedSugar: boolean
-                                 , vegan: boolean
+                                 , items: OrderItem[]
                                  }
 
 export type OrderItem = { productId: number
@@ -126,23 +104,6 @@ export type OrderItem = { productId: number
                         , addedSugar: boolean
                         , vegan: boolean
                         }
-
-export type PastOrderItem = { productId: number
-                            , productCode: string
-                            , productName: string
-                            , productPriceExcVat: number
-                            , productPriceIncVat: number
-                            , productVatRate: VatRate
-                            , itemQuantity: number
-                            , itemTotalExcVat: number
-                            , itemTotalIncVat: number
-                            , biodynamic: boolean
-                            , fairTrade: boolean
-                            , glutenFree: boolean
-                            , organic: boolean
-                            , addedSugar: boolean
-                            , vegan: boolean                            
-                            }
 
 export type HouseholdPayment = { id: number 
                                , householdId: number

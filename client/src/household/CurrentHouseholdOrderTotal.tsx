@@ -7,7 +7,7 @@ import { Money } from '../util/Money'
 export const CurrentHouseholdOrderTotal = ({currentHouseholdOrder}: {currentHouseholdOrder: HouseholdOrder | null}) => {
   return !currentHouseholdOrder?
     <Money amount={0} />
-  : currentHouseholdOrder.oldTotalIncVat === null || currentHouseholdOrder.oldTotalIncVat == currentHouseholdOrder.totalIncVat?
+  : currentHouseholdOrder.oldTotalIncVat === null || currentHouseholdOrder.oldTotalIncVat === undefined || currentHouseholdOrder.oldTotalIncVat == currentHouseholdOrder.totalIncVat?
     <Money className={classNames({"line-through text-grey-darker": currentHouseholdOrder.isAbandoned})} amount={currentHouseholdOrder.totalIncVat} />
   : <span>
       <span className="line-through"><Money amount={currentHouseholdOrder.oldTotalIncVat} /></span> 

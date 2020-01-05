@@ -55,10 +55,10 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
   }
 
   joinOrder = () => {
-    if(!this.props.household.currentHouseholdOrder)
+    if(!this.props.collectiveOrder)
       return
 
-    const orderId = this.props.household.currentHouseholdOrder.orderId
+    const orderId = this.props.collectiveOrder.id
     const householdId = this.props.household.id
     this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
       .then(this.props.reload)
@@ -158,7 +158,7 @@ export class CurrentCollectiveOrder extends React.Component<CurrentCollectiveOrd
         : !householdOrder?
           <div className="px-2 py-4 text-grey-darker">
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
-            <button className="mt-4" onClick={_ => this.joinOrder()}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
+            <button className="mt-4" onClick={this.joinOrder}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
           </div>
         : this.state.addingProduct?
           <AddProduct products={unusedProducts}

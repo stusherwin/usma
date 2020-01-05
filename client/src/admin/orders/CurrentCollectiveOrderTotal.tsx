@@ -16,7 +16,7 @@ export const CurrentCollectiveOrderTotal = ({order}: CurrentCollectiveOrderMessa
     <span className="flex justify-end">
       {/* <span>Total:</span> */}
       <span className="w-24 font-bold text-right">
-      { order.oldTotalIncVat === null || order.oldTotalIncVat == order.totalIncVat?
+      { order.oldTotalIncVat === null || order.oldTotalIncVat === undefined || order.oldTotalIncVat == order.totalIncVat?
         <Money amount={order.totalIncVat} />
       : <span>
           <span className="line-through"><Money amount={order.oldTotalIncVat} /></span> 

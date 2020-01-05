@@ -1,14 +1,14 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder, PastOrderItem, Household } from '../util/Types'
+import { PastHouseholdOrder, OrderItem, Household } from '../util/Types'
 import { Util } from '../util/Util'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
 
-import { PastHouseholdOrderItem } from './PastHouseholdOrderItem'
+import { CurrentHouseholdOrderItem } from './CurrentHouseholdOrderItem'
 
 export interface PastHouseholdOrdersProps { household: Household
                                           , collapsibleKey: string
@@ -29,7 +29,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     }
   }
 
-  addToCurrentOrder = (item: PastOrderItem) => {
+  addToCurrentOrder = (item: OrderItem) => {
     if(!this.props.household.currentHouseholdOrder) return;
 
     this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, item.productCode, null))
@@ -115,11 +115,11 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                 <table className="border-collapse w-full">
                                   <tbody>
                                     {ho.items.map((item, index) => 
-                                      <PastHouseholdOrderItem item={item} 
-                                                              index={index} 
-                                                              orderAbandoned={ho.isAbandoned}
-                                                              canAddToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen}
-                                                              addToCurrentOrder={this.addToCurrentOrder} />
+                                      <CurrentHouseholdOrderItem item={item} 
+                                                                 index={index} 
+                                                                 orderAbandoned={ho.isAbandoned}
+                                                                 canAddToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen}
+                                                                 addToCurrentOrder={this.addToCurrentOrder} />
                                     )}
                                     <tr>
                                       <td></td>
