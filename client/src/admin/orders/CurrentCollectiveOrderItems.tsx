@@ -6,7 +6,7 @@ import { ServerApi } from '../../util/ServerApi'
 import { Money } from '../../util/Money'
 import { Icon } from '../../util/Icon'
 
-import { CurrentHouseholdOrderItem } from '../../household/CurrentHouseholdOrderItem'
+import { OrderItem } from '../../household/OrderItem'
 
 export interface CurrentCollectiveOrderItemsProps { collectiveOrder: CollectiveOrder
                                         }
@@ -28,7 +28,7 @@ export class CurrentCollectiveOrderItems extends React.Component<CurrentCollecti
         </div>
         <table className="border-collapse w-full">
           {this.props.collectiveOrder.items.map((item, index) => 
-            <CurrentHouseholdOrderItem item={item} index={index} />
+            <OrderItem item={item} index={index} />
           )}
           <tr>
             <td></td>

@@ -1,25 +1,34 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { OrderItem } from '../util/Types'
+import { OrderItem as Item } from '../util/Types'
 import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
 import { ProductFlags } from '../product/ProductFlags'
 
-export interface CurrentHouseholdOrderItemProps { item: OrderItem
-                                                  index: number
-                                                  orderAbandoned?: boolean
-                                                  canEditQuantity?: boolean
-                                                  editQuantity?: (item: OrderItem, quantity: number) => void
-                                                  canRemoveItem?: boolean
-                                                  removeItem?: (item: OrderItem) => void
-                                                  canAddToCurrentOrder?: boolean
-                                                  addToCurrentOrder?: (item: OrderItem) => void
-                                                }
+export interface OrderItemProps { item: Item
+                                  index: number
+                                  orderAbandoned?: boolean
+                                  canEditQuantity?: boolean
+                                  editQuantity?: (item: Item, quantity: number) => void
+                                  canRemoveItem?: boolean
+                                  removeItem?: (item: Item) => void
+                                  canAddToCurrentOrder?: boolean
+                                  addToCurrentOrder?: (item: Item) => void
+                                }
 
-export const CurrentHouseholdOrderItem = ({item, index, orderAbandoned, canEditQuantity, editQuantity, canRemoveItem, removeItem, canAddToCurrentOrder, addToCurrentOrder}: CurrentHouseholdOrderItemProps) =>
+export const OrderItem = ({ item
+                          , index
+                          , orderAbandoned
+                          , canEditQuantity
+                          , editQuantity
+                          , canRemoveItem
+                          , removeItem
+                          , canAddToCurrentOrder
+                          , addToCurrentOrder
+                          }: OrderItemProps) =>
   <React.Fragment>
     <tr>
       <td className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})} rowSpan={3}>

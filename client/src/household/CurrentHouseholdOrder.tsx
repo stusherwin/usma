@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, OrderItem } from '../util/Types'
+import { HouseholdOrder, OrderItem as Item } from '../util/Types'
 import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
-import { CurrentHouseholdOrderItem } from './CurrentHouseholdOrderItem'
+import { OrderItem } from './OrderItem'
 
 export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOrder
                                             , readOnly?: boolean
@@ -15,12 +15,12 @@ export interface CurrentHouseholdOrderProps { currentHouseholdOrder: HouseholdOr
                                             }
 
 export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
-  removeItem = (item: OrderItem) => {
+  removeItem = (item: Item) => {
     this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productId))
       .then(this.props.reload)
   }
 
-  editQuantity = (item: OrderItem, quantity: number) => {
+  editQuantity = (item: Item, quantity: number) => {
     this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, quantity))
       .then(this.props.reload)
   }
@@ -33,13 +33,13 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
     return (
       <table className="border-collapse w-full">
         { items.map((item, index) => 
-          <CurrentHouseholdOrderItem item={item} 
-                                     index={index} 
-                                     orderAbandoned={householdOrder.isAbandoned}
-                                     canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
-                                     editQuantity={this.editQuantity}
-                                     canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
-                                     removeItem={this.removeItem} />
+          <OrderItem item={item} 
+                     index={index} 
+                     orderAbandoned={householdOrder.isAbandoned}
+                     canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
+                     editQuantity={this.editQuantity}
+                     canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
+                     removeItem={this.removeItem} />
         )}
         <tr hidden={!discontinuedItems.length}>
           <td colSpan={5} className={classNames("text-red font-bold pb-2 px-2", {"pt-4": !items.length, "pt-8": items.length})}>
@@ -49,13 +49,13 @@ export class CurrentHouseholdOrder extends React.Component<CurrentHouseholdOrder
           </td>
         </tr>
         { discontinuedItems.map((item, index) => 
-          <CurrentHouseholdOrderItem item={item} 
-                                     index={index}
-                                     orderAbandoned={householdOrder.isAbandoned}
-                                     canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
-                                     editQuantity={this.editQuantity}
-                                     canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
-                                     removeItem={this.removeItem} />
+          <OrderItem item={item} 
+                     index={index}
+                     orderAbandoned={householdOrder.isAbandoned}
+                     canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
+                     editQuantity={this.editQuantity}
+                     canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
+                     removeItem={this.removeItem} />
         )}
         <tr>
           <td></td>

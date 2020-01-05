@@ -6,7 +6,7 @@ import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
-import { CurrentHouseholdOrderItem } from '../../household/CurrentHouseholdOrderItem'
+import { OrderItem } from '../../household/OrderItem'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
                                           }
@@ -64,7 +64,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                       : <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
                           <tbody>
                             {ho.items.map((item, index) =>
-                              <CurrentHouseholdOrderItem item={item} 
+                              <OrderItem item={item} 
                                                          index={index} 
                                                          orderAbandoned={ho.isAbandoned} />
                             )}
