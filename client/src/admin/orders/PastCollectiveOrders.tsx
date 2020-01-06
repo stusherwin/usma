@@ -6,9 +6,12 @@ import { Util } from '../../util/Util'
 import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+import { ServerApi } from '../../util/ServerApi'
 
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
+import { OrderItems } from './OrderItems'
+import { ProductCodes } from './ProductCodes'
 
 export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
                                              collapsibleKey: string
@@ -76,7 +79,24 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                        <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                      </div>
                    }>
-                   <PastHouseholdOrders pastOrder={o} />
+                  { this.state.tab == 'households'?
+                    <div className="shadow-inner-top border-t bg-grey-lighter">
+                      <div className="flex justify-end mt-4 mr-2 mb-4">
+                        <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                      </div>
+                      <PastHouseholdOrders pastOrder={o} />
+                    </div>
+                  : this.state.tab == 'product-list'?
+                    <div className="shadow-inner-top border-t bg-white">
+                      <div className="flex justify-end mr-2 mt-4 mb-4">
+                        <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                      </div>
+                      <OrderItems order={o} />
+                    </div>
+                  : <div className="shadow-inner-top border-t bg-white">
+                      <ProductCodes order={o} />
+                    </div>
+                  }
                 </Collapsible>
               )}
             </div>

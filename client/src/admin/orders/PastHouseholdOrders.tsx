@@ -24,7 +24,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
 
   render() {
     return (
-      <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
+      <table className="border-collapse w-full">
         <tbody>
           {this.props.pastOrder.pastHouseholdOrders.map((ho, i) => {
             let status = 
@@ -42,7 +42,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                collapsibleKey={ho.householdId}
                                collapsibleState={this.state.collapsibleState}
                                header={
-                                 <div className={classNames('p-2 bg-household-lighter min-h-24', {'shadow-inner-top': i == 0})}>
+                                 <div className={classNames('p-2 bg-household-lighter min-h-24')}>
                                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
                                    <h3 className="leading-none ml-20 relative flex mt-2">
                                      {ho.householdName}

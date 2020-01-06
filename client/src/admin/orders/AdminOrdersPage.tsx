@@ -1,18 +1,18 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
 import { CollectiveOrder, Household, PastCollectiveOrder } from '../../util/Types'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { ServerApi } from '../../util/ServerApi'
 import { Router } from '../../util/Router'
+import { Icon } from '../../util/Icon'
 
 import { AdminTopNav } from '../AdminTopNav'
 
 import { PastCollectiveOrders } from './PastCollectiveOrders'
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 import { HouseholdOrders } from './HouseholdOrders'
-import { CollectiveOrderItems } from './CollectiveOrderItems'
-import { CollectiveOrderProductCodes } from './CollectiveOrderProductCodes'
+import { OrderItems } from './OrderItems'
+import { ProductCodes } from './ProductCodes'
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 import { CollectiveOrderTotal } from './CollectiveOrderTotal'
@@ -97,20 +97,29 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                          }
                        </div>
                      }>
-          { order && 
-            <div className={classNames("shadow-inner-top border-t", {
-              "bg-household-lightest": this.state.tab == 'households',
-              "bg-white": this.state.tab != 'households'
-            })}>
-              <CollectiveOrderMessages order={order} />
-              { this.state.tab == 'households'?
+          { order && (
+            this.state.tab == 'households'?
+              <div className="shadow-inner-top border-t bg-household-lightest">
+                <CollectiveOrderMessages order={order} />
+                <div className="flex justify-end mt-4 mr-2">
+                  <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                </div>
                 <HouseholdOrders order={order}
-                                        {...this.props} />
-              : this.state.tab == 'product-list'?
-                <CollectiveOrderItems order={order} />
-              : <CollectiveOrderProductCodes items={order.items} />
-              }
-            </div>
+                                 {...this.props} />
+              </div>
+            : this.state.tab == 'product-list'?
+              <div className="shadow-inner-top border-t bg-white">
+                <CollectiveOrderMessages order={order} />
+                <div className="flex justify-end mr-2 mt-4 mb-2">
+                  <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                </div>
+                <OrderItems order={order} />
+              </div>
+            : <div className="shadow-inner-top border-t bg-white">
+                <CollectiveOrderMessages order={order} />
+                <ProductCodes order={order} />
+              </div>
+            )
           }
         </Collapsible>
         <PastCollectiveOrders collapsibleKey="past-orders"
