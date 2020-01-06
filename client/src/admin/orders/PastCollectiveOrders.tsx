@@ -60,7 +60,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    collapsibleKey={o.id}
                    collapsibleState={this.state.collapsibleState}
                    header={
-                     <div className={classNames('p-2 bg-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
+                     <div className={classNames('p-2 bg-past-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <h3 className="leading-none ml-20 relative flex">
                          {Util.formatDate(o.createdDate)}
@@ -76,20 +76,22 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                            <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': o.isAbandoned})}><Money amount={o.totalIncVat} /></span>
                          </span>
                        </h4>
-                       <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                       <div className="mt-5">
+                         <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                       </div>
                      </div>
                    }>
                   { this.state.tab == 'households'?
-                    <div className="shadow-inner-top border-t bg-grey-lighter">
+                    <div className="shadow-inner-top border-t bg-household-lightest">
                       <div className="flex justify-end mt-4 mr-2 mb-4">
-                        <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                        <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-household-orders-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <PastHouseholdOrders pastOrder={o} />
                     </div>
                   : this.state.tab == 'product-list'?
                     <div className="shadow-inner-top border-t bg-white">
                       <div className="flex justify-end mr-2 mt-4 mb-4">
-                        <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                        <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-collective-order-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <OrderItems order={o} />
                     </div>

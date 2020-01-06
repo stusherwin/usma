@@ -17,6 +17,7 @@ module Main where
   import Data.Time.Calendar (toGregorian, fromGregorian, addGregorianYearsClip)
   import Data.Time.Format (formatTime, defaultTimeLocale)
   import Data.Text (Text)
+  import Data.List (find)
   import Data.Text as T (unpack)
   import Servant
   import Servant.Multipart
@@ -184,6 +185,7 @@ module Main where
                            :<|> productImage
                            :<|> collectiveOrderDownload groupKey
                            :<|> householdOrdersDownload groupKey
+                           :<|> pastCollectiveOrderDownload groupKey
                            :<|> pastHouseholdOrdersDownload groupKey
                            :<|> productCatalogueCategories
                            :<|> productCatalogueBrands
@@ -258,22 +260,36 @@ module Main where
                                                    , HouseholdOrderItem.itemTotalExcVat = total
                                                    }) = CsvItem name code price qty total householdName
 
-    pastHouseholdOrdersDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-    pastHouseholdOrdersDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+    pastCollectiveOrderDownload :: Text -> Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastCollectiveOrderDownload groupKey orderId = findGroupOr404 conn groupKey $ \groupId -> do
       orders <- liftIO $ D.getPastCollectiveOrders conn groupId
-      let o = head orders
+      let order = find ((== orderId) . PastCollectiveOrder.id) orders
+      let items = case order of
+                    Nothing -> []
+                    Just o -> map toCsvItem $ PastCollectiveOrder.items o
+      return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
+      where
+      toCsvItem (PastOrderItem { PastOrderItem.productName = name
+                               , PastOrderItem.productCode = code
+                               , PastOrderItem.productPriceExcVat = price
+                               , PastOrderItem.itemQuantity = qty
+                               , PastOrderItem.itemTotalExcVat = total
+                               }) = CsvItem name code price qty total ""
+
+    pastHouseholdOrdersDownload :: Text -> Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastHouseholdOrdersDownload groupKey orderId = findGroupOr404 conn groupKey $ \groupId -> do
       householdOrders <- liftIO $ D.getPastHouseholdOrders conn groupId
-      let items = (map toCsvItem) . concat . withHouseholdName . (forOrder o) $ householdOrders
+      let items = (map toCsvItem) . concat . withHouseholdName . forOrder $ householdOrders
       return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
       where
-      forOrder o = filter ((== PastCollectiveOrder.id o) . PastHouseholdOrder.orderId)
+      forOrder = filter ((== orderId) . PastHouseholdOrder.orderId)
       withHouseholdName = map (\(PastHouseholdOrder { PastHouseholdOrder.householdName = n, PastHouseholdOrder.items = is }) -> map (n,) is)
       toCsvItem (householdName, PastOrderItem { PastOrderItem.productName = name
-                                                   , PastOrderItem.productCode = code
-                                                   , PastOrderItem.productPriceExcVat = price
-                                                   , PastOrderItem.itemQuantity = qty
-                                                   , PastOrderItem.itemTotalExcVat = total
-                                                   }) = CsvItem name code price qty total householdName
+                                              , PastOrderItem.productCode = code
+                                              , PastOrderItem.productPriceExcVat = price
+                                              , PastOrderItem.itemQuantity = qty
+                                              , PastOrderItem.itemTotalExcVat = total
+                                              }) = CsvItem name code price qty total householdName
 
     productCatalogueCategories :: Handler [String]
     productCatalogueCategories = liftIO $ D.getProductCatalogueCategories conn

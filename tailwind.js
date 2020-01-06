@@ -61,7 +61,7 @@ let colors = {
 
   'past-order': '#ffa868', //#ff6633
   'past-order-lighter': '#feb244',
-  'past-order-lightest': '#f8d78a',
+  'past-order-lightest': '#ffd89e',
 
   'product': '#b1529e',
   'product-light': '#ca72b8',

@@ -92,7 +92,9 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                          <CollectiveOrderButtons order={order}
                             newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
                          {!!order
-                         ? <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                         ? <div className="mt-4">
+                             <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                           </div>
                          : <span></span>
                          }
                        </div>

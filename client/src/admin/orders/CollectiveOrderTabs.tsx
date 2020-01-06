@@ -7,7 +7,7 @@ export interface CollectiveOrderTabsProps {
 }
 
 export const CollectiveOrderTabs = ({tab, setTab}: CollectiveOrderTabsProps) => 
-  <div className="mt-4 flex justify-end items-baseline">
+  <div className="flex justify-end items-baseline">
     <div className="flex justify-end rounded-sm items-baseline border border-order-darker p-1 bg-white shadow-sm-inner-top">
       <a href="#" className={classNames("border rounded-sm whitespace-no-wrap px-2 py-1 no-underline hover:no-underline", {
           "bg-white border-white text-black hover:text-black": tab == 'households', 
