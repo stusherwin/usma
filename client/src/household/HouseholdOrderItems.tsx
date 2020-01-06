@@ -1,32 +1,38 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder as Order, OrderItem as Item } from '../util/Types'
+import { HouseholdOrder, OrderItem as Item } from '../util/Types'
 import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
 import { OrderItem } from './OrderItem'
 
-export interface CurrentHouseholdOrderProps { currentHouseholdOrder: Order
-                                            , readOnly?: boolean
-                                            , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                            , reload: () => Promise<void>
-                                            }
+export interface HouseholdOrderItemsProps { householdOrder: HouseholdOrder
+                                            readOnly?: boolean
+                                            request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                            reload: () => Promise<void>
+                                          }
 
-export class HouseholdOrder extends React.Component<CurrentHouseholdOrderProps, {}> {
+export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProps, {}> {
   removeItem = (item: Item) => {
-    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productId))
+    if(!this.props.householdOrder)
+      return 
+
+    this.props.request(ServerApi.command.removeHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productId))
       .then(this.props.reload)
   }
 
   editQuantity = (item: Item, quantity: number) => {
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.currentHouseholdOrder.orderId, this.props.currentHouseholdOrder.householdId, item.productCode, quantity))
+    if(!this.props.householdOrder)
+      return 
+      
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productCode, quantity))
       .then(this.props.reload)
   }
 
   render() {
-    const householdOrder = this.props.currentHouseholdOrder
+    const householdOrder = this.props.householdOrder
     const items = householdOrder.items.filter(i => !i.productDiscontinued)
     const discontinuedItems = householdOrder.items.filter(i => i.productDiscontinued)
 

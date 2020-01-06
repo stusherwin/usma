@@ -76,11 +76,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                        <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                      </div>
                    }>
-                    <div>
-                      <div>
-                        <PastHouseholdOrders pastOrder={o} />
-                      </div>
-                    </div>
+                   <PastHouseholdOrders pastOrder={o} />
                 </Collapsible>
               )}
             </div>

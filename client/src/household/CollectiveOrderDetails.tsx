@@ -1,35 +1,35 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder as Order, ProductCatalogueEntry } from '../util/Types'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
 import { Util } from '../util/Util'
 import { Icon } from '../util/Icon'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
 
 import { AddProduct } from './AddProduct'
-import { HouseholdOrder } from './HouseholdOrder'
+import { HouseholdOrderItems } from './HouseholdOrderItems'
 import { HouseholdOrderButtons } from './HouseholdOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 import { HouseholdOrderStatus } from './HouseholdOrderStatus'
 import { HouseholdOrderTotal } from './HouseholdOrderTotal'
 
-export interface CollectiveOrderProps { household: Household
-                                        collectiveOrder: Order | null
-                                        households: Household[]
-                                        products: ProductCatalogueEntry[]
-                                        categories: string[]
-                                        brands: string[]
-                                        collapsibleKey: string
-                                        collapsibleState: CollapsibleState
-                                        request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                        reload: () => Promise<void>
-                                      }
+export interface CollectiveOrderDetailsProps { household: Household
+                                               collectiveOrder: CollectiveOrder | null
+                                               households: Household[]
+                                               products: ProductCatalogueEntry[]
+                                               categories: string[]
+                                               brands: string[]
+                                               collapsibleKey: string
+                                               collapsibleState: CollapsibleState
+                                               request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                               reload: () => Promise<void>
+                                             }
 
-export interface CollectiveOrderState { addingProduct: boolean
-                                      }
+export interface CollectiveOrderDetailsState { addingProduct: boolean
+                                             }
 
-export class CollectiveOrder extends React.Component<CollectiveOrderProps, CollectiveOrderState> {
-  constructor(props: CollectiveOrderProps) {
+export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetailsProps, CollectiveOrderDetailsState> {
+  constructor(props: CollectiveOrderDetailsProps) {
     super(props)
 
     this.state = { addingProduct: false
@@ -173,7 +173,7 @@ export class CollectiveOrder extends React.Component<CollectiveOrderProps, Colle
             <CollectiveOrderMessages householdOrder={householdOrder} 
                                             collectiveOrder={order} 
                                             acceptUpdates={this.acceptUpdates} />
-            <HouseholdOrder currentHouseholdOrder={householdOrder}
+            <HouseholdOrderItems householdOrder={householdOrder}
                                    reload={this.props.reload}
                                    request={this.props.request} />
           </div>

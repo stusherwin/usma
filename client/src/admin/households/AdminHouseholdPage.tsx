@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder as Order, ProductCatalogueEntry } from '../../util/Types'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from '../../util/Types'
 import { ServerApi } from '../../util/ServerApi'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
-import { CollectiveOrder } from '../../household/CollectiveOrder'
+import { CollectiveOrderDetails } from '../../household/CollectiveOrderDetails'
 import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
 import { HouseholdPayments } from '../../household/HouseholdPayments'
 import { EditHousehold } from '../../household/EditHousehold'
@@ -13,7 +13,7 @@ import { EditHousehold } from '../../household/EditHousehold'
 import { AdminTopNav } from '../AdminTopNav'
 
 export interface AdminHouseholdOrdersPageProps { household: Household
-                                               , collectiveOrder: Order | null
+                                               , collectiveOrder: CollectiveOrder | null
                                                , products: ProductCatalogueEntry[]
                                                , households: Household[]
                                                , categories: string[]
@@ -75,7 +75,7 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                          onCancel={this.state.collapsibleState.toggle('household')}
                          {...this.props} />
         </Collapsible>
-        <CollectiveOrder collapsibleKey="orders"
+        <CollectiveOrderDetails collapsibleKey="orders"
                                 collapsibleState={this.state.collapsibleState}
                                 {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"

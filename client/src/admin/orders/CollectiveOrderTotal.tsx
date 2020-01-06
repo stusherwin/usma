@@ -3,11 +3,11 @@ import * as React from 'react';
 import { CollectiveOrder } from '../../util/Types'
 import { Money } from '../../util/Money'
 
-export interface CollectiveOrderMessagesProps {
+export interface CollectiveOrderTotalProps {
   order: CollectiveOrder | null
 }
 
-export const CollectiveOrderTotal = ({order}: CollectiveOrderMessagesProps) => {
+export const CollectiveOrderTotal = ({order}: CollectiveOrderTotalProps) => {
   if(!order) {
     return <span></span>;
   }

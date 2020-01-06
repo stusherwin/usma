@@ -1,18 +1,18 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder as Order, ProductCatalogueEntry } from '../util/Types'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
 import { Money } from '../util/Money'
 import { Router } from '../util/Router'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { RouterLink } from '../util/RouterLink'
 
-import { CollectiveOrder } from './CollectiveOrder'
+import { CollectiveOrderDetails } from './CollectiveOrderDetails'
 import { PastHouseholdOrders } from './PastHouseholdOrders'
 import { HouseholdPayments } from './HouseholdPayments'
 import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdPageProps { household: Household
-                                      collectiveOrder: Order | null
+                                      collectiveOrder: CollectiveOrder | null
                                       products: ProductCatalogueEntry[]
                                       categories: string[]
                                       brands: string[]
@@ -66,7 +66,7 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                          onConfirm={() => this.props.reload().then(this.state.collapsibleState.toggle('household'))}
                          onCancel={this.state.collapsibleState.toggle('household')} />
         </Collapsible>
-        <CollectiveOrder collapsibleKey="orders"
+        <CollectiveOrderDetails collapsibleKey="orders"
                                 collapsibleState={this.state.collapsibleState}
                                 {...this.props} />
         <PastHouseholdOrders collapsibleKey="past-orders"

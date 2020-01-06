@@ -7,7 +7,7 @@ import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
-import { HouseholdOrder } from '../../household/HouseholdOrder'
+import { HouseholdOrderItems } from '../../household/HouseholdOrderItems'
 
 export interface HouseholdOrdersProps { order: CollectiveOrder
                                         households: Household[]
@@ -77,9 +77,9 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                             <div className="px-2 py-4 text-grey-darker">
                               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet
                             </div>
-                          : <HouseholdOrder currentHouseholdOrder={ho}
-                                                   readOnly={true}
-                                                   {...this.props} />
+                          : <HouseholdOrderItems householdOrder={ho}
+                                                 readOnly={true}
+                                                 {...this.props} />
                           }
                         </div>
                       </Collapsible>
