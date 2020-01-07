@@ -71,8 +71,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                        </h2>
                        <div>
                          <h3 className="flex justify-end ml-20 mt-4">
-                           {/* <span>Total:</span> */}
-                           <span className="w-24 text-right"><Money amount={this.props.household.totalPayments} /></span>
+                           <span className="text-right"><Money amount={this.props.household.totalPayments} /></span>
                          </h3>
                          {!this.props.readOnly && 
                            <div className="flex justify-start mt-4">
@@ -112,7 +111,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   )
                   : (
                   <tr key={p.id}>
-                    <td className={classNames('pt-4 pl-2 pr-2 whitespace-no-wrap')}>{ Util.formatDate(p.date) }</td>
+                    <td className={classNames('pt-4 pl-20 pr-2 whitespace-no-wrap')}><span className="pl-2">{ Util.formatDate(p.date) }</span></td>
                     {!this.props.readOnly && 
                       <td className={classNames("pt-4 pr-2 w-full whitespace-no-wrap")}>
                         <button onClick={_ => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
@@ -124,10 +123,10 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   )
                 ) }
                 <tr>
-                  <td className="pt-4 pl-2 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>
-                    <div className="flex justify-end">
-                      <span>Total:</span>
-                      <span className={classNames("w-24 font-bold text-right whitespace-no-wrap")}><Money amount={total} /></span>
+                  <td className="pt-4 pl-20 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>
+                    <div className="flex justify-between">
+                      <span className="pl-2">Total:</span>
+                      <span className={classNames("font-bold text-right whitespace-no-wrap")}><Money amount={total} /></span>
                     </div>
                   </td>
                 </tr>

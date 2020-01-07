@@ -62,7 +62,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                          Past orders
                        </h2>
                        <h3 className="flex justify-end ml-20 mt-4">
-                         <span className="w-24 text-right"><Money amount={total} /></span>
+                         <span className="text-right"><Money amount={total} /></span>
                        </h3>
                      </div>
                    }>
@@ -126,7 +126,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                   <td className="pt-4 pl-20 pr-2 pb-4 font-bold">
                     <div className="pl-2 flex justify-between">
                       <span>Total:</span>
-                      <span className="w-24 font-bold text-right"><Money amount={total} /></span>
+                      <span className="font-bold text-right"><Money amount={total} /></span>
                     </div>
                   </td>
                 </tr>

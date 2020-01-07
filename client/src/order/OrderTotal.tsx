@@ -15,7 +15,7 @@ export const OrderTotal = ({order}: OrderTotalProps) => {
 
   return (
     <span className="flex justify-end">
-      <span className="w-24 font-bold text-right">
+      <span className="font-bold text-right">
       { order.oldTotalIncVat === null || order.oldTotalIncVat === undefined || order.oldTotalIncVat == order.totalIncVat?
         <Money className={classNames({'line-through text-grey-darker': order.isAbandoned})} amount={order.totalIncVat} />
       : <span>
