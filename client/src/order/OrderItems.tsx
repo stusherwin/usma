@@ -1,12 +1,10 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
-import { Order } from '../../util/Types'
-import { Money } from '../../util/Money'
-import { Icon } from '../../util/Icon'
+import { Order } from '../util/Types'
+import { Icon } from '../util/Icon'
 
-import { OrderItem } from '../../order/OrderItem'
-import { OrderFooter } from '../../order/OrderFooter'
+import { OrderItem } from './OrderItem'
+import { OrderFooter } from './OrderFooter'
 
 export interface OrderItemsProps { order: Order
                                  }

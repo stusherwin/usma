@@ -7,7 +7,7 @@ export const OrderStatus = ({order}: {order: Order | null}) => {
   return (
     <span>
       {!order?
-        <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />No current order</span>
+        <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />None</span>
       : order.isComplete?
         <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
       : order.isAbandoned?

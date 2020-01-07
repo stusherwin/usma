@@ -57,8 +57,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                           <tbody>
                             {ho.items.map((item, index) =>
                               <OrderItem item={item} 
-                                                         index={index} 
-                                                         orderAbandoned={ho.isAbandoned} />
+                                         index={index} 
+                                         orderAbandoned={ho.isAbandoned} />
                             )}
                             <OrderFooter order={ho} />
                           </tbody>

@@ -162,17 +162,12 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                       cancelAdd={this.cancelAdd}
                       confirmAdd={this.confirmAdd}
                       {...this.props} />
-        : !householdOrder.items.length?
-          <div className="px-2 py-4 text-grey-darker">
-            <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet {!this.props.products.length && ' - the product catalogue is empty'}
-          </div>
         : <div>
             <CollectiveOrderMessages householdOrder={householdOrder} 
-                                            collectiveOrder={order} 
-                                            acceptUpdates={this.acceptUpdates} />
+                                     collectiveOrder={order} 
+                                     acceptUpdates={this.acceptUpdates} />
             <HouseholdOrderItems householdOrder={householdOrder}
-                                   reload={this.props.reload}
-                                   request={this.props.request} />
+                                 {...this.props} />
           </div>
         }
         </div>

@@ -9,7 +9,7 @@ import { ServerApi } from '../../util/ServerApi'
 
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
-import { OrderItems } from './OrderItems'
+import { OrderItems } from '../../order/OrderItems'
 import { ProductCodes } from './ProductCodes'
 import { OrderStatus } from '../../order/OrderStatus'
 import { OrderTotal } from '../../order/OrderTotal'

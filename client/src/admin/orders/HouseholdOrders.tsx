@@ -53,14 +53,9 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                              </div>
                            }>
                 <div className="shadow-inner-top bg-white border-t border-household-light">
-                  {!ho.items.length?
-                    <div className="px-2 py-4 text-grey-darker">
-                      <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items yet
-                    </div>
-                  : <HouseholdOrderItems householdOrder={ho}
-                                         readOnly={true}
-                                         {...this.props} />
-                  }
+                  <HouseholdOrderItems householdOrder={ho}
+                                       readOnly={true}
+                                       {...this.props} />
                 </div>
               </Collapsible>
             </div>
