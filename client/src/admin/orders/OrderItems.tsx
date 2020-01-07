@@ -6,6 +6,7 @@ import { Money } from '../../util/Money'
 import { Icon } from '../../util/Icon'
 
 import { OrderItem } from '../../order/OrderItem'
+import { OrderFooter } from '../../order/OrderFooter'
 
 export interface OrderItemsProps { order: Order
                                  }
@@ -19,26 +20,5 @@ export const OrderItems = ({order}: OrderItemsProps) =>
       {order.items.map((item, index) => 
         <OrderItem item={item} index={index} />
       )}
-      <tr>
-        <td></td>
-        <td className={classNames('pt-4 align-baseline px-2')} colSpan={4}>
-          <div className="flex justify-between">
-            <span>VAT:</span>
-            <span className={classNames('text-right')}>
-              <span><Money amount={order.totalIncVat - order.totalExcVat} /></span>
-            </span>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td></td>
-        <td className={classNames('pt-4 align-baseline px-2 pb-4')} colSpan={4}>
-          <div className="flex justify-between font-bold">
-            <span>Total:</span>
-            <span className="text-right">
-              <Money className="flex-no-shrink flex-no-grow text-right" amount={order.totalIncVat} />
-            </span>
-          </div>
-        </td>
-      </tr>
+      <OrderFooter order={order} />
     </table>

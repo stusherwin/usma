@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { OrderItem } from '../../order/OrderItem'
 import { OrderStatus } from '../../order/OrderStatus'
 import { OrderTotal } from '../../order/OrderTotal'
+import { OrderFooter } from '../../order/OrderFooter'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
                                           }
@@ -59,24 +60,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                                          index={index} 
                                                          orderAbandoned={ho.isAbandoned} />
                             )}
-                            <tr>
-                              <td></td>
-                              <td className="pt-2 pr-2 pl-2" colSpan={3}>
-                                <div className="flex justify-between">
-                                  <span>VAT:</span>
-                                  <span className={classNames('text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat - ho.totalExcVat} /></span>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td></td>
-                              <td className="pt-4 pb-4 pl-2 pr-2 font-bold" colSpan={3}>
-                                <div className="flex justify-between">
-                                  <span>Total:</span>
-                                  <span className={classNames('text-right', {'line-through text-grey-dark': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
-                                </div>
-                              </td>
-                            </tr>
+                            <OrderFooter order={ho} />
                           </tbody>
                         </table>
                       } 
