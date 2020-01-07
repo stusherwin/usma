@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
 import { OrderItem } from '../../order/OrderItem'
 import { OrderStatus } from '../../order/OrderStatus'
+import { OrderTotal } from '../../order/OrderTotal'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
                                           }
@@ -42,10 +43,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                    </h3>
                                    <h4 className="flex justify-between ml-20 mt-4 mb-4">
                                      <OrderStatus order={ho} />
-                                     <span className="flex justify-end">
-                                       {/* <span>Total:</span> */}
-                                       <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
-                                     </span>
+                                     <OrderTotal order={ho} />
                                    </h4>
                                  </div>
                                }>

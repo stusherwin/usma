@@ -24,9 +24,11 @@ export interface OrderItem {
 }
 
 export interface Order { 
+  items: OrderItem[]
   totalExcVat: number
   totalIncVat: number
-  items: OrderItem[]
+  oldTotalExcVat: number | null
+  oldTotalIncVat: number | null
   isComplete: boolean
   isAbandoned: boolean
 }

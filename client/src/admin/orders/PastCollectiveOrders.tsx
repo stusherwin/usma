@@ -4,7 +4,6 @@ import * as classNames from 'classnames'
 import { PastCollectiveOrder } from '../../util/Types'
 import { Util } from '../../util/Util'
 import { Icon } from '../../util/Icon'
-import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { ServerApi } from '../../util/ServerApi'
 
@@ -13,6 +12,7 @@ import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 import { OrderItems } from './OrderItems'
 import { ProductCodes } from './ProductCodes'
 import { OrderStatus } from '../../order/OrderStatus'
+import { OrderTotal } from '../../order/OrderTotal'
 
 export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
                                              collapsibleKey: string
@@ -68,9 +68,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                        </h3>
                        <h4 className="flex justify-between ml-20 mt-4 mb-4">
                          <OrderStatus order={o} />
-                         <span className="flex justify-end">
-                           <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': o.isAbandoned})}><Money amount={o.totalIncVat} /></span>
-                         </span>
+                         <OrderTotal order={o} />
                        </h4>
                        <div className="mt-5">
                          <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />

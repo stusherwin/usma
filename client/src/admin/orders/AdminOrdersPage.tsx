@@ -15,7 +15,7 @@ import { OrderItems } from './OrderItems'
 import { ProductCodes } from './ProductCodes'
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
-import { CollectiveOrderTotal } from './CollectiveOrderTotal'
+import { OrderTotal } from '../../order/OrderTotal'
 import { OrderStatus } from '../../order/OrderStatus'
 
 export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | null
@@ -87,7 +87,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                          </h2>
                          <h3 className="flex justify-between ml-20 mt-4">
                            <OrderStatus order={order} />
-                           <CollectiveOrderTotal order={order} />
+                           <OrderTotal order={order} />
                          </h3>
                          <CollectiveOrderButtons order={order}
                             newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />

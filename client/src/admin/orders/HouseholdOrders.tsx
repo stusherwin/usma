@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
 import { HouseholdOrderItems } from '../../household/HouseholdOrderItems'
 import { OrderStatus } from '../../order/OrderStatus'
+import { OrderTotal } from '../../order/OrderTotal'
 
 export interface HouseholdOrdersProps { order: CollectiveOrder
                                         request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -47,10 +48,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                </h3>
                                <h4 className="flex justify-between ml-20 mt-4 mb-4">
                                  <OrderStatus order={ho} />
-                                 <span className="flex justify-end">
-                                   {/* <span>Total:</span> */}
-                                   <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>
-                                 </span>
+                                 <OrderTotal order={ho} />
                                </h4>
                              </div>
                            }>

@@ -11,7 +11,7 @@ import { HouseholdOrderItems } from './HouseholdOrderItems'
 import { HouseholdOrderButtons } from './HouseholdOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 import { OrderStatus } from '../order/OrderStatus'
-import { HouseholdOrderTotal } from './HouseholdOrderTotal'
+import { OrderTotal } from '../order/OrderTotal'
 
 export interface CollectiveOrderDetailsProps { household: Household
                                                collectiveOrder: CollectiveOrder | null
@@ -132,10 +132,7 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                        <div>
                          <h3 className="flex justify-between ml-20 mt-4 mb-2">
                            <OrderStatus order={householdOrder} />
-                           <span className="flex justify-end">
-                             {/* <span>Total:</span> */}
-                             <span className="w-24 text-right"><HouseholdOrderTotal householdOrder={householdOrder} /></span>
-                           </span>
+                           <OrderTotal order={householdOrder} />
                          </h3>
                          {!this.state.addingProduct &&
                            <HouseholdOrderButtons unusedProducts={unusedProducts} 
