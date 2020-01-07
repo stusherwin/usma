@@ -8,7 +8,8 @@ import { Money } from '../util/Money'
 import { Collapsible, CollapsibleState } from '../util/Collapsible'
 import { ServerApi } from '../util/ServerApi'
 
-import { OrderItem } from './OrderItem'
+import { OrderItem } from '../order/OrderItem'
+import { OrderStatus } from '../order/OrderStatus'
 
 export interface PastHouseholdOrdersProps { household: Household
                                           , collapsibleKey: string
@@ -64,7 +65,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                        </h3>
                      </div>
                    }>
-        <div className="shadow-inner-top bg-order-lightest">
+        <div className="shadow-inner-top bg-past-order-lightest">
           { !pastOrders.length
           ? <div className="px-2 py-4 text-grey-darker">
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
@@ -72,14 +73,6 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
           : <table className="border-collapse w-full">
               <tbody>
                 { pastOrders.map((ho, i) => {
-                  let status = 
-                    <span>
-                      { ho.isAbandoned?
-                        <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
-                      : <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
-                      }
-                    </span>
-
                   return (
                     <tr key={ho.orderId}>
                       <td>
@@ -87,13 +80,13 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                      collapsibleKey={ho.orderId}
                                      collapsibleState={this.state.collapsibleState}
                                      header={
-                                       <div className={classNames('p-2 bg-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
+                                       <div className={classNames('p-2 bg-past-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
                                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                                          <h3 className="leading-none ml-20 relative flex">
                                            {Util.formatDate(ho.orderCreatedDate)}
                                          </h3>
                                          <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                                           {status}
+                                           <OrderStatus order={ho} />
                                            <span className="flex justify-end">
                                              {/* <span>Total:</span> */}
                                              <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>

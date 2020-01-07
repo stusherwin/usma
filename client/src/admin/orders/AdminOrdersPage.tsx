@@ -16,7 +16,7 @@ import { ProductCodes } from './ProductCodes'
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 import { CollectiveOrderTotal } from './CollectiveOrderTotal'
-import { CollectiveOrderStatus } from './CollectiveOrderStatus'
+import { OrderStatus } from '../../order/OrderStatus'
 
 export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | null
                                       , pastOrders: PastCollectiveOrder[]
@@ -86,7 +86,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                            Current order
                          </h2>
                          <h3 className="flex justify-between ml-20 mt-4">
-                           <CollectiveOrderStatus order={order} />
+                           <OrderStatus order={order} />
                            <CollectiveOrderTotal order={order} />
                          </h3>
                          <CollectiveOrderButtons order={order}

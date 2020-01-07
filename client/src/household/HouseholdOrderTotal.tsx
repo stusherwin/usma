@@ -4,13 +4,13 @@ import * as classNames from 'classnames'
 import { HouseholdOrder } from '../util/Types'
 import { Money } from '../util/Money'
 
-export const HouseholdOrderTotal = ({currentHouseholdOrder}: {currentHouseholdOrder: HouseholdOrder | null}) => {
-  return !currentHouseholdOrder?
+export const HouseholdOrderTotal = ({householdOrder}: {householdOrder: HouseholdOrder | null}) => {
+  return !householdOrder?
     <Money amount={0} />
-  : currentHouseholdOrder.oldTotalIncVat === null || currentHouseholdOrder.oldTotalIncVat === undefined || currentHouseholdOrder.oldTotalIncVat == currentHouseholdOrder.totalIncVat?
-    <Money className={classNames({"line-through text-grey-darker": currentHouseholdOrder.isAbandoned})} amount={currentHouseholdOrder.totalIncVat} />
+  : householdOrder.oldTotalIncVat === null || householdOrder.oldTotalIncVat === undefined || householdOrder.oldTotalIncVat == householdOrder.totalIncVat?
+    <Money className={classNames({"line-through text-grey-darker": householdOrder.isAbandoned})} amount={householdOrder.totalIncVat} />
   : <span>
-      <span className="line-through"><Money amount={currentHouseholdOrder.oldTotalIncVat} /></span> 
-      <Money className="text-red font-bold" amount={currentHouseholdOrder.totalIncVat} />
+      <span className="line-through"><Money amount={householdOrder.oldTotalIncVat} /></span> 
+      <Money className="text-red font-bold" amount={householdOrder.totalIncVat} />
     </span>
 }

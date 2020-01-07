@@ -7,6 +7,7 @@ import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
 import { HouseholdOrderItems } from '../../household/HouseholdOrderItems'
+import { OrderStatus } from '../../order/OrderStatus'
 
 export interface HouseholdOrdersProps { order: CollectiveOrder
                                         request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -33,16 +34,6 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
       </div>
     : <div className="mt-4">
         {order.householdOrders.map((ho, i) => {
-          let status = 
-            <span>
-              { ho.isComplete?
-                <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
-              : ho.isAbandoned?
-                <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
-              : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Open</span>
-              }
-            </span>
-
           return (
             <div key={ho.householdId}>
               <Collapsible className="min-h-16"
@@ -55,7 +46,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                  {ho.householdName}
                                </h3>
                                <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                                 {status}
+                                 <OrderStatus order={ho} />
                                  <span className="flex justify-end">
                                    {/* <span>Total:</span> */}
                                    <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>

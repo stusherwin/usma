@@ -5,7 +5,7 @@ import { Order } from '../../util/Types'
 import { Money } from '../../util/Money'
 import { Icon } from '../../util/Icon'
 
-import { OrderItem } from '../../household/OrderItem'
+import { OrderItem } from '../../order/OrderItem'
 
 export interface OrderItemsProps { order: Order
                                  }

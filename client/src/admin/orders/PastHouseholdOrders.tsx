@@ -6,7 +6,8 @@ import { Icon } from '../../util/Icon'
 import { Money } from '../../util/Money'
 import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 
-import { OrderItem } from '../../household/OrderItem'
+import { OrderItem } from '../../order/OrderItem'
+import { OrderStatus } from '../../order/OrderStatus'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
                                           }
@@ -27,14 +28,6 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       <table className="border-collapse w-full">
         <tbody>
           {this.props.pastOrder.pastHouseholdOrders.map((ho, i) => {
-            let status = 
-              <span>
-                {ho.isAbandoned?
-                  <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
-                : <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
-                }
-              </span>
-
             return (
               <tr key={ho.householdId}>
                 <td colSpan={2}>
@@ -48,7 +41,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                      {ho.householdName}
                                    </h3>
                                    <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                                     {status}
+                                     <OrderStatus order={ho} />
                                      <span className="flex justify-end">
                                        {/* <span>Total:</span> */}
                                        <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': ho.isAbandoned})}><Money amount={ho.totalIncVat} /></span>

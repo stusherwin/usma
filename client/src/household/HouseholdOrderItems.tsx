@@ -6,7 +6,7 @@ import { ServerApi } from '../util/ServerApi'
 import { Icon } from '../util/Icon'
 import { Money } from '../util/Money'
 
-import { OrderItem } from './OrderItem'
+import { OrderItem } from '../order/OrderItem'
 
 export interface HouseholdOrderItemsProps { householdOrder: HouseholdOrder
                                             readOnly?: boolean

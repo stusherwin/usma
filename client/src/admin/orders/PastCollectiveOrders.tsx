@@ -12,6 +12,7 @@ import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderTabs } from './CollectiveOrderTabs'
 import { OrderItems } from './OrderItems'
 import { ProductCodes } from './ProductCodes'
+import { OrderStatus } from '../../order/OrderStatus'
 
 export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
                                              collapsibleKey: string
@@ -66,12 +67,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                          {Util.formatDate(o.createdDate)}
                        </h3>
                        <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                         <span>
-                           { o.isAbandoned?
-                             <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Abandoned</span>
-                           : <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Complete</span>
-                           }
-                         </span>
+                         <OrderStatus order={o} />
                          <span className="flex justify-end">
                            <span className={classNames("w-24 font-bold text-right", {'line-through text-grey-darker': o.isAbandoned})}><Money amount={o.totalIncVat} /></span>
                          </span>
