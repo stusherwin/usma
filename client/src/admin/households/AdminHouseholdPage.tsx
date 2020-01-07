@@ -86,8 +86,8 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                            {...this.props} />
         <div className="bg-household-light p-2 pl-20 text-black">
           <h3 className="mt-0 ml-2 flex justify-between">
-            <span>Balance ({this.props.household.balance < 0? 'owing' : 'in credit' }):</span>
-            <span className="text-right"><Money amount={this.props.household.balance} absolute /></span>
+            <span>Balance:</span>
+            <span className="text-right">they{this.props.household.balance < 0? ' owe' : '\'re due' } <Money amount={this.props.household.balance} absolute /></span>
           </h3>
         </div>
       </div>
