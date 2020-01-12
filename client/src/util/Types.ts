@@ -31,6 +31,7 @@ export interface Order {
   oldTotalIncVat: number | null
   isComplete: boolean
   isAbandoned: boolean
+  isOpen: boolean
 }
 
 export interface ProductCatalogueEntry { 
@@ -68,13 +69,7 @@ export interface CollectiveOrder extends Order {
   createdDate: Date
   createdBy: number
   createdByName: string
-  isComplete: boolean
-  oldTotalExcVat: number | null
-  oldTotalIncVat: number | null
-  totalExcVat: number
-  totalIncVat: number
   allHouseholdsUpToDate: boolean
-  items: OrderItem[]
   householdOrders: HouseholdOrder[]
 }
 
@@ -83,10 +78,6 @@ export interface PastCollectiveOrder extends Order {
   createdDate: Date
   createdBy: number
   createdByName: string
-  isAbandoned: boolean
-  totalExcVat: number
-  totalIncVat: number
-  items: OrderItem[]
   pastHouseholdOrders: PastHouseholdOrder[]
 }
 
@@ -97,14 +88,6 @@ export interface HouseholdOrder extends Order {
   orderCreatedByName: string
   householdId: number
   householdName: string 
-  isComplete: boolean
-  isAbandoned: boolean
-  isOpen: boolean
-  oldTotalExcVat: number | null
-  oldTotalIncVat: number | null
-  totalExcVat: number
-  totalIncVat: number
-  items: OrderItem[]
 }
 
 export interface PastHouseholdOrder extends Order { 
@@ -114,10 +97,6 @@ export interface PastHouseholdOrder extends Order {
   orderCreatedByName: string
   householdId: number
   householdName: string 
-  isAbandoned: boolean
-  totalExcVat: number
-  totalIncVat: number
-  items: OrderItem[]
 }
 
 export interface HouseholdPayment { 

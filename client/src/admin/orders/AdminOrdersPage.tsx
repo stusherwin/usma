@@ -9,7 +9,7 @@ import { Icon } from '../../util/Icon'
 import { AdminTopNav } from '../AdminTopNav'
 
 import { PastCollectiveOrders } from './PastCollectiveOrders'
-import { CollectiveOrderTabs } from './CollectiveOrderTabs'
+import { OrderTabs } from '../../order/OrderTabs'
 import { HouseholdOrders } from './HouseholdOrders'
 import { OrderItems } from '../../order/OrderItems'
 import { ProductCodes } from './ProductCodes'
@@ -93,7 +93,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                             newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
                          {!!order
                          ? <div className="mt-4">
-                             <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                             <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                            </div>
                          : <span></span>
                          }

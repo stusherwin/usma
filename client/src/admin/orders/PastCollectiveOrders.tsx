@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleState } from '../../util/Collapsible'
 import { ServerApi } from '../../util/ServerApi'
 
 import { PastHouseholdOrders } from './PastHouseholdOrders';
-import { CollectiveOrderTabs } from './CollectiveOrderTabs'
+import { OrderTabs, OrderTab } from '../../order/OrderTabs'
 import { OrderItems } from '../../order/OrderItems'
 import { ProductCodes } from './ProductCodes'
 import { OrderStatus } from '../../order/OrderStatus'
@@ -20,7 +20,7 @@ export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
                                            }
                                  
 export interface PastCollectiveOrdersState { collapsibleState: CollapsibleState
-                                             tab: 'households' | 'product-list' | 'product-codes'
+                                             tabs: OrderTab[]
                                            }
 
 export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersProps, PastCollectiveOrdersState> {  
@@ -29,8 +29,14 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
 
     this.state = { 
       collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState})),
-      tab: 'households'
+      tabs: []
     }
+  }
+
+  setTab = (i: number) => (tab: OrderTab) => {
+    let tabs = this.state.tabs
+    tabs[i] = tab
+    this.setState({tabs})
   }
 
   render() {
@@ -71,18 +77,18 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                          <OrderTotal order={o} />
                        </h4>
                        <div className="mt-5">
-                         <CollectiveOrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                         <OrderTabs tab={this.state.tabs[i]} setTab={this.setTab(i)} />
                        </div>
                      </div>
                    }>
-                  { this.state.tab == 'households'?
+                  { (this.state.tabs[i] || 'households') == 'households'?
                     <div className="shadow-inner-top border-t bg-household-lightest">
                       <div className="flex justify-end mt-4 mr-2 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-household-orders-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <PastHouseholdOrders pastOrder={o} />
                     </div>
-                  : this.state.tab == 'product-list'?
+                  : this.state.tabs[i] == 'product-list'?
                     <div className="shadow-inner-top border-t bg-white">
                       <div className="flex justify-end mr-2 mt-4 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-collective-order-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>

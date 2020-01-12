@@ -12,6 +12,7 @@ module PastCollectiveOrder where
                                                  , createdBy :: Int
                                                  , createdByName :: String
                                                  , isAbandoned :: Bool
+                                                 , isComplete :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int
                                                  , items :: [PastOrderItem]
@@ -19,4 +20,5 @@ module PastCollectiveOrder where
   instance ToJSON PastCollectiveOrder
 
   pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> [PastOrderItem] -> PastCollectiveOrder
-  pastCollectiveOrder = PastCollectiveOrder
+  pastCollectiveOrder id createdDate createdBy createdByName isAbandoned totalExcVat totalIncVat items = 
+    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) totalExcVat totalIncVat items

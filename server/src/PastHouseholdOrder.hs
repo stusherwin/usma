@@ -14,6 +14,7 @@ module PastHouseholdOrder where
                                                , householdId :: Int
                                                , householdName :: String 
                                                , isAbandoned :: Bool
+                                               , isComplete :: Bool
                                                , totalExcVat :: Int
                                                , totalIncVat :: Int
                                                , items :: [PastOrderItem]
@@ -21,4 +22,5 @@ module PastHouseholdOrder where
   instance ToJSON PastHouseholdOrder
 
   pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Int -> Int -> [PastOrderItem] -> PastHouseholdOrder
-  pastHouseholdOrder = PastHouseholdOrder
+  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat items =
+    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) totalExcVat totalIncVat items
