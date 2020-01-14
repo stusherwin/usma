@@ -13,7 +13,7 @@ import { EditHousehold } from 'household/EditHousehold'
 import { AdminTopNav } from 'admin/AdminTopNav'
 
 export interface AdminHouseholdOrdersPageProps { household: Household
-                                               , collectiveOrder: CollectiveOrder | null
+                                               , collectiveOrder: CollectiveOrder | undefined
                                                , products: ProductCatalogueEntry[]
                                                , households: Household[]
                                                , categories: string[]

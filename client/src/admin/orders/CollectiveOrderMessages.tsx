@@ -4,7 +4,7 @@ import { CollectiveOrder, HouseholdOrder } from 'util/Types'
 import { Icon } from 'util/Icon'
 
 export interface CollectiveOrderMessagesProps {
-  order: CollectiveOrder | null
+  order: CollectiveOrder | undefined
 }
 
 export const CollectiveOrderMessages = ({order}: CollectiveOrderMessagesProps) => {

@@ -59,8 +59,8 @@ export interface Household {
   totalOrders: number
   totalPayments: number
   balance: number
-  currentHouseholdOrder: HouseholdOrder | null
-  pastHouseholdOrders: PastHouseholdOrder[]
+  currentHouseholdOrder: HouseholdOrder | undefined
+  pastHouseholdOrders: HouseholdOrder[]
   householdPayments: HouseholdPayment[]
 }
    
@@ -73,24 +73,7 @@ export interface CollectiveOrder extends Order {
   householdOrders: HouseholdOrder[]
 }
 
-export interface PastCollectiveOrder extends Order { 
-  id: number
-  createdDate: Date
-  createdBy: number
-  createdByName: string
-  pastHouseholdOrders: PastHouseholdOrder[]
-}
-
 export interface HouseholdOrder extends Order { 
-  orderId: number
-  orderCreatedDate: Date
-  orderCreatedBy: number
-  orderCreatedByName: string
-  householdId: number
-  householdName: string 
-}
-
-export interface PastHouseholdOrder extends Order { 
   orderId: number
   orderCreatedDate: Date
   orderCreatedBy: number

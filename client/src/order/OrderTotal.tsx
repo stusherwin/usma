@@ -5,7 +5,7 @@ import { Order } from 'util/Types'
 import { Money } from 'util/Money'
 
 export interface OrderTotalProps {
-  order: Order | null
+  order: Order | undefined
 }
 
 export const OrderTotal = ({order}: OrderTotalProps) => {

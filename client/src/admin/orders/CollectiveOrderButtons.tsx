@@ -4,7 +4,7 @@ import { CollectiveOrder, HouseholdOrder } from 'util/Types'
 import { Icon } from 'util/Icon'
 
 interface CollectiveOrderButtonsProps {
-  order: CollectiveOrder | null
+  order: CollectiveOrder | undefined
   newOrder: () => void
   deleteOrder: () => void
   abandonOrder: () => void
@@ -16,9 +16,9 @@ export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrd
   const orderMinimumReached = !!order && order.totalIncVat >= 25000
 
   const deleteOrderPossible = !!order && !order.householdOrders.length
-  const placeOrderPossible = !!order && !!order.householdOrders.length
-  const placeOrderAllowed = allComplete /*&& allPaid*/ && orderMinimumReached
-  const abandonOrderPossible = !!order && !!order.householdOrders.length
+  const placeOrderPossible = !!order && !order.isAbandoned && !!order.householdOrders.length
+  const placeOrderAllowed = !!order && !order.isAbandoned && allComplete /*&& allPaid*/ && orderMinimumReached
+  const abandonOrderPossible = !!order && !order.isAbandoned && !!order.householdOrders.length
 
   return (
     <div className="mt-2 flex flex-wrap content-start items-start">

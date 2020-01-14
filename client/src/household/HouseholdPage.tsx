@@ -12,7 +12,7 @@ import { HouseholdPayments } from './HouseholdPayments'
 import { EditHousehold } from './EditHousehold'
 
 export interface HouseholdPageProps { household: Household
-                                      collectiveOrder: CollectiveOrder | null
+                                      collectiveOrder: CollectiveOrder | undefined
                                       products: ProductCatalogueEntry[]
                                       categories: string[]
                                       brands: string[]
