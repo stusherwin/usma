@@ -4,7 +4,7 @@ import { HouseholdOrder, ProductCatalogueEntry } from 'util/Types'
 import { Icon } from 'util/Icon'
 
 export interface HouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEntry[]
-                                              currentHouseholdOrder: HouseholdOrder | null
+                                              currentHouseholdOrder: HouseholdOrder | undefined
                                               leaveOrder: () => void
                                               reopenOrder: () => void
                                               abandonOrder: () => void

@@ -34,8 +34,8 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
 
   render() {
     const householdOrder = this.props.householdOrder
-    const items = householdOrder.items.filter(i => !i.productDiscontinued)
-    const discontinuedItems = householdOrder.items.filter(i => i.productDiscontinued)
+    const items = householdOrder.items.filter(i => !i.adjustment || !i.adjustment.productDiscontinued)
+    const discontinuedItems = householdOrder.items.filter(i => i.adjustment && i.adjustment.productDiscontinued)
 
     return !householdOrder.items.length?
       <div className="px-2 py-4 text-grey-darker">
@@ -46,9 +46,9 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
         <OrderItem item={item} 
                    index={index} 
                    orderAbandoned={householdOrder.isAbandoned}
-                   canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
+                   canEditQuantity={!this.props.readOnly && householdOrder.isOpen}
                    editQuantity={this.editQuantity}
-                   canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
+                   canRemoveItem={!this.props.readOnly && householdOrder.isOpen}
                    removeItem={this.removeItem} />
       )}
       <tr hidden={!discontinuedItems.length}>
@@ -61,11 +61,7 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
       { discontinuedItems.map((item, index) => 
         <OrderItem item={item} 
                    index={index}
-                   orderAbandoned={householdOrder.isAbandoned}
-                   canEditQuantity={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
-                   editQuantity={this.editQuantity}
-                   canRemoveItem={!this.props.readOnly && householdOrder.isOpen && !item.productDiscontinued}
-                   removeItem={this.removeItem} />
+                   orderAbandoned={householdOrder.isAbandoned} />
       )}
       <OrderFooter order={householdOrder} />
     </table>

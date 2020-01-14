@@ -5,7 +5,7 @@ module PastCollectiveOrder where
   import Data.Aeson
   import GHC.Generics
   import Data.Time.Clock (UTCTime)
-  import PastOrderItem (PastOrderItem)
+  import OrderItem (OrderItem, OrderAdjustment)
 
   data PastCollectiveOrder = PastCollectiveOrder { id :: Int
                                                  , createdDate :: UTCTime
@@ -15,10 +15,11 @@ module PastCollectiveOrder where
                                                  , isComplete :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int
-                                                 , items :: [PastOrderItem]
+                                                 , adjustment :: Maybe OrderAdjustment
+                                                 , items :: [OrderItem]
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON PastCollectiveOrder
 
-  pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> [PastOrderItem] -> PastCollectiveOrder
+  pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastCollectiveOrder
   pastCollectiveOrder id createdDate createdBy createdByName isAbandoned totalExcVat totalIncVat items = 
-    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) totalExcVat totalIncVat items
+    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) totalExcVat totalIncVat Nothing items

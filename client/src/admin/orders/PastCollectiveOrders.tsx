@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder } from 'util/Types'
+import { CollectiveOrder } from 'util/Types'
 import { Util } from 'util/Util'
 import { Icon } from 'util/Icon'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
@@ -15,7 +15,7 @@ import { OrderTotal } from 'order/OrderTotal'
 
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 
-export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
+export interface PastCollectiveOrdersProps { pastOrders: CollectiveOrder[]
                                              collapsibleKey: string
                                              collapsibleState: CollapsibleState
                                            }

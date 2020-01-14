@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder, OrderItem as Item, Household } from 'util/Types'
+import { HouseholdOrder, OrderItem as Item, Household } from 'util/Types'
 import { Util } from 'util/Util'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
@@ -39,7 +39,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       .then(this.props.reload)
   }
 
-  addAllItemsToCurrentOrder = (ho: PastHouseholdOrder) => {
+  addAllItemsToCurrentOrder = (ho: HouseholdOrder) => {
     if(!this.props.household.currentHouseholdOrder) return;
 
     this.props.request(ServerApi.command.ensureAllItemsFromPastHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, ho.orderId))

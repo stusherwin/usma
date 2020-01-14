@@ -1,15 +1,15 @@
-import { Household, CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
+import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Util } from './Util'
 
-export interface Data { collectiveOrder: CollectiveOrder | null
-                      , pastCollectiveOrders: PastCollectiveOrder[]
-                      , householdOrders: HouseholdOrder[]
-                      , pastHouseholdOrders: PastHouseholdOrder[]
+export interface Data { collectiveOrders: CollectiveOrder[] // | null
+                      // , pastCollectiveOrders: CollectiveOrder[]
+                      // , householdOrders: HouseholdOrder[]
+                      // , pastHouseholdOrders: HouseholdOrder[]
                       , productCatalogue: ProductCatalogueEntry[]
                       , categories: string[]
                       , brands: string[]
                       , households: Household[]
-                      , householdPayments: HouseholdPayment[]
+                      // , householdPayments: HouseholdPayment[]
 }
 
 function getCollectiveOrder(): Promise<CollectiveOrder | null> {
@@ -22,8 +22,8 @@ function getCollectiveOrder(): Promise<CollectiveOrder | null> {
     })
 }
 
-function getPastCollectiveOrders(): Promise<PastCollectiveOrder[]> {
-  return Http.get<PastCollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
+function getPastCollectiveOrders(): Promise<CollectiveOrder[]> {
+  return Http.get<CollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
     .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
 }
 
@@ -32,8 +32,8 @@ function getHouseholdOrders(): Promise<HouseholdOrder[]> {
     .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
 }
 
-function getPastHouseholdOrders(): Promise<PastHouseholdOrder[]> {
-  return Http.get<PastHouseholdOrder[]>(groupUrl('/query/past-household-orders'))
+function getPastHouseholdOrders(): Promise<HouseholdOrder[]> {
+  return Http.get<HouseholdOrder[]>(groupUrl('/query/past-household-orders'))
     .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
 }
 
@@ -76,23 +76,30 @@ const query = {
           collectiveOrder.householdOrders = householdOrders.filter(ho => ho.orderId == collectiveOrder.id)
         }
 
+        for(let po of pastCollectiveOrders) {
+          po.householdOrders = pastHouseholdOrders.filter(ho => ho.orderId == po.id)
+        }
+
+        let collectiveOrders = pastCollectiveOrders
+        if(collectiveOrder) {
+          collectiveOrders.unshift(collectiveOrder)
+        }
+
+        let ho = householdOrders.concat(pastHouseholdOrders)
+
         for(let h of households) {
           h.pastHouseholdOrders = pastHouseholdOrders.filter(pho => pho.householdId == h.id)
-          h.currentHouseholdOrder = collectiveOrder && (householdOrders.filter(ho => ho.householdId == h.id && ho.orderId == collectiveOrder.id)[0] || null)
+          h.currentHouseholdOrder = collectiveOrders[0] && (ho.filter(ho => ho.householdId == h.id && ho.orderId == collectiveOrders[0].id)[0])
           h.householdPayments = householdPayments.filter(p => p.householdId == h.id)
         }
 
-        for(let po of pastCollectiveOrders) {
-          po.pastHouseholdOrders = pastHouseholdOrders.filter(ho => ho.orderId == po.id)
-        }
-
         return {
-          collectiveOrder,
-          pastCollectiveOrders,
-          householdOrders,
-          pastHouseholdOrders,
+          collectiveOrders,
+          // pastCollectiveOrders,
+          // householdOrders,
+          // pastHouseholdOrders,
           households,
-          householdPayments,
+          // householdPayments,
           productCatalogue,
           categories,
           brands

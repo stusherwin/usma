@@ -4,13 +4,8 @@ export interface OrderItem {
   productId: number
   productCode: string
   productName: string
-  oldProductPriceExcVat: number | null
-  oldProductPriceIncVat: number | null
   productVatRate: VatRate
   itemQuantity: number
-  oldItemTotalExcVat: number | null
-  oldItemTotalIncVat: number | null
-  productDiscontinued: boolean
   productPriceExcVat: number
   productPriceIncVat: number
   itemTotalExcVat: number
@@ -21,17 +16,32 @@ export interface OrderItem {
   organic: boolean
   addedSugar: boolean
   vegan: boolean
+  adjustment: OrderItemAdjustment | null
+}
+
+export interface OrderItemAdjustment {
+  oldProductPriceExcVat: number
+  oldProductPriceIncVat: number
+  oldItemTotalExcVat: number
+  oldItemTotalIncVat: number
+  productDiscontinued: boolean
 }
 
 export interface Order { 
   items: OrderItem[]
   totalExcVat: number
   totalIncVat: number
-  oldTotalExcVat: number | null
-  oldTotalIncVat: number | null
+  // oldTotalExcVat: number | null
+  // oldTotalIncVat: number | null
   isComplete: boolean
   isAbandoned: boolean
   isOpen: boolean
+  adjustment: OrderAdjustment | null
+}
+
+export interface OrderAdjustment {
+  oldTotalExcVat: number
+  oldTotalIncVat: number
 }
 
 export interface ProductCatalogueEntry { 
@@ -59,8 +69,8 @@ export interface Household {
   totalOrders: number
   totalPayments: number
   balance: number
-  currentHouseholdOrder: HouseholdOrder | null
-  pastHouseholdOrders: PastHouseholdOrder[]
+  currentHouseholdOrder: HouseholdOrder | undefined
+  pastHouseholdOrders: HouseholdOrder[]
   householdPayments: HouseholdPayment[]
 }
    
@@ -73,24 +83,7 @@ export interface CollectiveOrder extends Order {
   householdOrders: HouseholdOrder[]
 }
 
-export interface PastCollectiveOrder extends Order { 
-  id: number
-  createdDate: Date
-  createdBy: number
-  createdByName: string
-  pastHouseholdOrders: PastHouseholdOrder[]
-}
-
 export interface HouseholdOrder extends Order { 
-  orderId: number
-  orderCreatedDate: Date
-  orderCreatedBy: number
-  orderCreatedByName: string
-  householdId: number
-  householdName: string 
-}
-
-export interface PastHouseholdOrder extends Order { 
   orderId: number
   orderCreatedDate: Date
   orderCreatedBy: number

@@ -15,7 +15,7 @@ import { HouseholdOrderButtons } from './HouseholdOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 
 export interface CollectiveOrderDetailsProps { household: Household
-                                               collectiveOrder: CollectiveOrder | null
+                                               collectiveOrder: CollectiveOrder | undefined
                                                households: Household[]
                                                products: ProductCatalogueEntry[]
                                                categories: string[]

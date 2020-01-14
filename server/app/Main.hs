@@ -50,8 +50,6 @@ module Main where
   import ProductCatalogueImport
   import ProductCatalogueEntry
   import OrderItem
-  import HouseholdOrderItem
-  import PastOrderItem
 
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
@@ -234,11 +232,11 @@ module Main where
                     Just o -> map toCsvItem $ CollectiveOrder.items o
       return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
       where
-      toCsvItem (OrderItem { OrderItem.productName = name
-                           , OrderItem.productCode = code
-                           , OrderItem.productPriceExcVat = price
-                           , OrderItem.itemQuantity = qty
-                           , OrderItem.itemTotalExcVat = total
+      toCsvItem (OrderItem { productName = name
+                           , productCode = code
+                           , productPriceExcVat = price
+                           , itemQuantity = qty
+                           , itemTotalExcVat = total
                            }) = CsvItem name code price qty total ""
   
     householdOrdersDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
@@ -253,12 +251,12 @@ module Main where
       where
       forOrder o = filter ((== CollectiveOrder.id o) . HouseholdOrder.orderId)
       withHouseholdName = map (\(HouseholdOrder { HouseholdOrder.householdName = n, HouseholdOrder.items = is }) -> map (n,) is)
-      toCsvItem (householdName, HouseholdOrderItem { HouseholdOrderItem.productName = name
-                                                   , HouseholdOrderItem.productCode = code
-                                                   , HouseholdOrderItem.productPriceExcVat = price
-                                                   , HouseholdOrderItem.itemQuantity = qty
-                                                   , HouseholdOrderItem.itemTotalExcVat = total
-                                                   }) = CsvItem name code price qty total householdName
+      toCsvItem (householdName, OrderItem { productName = name
+                                          , productCode = code
+                                          , productPriceExcVat = price
+                                          , itemQuantity = qty
+                                          , itemTotalExcVat = total
+                                          }) = CsvItem name code price qty total householdName
 
     pastCollectiveOrderDownload :: Text -> Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
     pastCollectiveOrderDownload groupKey orderId = findGroupOr404 conn groupKey $ \groupId -> do
@@ -269,12 +267,12 @@ module Main where
                     Just o -> map toCsvItem $ PastCollectiveOrder.items o
       return $ addHeader "attachment; filename=\"order.csv\"" $ Csv.encodeByName (fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
       where
-      toCsvItem (PastOrderItem { PastOrderItem.productName = name
-                               , PastOrderItem.productCode = code
-                               , PastOrderItem.productPriceExcVat = price
-                               , PastOrderItem.itemQuantity = qty
-                               , PastOrderItem.itemTotalExcVat = total
-                               }) = CsvItem name code price qty total ""
+      toCsvItem (OrderItem { productName = name
+                           , productCode = code
+                           , productPriceExcVat = price
+                           , itemQuantity = qty
+                           , itemTotalExcVat = total
+                           }) = CsvItem name code price qty total ""
 
     pastHouseholdOrdersDownload :: Text -> Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
     pastHouseholdOrdersDownload groupKey orderId = findGroupOr404 conn groupKey $ \groupId -> do
@@ -284,12 +282,12 @@ module Main where
       where
       forOrder = filter ((== orderId) . PastHouseholdOrder.orderId)
       withHouseholdName = map (\(PastHouseholdOrder { PastHouseholdOrder.householdName = n, PastHouseholdOrder.items = is }) -> map (n,) is)
-      toCsvItem (householdName, PastOrderItem { PastOrderItem.productName = name
-                                              , PastOrderItem.productCode = code
-                                              , PastOrderItem.productPriceExcVat = price
-                                              , PastOrderItem.itemQuantity = qty
-                                              , PastOrderItem.itemTotalExcVat = total
-                                              }) = CsvItem name code price qty total householdName
+      toCsvItem (householdName, OrderItem { productName = name
+                                          , productCode = code
+                                          , productPriceExcVat = price
+                                          , itemQuantity = qty
+                                          , itemTotalExcVat = total
+                                          }) = CsvItem name code price qty total householdName
 
     productCatalogueCategories :: Handler [String]
     productCatalogueCategories = liftIO $ D.getProductCatalogueCategories conn

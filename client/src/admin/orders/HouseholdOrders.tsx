@@ -64,7 +64,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
         )}
         <div className="pt-4 pb-4 pl-20 pr-2 font-bold text-black pl-2 flex justify-between">
           <span className="pl-2">Total:</span>
-          <span className="font-bold text-right"><Money amount={order.totalIncVat} /></span>
+          <span className={classNames('text-right', {'line-through text-grey-dark': order.isAbandoned})}><Money amount={order.totalIncVat} /></span>
         </div>
     </div>
   }

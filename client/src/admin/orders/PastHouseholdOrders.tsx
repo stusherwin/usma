@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder } from 'util/Types'
+import { CollectiveOrder } from 'util/Types'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
@@ -11,7 +11,7 @@ import { OrderStatus } from 'order/OrderStatus'
 import { OrderTotal } from 'order/OrderTotal'
 import { OrderFooter } from 'order/OrderFooter'
 
-export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
+export interface PastHouseholdOrdersProps { pastOrder: CollectiveOrder 
                                           }
 
 export interface PastHouseholdOrdersState { collapsibleState: CollapsibleState }
@@ -29,7 +29,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
     return (
       <table className="border-collapse w-full">
         <tbody>
-          {this.props.pastOrder.pastHouseholdOrders.map((ho, i) => {
+          {this.props.pastOrder.householdOrders.map((ho, i) => {
             return (
               <tr key={ho.householdId}>
                 <td colSpan={2}>
@@ -74,7 +74,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             <td className="pt-4 pb-4 pl-20 pr-2 font-bold" colSpan={2}>
               <div className="pl-2 flex justify-between">
                 <span>Total:</span>
-                <span className={classNames('text-right', {'line-through text-grey-dark': this.props.pastOrder.isAbandoned})}><Money amount={this.props.pastOrder.totalIncVat} /></span>
+                <span className={classNames('text-right', {'line-through text-grey-darker': this.props.pastOrder.isAbandoned})}><Money amount={this.props.pastOrder.totalIncVat} /></span>
               </div>
             </td>
           </tr>

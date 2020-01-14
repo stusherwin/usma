@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CollectiveOrder, PastCollectiveOrder, HouseholdOrder, PastHouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './util/Types'
+import { CollectiveOrder, HouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './util/Types'
 import { ServerApi, ApiError } from './util/ServerApi'
 import { Router } from './util/Router'
 import { Loading } from './util/Loading'
@@ -23,15 +23,16 @@ export interface MainState { loading: boolean
                            , groupKey: string | null
                            , groupValid: boolean
                            , initialised: boolean
-                           , collectiveOrder: CollectiveOrder | null
-                           , pastCollectiveOrders: PastCollectiveOrder[]
-                           , householdOrders: HouseholdOrder[]
-                           , pastHouseholdOrders: PastHouseholdOrder[]
+                          //  , collectiveOrder: CollectiveOrder | undefined
+                          //  , pastCollectiveOrders: CollectiveOrder[]
+                           , collectiveOrders: CollectiveOrder[]
+                          //  , householdOrders: HouseholdOrder[]
+                          //  , pastHouseholdOrders: HouseholdOrder[]
                            , productCatalogue: ProductCatalogueEntry[]
                            , categories: string[]
                            , brands: string[]
                            , households: Household[]
-                           , householdPayments: HouseholdPayment[]
+                          //  , householdPayments: HouseholdPayment[]
                            }
 
 export class Main extends React.Component<MainProps, MainState> {
@@ -47,15 +48,16 @@ export class Main extends React.Component<MainProps, MainState> {
                  , url: urlInfo.url
                  , groupKey: urlInfo.groupKey
                  , groupValid: false
-                 , collectiveOrder: null
-                 , pastCollectiveOrders: []
-                 , householdOrders: []
-                 , pastHouseholdOrders: []
+                //  , collectiveOrder: null
+                //  , pastCollectiveOrders: []
+                 , collectiveOrders: []
+                //  , householdOrders: []
+                //  , pastHouseholdOrders: []
                  , productCatalogue: []
                  , categories: []
                  , brands: []
                  , households: []
-                 , householdPayments: []
+                //  , householdPayments: []
                  , initialised: !urlInfo.groupKey
                  }
   }
@@ -111,12 +113,13 @@ export class Main extends React.Component<MainProps, MainState> {
 
   reload = () =>
     this.request(ServerApi.query.getData())
-        .then(data => this.setState({ collectiveOrder: data.collectiveOrder
-                                    , pastCollectiveOrders: data.pastCollectiveOrders
-                                    , householdOrders: data.householdOrders
-                                    , pastHouseholdOrders: data.pastHouseholdOrders
+        .then(data => this.setState({ //collectiveOrder: data.collectiveOrder
+                                    // , pastCollectiveOrders: data.pastCollectiveOrders
+                                     collectiveOrders: data.collectiveOrders
+                                    // , householdOrders: data.householdOrders
+                                    // , pastHouseholdOrders: data.pastHouseholdOrders
                                     , households: data.households
-                                    , householdPayments: data.householdPayments
+                                    // , householdPayments: data.householdPayments
                                     , productCatalogue: data.productCatalogue
                                     , categories: data.categories
                                     , brands: data.brands
@@ -143,9 +146,9 @@ export class Main extends React.Component<MainProps, MainState> {
     const router = new Router('')    
     
     router.route('/admin/orders', c => {
-      return <AdminOrdersPage collectiveOrder={this.state.collectiveOrder}
+      return <AdminOrdersPage collectiveOrder={this.state.collectiveOrders[0]}
                               households={this.state.households}
-                              pastOrders={this.state.pastCollectiveOrders}
+                              pastOrders={this.state.collectiveOrders.slice(1)}
                               reload={this.reload}
                               request={this.request} />
     })
@@ -161,7 +164,7 @@ export class Main extends React.Component<MainProps, MainState> {
       
       return household && 
         <AdminHouseholdPage household={household}
-                            collectiveOrder={this.state.collectiveOrder}
+                            collectiveOrder={this.state.collectiveOrders[0]}
                             products={this.state.productCatalogue}
                             categories={this.state.categories}
                             brands={this.state.brands}
@@ -181,7 +184,7 @@ export class Main extends React.Component<MainProps, MainState> {
       
       return household && 
         <HouseholdPage household={household}
-                       collectiveOrder={this.state.collectiveOrder}
+                       collectiveOrder={this.state.collectiveOrders[0]}
                        products={this.state.productCatalogue}
                        categories={this.state.categories}
                        brands={this.state.brands}

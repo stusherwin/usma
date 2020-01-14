@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CollectiveOrder, Household, PastCollectiveOrder } from 'util/Types'
+import { CollectiveOrder, Household } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 import { Router } from 'util/Router'
@@ -19,8 +19,8 @@ import { ProductCodes } from './ProductCodes'
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 
-export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | null
-                                      , pastOrders: PastCollectiveOrder[]
+export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undefined
+                                      , pastOrders: CollectiveOrder[]
                                       , households: Household[]
                                       , request: <T extends {}>(p: Promise<T>) => Promise<T>
                                       , reload: () => Promise<void>
@@ -91,7 +91,10 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                            <OrderTotal order={order} />
                          </h3>
                          <CollectiveOrderButtons order={order}
-                            newOrder={this.newOrder} deleteOrder={this.deleteOrder} abandonOrder={this.abandonOrder} placeOrder={this.placeOrder} />
+                                                 newOrder={this.newOrder} 
+                                                 deleteOrder={this.deleteOrder} 
+                                                 abandonOrder={this.abandonOrder} 
+                                                 placeOrder={this.placeOrder} />
                          {!!order
                          ? <div className="mt-4">
                              <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
