@@ -1,15 +1,15 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder } from '../../util/Types'
-import { Icon } from '../../util/Icon'
-import { Money } from '../../util/Money'
-import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+import { PastCollectiveOrder } from 'util/Types'
+import { Icon } from 'util/Icon'
+import { Money } from 'util/Money'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
 
-import { OrderItem } from '../../order/OrderItem'
-import { OrderStatus } from '../../order/OrderStatus'
-import { OrderTotal } from '../../order/OrderTotal'
-import { OrderFooter } from '../../order/OrderFooter'
+import { OrderItem } from 'order/OrderItem'
+import { OrderStatus } from 'order/OrderStatus'
+import { OrderTotal } from 'order/OrderTotal'
+import { OrderFooter } from 'order/OrderFooter'
 
 export interface PastHouseholdOrdersProps { pastOrder: PastCollectiveOrder 
                                           }

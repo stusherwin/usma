@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { HouseholdOrder, CollectiveOrder } from '../util/Types'
-import { Icon } from '../util/Icon'
-import { Money } from '../util/Money'
+import { HouseholdOrder, CollectiveOrder } from 'util/Types'
+import { Icon } from 'util/Icon'
+import { Money } from 'util/Money'
 
 interface CollectiveOrderMessagesProps { householdOrder: HouseholdOrder | null
                                          collectiveOrder: CollectiveOrder

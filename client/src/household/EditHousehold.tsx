@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { Household } from '../util/Types'
-import { Form, Field, Validate } from '../util/Validation'
-import { TextField } from '../util/Field'
-import { ServerApi } from '../util/ServerApi'
-import { Icon } from '../util/Icon'
+import { Household } from 'util/Types'
+import { Form, Field, Validate } from 'util/Validation'
+import { TextField } from 'util/Field'
+import { ServerApi } from 'util/ServerApi'
+import { Icon } from 'util/Icon'
 
 export interface EditHouseholdProps { household: Household
                                     , request: <T extends {}>(p: Promise<T>) => Promise<T>

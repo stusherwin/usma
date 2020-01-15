@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { CollectiveOrder, HouseholdOrder } from '../../util/Types'
-import { Icon } from '../../util/Icon'
+import { CollectiveOrder, HouseholdOrder } from 'util/Types'
+import { Icon } from 'util/Icon'
 
 interface CollectiveOrderButtonsProps {
   order: CollectiveOrder | null

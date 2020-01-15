@@ -1,14 +1,15 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder } from '../../util/Types'
-import { Icon } from '../../util/Icon'
-import { Money } from '../../util/Money'
-import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+import { CollectiveOrder } from 'util/Types'
+import { Icon } from 'util/Icon'
+import { Money } from 'util/Money'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
 
-import { HouseholdOrderItems } from '../../household/HouseholdOrderItems'
-import { OrderStatus } from '../../order/OrderStatus'
-import { OrderTotal } from '../../order/OrderTotal'
+import { HouseholdOrderItems } from 'household/HouseholdOrderItems'
+
+import { OrderStatus } from 'order/OrderStatus'
+import { OrderTotal } from 'order/OrderTotal'
 
 export interface HouseholdOrdersProps { order: CollectiveOrder
                                         request: <T extends {}>(p: Promise<T>) => Promise<T>

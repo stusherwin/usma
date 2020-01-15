@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { OrderItem as Item } from '../util/Types'
-import { ServerApi } from '../util/ServerApi'
-import { Icon } from '../util/Icon'
-import { Money } from '../util/Money'
+import { OrderItem as Item } from 'util/Types'
+import { ServerApi } from 'util/ServerApi'
+import { Icon } from 'util/Icon'
+import { Money } from 'util/Money'
 
-import { ProductFlags } from '../product/ProductFlags'
+import { ProductFlags } from 'product/ProductFlags'
 
 export interface OrderItemProps { item: Item
                                   index: number

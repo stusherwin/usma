@@ -1,22 +1,23 @@
 import * as React from 'react';
 
-import { CollectiveOrder, Household, PastCollectiveOrder } from '../../util/Types'
-import { Collapsible, CollapsibleState } from '../../util/Collapsible'
-import { ServerApi } from '../../util/ServerApi'
-import { Router } from '../../util/Router'
-import { Icon } from '../../util/Icon'
+import { CollectiveOrder, Household, PastCollectiveOrder } from 'util/Types'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
+import { ServerApi } from 'util/ServerApi'
+import { Router } from 'util/Router'
+import { Icon } from 'util/Icon'
 
-import { AdminTopNav } from '../AdminTopNav'
+import { OrderTabs } from 'order/OrderTabs'
+import { OrderItems } from 'order/OrderItems'
+import { OrderTotal } from 'order/OrderTotal'
+import { OrderStatus } from 'order/OrderStatus'
+
+import { AdminTopNav } from 'admin/AdminTopNav'
 
 import { PastCollectiveOrders } from './PastCollectiveOrders'
-import { OrderTabs } from '../../order/OrderTabs'
 import { HouseholdOrders } from './HouseholdOrders'
-import { OrderItems } from '../../order/OrderItems'
 import { ProductCodes } from './ProductCodes'
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
-import { OrderTotal } from '../../order/OrderTotal'
-import { OrderStatus } from '../../order/OrderStatus'
 
 export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | null
                                       , pastOrders: PastCollectiveOrder[]

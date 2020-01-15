@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { Order } from '../util/Types'
-import { Icon } from '../util/Icon'
+import { Order } from 'util/Types'
+import { Icon } from 'util/Icon'
 
 import { OrderItem } from './OrderItem'
 import { OrderFooter } from './OrderFooter'

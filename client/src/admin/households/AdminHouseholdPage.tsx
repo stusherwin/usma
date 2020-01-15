@@ -1,16 +1,16 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder, ProductCatalogueEntry } from '../../util/Types'
-import { ServerApi } from '../../util/ServerApi'
-import { Money } from '../../util/Money'
-import { Collapsible, CollapsibleState } from '../../util/Collapsible'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
+import { ServerApi } from 'util/ServerApi'
+import { Money } from 'util/Money'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
 
-import { CollectiveOrderDetails } from '../../household/CollectiveOrderDetails'
-import { PastHouseholdOrders } from '../../household/PastHouseholdOrders'
-import { HouseholdPayments } from '../../household/HouseholdPayments'
-import { EditHousehold } from '../../household/EditHousehold'
+import { CollectiveOrderDetails } from 'household/CollectiveOrderDetails'
+import { PastHouseholdOrders } from 'household/PastHouseholdOrders'
+import { HouseholdPayments } from 'household/HouseholdPayments'
+import { EditHousehold } from 'household/EditHousehold'
 
-import { AdminTopNav } from '../AdminTopNav'
+import { AdminTopNav } from 'admin/AdminTopNav'
 
 export interface AdminHouseholdOrdersPageProps { household: Household
                                                , collectiveOrder: CollectiveOrder | null

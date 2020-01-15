@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { RouterLink } from '../util/RouterLink'
-import { Icon } from '../util/Icon'
+import { RouterLink } from 'util/RouterLink'
+import { Icon } from 'util/Icon'
 
 export interface AdminHomePageProps { 
                                     }

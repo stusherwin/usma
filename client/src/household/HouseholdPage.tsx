@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
-import { Money } from '../util/Money'
-import { Router } from '../util/Router'
-import { Collapsible, CollapsibleState } from '../util/Collapsible'
-import { RouterLink } from '../util/RouterLink'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
+import { Money } from 'util/Money'
+import { Router } from 'util/Router'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
+import { RouterLink } from 'util/RouterLink'
 
 import { CollectiveOrderDetails } from './CollectiveOrderDetails'
 import { PastHouseholdOrders } from './PastHouseholdOrders'

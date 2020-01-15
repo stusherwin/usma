@@ -1,14 +1,14 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household } from '../../util/Types'
-import { ServerApi } from '../../util/ServerApi'
-import { RouterLink } from '../../util/RouterLink'
-import { Icon } from '../../util/Icon'
-import { Form, Field, Validate } from '../../util/Validation'
-import { TextField } from '../../util/Field'
+import { Household } from 'util/Types'
+import { ServerApi } from 'util/ServerApi'
+import { RouterLink } from 'util/RouterLink'
+import { Icon } from 'util/Icon'
+import { Form, Field, Validate } from 'util/Validation'
+import { TextField } from 'util/Field'
 
-import { AdminTopNav } from '../AdminTopNav'
+import { AdminTopNav } from 'admin/AdminTopNav'
 
 export interface AdminHouseholdsPageProps { households: Household[]
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>

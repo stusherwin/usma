@@ -33,6 +33,10 @@ if(isWebpackDevServer) {
   })
 }
 
+function srcPath(subdir) {
+  return path.join(__dirname, "client/src", subdir);
+}
+
 module.exports = {
     entry: "./client/src/index.tsx",
 
@@ -55,7 +59,14 @@ module.exports = {
 
     resolve: {
         modules: [ 'node_modules', 'bower_components' ],
-        extensions: [".ts", ".tsx", ".js", ".json", ".css"]
+        extensions: [".ts", ".tsx", ".js", ".json", ".css"],
+        alias:  {
+          admin: srcPath('admin'),
+          household: srcPath('household'),
+          order: srcPath('order'),
+          product: srcPath('product'),
+          util: srcPath('util'),
+        }
     },
 
     module: {

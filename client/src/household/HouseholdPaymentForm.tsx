@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { HouseholdPayment } from '../util/Types'
-import { Util } from '../util/Util'
-import { Icon } from '../util/Icon'
-import { Form, Field, Validate } from '../util/Validation'
-import { TextField, MoneyField } from '../util/Field'
+import { HouseholdPayment } from 'util/Types'
+import { Util } from 'util/Util'
+import { Icon } from 'util/Icon'
+import { Form, Field, Validate } from 'util/Validation'
+import { TextField, MoneyField } from 'util/Field'
 
 export interface PaymentData {
   date: Date

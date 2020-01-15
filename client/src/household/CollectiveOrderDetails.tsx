@@ -1,17 +1,18 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder, ProductCatalogueEntry } from '../util/Types'
-import { Util } from '../util/Util'
-import { Icon } from '../util/Icon'
-import { Collapsible, CollapsibleState } from '../util/Collapsible'
-import { ServerApi } from '../util/ServerApi'
+import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
+import { Util } from 'util/Util'
+import { Icon } from 'util/Icon'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
+import { ServerApi } from 'util/ServerApi'
+
+import { OrderStatus } from 'order/OrderStatus'
+import { OrderTotal } from 'order/OrderTotal'
 
 import { AddProduct } from './AddProduct'
 import { HouseholdOrderItems } from './HouseholdOrderItems'
 import { HouseholdOrderButtons } from './HouseholdOrderButtons'
 import { CollectiveOrderMessages } from './CollectiveOrderMessages'
-import { OrderStatus } from '../order/OrderStatus'
-import { OrderTotal } from '../order/OrderTotal'
 
 export interface CollectiveOrderDetailsProps { household: Household
                                                collectiveOrder: CollectiveOrder | null

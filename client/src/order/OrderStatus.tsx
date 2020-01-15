@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { Order } from '../util/Types'
-import { Icon } from '../util/Icon'
+import { Order } from 'util/Types'
+import { Icon } from 'util/Icon'
 
 export const OrderStatus = ({order}: {order: Order | null}) => {
   return (

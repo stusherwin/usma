@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { ProductCatalogueEntry } from '../../util/Types'
-import { ServerApi } from '../../util/ServerApi'
-import { Icon } from '../../util/Icon'
-import { AdminTopNav } from '../AdminTopNav'
+import { ProductCatalogueEntry } from 'util/Types'
+import { ServerApi } from 'util/ServerApi'
+import { Icon } from 'util/Icon'
+import { AdminTopNav } from 'admin/AdminTopNav'
 
-import { ProductList } from '../../product/ProductList'
-import { FilteredProducts } from '../../product/FilteredProducts'
-import { ProductFilters } from '../../product/ProductFilters'
+import { ProductList } from 'product/ProductList'
+import { FilteredProducts } from 'product/FilteredProducts'
+import { ProductFilters } from 'product/ProductFilters'
 
 export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
                                         , categories: string[]

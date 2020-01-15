@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { HouseholdOrder, ProductCatalogueEntry } from '../util/Types'
-import { Icon } from '../util/Icon'
+import { HouseholdOrder, ProductCatalogueEntry } from 'util/Types'
+import { Icon } from 'util/Icon'
 
 export interface HouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEntry[]
                                               currentHouseholdOrder: HouseholdOrder | null

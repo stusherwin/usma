@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, OrderItem as Item, ProductCatalogueEntry } from '../util/Types'
-import { ServerApi } from '../util/ServerApi'
-import { Icon } from '../util/Icon'
+import { HouseholdOrder, OrderItem as Item, ProductCatalogueEntry } from 'util/Types'
+import { ServerApi } from 'util/ServerApi'
+import { Icon } from 'util/Icon'
 
-import { OrderItem } from '../order/OrderItem'
-import { OrderFooter } from '../order/OrderFooter'
+import { OrderItem } from 'order/OrderItem'
+import { OrderFooter } from 'order/OrderFooter'
 
 export interface HouseholdOrderItemsProps { householdOrder: HouseholdOrder
                                             products?: ProductCatalogueEntry[]

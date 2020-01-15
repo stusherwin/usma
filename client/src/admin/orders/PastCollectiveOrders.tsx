@@ -1,18 +1,19 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastCollectiveOrder } from '../../util/Types'
-import { Util } from '../../util/Util'
-import { Icon } from '../../util/Icon'
-import { Collapsible, CollapsibleState } from '../../util/Collapsible'
-import { ServerApi } from '../../util/ServerApi'
+import { PastCollectiveOrder } from 'util/Types'
+import { Util } from 'util/Util'
+import { Icon } from 'util/Icon'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
+import { ServerApi } from 'util/ServerApi'
+
+import { OrderTabs, OrderTab } from 'order/OrderTabs'
+import { OrderItems } from 'order/OrderItems'
+import { ProductCodes } from './ProductCodes'
+import { OrderStatus } from 'order/OrderStatus'
+import { OrderTotal } from 'order/OrderTotal'
 
 import { PastHouseholdOrders } from './PastHouseholdOrders';
-import { OrderTabs, OrderTab } from '../../order/OrderTabs'
-import { OrderItems } from '../../order/OrderItems'
-import { ProductCodes } from './ProductCodes'
-import { OrderStatus } from '../../order/OrderStatus'
-import { OrderTotal } from '../../order/OrderTotal'
 
 export interface PastCollectiveOrdersProps { pastOrders: PastCollectiveOrder[]
                                              collapsibleKey: string

@@ -1,13 +1,13 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household } from '../util/Types'
-import { RouterLink } from '../util/RouterLink'
-import { Icon } from '../util/Icon'
-import { Router } from '../util/Router'
-import { Form, Field, Validate } from '../util/Validation'
-import { TextField } from '../util/Field'
-import { ServerApi } from '../util/ServerApi'
+import { Household } from 'util/Types'
+import { RouterLink } from 'util/RouterLink'
+import { Icon } from 'util/Icon'
+import { Router } from 'util/Router'
+import { Form, Field, Validate } from 'util/Validation'
+import { TextField } from 'util/Field'
+import { ServerApi } from 'util/ServerApi'
 
 export interface HouseholdWelcomePageProps { households: Household[]
                                            , request: <T extends {}>(p: Promise<T>) => Promise<T>

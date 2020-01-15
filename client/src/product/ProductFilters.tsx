@@ -1,8 +1,9 @@
 import * as React from 'react';
 
+import { Icon } from 'util/Icon'
+import { Util } from 'util/Util'
+
 import { ProductFlags } from './FilteredProducts'
-import { Icon } from '../util/Icon'
-import { Util } from '../util/Util'
 
 export interface ProductFiltersProps { searchString: string
                                      , flags: ProductFlags

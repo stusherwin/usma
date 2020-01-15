@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Order } from '../util/Types'
-import { Money } from '../util/Money'
+import { Order } from 'util/Types'
+import { Money } from 'util/Money'
 
 export interface OrderFooterProps {
   order: Order

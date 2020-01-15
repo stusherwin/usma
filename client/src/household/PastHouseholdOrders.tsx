@@ -1,17 +1,17 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { PastHouseholdOrder, OrderItem as Item, Household } from '../util/Types'
-import { Util } from '../util/Util'
-import { Icon } from '../util/Icon'
-import { Money } from '../util/Money'
-import { Collapsible, CollapsibleState } from '../util/Collapsible'
-import { ServerApi } from '../util/ServerApi'
+import { PastHouseholdOrder, OrderItem as Item, Household } from 'util/Types'
+import { Util } from 'util/Util'
+import { Icon } from 'util/Icon'
+import { Money } from 'util/Money'
+import { Collapsible, CollapsibleState } from 'util/Collapsible'
+import { ServerApi } from 'util/ServerApi'
 
-import { OrderItem } from '../order/OrderItem'
-import { OrderStatus } from '../order/OrderStatus'
-import { OrderTotal } from '../order/OrderTotal'
-import { OrderFooter } from '../order/OrderFooter'
+import { OrderItem } from 'order/OrderItem'
+import { OrderStatus } from 'order/OrderStatus'
+import { OrderTotal } from 'order/OrderTotal'
+import { OrderFooter } from 'order/OrderFooter'
 
 export interface PastHouseholdOrdersProps { household: Household
                                           , collapsibleKey: string
