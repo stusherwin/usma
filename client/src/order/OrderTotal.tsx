@@ -16,10 +16,10 @@ export const OrderTotal = ({order}: OrderTotalProps) => {
   return (
     <span className="flex justify-end">
       <span className="font-bold text-right">
-      { order.oldTotalIncVat === null || order.oldTotalIncVat === undefined || order.oldTotalIncVat == order.totalIncVat?
+      { order.adjustment == null || order.adjustment.oldTotalIncVat == order.totalIncVat?
         <Money className={classNames({'line-through text-grey-darker': order.isAbandoned})} amount={order.totalIncVat} />
       : <span>
-          <Money className="line-through text-grey-darker" amount={order.oldTotalIncVat} />
+          <Money className="line-through text-grey-darker mr-2" amount={order.adjustment.oldTotalIncVat} />
           <Money className="text-red" amount={order.totalIncVat} />
         </span>
       }

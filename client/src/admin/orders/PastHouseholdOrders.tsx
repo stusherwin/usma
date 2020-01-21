@@ -74,7 +74,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             <td className="pt-4 pb-4 pl-20 pr-2 font-bold" colSpan={2}>
               <div className="pl-2 flex justify-between">
                 <span>Total:</span>
-                <span className={classNames('text-right', {'line-through text-grey-dark': this.props.pastOrder.isAbandoned})}><Money amount={this.props.pastOrder.totalIncVat} /></span>
+                <span className={classNames('text-right', {'line-through text-grey-darker': this.props.pastOrder.isAbandoned})}><Money amount={this.props.pastOrder.totalIncVat} /></span>
               </div>
             </td>
           </tr>

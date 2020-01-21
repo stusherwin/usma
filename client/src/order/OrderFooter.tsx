@@ -17,10 +17,10 @@ export const OrderFooter = ({order}: OrderFooterProps) => {
           <div className="flex justify-between">
             <span>VAT:</span>
             <span className={classNames('text-right align-baseline whitespace-no-wrap flex-no-shrink flex-no-grow')}>
-              {order.oldTotalIncVat === null || order.oldTotalIncVat === undefined || order.oldTotalExcVat === null || order.oldTotalExcVat === undefined || order.oldTotalIncVat - order.oldTotalExcVat == order.totalIncVat - order.totalExcVat?
-                <span className={classNames({"line-through text-grey-dark": order.isAbandoned})}><Money amount={order.totalIncVat - order.totalExcVat} /></span>
+              {order.adjustment == null || order.adjustment.oldTotalIncVat - order.adjustment.oldTotalExcVat == order.totalIncVat - order.totalExcVat?
+                <Money className={classNames({"line-through text-grey-darker": order.isAbandoned})} amount={order.totalIncVat - order.totalExcVat} />
               : <span>
-                  <span className="line-through text-grey-dark"><Money amount={order.oldTotalIncVat - order.oldTotalExcVat} /></span> 
+                  <Money className="line-through text-grey-darker mr-2" amount={order.adjustment.oldTotalIncVat - order.adjustment.oldTotalExcVat} />
                   <Money className="text-red font-bold" amount={order.totalIncVat - order.totalExcVat} />
                 </span>
               }
@@ -34,10 +34,10 @@ export const OrderFooter = ({order}: OrderFooterProps) => {
           <div className="flex justify-between">
             <span>Total:</span>
             <span className={classNames('text-right align-baseline font-bold whitespace-no-wrap flex-no-shrink flex-no-grow')}>
-              {order.oldTotalIncVat === null || order.oldTotalIncVat === undefined || order.oldTotalIncVat == order.totalIncVat?
-                <span className={classNames({"line-through text-grey-dark": order.isAbandoned})}><Money amount={order.totalIncVat} /></span>
+              {order.adjustment == null || order.adjustment.oldTotalIncVat == order.totalIncVat?
+                <Money className={classNames({"line-through text-grey-darker": order.isAbandoned})} amount={order.totalIncVat} />
               : <span>
-                  <span className="line-through text-grey-dark"><Money amount={order.oldTotalIncVat} /></span> 
+                  <Money className="line-through text-grey-darker mr-2" amount={order.adjustment.oldTotalIncVat} />
                   <Money className="text-red font-bold" amount={order.totalIncVat} />
                 </span>
               }

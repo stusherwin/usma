@@ -4,13 +4,8 @@ export interface OrderItem {
   productId: number
   productCode: string
   productName: string
-  oldProductPriceExcVat: number | null
-  oldProductPriceIncVat: number | null
   productVatRate: VatRate
   itemQuantity: number
-  oldItemTotalExcVat: number | null
-  oldItemTotalIncVat: number | null
-  productDiscontinued: boolean
   productPriceExcVat: number
   productPriceIncVat: number
   itemTotalExcVat: number
@@ -21,17 +16,32 @@ export interface OrderItem {
   organic: boolean
   addedSugar: boolean
   vegan: boolean
+  adjustment: OrderItemAdjustment | null
+}
+
+export interface OrderItemAdjustment {
+  oldProductPriceExcVat: number
+  oldProductPriceIncVat: number
+  oldItemTotalExcVat: number
+  oldItemTotalIncVat: number
+  productDiscontinued: boolean
 }
 
 export interface Order { 
   items: OrderItem[]
   totalExcVat: number
   totalIncVat: number
-  oldTotalExcVat: number | null
-  oldTotalIncVat: number | null
+  // oldTotalExcVat: number | null
+  // oldTotalIncVat: number | null
   isComplete: boolean
   isAbandoned: boolean
   isOpen: boolean
+  adjustment: OrderAdjustment | null
+}
+
+export interface OrderAdjustment {
+  oldTotalExcVat: number
+  oldTotalIncVat: number
 }
 
 export interface ProductCatalogueEntry { 
