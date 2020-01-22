@@ -12,6 +12,10 @@ interface CollectiveOrderButtonsProps {
 }
 
 export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrder, placeOrder}: CollectiveOrderButtonsProps) => {
+  if(order && (order.isPlaced || order.isAbandoned)) {
+    return null
+  }
+
   const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
   const orderMinimumReached = !!order && order.totalIncVat >= 25000
 

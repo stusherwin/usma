@@ -15,6 +15,7 @@ module PastHouseholdOrder where
                                                , householdName :: String 
                                                , isAbandoned :: Bool
                                                , isComplete :: Bool
+                                               , isPlaced :: Bool
                                                , totalExcVat :: Int
                                                , totalIncVat :: Int
                                                , adjustment :: Maybe OrderAdjustment
@@ -24,4 +25,4 @@ module PastHouseholdOrder where
 
   pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastHouseholdOrder
   pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat items =
-    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) totalExcVat totalIncVat Nothing items
+    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat Nothing items

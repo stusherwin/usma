@@ -13,9 +13,8 @@ export const CollectiveOrderMessages = ({householdOrder, collectiveOrder, accept
   if(!householdOrder)
     return null
 
-  const allComplete = !!collectiveOrder && collectiveOrder.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
-  const allHouseholdsUpToDate = !!collectiveOrder && collectiveOrder.allHouseholdsUpToDate;
-  const orderMinimumReached = !!collectiveOrder && collectiveOrder.totalIncVat >= 25000
+  if(collectiveOrder && collectiveOrder.isPlaced)
+    return null
 
   if(!!householdOrder.adjustment)
     return (
@@ -27,6 +26,10 @@ export const CollectiveOrderMessages = ({householdOrder, collectiveOrder, accept
 
   if(!householdOrder.isComplete)
     return null
+
+  const allComplete = !!collectiveOrder && collectiveOrder.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
+  const allHouseholdsUpToDate = !!collectiveOrder && collectiveOrder.allHouseholdsUpToDate;
+  const orderMinimumReached = !!collectiveOrder && collectiveOrder.totalIncVat >= 25000
 
   return (
     <div className="flex px-2 py-4 text-black">

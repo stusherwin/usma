@@ -13,8 +13,10 @@ module PastCollectiveOrder where
                                                  , createdByName :: String
                                                  , isAbandoned :: Bool
                                                  , isComplete :: Bool
+                                                 , isPlaced :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int
+                                                 , allHouseholdsUpToDate :: Bool
                                                  , adjustment :: Maybe OrderAdjustment
                                                  , items :: [OrderItem]
                                                  } deriving (Eq, Show, Generic)
@@ -22,4 +24,4 @@ module PastCollectiveOrder where
 
   pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastCollectiveOrder
   pastCollectiveOrder id createdDate createdBy createdByName isAbandoned totalExcVat totalIncVat items = 
-    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) totalExcVat totalIncVat Nothing items
+    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat True Nothing items
