@@ -9,7 +9,11 @@ export interface CollectiveOrderMessagesProps {
 
 export const CollectiveOrderMessages = ({order}: CollectiveOrderMessagesProps) => {
   if(!order) {
-    return <span></span>;
+    return null
+  }
+
+  if(order.isPlaced) {
+    return null
   }
 
   const allComplete = order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)

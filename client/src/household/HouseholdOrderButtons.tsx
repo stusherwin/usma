@@ -16,6 +16,9 @@ export const HouseholdOrderButtons = (props: HouseholdOrderButtonsProps) => {
   if(!props.currentHouseholdOrder)
     return null
 
+  if(props.currentHouseholdOrder.isPlaced) 
+    return null
+
   const canAddItem = props.currentHouseholdOrder.isOpen && !!props.unusedProducts.length
   const canLeaveOrder = !props.currentHouseholdOrder.items.length
   const canReopenOrder = !!props.currentHouseholdOrder.items.length && !props.currentHouseholdOrder.isOpen

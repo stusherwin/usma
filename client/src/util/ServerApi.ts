@@ -95,11 +95,7 @@ const query = {
 
         return {
           collectiveOrders,
-          // pastCollectiveOrders,
-          // householdOrders,
-          // pastHouseholdOrders,
           households,
-          // householdPayments,
           productCatalogue,
           categories,
           brands

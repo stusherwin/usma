@@ -8,6 +8,8 @@ export const OrderStatus = ({order}: {order: Order | undefined}) => {
     <span>
       {!order?
         <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />None</span>
+      : order.isPlaced?
+        <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Placed</span>
       : order.isComplete?
         <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
       : order.isAbandoned?

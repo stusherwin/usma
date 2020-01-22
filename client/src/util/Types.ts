@@ -31,9 +31,8 @@ export interface Order {
   items: OrderItem[]
   totalExcVat: number
   totalIncVat: number
-  // oldTotalExcVat: number | null
-  // oldTotalIncVat: number | null
   isComplete: boolean
+  isPlaced: boolean
   isAbandoned: boolean
   isOpen: boolean
   adjustment: OrderAdjustment | null
