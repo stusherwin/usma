@@ -232,24 +232,26 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                 <div className="shadow-inner-top border-t bg-white">
                   <table className="border-collapse w-full">
                     <tbody>
-                      {this.state.reconcilingOrder.items.map((item, index) => 
-                        <React.Fragment>
+                      {this.state.reconcilingOrder.items.map((item, index) => {
+                        let maxQuantity = item.itemQuantity
+                        return <React.Fragment>
                           <OrderItem key={item.productId}
                                      item={item} 
                                      index={index}
-                                     allowZeroQuantity={true}
+                                     minQuantity={0}
+                                     maxQuantity={maxQuantity}
                                      checkedOff={item.reconciled}
                                      editItemQuantity={!item.reconciled && !this.state.reconcilingQuantities[item.productId] && this.editItemQuantity || undefined}
                                      editProductPrice={!item.reconciled && !this.state.reconcilingQuantities[item.productId] && this.editProductPrice || undefined}
                                      saveItem={!item.reconciled && !this.state.reconcilingQuantities[item.productId] && this.saveItem || undefined}
                                      editItem={(item.reconciled || this.state.reconcilingQuantities[item.productId]) && this.editItem || undefined} />
-                        {this.state.reconcilingQuantities[item.productId] &&
-                          <DistributeQuantities item={item}
-                                                index={index}
-                                                reconcilingQuantities={this.state.reconcilingQuantities[item.productId]} />
-                        }
+                          {this.state.reconcilingQuantities[item.productId] &&
+                            <DistributeQuantities item={item}
+                                                  index={index}
+                                                  reconcilingQuantities={this.state.reconcilingQuantities[item.productId]} />
+                          }
                         </React.Fragment>
-                      )}
+                      })}
                       <OrderFooter order={this.state.reconcilingOrder} />
                     </tbody>
                   </table>
@@ -321,32 +323,5 @@ export const DistributeQuantities = ({item, index, reconcilingQuantities}: Distr
         </td>
       </tr>
     })}
-    {/* <tr>
-      <td className={classNames('pb-2 pl-2 align-top')} colSpan={2}>
-        {item.productName}
-      </td>
-      <td className={classNames('pl-2 pr-2 align-top text-right')}>
-        {!!removeItem &&
-          <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-        }
-        {!!addToCurrentOrder &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
-        }
-        {!!saveItem &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => saveItem(item)}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
-        }
-        {!!editItem &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => editItem(item)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-        }
-      </td>
-    </tr>
-    <tr>
-      <td className={classNames('pl-2')} colSpan={3}>
-        <span className="pr-2">
-          <ProductFlags p={item} />
-        </span>
-        <span className="text-grey whitespace-no-wrap">VAT: {item.productVatRate} rate</span>
-      </td>
-    </tr> */}
   </React.Fragment>
 }

@@ -12,7 +12,8 @@ import { ProductFlags } from 'product/ProductFlags'
 export interface OrderItemProps { item: Item
                                   index: number
                                   orderAbandoned?: boolean
-                                  allowZeroQuantity?: boolean
+                                  minQuantity?: number
+                                  maxQuantity?: number
                                   checkedOff?: boolean
                                   editItemQuantity?: (item: Item, quantity: number) => void
                                   editProductPrice?: (item: Item, price: number) => void
@@ -25,7 +26,8 @@ export interface OrderItemProps { item: Item
 export const OrderItem = ({ item
                           , index
                           , orderAbandoned
-                          , allowZeroQuantity
+                          , minQuantity
+                          , maxQuantity
                           , checkedOff
                           , editItemQuantity
                           , editProductPrice
@@ -34,9 +36,12 @@ export const OrderItem = ({ item
                           , saveItem
                           , editItem
                           }: OrderItemProps) => {
-  let quantities = [1,2,3,4,5,6,7,8,9,10]
-  if(allowZeroQuantity) {
-    quantities.unshift(0)
+  if(minQuantity === undefined) minQuantity = 1
+  if(maxQuantity === undefined) maxQuantity = 10
+
+  let quantities = []
+  for(let i = minQuantity; i <= maxQuantity; i++) {
+    quantities.push(i)
   }
 
   const [priceStringValue, setPriceStringValue] = useState((item.productPriceExcVat / 100.0).toFixed(2))
