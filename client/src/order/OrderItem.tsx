@@ -13,20 +13,26 @@ export interface OrderItemProps { item: Item
                                   index: number
                                   orderAbandoned?: boolean
                                   allowZeroQuantity?: boolean
+                                  checkedOff?: boolean
                                   editItemQuantity?: (item: Item, quantity: number) => void
                                   editProductPrice?: (item: Item, price: number) => void
                                   removeItem?: (item: Item) => void
                                   addToCurrentOrder?: (item: Item) => void
+                                  saveItem?: (item: Item) => void
+                                  editItem?: (item: Item) => void
                                 }
 
 export const OrderItem = ({ item
                           , index
                           , orderAbandoned
                           , allowZeroQuantity
+                          , checkedOff
                           , editItemQuantity
                           , editProductPrice
                           , removeItem
                           , addToCurrentOrder
+                          , saveItem
+                          , editItem
                           }: OrderItemProps) => {
   let quantities = [1,2,3,4,5,6,7,8,9,10]
   if(allowZeroQuantity) {
@@ -57,21 +63,29 @@ export const OrderItem = ({ item
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
       </td>
       <td className={classNames('pb-2 pl-2 font-bold align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
-        {item.productCode}
+        {checkedOff && '\u2713 '}{item.productCode}
       </td>
       <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
         {!!editItemQuantity
           ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
               {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
             </select>
-          : <span>x {item.itemQuantity}</span>
+          : <span>
+              {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
+                <span>
+                  <span className="line-through text-grey-darker mr-2">x {item.adjustment.oldItemQuantity}</span>
+                  <span className="text-red font-bold">x {item.itemQuantity}</span>
+                </span>
+              : <span>x {item.itemQuantity}</span>
+              }
+            </span>
         }
         {editProductPrice &&
           <span> @ &pound;<input type="text" className={classNames("w-20", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} /></span>
         }
       </td>
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': index == 0, 'pt-8': index > 0})}>
-        {item.adjustment != null && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
+        {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
           <span>
             <Money className="line-through text-grey-darker mr-2" amount={item.adjustment.oldItemTotalExcVat} />
             {!item.adjustment.productDiscontinued && 
@@ -92,6 +106,12 @@ export const OrderItem = ({ item
         }
         {!!addToCurrentOrder &&
           <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
+        }
+        {!!saveItem &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => saveItem(item)}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Done</button>
+        }
+        {!!editItem &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => editItem(item)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Edit</button>
         }
       </td>
     </tr>

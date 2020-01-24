@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as classNames from 'classnames'
 
 import { CollectiveOrder, Household, OrderItem as Item } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
@@ -33,6 +34,7 @@ export interface AdminOrdersPageState { collapsibleState: CollapsibleState
                                         addingHousehold: Household | undefined
                                         tab: 'households' | 'product-list' | 'product-codes'
                                         reconcilingOrder: CollectiveOrder | undefined
+                                        reconcilingQuantities: {[productId: string]: {householdId: number, householdName: string, oldQuantity: number, quantity: number}[]}
                                       }
 
 export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, AdminOrdersPageState> {  
@@ -43,7 +45,8 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       collapsibleState: new CollapsibleState('order', collapsibleState => this.setState({collapsibleState})),
       addingHousehold: undefined,
       tab: 'households',
-      reconcilingOrder: Util.clone(this.props.collectiveOrder)
+      reconcilingOrder: undefined,
+      reconcilingQuantities: {}
     }
   }
 
@@ -78,7 +81,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
   startReconcilingOrder = () => {
     if(!this.props.collectiveOrder) return
     
-    this.setState({reconcilingOrder: Util.clone(this.props.collectiveOrder)})
+    this.setState({reconcilingOrder: Util.clone(this.props.collectiveOrder), reconcilingQuantities: {}})
   }
 
   endReconcilingOrder = () => {
@@ -92,10 +95,11 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
     if(!item.adjustment) {
       item.adjustment = {
-        oldItemTotalExcVat: item.itemTotalExcVat,
-        oldItemTotalIncVat: item.itemTotalIncVat,
         oldProductPriceExcVat: item.productPriceExcVat,
         oldProductPriceIncVat: item.productPriceIncVat,
+        oldItemQuantity: item.itemQuantity,
+        oldItemTotalExcVat: item.itemTotalExcVat,
+        oldItemTotalIncVat: item.itemTotalIncVat,
         productDiscontinued: false
       }
     }
@@ -119,10 +123,11 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     
     if(!item.adjustment) {
       item.adjustment = {
-        oldItemTotalExcVat: item.itemTotalExcVat,
-        oldItemTotalIncVat: item.itemTotalIncVat,
         oldProductPriceExcVat: item.productPriceExcVat,
         oldProductPriceIncVat: item.productPriceIncVat,
+        oldItemQuantity: item.itemQuantity,
+        oldItemTotalExcVat: item.itemTotalExcVat,
+        oldItemTotalIncVat: item.itemTotalIncVat,
         productDiscontinued: false
       }
     }
@@ -141,6 +146,42 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     this.state.reconcilingOrder.totalExcVat = this.state.reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
     this.state.reconcilingOrder.totalIncVat = this.state.reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
     this.setState({reconcilingOrder: this.state.reconcilingOrder})
+  }
+
+  saveItem = (item: Item) => {
+    if(!this.state.reconcilingOrder) return
+
+    const reconcilingOrder = this.state.reconcilingOrder
+    const reconcilingQuantities = this.state.reconcilingQuantities
+    if(item.adjustment && item.itemQuantity != item.adjustment.oldItemQuantity) {
+      const households: {householdId: number, householdName: string, oldQuantity: number, quantity: number}[] = []
+      let quantityRemaining = item.itemQuantity
+      for(let ho of reconcilingOrder.householdOrders) {
+        let found = ho.items.find(i => i.productId === item.productId)
+        if(found) {
+          const quantity = Math.min(found.itemQuantity, quantityRemaining)
+          quantityRemaining -= quantity
+          households.push({householdId: ho.householdId, householdName: ho.householdName, oldQuantity: found.itemQuantity, quantity})
+        }
+      }
+      if(households.length > 1) {
+        reconcilingQuantities[item.productId] = households
+      } else {
+        item.reconciled = true
+      }
+    } else {
+      item.reconciled = true
+    }
+    this.setState({reconcilingOrder, reconcilingQuantities})
+  }
+
+  editItem = (item: Item) => {
+    if(!this.state.reconcilingOrder) return
+
+    item.reconciled = false
+    const reconcilingQuantities = this.state.reconcilingQuantities
+    delete reconcilingQuantities[item.productId]
+    this.setState({reconcilingOrder: this.state.reconcilingOrder, reconcilingQuantities})
   }
 
   render() {
@@ -192,12 +233,22 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                   <table className="border-collapse w-full">
                     <tbody>
                       {this.state.reconcilingOrder.items.map((item, index) => 
-                        <OrderItem key={item.productId}
-                                   item={item} 
-                                   index={index}
-                                   allowZeroQuantity={true}
-                                   editItemQuantity={this.editItemQuantity}
-                                   editProductPrice={this.editProductPrice} />
+                        <React.Fragment>
+                          <OrderItem key={item.productId}
+                                     item={item} 
+                                     index={index}
+                                     allowZeroQuantity={true}
+                                     checkedOff={item.reconciled}
+                                     editItemQuantity={!item.reconciled && !this.state.reconcilingQuantities[item.productId] && this.editItemQuantity || undefined}
+                                     editProductPrice={!item.reconciled && !this.state.reconcilingQuantities[item.productId] && this.editProductPrice || undefined}
+                                     saveItem={!item.reconciled && !this.state.reconcilingQuantities[item.productId] && this.saveItem || undefined}
+                                     editItem={(item.reconciled || this.state.reconcilingQuantities[item.productId]) && this.editItem || undefined} />
+                        {this.state.reconcilingQuantities[item.productId] &&
+                          <DistributeQuantities item={item}
+                                                index={index}
+                                                reconcilingQuantities={this.state.reconcilingQuantities[item.productId]} />
+                        }
+                        </React.Fragment>
                       )}
                       <OrderFooter order={this.state.reconcilingOrder} />
                     </tbody>
@@ -234,4 +285,68 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       </div>
     )
   }
+}
+
+export interface DistributeQuantitiesProps { item: Item
+                                             index: number
+                                             reconcilingQuantities: {householdId: number, householdName: string, oldQuantity: number, quantity: number}[]
+                                           }
+export const DistributeQuantities = ({item, index, reconcilingQuantities}: DistributeQuantitiesProps) => {
+  return <React.Fragment>
+    <tr>
+      <td rowSpan={reconcilingQuantities.length + 1} className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})}>
+      </td>
+      <td colSpan={3} className={classNames('pb-2 pl-2 align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
+        How do you want to distribute the items?
+      </td>
+    </tr>
+    {reconcilingQuantities.map((h, ix) => {
+      const quantities = []
+      for(let i = 0; i <= Math.min(h.oldQuantity, item.itemQuantity); i++) {
+        quantities.push(i)
+      }
+      return <tr>
+        <td colSpan={2} className={classNames('pb-2 pl-2 align-baseline')}>
+          <span className="flex justify-between">
+            <span>{h.householdName}</span>
+            <select className="border" value={h.quantity}>
+              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
+            </select>
+          </span>
+        </td>
+        <td className={classNames('pl-2 pr-2 align-bottom text-right')}>
+          {ix === reconcilingQuantities.length - 1 &&
+            <button className="ml-4 whitespace-no-wrap" onClick={() => {}}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Done</button>
+          }
+        </td>
+      </tr>
+    })}
+    {/* <tr>
+      <td className={classNames('pb-2 pl-2 align-top')} colSpan={2}>
+        {item.productName}
+      </td>
+      <td className={classNames('pl-2 pr-2 align-top text-right')}>
+        {!!removeItem &&
+          <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+        }
+        {!!addToCurrentOrder &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
+        }
+        {!!saveItem &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => saveItem(item)}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
+        }
+        {!!editItem &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => editItem(item)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+        }
+      </td>
+    </tr>
+    <tr>
+      <td className={classNames('pl-2')} colSpan={3}>
+        <span className="pr-2">
+          <ProductFlags p={item} />
+        </span>
+        <span className="text-grey whitespace-no-wrap">VAT: {item.productVatRate} rate</span>
+      </td>
+    </tr> */}
+  </React.Fragment>
 }
