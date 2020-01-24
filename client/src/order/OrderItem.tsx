@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react'
 import * as classNames from 'classnames'
 
 import { OrderItem as Item } from 'util/Types'
@@ -11,25 +12,31 @@ import { ProductFlags } from 'product/ProductFlags'
 export interface OrderItemProps { item: Item
                                   index: number
                                   orderAbandoned?: boolean
-                                  canEditQuantity?: boolean
-                                  editQuantity?: (item: Item, quantity: number) => void
-                                  canRemoveItem?: boolean
+                                  allowZeroQuantity?: boolean
+                                  editItemQuantity?: (item: Item, quantity: number) => void
+                                  editProductPrice?: (item: Item, price: number) => void
                                   removeItem?: (item: Item) => void
-                                  canAddToCurrentOrder?: boolean
                                   addToCurrentOrder?: (item: Item) => void
                                 }
 
 export const OrderItem = ({ item
                           , index
                           , orderAbandoned
-                          , canEditQuantity
-                          , editQuantity
-                          , canRemoveItem
+                          , allowZeroQuantity
+                          , editItemQuantity
+                          , editProductPrice
                           , removeItem
-                          , canAddToCurrentOrder
                           , addToCurrentOrder
-                          }: OrderItemProps) =>
-  <React.Fragment>
+                          }: OrderItemProps) => {
+  let quantities = [1,2,3,4,5,6,7,8,9,10]
+  if(allowZeroQuantity) {
+    quantities.unshift(0)
+  }
+
+  const [priceStringValue, setPriceStringValue] = useState((item.productPriceExcVat / 100.0).toFixed(2))
+  const parsePrice = (stringValue: string) => Math.floor((parseFloat(stringValue) || 0) * 100)
+
+  return <React.Fragment>
     <tr>
       <td className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})} rowSpan={3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
@@ -38,11 +45,14 @@ export const OrderItem = ({ item
         {item.productCode}
       </td>
       <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
-        {canEditQuantity
-          ? <select className="border" value={item.itemQuantity} onChange={e => !!editQuantity && editQuantity(item, parseInt(e.target.value))}>
-              {[1,2,3,4,5,6,7,8,9,10].map(q => <option key={q} value={q}>x {q}</option>)}
+        {!!editItemQuantity
+          ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
+              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
             </select>
           : <span>x {item.itemQuantity}</span>
+        }
+        {editProductPrice &&
+          <span> @ &pound;<input type="text" className="border w-20" value={priceStringValue} onChange={e => { setPriceStringValue(e.target.value); editProductPrice(item, parsePrice(e.target.value))}} /></span>
         }
       </td>
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': index == 0, 'pt-8': index > 0})}>
@@ -62,11 +72,11 @@ export const OrderItem = ({ item
         {item.productName}
       </td>
       <td className={classNames('pl-2 pr-2 align-top text-right')}>
-        {canRemoveItem &&
-          <button className="ml-4" onClick={() => !!removeItem && removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+        {!!removeItem &&
+          <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
         }
-        {canAddToCurrentOrder &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder && addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
+        {!!addToCurrentOrder &&
+          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
         }
       </td>
     </tr>
@@ -79,3 +89,4 @@ export const OrderItem = ({ item
       </td>
     </tr>
   </React.Fragment>
+}

@@ -109,8 +109,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                       <OrderItem item={item} 
                                                  index={index} 
                                                  orderAbandoned={ho.isAbandoned}
-                                                 canAddToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen}
-                                                 addToCurrentOrder={this.addToCurrentOrder} />
+                                                 addToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && this.addToCurrentOrder || undefined} />
                                     )}
                                     <OrderFooter order={ho} />
                                   </tbody>

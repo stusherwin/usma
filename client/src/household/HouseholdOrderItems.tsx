@@ -46,10 +46,8 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
         <OrderItem item={item} 
                    index={index} 
                    orderAbandoned={householdOrder.isAbandoned}
-                   canEditQuantity={!this.props.readOnly && householdOrder.isOpen}
-                   editQuantity={this.editQuantity}
-                   canRemoveItem={!this.props.readOnly && householdOrder.isOpen}
-                   removeItem={this.removeItem} />
+                   editItemQuantity={!this.props.readOnly && householdOrder.isOpen && this.editQuantity || undefined}
+                   removeItem={!this.props.readOnly && householdOrder.isOpen && this.removeItem || undefined} />
       )}
       <tr hidden={!discontinuedItems.length}>
         <td colSpan={4} className={classNames("text-red font-bold pb-2 px-2", {"pt-4": !items.length, "pt-8": items.length})}>

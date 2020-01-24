@@ -1,15 +1,18 @@
 import * as React from 'react';
 
-import { CollectiveOrder, Household } from 'util/Types'
+import { CollectiveOrder, Household, OrderItem as Item } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 import { Router } from 'util/Router'
 import { Icon } from 'util/Icon'
+import { Util } from 'util/Util'
 
 import { OrderTabs } from 'order/OrderTabs'
 import { OrderItems } from 'order/OrderItems'
 import { OrderTotal } from 'order/OrderTotal'
 import { OrderStatus } from 'order/OrderStatus'
+import { OrderItem } from 'order/OrderItem'
+import { OrderFooter } from 'order/OrderFooter'
 
 import { AdminTopNav } from 'admin/AdminTopNav'
 
@@ -27,8 +30,9 @@ export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undef
                                       }
 
 export interface AdminOrdersPageState { collapsibleState: CollapsibleState 
-                                        addingHousehold: Household | null
+                                        addingHousehold: Household | undefined
                                         tab: 'households' | 'product-list' | 'product-codes'
+                                        reconcilingOrder: CollectiveOrder | undefined
                                       }
 
 export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, AdminOrdersPageState> {  
@@ -37,8 +41,9 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
     this.state = { 
       collapsibleState: new CollapsibleState('order', collapsibleState => this.setState({collapsibleState})),
-      addingHousehold: null,
-      tab: 'households'
+      addingHousehold: undefined,
+      tab: 'households',
+      reconcilingOrder: Util.clone(this.props.collectiveOrder)
     }
   }
 
@@ -70,6 +75,74 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       .then(this.props.reload)
   }
 
+  startReconcilingOrder = () => {
+    if(!this.props.collectiveOrder) return
+    
+    this.setState({reconcilingOrder: Util.clone(this.props.collectiveOrder)})
+  }
+
+  endReconcilingOrder = () => {
+    if(!this.props.collectiveOrder) return
+    
+    this.setState({reconcilingOrder: undefined})
+  }
+
+  editItemQuantity = (item: Item, quantity: number) => {
+    if(!this.state.reconcilingOrder) return
+
+    if(!item.adjustment) {
+      item.adjustment = {
+        oldItemTotalExcVat: item.itemTotalExcVat,
+        oldItemTotalIncVat: item.itemTotalIncVat,
+        oldProductPriceExcVat: item.productPriceExcVat,
+        oldProductPriceIncVat: item.productPriceIncVat,
+        productDiscontinued: false
+      }
+    }
+    item.itemQuantity = quantity
+    item.itemTotalExcVat = item.productPriceExcVat * item.itemQuantity
+    item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
+
+    if(!this.state.reconcilingOrder.adjustment) {
+      this.state.reconcilingOrder.adjustment = {
+        oldTotalExcVat: this.state.reconcilingOrder.totalExcVat,
+        oldTotalIncVat: this.state.reconcilingOrder.totalIncVat
+      }
+    }
+    this.state.reconcilingOrder.totalExcVat = this.state.reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+    this.state.reconcilingOrder.totalIncVat = this.state.reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+    this.setState({reconcilingOrder: this.state.reconcilingOrder})
+  }
+
+  editProductPrice = (item: Item, price: number) => {
+    if(!this.state.reconcilingOrder) return
+    
+    if(!item.adjustment) {
+      item.adjustment = {
+        oldItemTotalExcVat: item.itemTotalExcVat,
+        oldItemTotalIncVat: item.itemTotalIncVat,
+        oldProductPriceExcVat: item.productPriceExcVat,
+        oldProductPriceIncVat: item.productPriceIncVat,
+        productDiscontinued: false
+      }
+    }
+    const diff = price - item.productPriceExcVat
+    item.productPriceExcVat = price
+    item.productPriceIncVat += diff
+    item.itemTotalExcVat = item.productPriceExcVat * item.itemQuantity
+    item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
+    
+    if(!this.state.reconcilingOrder.adjustment) {
+      this.state.reconcilingOrder.adjustment = {
+        oldTotalExcVat: this.state.reconcilingOrder.totalExcVat,
+        oldTotalIncVat: this.state.reconcilingOrder.totalIncVat
+      }
+    }
+    this.state.reconcilingOrder.totalExcVat = this.state.reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+    this.state.reconcilingOrder.totalIncVat = this.state.reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+    this.setState({reconcilingOrder: this.state.reconcilingOrder})
+  }
+
   render() {
     const order = this.props.collectiveOrder
 
@@ -90,21 +163,48 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                            <OrderStatus order={order} />
                            <OrderTotal order={order} />
                          </h3>
-                         <CollectiveOrderButtons order={order}
-                                                 newOrder={this.newOrder} 
-                                                 deleteOrder={this.deleteOrder} 
-                                                 abandonOrder={this.abandonOrder} 
-                                                 placeOrder={this.placeOrder} />
-                         {!!order
-                         ? <div className="mt-4">
+                         {!this.state.reconcilingOrder &&
+                           <CollectiveOrderButtons order={order}
+                                                   newOrder={this.newOrder} 
+                                                   deleteOrder={this.deleteOrder} 
+                                                   abandonOrder={this.abandonOrder} 
+                                                   placeOrder={this.placeOrder}
+                                                   reconcileOrder={this.startReconcilingOrder} />
+                         }
+                         {!!order && !this.state.reconcilingOrder &&
+                           <div className="mt-4">
                              <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                            </div>
-                         : <span></span>
                          }
                        </div>
                      }>
           { order && (
-            this.state.tab == 'households'?
+            this.state.reconcilingOrder?
+              <div className="">
+                <div className="bg-product-light text-white p-2 relative shadow-inner-top">
+                  <div className="bg-img-product bg-no-repeat w-16 h-16 absolute"></div>
+                  <h2 className="leading-none ml-20">Reconcile order</h2>
+                  <div className="ml-20 mt-3">
+                    <button onClick={this.endReconcilingOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>
+                  </div>
+                </div>
+                <div className="shadow-inner-top border-t bg-white">
+                  <table className="border-collapse w-full">
+                    <tbody>
+                      {this.state.reconcilingOrder.items.map((item, index) => 
+                        <OrderItem key={item.productId}
+                                   item={item} 
+                                   index={index}
+                                   allowZeroQuantity={true}
+                                   editItemQuantity={this.editItemQuantity}
+                                   editProductPrice={this.editProductPrice} />
+                      )}
+                      <OrderFooter order={this.state.reconcilingOrder} />
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            : this.state.tab == 'households'?
               <div className="shadow-inner-top border-t bg-household-lightest">
                 <CollectiveOrderMessages order={order} />
                 <div className="flex justify-end mt-4 mr-2">
