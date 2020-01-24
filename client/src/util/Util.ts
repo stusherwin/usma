@@ -20,4 +20,20 @@ export class Util {
   static toTitleCase(str: string): string {
     return str.split(/\s+/).map(s => s.substr(0, 1).toUpperCase() + s.substr(1).toLowerCase()).join(' ');
   }
+
+  static clone(obj: any): any {
+    if(obj === null) {
+      return null
+    }
+    
+    if(typeof obj !== 'object') {
+      return obj
+    }
+
+    let newObj: any = Array.isArray(obj)? [] : {}
+    for(let prop in obj) {
+      newObj[prop] = Util.clone(obj[prop])
+    }
+    return newObj
+  }
 }

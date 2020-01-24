@@ -51,8 +51,8 @@ export class Field {
     this.error = error
   }
 
-  static create(parse: (stringValue: string) => any, toString: (value: any) => string, validation: Validate[]): Field {
-    return new Field(parse, toString, validation)
+  static create(parse: (stringValue: string) => any, toString: (value: any) => string, validation: Validate[], stringValue: string = '', value: any = null): Field {
+    return new Field(parse, toString, validation, stringValue, value)
   }
 
   clone(): Field {

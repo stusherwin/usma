@@ -17,11 +17,13 @@ export interface OrderItem {
   addedSugar: boolean
   vegan: boolean
   adjustment: OrderItemAdjustment | null
+  reconciled: boolean
 }
 
 export interface OrderItemAdjustment {
   oldProductPriceExcVat: number
   oldProductPriceIncVat: number
+  oldItemQuantity: number
   oldItemTotalExcVat: number
   oldItemTotalIncVat: number
   productDiscontinued: boolean
