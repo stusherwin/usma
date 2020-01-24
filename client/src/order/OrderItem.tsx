@@ -34,7 +34,22 @@ export const OrderItem = ({ item
   }
 
   const [priceStringValue, setPriceStringValue] = useState((item.productPriceExcVat / 100.0).toFixed(2))
+  const [priceValid, setPriceValid] = useState(item.productPriceExcVat > 0)
   const parsePrice = (stringValue: string) => Math.floor((parseFloat(stringValue) || 0) * 100)
+  const updatePrice = (stringValue: string) => {
+    setPriceStringValue(stringValue);
+    const price =  parsePrice(stringValue)
+    const valid = price > 0 && price <= 99900
+    setPriceValid(valid)
+
+    if(editProductPrice) {
+      if(valid) {
+        editProductPrice(item, price)
+      } else if(item.adjustment) {
+        editProductPrice(item, item.adjustment.oldProductPriceExcVat)
+      }
+    }
+  }
 
   return <React.Fragment>
     <tr>
@@ -52,7 +67,7 @@ export const OrderItem = ({ item
           : <span>x {item.itemQuantity}</span>
         }
         {editProductPrice &&
-          <span> @ &pound;<input type="text" className="border w-20" value={priceStringValue} onChange={e => { setPriceStringValue(e.target.value); editProductPrice(item, parsePrice(e.target.value))}} /></span>
+          <span> @ &pound;<input type="text" className={classNames("w-20", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} /></span>
         }
       </td>
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap', {'pt-4': index == 0, 'pt-8': index > 0})}>
