@@ -30,7 +30,7 @@ export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undef
 export interface AdminOrdersPageState { collapsibleState: CollapsibleState 
                                         addingHousehold: Household | undefined
                                         tab: 'households' | 'product-list' | 'product-codes'
-                                        reconcilingOrder: boolean
+                                        reconcilingOrder: CollectiveOrder | undefined
                                       }
 
 export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, AdminOrdersPageState> {  
@@ -41,7 +41,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       collapsibleState: new CollapsibleState('order', collapsibleState => this.setState({collapsibleState})),
       addingHousehold: undefined,
       tab: 'households',
-      reconcilingOrder: false,
+      reconcilingOrder: undefined,
     }
   }
 
@@ -76,13 +76,83 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
   startReconcilingOrder = () => {
     if(!this.props.collectiveOrder) return
     
-    this.setState({reconcilingOrder: true})
+    this.setState({reconcilingOrder: {...this.props.collectiveOrder}})
   }
 
   endReconcilingOrder = () => {
-    if(!this.props.collectiveOrder) return
+    if(!this.state.reconcilingOrder) return
     
-    this.setState({reconcilingOrder: false})
+    this.setState({reconcilingOrder: undefined})
+  }
+
+  endReconcilingItem = (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => {
+    if(!this.state.reconcilingOrder) return
+    
+    let reconcilingOrder = {...this.state.reconcilingOrder}
+
+    if(!reconcilingOrder.adjustment) {
+      reconcilingOrder.adjustment = {
+        oldTotalExcVat: reconcilingOrder.totalExcVat,
+        oldTotalIncVat: reconcilingOrder.totalIncVat
+      }
+    }
+
+    let item = reconcilingOrder.items.find(i => i.productId == productId)
+    if(item) {
+      item.reconciled = true
+      if(!item.adjustment) {
+        item.adjustment = {
+          oldProductPriceExcVat: item.productPriceExcVat,
+          oldProductPriceIncVat: item.productPriceIncVat,
+          oldItemQuantity: item.itemQuantity,
+          oldItemTotalExcVat: item.itemTotalExcVat,
+          oldItemTotalIncVat: item.itemTotalIncVat,
+          productDiscontinued: false
+        }
+      }
+
+      item.itemQuantity = households.reduce((t, i) => t + i.itemQuantity, 0)
+
+      const diff = productPriceExcVat - item.productPriceExcVat
+      item.productPriceExcVat = productPriceExcVat
+      item.productPriceIncVat += diff
+
+      item.itemTotalExcVat = productPriceExcVat * item.itemQuantity
+      item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
+    }
+
+    for(let h of households) {
+      let order = reconcilingOrder.householdOrders.find(ho => ho.householdId == h.householdId)
+      if(!order) continue
+
+      let householdItem = order.items.find(i => i.productId == productId)
+      if(!householdItem) continue
+
+      if(!householdItem.adjustment) {
+        householdItem.adjustment = {
+          oldProductPriceExcVat: householdItem.productPriceExcVat,
+          oldProductPriceIncVat: householdItem.productPriceIncVat,
+          oldItemQuantity: householdItem.itemQuantity,
+          oldItemTotalExcVat: householdItem.itemTotalExcVat,
+          oldItemTotalIncVat: householdItem.itemTotalIncVat,
+          productDiscontinued: false
+        }
+      }
+
+      householdItem.itemQuantity = h.itemQuantity
+
+      const diff = productPriceExcVat - householdItem.productPriceExcVat
+      householdItem.productPriceExcVat = productPriceExcVat
+      householdItem.productPriceIncVat += diff
+
+      householdItem.itemTotalExcVat = productPriceExcVat * householdItem.itemQuantity
+      householdItem.itemTotalIncVat = householdItem.productPriceIncVat * householdItem.itemQuantity
+    }
+
+    reconcilingOrder.totalExcVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+    reconcilingOrder.totalIncVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+
+    this.setState({reconcilingOrder})
   }
 
   render() {
@@ -122,8 +192,9 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                      }>
           { order && (
             this.state.reconcilingOrder?
-              <ReconcileOrder order={order} 
-                              endReconcilingOrder={this.endReconcilingOrder} />
+              <ReconcileOrder order={this.state.reconcilingOrder} 
+                              endReconcilingOrder={this.endReconcilingOrder}
+                              endReconcilingItem={this.endReconcilingItem} />
             : this.state.tab == 'households'?
               <div className="shadow-inner-top border-t bg-household-lightest">
                 <CollectiveOrderMessages order={order} />

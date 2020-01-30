@@ -16,8 +16,17 @@ export interface DistributeHouseholdQuantitiesProps { item: Item
                                                       index: number
                                                       householdQuantities: HouseholdQuantity[]
                                                       updateQuantity: (item: Item, householdId: number, quantity: number) => void
+                                                      saveHouseholdQuantities: (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => void
                                                     }
-export const DistributeHouseholdQuantities = ({item, index, householdQuantities, updateQuantity}: DistributeHouseholdQuantitiesProps) => {
+export const DistributeHouseholdQuantities = ({item, index, householdQuantities, updateQuantity, saveHouseholdQuantities}: DistributeHouseholdQuantitiesProps) => {
+  const save = () => 
+    saveHouseholdQuantities( item.productId
+                           , item.productPriceExcVat
+                           , householdQuantities.map(h => ({ householdId: h.householdId
+                                                           , productPriceExcVat: item.productPriceExcVat
+                                                           , itemQuantity: h.quantity
+                                                           })))
+
   return <React.Fragment>
     <tr>
       <td rowSpan={householdQuantities.length + 1} className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})}>
@@ -47,7 +56,7 @@ export const DistributeHouseholdQuantities = ({item, index, householdQuantities,
         </td>
         <td className={classNames('pl-2 pr-2 align-bottom text-right')}>
           {ix === householdQuantities.length - 1 &&
-            <button className="ml-4 whitespace-no-wrap" onClick={() => {}}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
+            <button className="ml-4 whitespace-no-wrap" onClick={save}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
           }
         </td>
       </tr>
