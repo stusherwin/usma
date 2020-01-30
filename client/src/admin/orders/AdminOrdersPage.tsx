@@ -87,72 +87,10 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
   endReconcilingItem = (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => {
     if(!this.state.reconcilingOrder) return
-    
-    let reconcilingOrder = {...this.state.reconcilingOrder}
+    if(!this.props.collectiveOrder) return
 
-    if(!reconcilingOrder.adjustment) {
-      reconcilingOrder.adjustment = {
-        oldTotalExcVat: reconcilingOrder.totalExcVat,
-        oldTotalIncVat: reconcilingOrder.totalIncVat
-      }
-    }
-
-    let item = reconcilingOrder.items.find(i => i.productId == productId)
-    if(item) {
-      item.reconciled = true
-      if(!item.adjustment) {
-        item.adjustment = {
-          oldProductPriceExcVat: item.productPriceExcVat,
-          oldProductPriceIncVat: item.productPriceIncVat,
-          oldItemQuantity: item.itemQuantity,
-          oldItemTotalExcVat: item.itemTotalExcVat,
-          oldItemTotalIncVat: item.itemTotalIncVat,
-          productDiscontinued: false
-        }
-      }
-
-      item.itemQuantity = households.reduce((t, i) => t + i.itemQuantity, 0)
-
-      const diff = productPriceExcVat - item.productPriceExcVat
-      item.productPriceExcVat = productPriceExcVat
-      item.productPriceIncVat += diff
-
-      item.itemTotalExcVat = productPriceExcVat * item.itemQuantity
-      item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
-    }
-
-    for(let h of households) {
-      let order = reconcilingOrder.householdOrders.find(ho => ho.householdId == h.householdId)
-      if(!order) continue
-
-      let householdItem = order.items.find(i => i.productId == productId)
-      if(!householdItem) continue
-
-      if(!householdItem.adjustment) {
-        householdItem.adjustment = {
-          oldProductPriceExcVat: householdItem.productPriceExcVat,
-          oldProductPriceIncVat: householdItem.productPriceIncVat,
-          oldItemQuantity: householdItem.itemQuantity,
-          oldItemTotalExcVat: householdItem.itemTotalExcVat,
-          oldItemTotalIncVat: householdItem.itemTotalIncVat,
-          productDiscontinued: false
-        }
-      }
-
-      householdItem.itemQuantity = h.itemQuantity
-
-      const diff = productPriceExcVat - householdItem.productPriceExcVat
-      householdItem.productPriceExcVat = productPriceExcVat
-      householdItem.productPriceIncVat += diff
-
-      householdItem.itemTotalExcVat = productPriceExcVat * householdItem.itemQuantity
-      householdItem.itemTotalIncVat = householdItem.productPriceIncVat * householdItem.itemQuantity
-    }
-
-    reconcilingOrder.totalExcVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
-    reconcilingOrder.totalIncVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
-
-    this.setState({reconcilingOrder})
+    this.props.request(ServerApi.command.reconcileOrderItem(this.props.collectiveOrder.id, productId, productPriceExcVat, households))
+      .then(this.props.reload)
   }
 
   render() {

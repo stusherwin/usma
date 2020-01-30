@@ -59,6 +59,9 @@ function getProductCatalogueBrands(): Promise<string[]> {
   return Http.get<string[]>(groupUrl('/query/product-catalogue-brands'))
 }
 
+let reconciledOrder: CollectiveOrder | undefined = undefined
+let savedCollectiveOrders: CollectiveOrder[] = []
+
 const query = {
   getData(): Promise<Data> {
     return Promise.all([ getCollectiveOrder()
@@ -91,6 +94,16 @@ const query = {
           h.pastHouseholdOrders = pastHouseholdOrders.filter(pho => pho.householdId == h.id)
           h.currentHouseholdOrder = collectiveOrders[0] && (ho.filter(ho => ho.householdId == h.id && ho.orderId == collectiveOrders[0].id)[0])
           h.householdPayments = householdPayments.filter(p => p.householdId == h.id)
+        }
+
+        savedCollectiveOrders = collectiveOrders
+
+        if(reconciledOrder) {
+          let id = reconciledOrder.id
+          let index = collectiveOrders.findIndex(o => o.id == id)
+          if(index > -1) {
+            collectiveOrders[index] = {...reconciledOrder}
+          }
         }
 
         return {
@@ -155,18 +168,18 @@ const command = {
 
   createHousehold(name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
     return Http.post(groupUrl(`/command/create-household/`), { hdName: name
-                                                       , hdContactName: contactName
-                                                       , hdContactEmail: contactEmail
-                                                       , hdContactPhone: contactPhone 
-                                                       })
+                                                             , hdContactName: contactName
+                                                             , hdContactEmail: contactEmail
+                                                             , hdContactPhone: contactPhone 
+                                                             })
   },
 
   updateHousehold(id: number, name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
     return Http.post(groupUrl(`/command/update-household/${id}`), { hdName: name
-                                                            , hdContactName: contactName
-                                                            , hdContactEmail: contactEmail
-                                                            , hdContactPhone: contactPhone 
-                                                            })
+                                                                  , hdContactName: contactName
+                                                                  , hdContactEmail: contactEmail
+                                                                  , hdContactPhone: contactPhone 
+                                                                  })
   },
 
   archiveHousehold(id: number): Promise<{}> {
@@ -196,6 +209,87 @@ const command = {
   acceptCatalogueUpdates(orderId: number, householdId: number): Promise<{}> {
     return Http.post(groupUrl(`/command/accept-catalogue-updates/${orderId}/${householdId}`), {})
   },
+
+  reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: {householdId: number, itemQuantity: number}[]): Promise<{}> {
+    let reconcilingOrder = savedCollectiveOrders.find(o => o.id == orderId)
+    if(!reconcilingOrder) return Promise.resolve({})
+
+    if(!reconcilingOrder.adjustment) {
+      reconcilingOrder.adjustment = {
+        oldTotalExcVat: reconcilingOrder.totalExcVat,
+        oldTotalIncVat: reconcilingOrder.totalIncVat
+      }
+    }
+
+    let item = reconcilingOrder.items.find(i => i.productId == productId)
+    if(item) {
+      item.reconciled = true
+      if(!item.adjustment) {
+        item.adjustment = {
+          oldProductPriceExcVat: item.productPriceExcVat,
+          oldProductPriceIncVat: item.productPriceIncVat,
+          oldItemQuantity: item.itemQuantity,
+          oldItemTotalExcVat: item.itemTotalExcVat,
+          oldItemTotalIncVat: item.itemTotalIncVat,
+          productDiscontinued: false
+        }
+      }
+
+      item.itemQuantity = householdQuantities.reduce((t, i) => t + i.itemQuantity, 0)
+
+      const diff = productPriceExcVat - item.productPriceExcVat
+      item.productPriceExcVat = productPriceExcVat
+      item.productPriceIncVat += diff
+
+      item.itemTotalExcVat = productPriceExcVat * item.itemQuantity
+      item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
+    }
+
+    for(let h of householdQuantities) {
+      let order = reconcilingOrder.householdOrders.find(ho => ho.householdId == h.householdId)
+      if(!order) continue
+
+      if(!order.adjustment) {
+        order.adjustment = {
+          oldTotalExcVat: order.totalExcVat,
+          oldTotalIncVat: order.totalIncVat
+        }
+      }
+
+      let householdItem = order.items.find(i => i.productId == productId)
+      if(!householdItem) continue
+
+      if(!householdItem.adjustment) {
+        householdItem.adjustment = {
+          oldProductPriceExcVat: householdItem.productPriceExcVat,
+          oldProductPriceIncVat: householdItem.productPriceIncVat,
+          oldItemQuantity: householdItem.itemQuantity,
+          oldItemTotalExcVat: householdItem.itemTotalExcVat,
+          oldItemTotalIncVat: householdItem.itemTotalIncVat,
+          productDiscontinued: false
+        }
+      }
+
+      householdItem.itemQuantity = h.itemQuantity
+
+      const diff = productPriceExcVat - householdItem.productPriceExcVat
+      householdItem.productPriceExcVat = productPriceExcVat
+      householdItem.productPriceIncVat += diff
+
+      householdItem.itemTotalExcVat = productPriceExcVat * householdItem.itemQuantity
+      householdItem.itemTotalIncVat = householdItem.productPriceIncVat * householdItem.itemQuantity
+    
+      order.totalExcVat = order.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+      order.totalIncVat = order.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+    }
+
+    reconcilingOrder.totalExcVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+    reconcilingOrder.totalIncVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+
+    reconciledOrder = reconcilingOrder
+
+    return Promise.resolve({})
+  }
 }
 
 const groupUrl = (url: string) => {
