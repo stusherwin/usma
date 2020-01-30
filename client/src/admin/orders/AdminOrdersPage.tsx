@@ -34,7 +34,7 @@ export interface AdminOrdersPageState { collapsibleState: CollapsibleState
                                         addingHousehold: Household | undefined
                                         tab: 'households' | 'product-list' | 'product-codes'
                                         reconcilingOrder: CollectiveOrder | undefined
-                                        reconcilingQuantities: {[productId: string]: {householdId: number, householdName: string, oldQuantity: number, quantity: number}[]}
+                                        reconcilingQuantities: {[productId: string]: {householdId: number, householdName: string, quantity: number, minQuantity: number, maxQuantity: number, lastUpdated: number}[]}
                                       }
 
 export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, AdminOrdersPageState> {  
@@ -153,18 +153,25 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
     const reconcilingOrder = this.state.reconcilingOrder
     const reconcilingQuantities = this.state.reconcilingQuantities
-    if(item.adjustment && item.itemQuantity != item.adjustment.oldItemQuantity) {
-      const households: {householdId: number, householdName: string, oldQuantity: number, quantity: number}[] = []
+    if(item.adjustment && item.itemQuantity != item.adjustment.oldItemQuantity && item.itemQuantity > 0) {
+      const households: {householdId: number, householdName: string, quantity: number, minQuantity: number, maxQuantity: number, lastUpdated: number}[] = []
       let quantityRemaining = item.itemQuantity
+      let lastUpdated = 0;
       for(let ho of reconcilingOrder.householdOrders) {
         let found = ho.items.find(i => i.productId === item.productId)
-        if(found) {
-          const quantity = Math.min(found.itemQuantity, quantityRemaining)
-          quantityRemaining -= quantity
-          households.push({householdId: ho.householdId, householdName: ho.householdName, oldQuantity: found.itemQuantity, quantity})
-        }
+        if(!found) continue
+
+        const oldQuantity = found.itemQuantity
+        const quantity = Math.min(oldQuantity, quantityRemaining)
+        quantityRemaining -= quantity
+        households.push({householdId: ho.householdId, householdName: ho.householdName, quantity, minQuantity: 0, maxQuantity: Math.min(oldQuantity, item.itemQuantity), lastUpdated})
+        lastUpdated++
       }
       if(households.length > 1) {
+        for(let h of households) {
+          let otherTotal = households.reduce((t, h2) => h2.householdId == h.householdId? t : t + h2.maxQuantity, 0)
+          h.minQuantity = Math.max(0, item.itemQuantity - otherTotal)
+        }
         reconcilingQuantities[item.productId] = households
       } else {
         item.reconciled = true
@@ -182,6 +189,43 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     const reconcilingQuantities = this.state.reconcilingQuantities
     delete reconcilingQuantities[item.productId]
     this.setState({reconcilingOrder: this.state.reconcilingOrder, reconcilingQuantities})
+  }
+
+  updateQuantity = (item: Item, householdId: number, quantity: number) => {
+    if(!this.state.reconcilingOrder) return
+    
+    const reconcilingQuantities = this.state.reconcilingQuantities
+    const itemQuantities = reconcilingQuantities[item.productId]
+    const household = itemQuantities.find(h => h.householdId == householdId)
+    if(!household) return
+
+    const oldQuantity = household.quantity
+    if(quantity == oldQuantity) return
+
+    household.quantity = quantity
+    const oldLastUpdated = household.lastUpdated
+    household.lastUpdated = 0
+
+    let lastUpdatedIndexes: number[] = []
+    for(let i = 0; i < itemQuantities.length; i++) {
+      let h = itemQuantities[i]
+      if(h != household && h.lastUpdated < oldLastUpdated) {
+        h.lastUpdated++
+      }
+
+      lastUpdatedIndexes[h.lastUpdated] = i
+    }
+
+    let remainingQuantity = quantity - oldQuantity
+    for(let i = lastUpdatedIndexes.length - 1; i >= 0 && Math.abs(remainingQuantity) > 0; i--) {
+      let h = itemQuantities[lastUpdatedIndexes[i]]
+
+      let oldQuantity = h.quantity
+      h.quantity = Math.max(h.minQuantity, Math.min(h.maxQuantity, h.quantity - remainingQuantity))
+      remainingQuantity += (h.quantity - oldQuantity)
+    }
+
+    this.setState({reconcilingQuantities})
   }
 
   render() {
@@ -233,7 +277,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                   <table className="border-collapse w-full">
                     <tbody>
                       {this.state.reconcilingOrder.items.map((item, index) => {
-                        let maxQuantity = item.itemQuantity
+                        let maxQuantity = item.adjustment? item.adjustment.oldItemQuantity : item.itemQuantity
                         return <React.Fragment>
                           <OrderItem key={item.productId}
                                      item={item} 
@@ -248,7 +292,8 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                           {this.state.reconcilingQuantities[item.productId] &&
                             <DistributeQuantities item={item}
                                                   index={index}
-                                                  reconcilingQuantities={this.state.reconcilingQuantities[item.productId]} />
+                                                  reconcilingQuantities={this.state.reconcilingQuantities[item.productId]} 
+                                                  updateQuantity={this.updateQuantity} />
                           }
                         </React.Fragment>
                       })}
@@ -291,9 +336,10 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
 export interface DistributeQuantitiesProps { item: Item
                                              index: number
-                                             reconcilingQuantities: {householdId: number, householdName: string, oldQuantity: number, quantity: number}[]
+                                             reconcilingQuantities: {householdId: number, householdName: string, quantity: number, maxQuantity: number, minQuantity: number}[]
+                                             updateQuantity: (item: Item, householdId: number, quantity: number) => void
                                            }
-export const DistributeQuantities = ({item, index, reconcilingQuantities}: DistributeQuantitiesProps) => {
+export const DistributeQuantities = ({item, index, reconcilingQuantities, updateQuantity}: DistributeQuantitiesProps) => {
   return <React.Fragment>
     <tr>
       <td rowSpan={reconcilingQuantities.length + 1} className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})}>
@@ -304,21 +350,24 @@ export const DistributeQuantities = ({item, index, reconcilingQuantities}: Distr
     </tr>
     {reconcilingQuantities.map((h, ix) => {
       const quantities = []
-      for(let i = 0; i <= Math.min(h.oldQuantity, item.itemQuantity); i++) {
+      for(let i = h.minQuantity; i <= h.maxQuantity; i++) {
         quantities.push(i)
       }
       return <tr>
         <td colSpan={2} className={classNames('pb-2 pl-2 align-baseline')}>
           <span className="flex justify-between">
             <span>{h.householdName}</span>
-            <select className="border" value={h.quantity}>
-              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
-            </select>
+            <span>
+              <span className="line-through text-grey-darker mr-2">x {h.maxQuantity}</span>
+              <select className="border" value={h.quantity} onChange={e=> updateQuantity(item, h.householdId, parseInt(e.target.value))}>
+                {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
+              </select>
+            </span>
           </span>
         </td>
         <td className={classNames('pl-2 pr-2 align-bottom text-right')}>
           {ix === reconcilingQuantities.length - 1 &&
-            <button className="ml-4 whitespace-no-wrap" onClick={() => {}}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Done</button>
+            <button className="ml-4 whitespace-no-wrap" onClick={() => {}}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
           }
         </td>
       </tr>
