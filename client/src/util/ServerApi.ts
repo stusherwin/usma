@@ -155,18 +155,18 @@ const command = {
 
   createHousehold(name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
     return Http.post(groupUrl(`/command/create-household/`), { hdName: name
-                                                       , hdContactName: contactName
-                                                       , hdContactEmail: contactEmail
-                                                       , hdContactPhone: contactPhone 
-                                                       })
+                                                             , hdContactName: contactName
+                                                             , hdContactEmail: contactEmail
+                                                             , hdContactPhone: contactPhone 
+                                                             })
   },
 
   updateHousehold(id: number, name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
     return Http.post(groupUrl(`/command/update-household/${id}`), { hdName: name
-                                                            , hdContactName: contactName
-                                                            , hdContactEmail: contactEmail
-                                                            , hdContactPhone: contactPhone 
-                                                            })
+                                                                  , hdContactName: contactName
+                                                                  , hdContactEmail: contactEmail
+                                                                  , hdContactPhone: contactPhone 
+                                                                  })
   },
 
   archiveHousehold(id: number): Promise<{}> {
@@ -175,14 +175,14 @@ const command = {
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
     return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), { hpdDate: Util.dateString(date)
-                                                                             , hpdAmount: amount
-                                                                             })
+                                                                                   , hpdAmount: amount
+                                                                                   })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
     return Http.post(groupUrl(`/command/update-household-payment/${id}`), { hpdDate: Util.dateString(date)
-                                                                    , hpdAmount: amount
-                                                                    })
+                                                                          , hpdAmount: amount
+                                                                          })
   },
 
   archiveHouseholdPayment(id: number): Promise<{}> {
@@ -196,6 +196,13 @@ const command = {
   acceptCatalogueUpdates(orderId: number, householdId: number): Promise<{}> {
     return Http.post(groupUrl(`/command/accept-catalogue-updates/${orderId}/${householdId}`), {})
   },
+
+  reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: {householdId: number, itemQuantity: number}[]): Promise<{}> {
+    return Http.post(groupUrl(`/command/reconcile-order-item/${orderId}/${productId}`), 
+      { roidProductPriceExcVat: productPriceExcVat
+      , roidHouseholdQuantities: householdQuantities.map(h => ({ hqdHouseholdId: h.householdId, hqdItemQuantity: h.itemQuantity }))
+      })
+  }
 }
 
 const groupUrl = (url: string) => {

@@ -13,8 +13,9 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , replaceProductCatalogue, acceptCatalogueUpdates
                 , getProductCatalogueCategories, getProductCatalogueBrands, getProductImage, saveProductImage
                 , getGroup
+                , reconcileOrderItem
                 ) where
-  import Control.Monad (mzero, when, void)
+  import Control.Monad (mzero, when, void, forM_)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
   import Database.PostgreSQL.Simple.ToField
@@ -133,11 +134,16 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     phoi_g :: Bool,
     phoi_o :: Bool,
     phoi_s :: Bool,
-    phoi_v :: Bool
+    phoi_v :: Bool,
+    phoi_oldProductPriceExcVat :: Maybe Int,
+    phoi_oldProductPriceIncVat :: Maybe Int,
+    phoi_oldQuantity :: Maybe Int,
+    phoi_oldItemTotalExcVat :: Maybe Int,
+    phoi_oldItemTotalIncVat :: Maybe Int
   }
 
   instance FromRow PastHouseholdOrderItemData where
-    fromRow = PastHouseholdOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+    fromRow = PastHouseholdOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
   data PastOrderItemData = PastOrderItemData {
     poi_orderId :: Int,
@@ -155,11 +161,16 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     poi_g :: Bool,
     poi_o :: Bool,
     poi_s :: Bool,
-    poi_v :: Bool
+    poi_v :: Bool,
+    poi_oldProductPriceExcVat :: Maybe Int,
+    poi_oldProductPriceIncVat :: Maybe Int,
+    poi_oldQuantity :: Maybe Int,
+    poi_oldItemTotalExcVat :: Maybe Int,
+    poi_oldItemTotalIncVat :: Maybe Int
   }
 
   instance FromRow PastOrderItemData where
-    fromRow = PastOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+    fromRow = PastOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
   data HouseholdOrderData = HouseholdOrderData {
     ho_orderId :: Int, 
@@ -179,6 +190,38 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
 
   instance FromRow HouseholdOrderData where
     fromRow = HouseholdOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+  data PastCollectiveOrderData = PastCollectiveOrderData {
+    pco_orderId :: Int, 
+    pco_orderCreated :: UTCTime, 
+    pco_orderCreatedBy :: Int, 
+    pco_orderCreatedByName :: String, 
+    pco_cancelled :: Bool, 
+    pco_totalExcVat :: Int, 
+    pco_totalIncVat :: Int,
+    pco_oldTotalExcVat :: Maybe Int, 
+    pco_oldTotalIncVat :: Maybe Int
+  }
+  
+  instance FromRow PastCollectiveOrderData where
+    fromRow = PastCollectiveOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field 
+
+  data PastHouseholdOrderData = PastHouseholdOrderData {
+    pho_orderId :: Int, 
+    pho_orderCreated :: UTCTime, 
+    pho_orderCreatedBy :: Int, 
+    pho_orderCreatedByName :: String, 
+    pho_householdId :: Int, 
+    pho_householdName :: String, 
+    pho_cancelled :: Bool, 
+    pho_totalExcVat :: Int, 
+    pho_totalIncVat :: Int,
+    pho_oldTotalExcVat :: Maybe Int, 
+    pho_oldTotalIncVat :: Maybe Int
+  }
+  
+  instance FromRow PastHouseholdOrderData where
+    fromRow = PastHouseholdOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field 
 
   data ProductCatalogueEntryData = ProductCatalogueEntryData {
     pce_code :: String,
@@ -279,7 +322,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     close conn
     return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, oldTotalExcVat, oldTotalIncVat, totalExcVat, totalIncVat, allUpToDate) ->
       let item (OrderItemData { oi_productId, oi_code, oi_name, oi_vatRate, oi_quantity, oi_priceExcVat, oi_priceIncVat, oi_itemTotalExcVat, oi_itemTotalIncVat, oi_b, oi_f, oi_g, oi_o, oi_s, oi_v }) 
-            = orderItem oi_productId oi_code oi_name oi_priceExcVat oi_priceIncVat oi_vatRate oi_quantity oi_itemTotalExcVat oi_itemTotalIncVat oi_b oi_f oi_g oi_o oi_s oi_v
+            = orderItem oi_productId oi_code oi_name oi_vatRate oi_priceExcVat oi_priceIncVat oi_quantity oi_itemTotalExcVat oi_itemTotalIncVat oi_b oi_f oi_g oi_o oi_s oi_v
           thisOrder (OrderItemData { oi_orderId }) = oi_orderId == id
           items = map item $ filter thisOrder rItems
       in  collectiveOrder id created createdBy createdByName complete oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat allUpToDate items
@@ -291,10 +334,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       os <- query conn [sql|
         select o.id, o.created_date, o.created_by_id, o.created_by_name, o.cancelled, 
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
-          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat
+          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
+          sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
+          sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
         from past_order o
         left join past_household_order ho on ho.order_id = o.id and (o.cancelled or ho.cancelled = false)
         left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+        left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
         where o.order_group_id = ?
         group by o.id, o.created_date, o.created_by_id, o.created_by_name, o.cancelled
         order by o.id desc
@@ -309,20 +355,26 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
            hoi.product_gluten_free,
            hoi.product_organic,
            hoi.product_added_sugar,
-           hoi.product_vegan
+           hoi.product_vegan,
+           max(adj.old_product_price_exc_vat) as old_product_price_exc_vat,
+           max(adj.old_product_price_inc_vat) as old_product_price_inc_vat,
+           sum(adj.old_quantity) as old_quantity,
+           sum(adj.old_item_total_exc_vat) as old_item_total_exc_vat,
+           sum(adj.old_item_total_inc_vat) as old_item_total_inc_vat
         from past_household_order_item hoi
+        left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
         where hoi.order_group_id = ?
         group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.product_biodynamic, hoi.product_fair_trade, hoi.product_gluten_free, hoi.product_organic, hoi.product_added_sugar, hoi.product_vegan
         order by hoi.order_id, hoi.product_code asc
       |] (Only groupId)
-      return (os :: [(Int, UTCTime, Int, String, Bool, Int, Int)], is :: [PastOrderItemData])
+      return (os :: [PastCollectiveOrderData], is :: [PastOrderItemData])
     close conn
-    return $ rOrders <&> \(id, created, createdBy, createdByName, cancelled, totalExcVat, totalIncVat) ->
-      let item (PastOrderItemData { poi_productId, poi_code, poi_name, poi_priceExcVat, poi_priceIncVat, poi_vatRate, poi_quantity, poi_itemTotalExcVat, poi_itemTotalIncVat, poi_b, poi_f, poi_g, poi_o, poi_s, poi_v}) 
-            = orderItem poi_productId poi_code poi_name poi_priceExcVat poi_priceIncVat poi_vatRate poi_quantity poi_itemTotalExcVat poi_itemTotalIncVat poi_b poi_f poi_g poi_o poi_s poi_v
-          thisOrder (PastOrderItemData { poi_orderId }) = poi_orderId == id
+    return $ rOrders <&> \(PastCollectiveOrderData { pco_orderId, pco_orderCreated, pco_orderCreatedBy, pco_orderCreatedByName, pco_cancelled, pco_totalExcVat, pco_totalIncVat, pco_oldTotalExcVat, pco_oldTotalIncVat }) ->
+      let item (PastOrderItemData { poi_productId, poi_code, poi_name, poi_priceExcVat, poi_priceIncVat, poi_vatRate, poi_quantity, poi_itemTotalExcVat, poi_itemTotalIncVat, poi_b, poi_f, poi_g, poi_o, poi_s, poi_v, poi_oldProductPriceExcVat, poi_oldProductPriceIncVat, poi_oldQuantity, poi_oldItemTotalExcVat, poi_oldItemTotalIncVat }) 
+            = householdOrderItem poi_productId poi_code poi_name poi_vatRate poi_priceExcVat poi_priceIncVat  poi_quantity poi_itemTotalExcVat poi_itemTotalIncVat poi_b poi_f poi_g poi_o poi_s poi_v poi_oldProductPriceExcVat poi_oldProductPriceIncVat poi_oldQuantity poi_oldItemTotalExcVat poi_oldItemTotalIncVat (Just False)
+          thisOrder (PastOrderItemData { poi_orderId }) = poi_orderId == pco_orderId
           items = map item $ filter thisOrder rItems
-      in  pastCollectiveOrder id created createdBy createdByName cancelled totalExcVat totalIncVat items
+      in  pastCollectiveOrder pco_orderId pco_orderCreated pco_orderCreatedBy pco_orderCreatedByName pco_cancelled pco_totalExcVat pco_totalIncVat pco_oldTotalExcVat pco_oldTotalIncVat items
   
   getHouseholdOrders :: ByteString -> Int -> IO [HouseholdOrder]
   getHouseholdOrders connectionString groupId = do
@@ -400,7 +452,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     close conn
     return $ rOrders <&> \(HouseholdOrderData { ho_orderId, ho_orderCreated, ho_orderCreatedBy, ho_orderCreatedByName, ho_householdId, ho_householdName, ho_complete, ho_cancelled, ho_oldTotalExcVat, ho_oldTotalIncVat, ho_totalExcVat, ho_totalIncVat, ho_updated }) ->
       let item (HouseholdOrderItemData { hoi_productId, hoi_code, hoi_name, hoi_oldPriceExcVat, hoi_oldPriceIncVat, hoi_vatRate, hoi_quantity, hoi_oldItemTotalExcVat, hoi_oldItemTotalIncVat, hoi_discontinued, hoi_priceExcVat, hoi_priceIncVat, hoi_itemTotalExcVat, hoi_itemTotalIncVat, hoi_b, hoi_f, hoi_g, hoi_o, hoi_s, hoi_v, hoi_updated }) 
-            = householdOrderItem hoi_productId hoi_code hoi_name hoi_oldPriceExcVat hoi_oldPriceIncVat hoi_vatRate hoi_quantity hoi_oldItemTotalExcVat hoi_oldItemTotalIncVat hoi_discontinued hoi_priceExcVat hoi_priceIncVat hoi_itemTotalExcVat hoi_itemTotalIncVat hoi_b hoi_f hoi_g hoi_o hoi_s hoi_v hoi_updated
+            = householdOrderItem hoi_productId hoi_code hoi_name hoi_vatRate hoi_priceExcVat hoi_priceIncVat hoi_quantity hoi_itemTotalExcVat hoi_itemTotalIncVat hoi_b hoi_f hoi_g hoi_o hoi_s hoi_v (if ho_updated then (Just hoi_oldPriceExcVat) else Nothing) (if ho_updated then (Just hoi_oldPriceIncVat) else Nothing) (if ho_updated then (Just hoi_quantity) else Nothing) (if ho_updated then (Just hoi_oldItemTotalExcVat) else Nothing) (if ho_updated then (Just hoi_oldItemTotalIncVat) else Nothing) (if ho_updated then (Just hoi_discontinued) else Nothing)
           thisOrder (HouseholdOrderItemData { hoi_orderId, hoi_householdId }) = hoi_orderId == ho_orderId && hoi_householdId == ho_householdId
           items = map item $ filter thisOrder rItems
       in  householdOrder ho_orderId ho_orderCreated ho_orderCreatedBy ho_orderCreatedByName ho_householdId ho_householdName ho_complete ho_cancelled ho_oldTotalExcVat ho_oldTotalIncVat ho_totalExcVat ho_totalIncVat ho_updated items
@@ -412,10 +464,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       os <- query conn [sql|
         select o.id, o.created_date, o.created_by_id, o.created_by_name, ho.household_id, ho.household_name, (case when o.cancelled then true else ho.cancelled end) as cancelled, 
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
-          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat
+          coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
+          sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
+          sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
         from past_household_order ho
         inner join past_order o on o.id = ho.order_id
         left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+        left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
         where o.order_group_id = ?
         group by o.id, o.created_date, o.created_by_id, o.created_by_name, ho.household_id, ho.household_name, ho.cancelled
         order by o.id desc, ho.household_name asc
@@ -427,19 +482,25 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
            hoi.product_gluten_free,
            hoi.product_organic,
            hoi.product_added_sugar,
-           hoi.product_vegan
+           hoi.product_vegan,
+           adj.old_product_price_exc_vat,
+           adj.old_product_price_inc_vat,
+           adj.old_quantity,
+           adj.old_item_total_exc_vat,
+           adj.old_item_total_inc_vat
         from past_household_order_item hoi
+        left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
         where hoi.order_group_id = ?
         order by hoi.household_id, hoi.product_code
       |] (Only groupId)
-      return (os :: [(Int, UTCTime, Int, String, Int, String, Bool, Int, Int)], is :: [PastHouseholdOrderItemData])
+      return (os :: [PastHouseholdOrderData], is :: [PastHouseholdOrderItemData])
     close conn
-    return $ rOrders <&> \(orderId, orderCreated, orderCreatedBy, orderCreatedByName, householdId, householdName, cancelled, totalExcVat, totalIncVat) ->
-      let item (PastHouseholdOrderItemData { phoi_productId, phoi_code, phoi_name, phoi_priceExcVat, phoi_priceIncVat, phoi_vatRate, phoi_quantity, phoi_itemTotalExcVat, phoi_itemTotalIncVat, phoi_b, phoi_f, phoi_g, phoi_o, phoi_s, phoi_v}) 
-            = orderItem phoi_productId phoi_code phoi_name phoi_priceExcVat phoi_priceIncVat phoi_vatRate phoi_quantity phoi_itemTotalExcVat phoi_itemTotalIncVat phoi_b phoi_f phoi_g phoi_o phoi_s phoi_v
-          thisOrder (PastHouseholdOrderItemData { phoi_orderId, phoi_householdId }) = phoi_orderId == orderId && phoi_householdId == householdId
+    return $ rOrders <&> \(PastHouseholdOrderData { pho_orderId, pho_orderCreated, pho_orderCreatedBy, pho_orderCreatedByName, pho_householdId, pho_householdName, pho_cancelled, pho_totalExcVat, pho_totalIncVat, pho_oldTotalExcVat, pho_oldTotalIncVat }) ->
+      let item (PastHouseholdOrderItemData { phoi_productId, phoi_code, phoi_name, phoi_priceExcVat, phoi_priceIncVat, phoi_vatRate, phoi_quantity, phoi_itemTotalExcVat, phoi_itemTotalIncVat, phoi_b, phoi_f, phoi_g, phoi_o, phoi_s, phoi_v, phoi_oldProductPriceExcVat, phoi_oldProductPriceIncVat, phoi_oldQuantity, phoi_oldItemTotalExcVat, phoi_oldItemTotalIncVat }) 
+            = householdOrderItem phoi_productId phoi_code phoi_name phoi_vatRate phoi_priceExcVat phoi_priceIncVat phoi_quantity phoi_itemTotalExcVat phoi_itemTotalIncVat phoi_b phoi_f phoi_g phoi_o phoi_s phoi_v phoi_oldProductPriceExcVat phoi_oldProductPriceIncVat phoi_oldQuantity phoi_oldItemTotalExcVat phoi_oldItemTotalIncVat (Just False)
+          thisOrder (PastHouseholdOrderItemData { phoi_orderId, phoi_householdId }) = phoi_orderId == pho_orderId && phoi_householdId == pho_householdId
           items = map item $ filter thisOrder rItems
-      in  pastHouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName cancelled totalExcVat totalIncVat items
+      in  pastHouseholdOrder pho_orderId pho_orderCreated pho_orderCreatedBy pho_orderCreatedByName pho_householdId pho_householdName pho_cancelled pho_totalExcVat pho_totalIncVat pho_oldTotalExcVat pho_oldTotalIncVat items
 
   getHouseholds :: ByteString -> Int -> IO [Household]
   getHouseholds connectionString groupId = do
@@ -894,4 +955,58 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       values (?, ?)
       ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
     |] (code, Binary image)
+    close conn
+
+  reconcileOrderItem :: ByteString -> Int -> Int -> Int -> ReconcileOrderItemDetails -> IO ()
+  reconcileOrderItem connectionString groupId orderId productId details = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      forM_ (roidHouseholdQuantities details) $ \h -> do
+        let price = roidProductPriceExcVat details
+        let quantity = hqdItemQuantity h
+        let householdId = hqdHouseholdId h
+
+        execute conn [sql|
+          insert into order_item_adjustment (
+              order_id
+            , household_id
+            , product_id
+            , order_group_id
+            , old_product_price_exc_vat
+            , old_product_price_inc_vat
+            , old_quantity
+            , old_item_total_exc_vat
+            , old_item_total_inc_vat
+          )
+          select
+              order_id
+            , household_id
+            , product_id
+            , order_group_id
+            , product_price_exc_vat
+            , product_price_inc_vat
+            , quantity
+            , item_total_exc_vat
+            , item_total_inc_vat
+          from past_household_order_item
+          where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+          ON CONFLICT (order_id, household_id, product_id) DO NOTHING;
+        |] (orderId, householdId, productId, groupId)
+
+        execute conn [sql|
+          with new_values as (
+            select ? as price, ? as quantity, ? as order_id, ? as household_id, ? as product_id, ? as order_group_id 
+          )
+          update past_household_order_item phoi
+          set product_price_exc_vat = nv.price
+            , product_price_inc_vat = cast(round(nv.price * v.multiplier) as int)
+            , quantity = nv.quantity
+            , item_total_exc_vat = nv.price * nv.quantity
+            , item_total_inc_vat = cast(round(nv.price * v.multiplier) as int) * nv.quantity
+          from past_household_order_item phoi2
+          inner join new_values nv on phoi2.order_id = nv.order_id and phoi2.household_id = nv.household_id and phoi2.product_id = nv.product_id and phoi2.order_group_id = nv.order_group_id
+          inner join product p on p.id = phoi2.product_id
+          inner join vat_rate v on v.code = p.vat_rate
+          where phoi.order_id = phoi2.order_id and phoi.household_id = phoi2.household_id and phoi.product_id = phoi2.product_id and phoi.order_group_id = phoi2.order_group_id
+        |] (price, quantity, orderId, householdId, productId, groupId)
     close conn

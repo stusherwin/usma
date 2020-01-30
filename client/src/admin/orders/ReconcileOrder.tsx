@@ -1,8 +1,9 @@
 import * as React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { CollectiveOrder, OrderItem as Item } from 'util/Types'
 import { Icon } from 'util/Icon'
+import { Util } from 'util/Util'
 
 import { OrderItem } from 'order/OrderItem'
 import { OrderFooter } from 'order/OrderFooter'
@@ -11,14 +12,19 @@ import { DistributeHouseholdQuantities, HouseholdQuantity } from './DistributeHo
 
 export type ReconcilingQuantities = {[productId: string]: HouseholdQuantity[]}
 
-export interface ReconcileOrderProps { order: CollectiveOrder, endReconcilingOrder: () => void }
+export interface ReconcileOrderProps { order: CollectiveOrder
+                                       endReconcilingItem: (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => void
+                                       endReconcilingOrder: () => void 
+                                     }
 
-export const ReconcileOrder = ({order, endReconcilingOrder}: ReconcileOrderProps) => {
-  const newReconcilingOrder = () => {
-    const reconcilingOrder = {...order}
+export const ReconcileOrder = ({order, endReconcilingItem, endReconcilingOrder}: ReconcileOrderProps) => {
+  const newReconcilingOrder = (order: CollectiveOrder) => {
+    const reconcilingOrder = Util.clone(order)
 
     for(let item of reconcilingOrder.items) {
-      if(!item.adjustment) {
+      if(item.adjustment) {
+        item.reconciled = true
+      } else {
         item.adjustment = {
           oldProductPriceExcVat: item.productPriceExcVat,
           oldProductPriceIncVat: item.productPriceIncVat,
@@ -40,8 +46,10 @@ export const ReconcileOrder = ({order, endReconcilingOrder}: ReconcileOrderProps
     return reconcilingOrder
   }
 
-  const [reconcilingOrder, setReconcilingOrder] = useState<CollectiveOrder>(newReconcilingOrder)
+  const [reconcilingOrder, setReconcilingOrder] = useState<CollectiveOrder>(() => newReconcilingOrder(order))
   const [reconcilingQuantities, setReconcilingQuantities] = useState<ReconcilingQuantities>({})
+
+  useEffect(() => setReconcilingOrder(newReconcilingOrder(order)), [order])
 
   const calculateTotals = (item: Item) => {
     item.itemTotalExcVat = item.productPriceExcVat * item.itemQuantity
@@ -70,44 +78,38 @@ export const ReconcileOrder = ({order, endReconcilingOrder}: ReconcileOrderProps
   }
 
   const saveItem = (item: Item) => {
-    if(item.adjustment && item.itemQuantity != item.adjustment.oldItemQuantity && item.itemQuantity > 0) {
-      const households: HouseholdQuantity[] = []
-      let quantityRemaining = item.itemQuantity
-      let lastUpdated = 0;
+    const households: HouseholdQuantity[] = []
+    let quantityRemaining = item.itemQuantity
+    let lastUpdated = 0;
 
-      for(let ho of reconcilingOrder.householdOrders) {
-        let found = ho.items.find(i => i.productId === item.productId)
-        if(!found) continue
+    for(let ho of reconcilingOrder.householdOrders) {
+      let found = ho.items.find(i => i.productId === item.productId)
+      if(!found) continue
 
-        const oldQuantity = found.itemQuantity
-        const quantity = Math.min(oldQuantity, quantityRemaining)
-        quantityRemaining -= quantity
+      const oldQuantity = found.adjustment? found.adjustment.oldItemQuantity : found.itemQuantity
+      const quantity = Math.min(oldQuantity, quantityRemaining)
+      quantityRemaining -= quantity
 
-        households.push({ householdId: ho.householdId
-                        , householdName: ho.householdName
-                        , quantity
-                        , minQuantity: 0
-                        , maxQuantity: Math.min(oldQuantity, item.itemQuantity)
-                        , lastUpdated
-                        })
-        lastUpdated++
-      }
-
-      if(households.length > 1) {
-        for(let h of households) {
-          let otherTotal = households.reduce((t, h2) => h2.householdId == h.householdId? t : t + h2.maxQuantity, 0)
-          h.minQuantity = Math.max(0, item.itemQuantity - otherTotal)
-        }
-        reconcilingQuantities[item.productId] = households
-      } else {
-        item.reconciled = true
-      }
-    } else {
-      item.reconciled = true
+      households.push({ householdId: ho.householdId
+                      , householdName: ho.householdName
+                      , quantity
+                      , minQuantity: 0
+                      , maxQuantity: Math.min(oldQuantity, item.itemQuantity)
+                      , lastUpdated
+                      })
+      lastUpdated++
     }
 
-    setReconcilingOrder({...reconcilingOrder})
-    setReconcilingQuantities({...reconcilingQuantities})
+    if(item.adjustment && item.itemQuantity != item.adjustment.oldItemQuantity && item.itemQuantity > 0 && households.length > 1) {
+      for(let h of households) {
+        let otherTotal = households.reduce((t, h2) => h2.householdId == h.householdId? t : t + h2.maxQuantity, 0)
+        h.minQuantity = Math.max(0, item.itemQuantity - otherTotal)
+      }
+      reconcilingQuantities[item.productId] = households
+      setReconcilingQuantities({...reconcilingQuantities})
+    } else {
+      endReconcilingItem(item.productId, item.productPriceExcVat, households.map(h => ({ householdId: h.householdId, itemQuantity: h.quantity })))
+    }
   }
 
   const editItem = (item: Item) => {
@@ -177,11 +179,12 @@ export const ReconcileOrder = ({order, endReconcilingOrder}: ReconcileOrderProps
                            editProductPrice={!item.reconciled && !reconcilingQuantities[item.productId] && editProductPrice || undefined}
                            saveItem={!item.reconciled && !reconcilingQuantities[item.productId] && saveItem || undefined}
                            editItem={(item.reconciled || reconcilingQuantities[item.productId]) && editItem || undefined} />
-                {reconcilingQuantities[item.productId] &&
+                {!item.reconciled && reconcilingQuantities[item.productId] &&
                   <DistributeHouseholdQuantities item={item}
                                                  index={index}
                                                  householdQuantities={reconcilingQuantities[item.productId]} 
-                                                 updateQuantity={updateQuantity} />
+                                                 updateQuantity={updateQuantity}
+                                                 saveHouseholdQuantities={endReconcilingItem} />
                 }
               </React.Fragment>
             })}

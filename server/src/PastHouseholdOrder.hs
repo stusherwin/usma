@@ -5,7 +5,7 @@ module PastHouseholdOrder where
   import Data.Aeson
   import GHC.Generics
   import Data.Time.Clock (UTCTime)
-  import OrderItem (OrderItem, OrderAdjustment)
+  import OrderItem (OrderItem, OrderAdjustment(..))
   
   data PastHouseholdOrder = PastHouseholdOrder { orderId :: Int
                                                , orderCreatedDate :: UTCTime
@@ -23,6 +23,9 @@ module PastHouseholdOrder where
                                                } deriving (Eq, Show, Generic)
   instance ToJSON PastHouseholdOrder
 
-  pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Int -> Int -> [OrderItem] -> PastHouseholdOrder
-  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat items =
+  pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
+  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
+    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+  
+  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat _ _ items =
     PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat Nothing items

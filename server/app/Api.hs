@@ -19,6 +19,7 @@ module Api where
   import PastHouseholdOrder
   import Household
   import HouseholdPayment
+  import OrderItem
   import ProductCatalogueEntry
   import qualified Data.ByteString.Lazy as L
   import Network.HTTP.Media ((//))
@@ -91,6 +92,7 @@ module Api where
     :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
     :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
     :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+    :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

@@ -316,6 +316,7 @@ module Main where
                              :<|> archiveHouseholdPayment groupKey
                              :<|> uploadProductCatalogue
                              :<|> acceptCatalogueUpdates groupKey
+                             :<|> reconcileOrderItem groupKey
     where
     conn = connectionString config
     
@@ -409,6 +410,10 @@ module Main where
     acceptCatalogueUpdates groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
       date <- liftIO $ getCurrentTime
       liftIO $ D.acceptCatalogueUpdates conn groupId date orderId householdId
+
+    reconcileOrderItem :: Text -> Int -> Int -> ReconcileOrderItemDetails -> Handler ()
+    reconcileOrderItem groupKey orderId productId details = findGroupOr404 conn groupKey $ \groupId -> do
+      liftIO $ D.reconcileOrderItem conn groupId orderId productId details
 
   findGroup :: B.ByteString -> Text -> IO (Maybe Int)
   findGroup conn groupKey = do

@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { CollectiveOrder, Household, OrderItem as Item } from 'util/Types'
+import { CollectiveOrder, Household } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 import { Router } from 'util/Router'
@@ -75,14 +75,22 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
   startReconcilingOrder = () => {
     if(!this.props.collectiveOrder) return
-    
+
     this.setState({reconcilingOrder: true})
   }
 
   endReconcilingOrder = () => {
-    if(!this.props.collectiveOrder) return
+    if(!this.state.reconcilingOrder) return
     
     this.setState({reconcilingOrder: false})
+  }
+
+  endReconcilingItem = (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => {
+    if(!this.state.reconcilingOrder) return
+    if(!this.props.collectiveOrder) return
+
+    this.props.request(ServerApi.command.reconcileOrderItem(this.props.collectiveOrder.id, productId, productPriceExcVat, households))
+      .then(this.props.reload)
   }
 
   render() {
@@ -123,7 +131,8 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
           { order && (
             this.state.reconcilingOrder?
               <ReconcileOrder order={order} 
-                              endReconcilingOrder={this.endReconcilingOrder} />
+                              endReconcilingOrder={this.endReconcilingOrder}
+                              endReconcilingItem={this.endReconcilingItem} />
             : this.state.tab == 'households'?
               <div className="shadow-inner-top border-t bg-household-lightest">
                 <CollectiveOrderMessages order={order} />
