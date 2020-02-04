@@ -13,8 +13,9 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , replaceProductCatalogue, acceptCatalogueUpdates
                 , getProductCatalogueCategories, getProductCatalogueBrands, getProductImage, saveProductImage
                 , getGroup
+                , reconcileOrderItem
                 ) where
-  import Control.Monad (mzero, when, void)
+  import Control.Monad (mzero, when, void, forM_)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
   import Database.PostgreSQL.Simple.ToField
@@ -894,4 +895,30 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       values (?, ?)
       ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
     |] (code, Binary image)
+    close conn
+
+  reconcileOrderItem :: ByteString -> Int -> Int -> Int -> ReconcileOrderItemDetails -> IO ()
+  reconcileOrderItem connectionString groupId orderId productId details = do
+    conn <- connectPostgreSQL connectionString
+    withTransaction conn $ do
+      forM_ (roidHouseholdQuantities details) $ \h -> do
+        let price = roidProductPriceExcVat details
+        let quantity = hqdItemQuantity h
+        let householdId = hqdHouseholdId h
+        execute conn [sql|
+          with new_values as (
+            select ? as price, ? as quantity, ? as order_id, ? as household_id, ? as product_id, ? as order_group_id 
+          )
+          update past_household_order_item phoi
+          set product_price_exc_vat = nv.price
+            , product_price_inc_vat = cast(round(nv.price * v.multiplier) as int)
+            , quantity = nv.quantity
+            , item_total_exc_vat = nv.price * nv.quantity
+            , item_total_inc_vat = cast(round(nv.price * v.multiplier) as int) * nv.quantity
+          from past_household_order_item phoi2
+          inner join new_values nv on phoi.order_id = nv.order_id and phoi.household_id = nv.household_id and phoi.product_id = nv.product_id and phoi.order_group_id = nv.order_group_id
+          inner join product p on p.id = phoi2.product_id
+          inner join vat_rate v on v.code = p.vat_rate
+          where phoi.order_id = phoi2.order_id and phoi.household_id = phoi2.household_id and phoi.product_id = phoi2.product_id and phoi.order_group_id = phoi2.order_group_id
+        |] (price, quantity, orderId, householdId, productId, groupId)
     close conn

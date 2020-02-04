@@ -188,14 +188,14 @@ const command = {
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
     return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), { hpdDate: Util.dateString(date)
-                                                                             , hpdAmount: amount
-                                                                             })
+                                                                                   , hpdAmount: amount
+                                                                                   })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
     return Http.post(groupUrl(`/command/update-household-payment/${id}`), { hpdDate: Util.dateString(date)
-                                                                    , hpdAmount: amount
-                                                                    })
+                                                                          , hpdAmount: amount
+                                                                          })
   },
 
   archiveHouseholdPayment(id: number): Promise<{}> {
@@ -211,84 +211,89 @@ const command = {
   },
 
   reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: {householdId: number, itemQuantity: number}[]): Promise<{}> {
-    let reconcilingOrder = savedCollectiveOrders.find(o => o.id == orderId)
-    if(!reconcilingOrder) return Promise.resolve({})
+    return Http.post(groupUrl(`/command/reconcile-order-item/${orderId}/${productId}`), 
+      { roidProductPriceExcVat: productPriceExcVat
+      , roidHouseholdQuantities: householdQuantities.map(h => ({ hqdHouseholdId: h.householdId, hqdItemQuantity: h.itemQuantity }))
+      })
 
-    if(!reconcilingOrder.adjustment) {
-      reconcilingOrder.adjustment = {
-        oldTotalExcVat: reconcilingOrder.totalExcVat,
-        oldTotalIncVat: reconcilingOrder.totalIncVat
-      }
-    }
+    // let reconcilingOrder = savedCollectiveOrders.find(o => o.id == orderId)
+    // if(!reconcilingOrder) return Promise.resolve({})
 
-    let item = reconcilingOrder.items.find(i => i.productId == productId)
-    if(item) {
-      item.reconciled = true
-      if(!item.adjustment) {
-        item.adjustment = {
-          oldProductPriceExcVat: item.productPriceExcVat,
-          oldProductPriceIncVat: item.productPriceIncVat,
-          oldItemQuantity: item.itemQuantity,
-          oldItemTotalExcVat: item.itemTotalExcVat,
-          oldItemTotalIncVat: item.itemTotalIncVat,
-          productDiscontinued: false
-        }
-      }
+    // if(!reconcilingOrder.adjustment) {
+    //   reconcilingOrder.adjustment = {
+    //     oldTotalExcVat: reconcilingOrder.totalExcVat,
+    //     oldTotalIncVat: reconcilingOrder.totalIncVat
+    //   }
+    // }
 
-      item.itemQuantity = householdQuantities.reduce((t, i) => t + i.itemQuantity, 0)
+    // let item = reconcilingOrder.items.find(i => i.productId == productId)
+    // if(item) {
+    //   item.reconciled = true
+    //   if(!item.adjustment) {
+    //     item.adjustment = {
+    //       oldProductPriceExcVat: item.productPriceExcVat,
+    //       oldProductPriceIncVat: item.productPriceIncVat,
+    //       oldItemQuantity: item.itemQuantity,
+    //       oldItemTotalExcVat: item.itemTotalExcVat,
+    //       oldItemTotalIncVat: item.itemTotalIncVat,
+    //       productDiscontinued: false
+    //     }
+    //   }
 
-      const diff = productPriceExcVat - item.productPriceExcVat
-      item.productPriceExcVat = productPriceExcVat
-      item.productPriceIncVat += diff
+    //   item.itemQuantity = householdQuantities.reduce((t, i) => t + i.itemQuantity, 0)
 
-      item.itemTotalExcVat = productPriceExcVat * item.itemQuantity
-      item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
-    }
+    //   const diff = productPriceExcVat - item.productPriceExcVat
+    //   item.productPriceExcVat = productPriceExcVat
+    //   item.productPriceIncVat += diff
 
-    for(let h of householdQuantities) {
-      let order = reconcilingOrder.householdOrders.find(ho => ho.householdId == h.householdId)
-      if(!order) continue
+    //   item.itemTotalExcVat = productPriceExcVat * item.itemQuantity
+    //   item.itemTotalIncVat = item.productPriceIncVat * item.itemQuantity
+    // }
 
-      if(!order.adjustment) {
-        order.adjustment = {
-          oldTotalExcVat: order.totalExcVat,
-          oldTotalIncVat: order.totalIncVat
-        }
-      }
+    // for(let h of householdQuantities) {
+    //   let order = reconcilingOrder.householdOrders.find(ho => ho.householdId == h.householdId)
+    //   if(!order) continue
 
-      let householdItem = order.items.find(i => i.productId == productId)
-      if(!householdItem) continue
+    //   if(!order.adjustment) {
+    //     order.adjustment = {
+    //       oldTotalExcVat: order.totalExcVat,
+    //       oldTotalIncVat: order.totalIncVat
+    //     }
+    //   }
 
-      if(!householdItem.adjustment) {
-        householdItem.adjustment = {
-          oldProductPriceExcVat: householdItem.productPriceExcVat,
-          oldProductPriceIncVat: householdItem.productPriceIncVat,
-          oldItemQuantity: householdItem.itemQuantity,
-          oldItemTotalExcVat: householdItem.itemTotalExcVat,
-          oldItemTotalIncVat: householdItem.itemTotalIncVat,
-          productDiscontinued: false
-        }
-      }
+    //   let householdItem = order.items.find(i => i.productId == productId)
+    //   if(!householdItem) continue
 
-      householdItem.itemQuantity = h.itemQuantity
+    //   if(!householdItem.adjustment) {
+    //     householdItem.adjustment = {
+    //       oldProductPriceExcVat: householdItem.productPriceExcVat,
+    //       oldProductPriceIncVat: householdItem.productPriceIncVat,
+    //       oldItemQuantity: householdItem.itemQuantity,
+    //       oldItemTotalExcVat: householdItem.itemTotalExcVat,
+    //       oldItemTotalIncVat: householdItem.itemTotalIncVat,
+    //       productDiscontinued: false
+    //     }
+    //   }
 
-      const diff = productPriceExcVat - householdItem.productPriceExcVat
-      householdItem.productPriceExcVat = productPriceExcVat
-      householdItem.productPriceIncVat += diff
+    //   householdItem.itemQuantity = h.itemQuantity
 
-      householdItem.itemTotalExcVat = productPriceExcVat * householdItem.itemQuantity
-      householdItem.itemTotalIncVat = householdItem.productPriceIncVat * householdItem.itemQuantity
+    //   const diff = productPriceExcVat - householdItem.productPriceExcVat
+    //   householdItem.productPriceExcVat = productPriceExcVat
+    //   householdItem.productPriceIncVat += diff
+
+    //   householdItem.itemTotalExcVat = productPriceExcVat * householdItem.itemQuantity
+    //   householdItem.itemTotalIncVat = householdItem.productPriceIncVat * householdItem.itemQuantity
     
-      order.totalExcVat = order.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
-      order.totalIncVat = order.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
-    }
+    //   order.totalExcVat = order.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+    //   order.totalIncVat = order.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+    // }
 
-    reconcilingOrder.totalExcVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
-    reconcilingOrder.totalIncVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
+    // reconcilingOrder.totalExcVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalExcVat, 0)
+    // reconcilingOrder.totalIncVat = reconcilingOrder.items.reduce((t, i) => t + i.itemTotalIncVat, 0)
 
-    reconciledOrder = reconcilingOrder
+    // reconciledOrder = reconcilingOrder
 
-    return Promise.resolve({})
+    // return Promise.resolve({})
   }
 }
 

@@ -205,7 +205,7 @@ create table past_household_order_item
 ( order_id              int  not null
 , household_id          int  not null
 , product_id            int  not null
-, order_group_id int   not null
+, order_group_id        int  not null
 , product_code          text not null
 , product_name          text not null
 , product_price_exc_vat int  not null

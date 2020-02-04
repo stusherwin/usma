@@ -46,3 +46,15 @@ module OrderItem where
                                          , oldTotalIncVat :: Int 
                                          } deriving (Eq, Show, Generic)
   instance ToJSON OrderAdjustment
+
+  data HouseholdQuantityDetails = HouseholdQuantityDetails { hqdHouseholdId :: Int
+                                                           , hqdItemQuantity :: Int
+                                                           } deriving (Eq, Show, Generic)
+  instance ToJSON HouseholdQuantityDetails
+  instance FromJSON HouseholdQuantityDetails
+
+  data ReconcileOrderItemDetails = ReconcileOrderItemDetails { roidProductPriceExcVat :: Int
+                                                             , roidHouseholdQuantities :: [HouseholdQuantityDetails]
+                                                             } deriving (Eq, Show, Generic)
+  instance ToJSON ReconcileOrderItemDetails
+  instance FromJSON ReconcileOrderItemDetails
