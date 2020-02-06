@@ -10,9 +10,9 @@ module OrderItem where
                              , productCode :: String
                              , productName :: String
                              , productVatRate :: VatRate
-                             , itemQuantity :: Int
                              , productPriceExcVat :: Int
                              , productPriceIncVat :: Int
+                             , itemQuantity :: Int
                              , itemTotalExcVat :: Int
                              , itemTotalIncVat :: Int
                              , biodynamic :: Bool
@@ -27,21 +27,22 @@ module OrderItem where
 
   data OrderItemAdjustment = OrderItemAdjustment { oldProductPriceExcVat :: Int
                                                  , oldProductPriceIncVat :: Int
+                                                 , oldItemQuantity :: Int
                                                  , oldItemTotalExcVat :: Int
                                                  , oldItemTotalIncVat :: Int
                                                  , productDiscontinued :: Bool
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON OrderItemAdjustment
 
-  orderItem productId productCode productName productPriceExcVat productPriceIncVat productVatRate itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan
-    = OrderItem productId productCode productName productVatRate itemQuantity productPriceExcVat productPriceIncVat itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing
+  orderItem          productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan
+    = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing
   
-  householdOrderItem productId productCode productName _ _ productVatRate itemQuantity _ _ False productPriceExcVat productPriceIncVat itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan False
-    = OrderItem productId productCode productName productVatRate itemQuantity productPriceExcVat productPriceIncVat itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing
-                     
-  householdOrderItem productId productCode productName oldProductPriceExcVat oldProductPriceIncVat productVatRate itemQuantity oldItemTotalExcVat oldItemTotalIncVat productDiscontinued productPriceExcVat productPriceIncVat itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan True
-    = OrderItem productId productCode productName productVatRate itemQuantity productPriceExcVat productPriceIncVat itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldItemTotalExcVat oldItemTotalIncVat productDiscontinued
+  householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan (Just oldProductPriceExcVat) (Just oldProductPriceIncVat) (Just oldItemQuantity) (Just oldItemTotalExcVat) (Just oldItemTotalIncVat) (Just productDiscontinued)
+    = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldItemQuantity oldItemTotalExcVat oldItemTotalIncVat productDiscontinued
 
+  householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan _ _ _ _ _ _
+    = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing                     
+  
   data OrderAdjustment = OrderAdjustment { oldTotalExcVat :: Int
                                          , oldTotalIncVat :: Int 
                                          } deriving (Eq, Show, Generic)
