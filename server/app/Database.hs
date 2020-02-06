@@ -905,6 +905,34 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         let price = roidProductPriceExcVat details
         let quantity = hqdItemQuantity h
         let householdId = hqdHouseholdId h
+
+        execute conn [sql|
+          insert into order_item_adjustment (
+              order_id
+            , household_id
+            , product_id
+            , order_group_id
+            , old_product_price_exc_vat
+            , old_product_price_inc_vat
+            , old_quantity
+            , old_item_total_exc_vat
+            , old_item_total_inc_vat
+          )
+          select
+              order_id
+            , household_id
+            , product_id
+            , order_group_id
+            , product_price_exc_vat
+            , product_price_inc_vat
+            , quantity
+            , item_total_exc_vat
+            , item_total_inc_vat
+          from past_household_order_item
+          where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+          ON CONFLICT (order_id, household_id, product_id, order_group_id) DO NOTHING;
+        |] (orderId, householdId, productId, groupId)
+        
         execute conn [sql|
           with new_values as (
             select ? as price, ? as quantity, ? as order_id, ? as household_id, ? as product_id, ? as order_group_id 
