@@ -5,11 +5,11 @@ import { Icon } from 'util/Icon'
 
 interface CollectiveOrderButtonsProps {
   order: CollectiveOrder | undefined
-  newOrder: () => void
-  deleteOrder: () => void
-  abandonOrder: () => void
-  placeOrder: () => void
-  reconcileOrder: () => void
+  newOrder?: () => void
+  deleteOrder?: () => void
+  abandonOrder?: () => void
+  placeOrder?: () => void
+  reconcileOrder?: () => void
 }
 
 export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrder, placeOrder, reconcileOrder}: CollectiveOrderButtonsProps) => {
@@ -26,19 +26,19 @@ export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrd
 
   return (
     <div className="mt-2 flex flex-wrap content-start items-start">
-      {deleteOrderPossible &&
+      {deleteOrderPossible && deleteOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
       }
-      {reconcileOrderPossible &&
+      {reconcileOrderPossible && reconcileOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); reconcileOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Reconcile order</button>
       }
-      {abandonOrderPossible &&
+      {abandonOrderPossible && abandonOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
       }
-      {placeOrderPossible &&
+      {placeOrderPossible && placeOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" disabled={!placeOrderAllowed} onClick={e => {e.preventDefault(); e.stopPropagation(); placeOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Place order</button>
       }
-      {newOrderPossible &&
+      {newOrderPossible && newOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new order</button>
       }
   </div>
