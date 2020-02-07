@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { CollectiveOrder, Household, OrderItem as Item } from 'util/Types'
+import { CollectiveOrder, Household } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 import { Router } from 'util/Router'
@@ -30,7 +30,7 @@ export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undef
 export interface AdminOrdersPageState { collapsibleState: CollapsibleState 
                                         addingHousehold: Household | undefined
                                         tab: 'households' | 'product-list' | 'product-codes'
-                                        reconcilingOrder: CollectiveOrder | undefined
+                                        reconcilingOrder: boolean
                                       }
 
 export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, AdminOrdersPageState> {  
@@ -41,7 +41,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       collapsibleState: new CollapsibleState('order', collapsibleState => this.setState({collapsibleState})),
       addingHousehold: undefined,
       tab: 'households',
-      reconcilingOrder: undefined,
+      reconcilingOrder: false,
     }
   }
 
@@ -75,14 +75,14 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
   startReconcilingOrder = () => {
     if(!this.props.collectiveOrder) return
-    
-    this.setState({reconcilingOrder: {...this.props.collectiveOrder}})
+
+    this.setState({reconcilingOrder: true})
   }
 
   endReconcilingOrder = () => {
     if(!this.state.reconcilingOrder) return
     
-    this.setState({reconcilingOrder: undefined})
+    this.setState({reconcilingOrder: false})
   }
 
   endReconcilingItem = (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => {
@@ -130,7 +130,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                      }>
           { order && (
             this.state.reconcilingOrder?
-              <ReconcileOrder order={this.state.reconcilingOrder} 
+              <ReconcileOrder order={order} 
                               endReconcilingOrder={this.endReconcilingOrder}
                               endReconcilingItem={this.endReconcilingItem} />
             : this.state.tab == 'households'?
