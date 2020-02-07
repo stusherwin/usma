@@ -14,14 +14,19 @@ import { OrderStatus } from 'order/OrderStatus'
 import { OrderTotal } from 'order/OrderTotal'
 
 import { PastHouseholdOrders } from './PastHouseholdOrders';
+import { CollectiveOrderButtons } from './CollectiveOrderButtons'
+import { ReconcileOrder } from './ReconcileOrder'
 
 export interface PastCollectiveOrdersProps { pastOrders: CollectiveOrder[]
                                              collapsibleKey: string
                                              collapsibleState: CollapsibleState
+                                             request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                             reload: () => Promise<void>
                                            }
                                  
 export interface PastCollectiveOrdersState { collapsibleState: CollapsibleState
                                              tabs: OrderTab[]
+                                             reconcilingOrder: {[orderId: number]: boolean}
                                            }
 
 export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersProps, PastCollectiveOrdersState> {  
@@ -30,7 +35,8 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
 
     this.state = { 
       collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState})),
-      tabs: []
+      tabs: [],
+      reconcilingOrder: {},
     }
   }
 
@@ -38,6 +44,21 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
     let tabs = this.state.tabs
     tabs[i] = tab
     this.setState({tabs})
+  }
+
+  startReconcilingOrder = (order: CollectiveOrder) => () => {
+    this.state.reconcilingOrder[order.id] = true
+    this.setState({reconcilingOrder: {...this.state.reconcilingOrder}})
+  }
+
+  endReconcilingOrder = (order: CollectiveOrder) => () => {
+    this.state.reconcilingOrder[order.id] = false
+    this.setState({reconcilingOrder: {...this.state.reconcilingOrder}})
+  }
+
+  endReconcilingItem = (order: CollectiveOrder) => (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => {
+    this.props.request(ServerApi.command.reconcileOrderItem(order.id, productId, productPriceExcVat, households))
+      .then(this.props.reload)
   }
 
   render() {
@@ -67,6 +88,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                 <Collapsible className="min-h-20"
                    collapsibleKey={o.id}
                    collapsibleState={this.state.collapsibleState}
+                   onCollapsed={this.endReconcilingOrder(o)}
                    header={
                      <div className={classNames('p-2 bg-past-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
@@ -77,12 +99,22 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                          <OrderStatus order={o} />
                          <OrderTotal order={o} />
                        </h4>
-                       <div className="mt-5">
-                         <OrderTabs tab={this.state.tabs[i]} setTab={this.setTab(i)} />
-                       </div>
+                       {!this.state.reconcilingOrder[o.id] &&
+                         <React.Fragment>
+                           <CollectiveOrderButtons order={o}
+                                                   reconcileOrder={this.startReconcilingOrder(o)} />
+                           <div className="mt-5">
+                             <OrderTabs tab={this.state.tabs[i]} setTab={this.setTab(i)} />
+                           </div>
+                         </React.Fragment>
+                       }
                      </div>
                    }>
-                  { (this.state.tabs[i] || 'households') == 'households'?
+                  { this.state.reconcilingOrder[o.id]?
+                    <ReconcileOrder order={o} 
+                                    endReconcilingOrder={this.endReconcilingOrder(o)}
+                                    endReconcilingItem={this.endReconcilingItem(o)} />
+                  : (this.state.tabs[i] || 'households') == 'households'?
                     <div className="shadow-inner-top border-t bg-household-lightest">
                       <div className="flex justify-end mt-4 mr-2 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-household-orders-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>

@@ -21,10 +21,10 @@ import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 import { ReconcileOrder } from './ReconcileOrder'
 
 export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undefined
-                                      , pastOrders: CollectiveOrder[]
-                                      , households: Household[]
-                                      , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                      , reload: () => Promise<void>
+                                        pastOrders: CollectiveOrder[]
+                                        households: Household[]
+                                        request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                        reload: () => Promise<void>
                                       }
 
 export interface AdminOrdersPageState { collapsibleState: CollapsibleState 
@@ -102,6 +102,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
         <Collapsible className="min-h-20"
                      collapsibleKey="order"
                      collapsibleState={this.state.collapsibleState}
+                     onCollapsed={this.endReconcilingOrder}
                      {...this.props}
                      header={
                        <div className="p-2 bg-order-dark min-h-20">
