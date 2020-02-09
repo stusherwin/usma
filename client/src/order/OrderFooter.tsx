@@ -18,7 +18,7 @@ export const OrderFooter = ({order}: OrderFooterProps) => {
     <React.Fragment>
       <tr>
         <td></td>
-        <td className={classNames('pt-8 align-baseline px-2')} colSpan={4}>
+        <td className={classNames('pt-4 align-baseline px-2')} colSpan={4}>
           <div className="flex justify-between">
             <span>VAT:</span>
             <span className={classNames('text-right align-baseline whitespace-no-wrap flex-no-shrink flex-no-grow')}>
