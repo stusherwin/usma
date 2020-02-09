@@ -1,11 +1,16 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Order } from 'util/Types'
+import { OrderAdjustment } from 'util/Types'
 import { Money } from 'util/Money'
 
 export interface OrderFooterProps {
-  order: Order
+  order: {
+    totalExcVat: number
+    totalIncVat: number
+    isAbandoned: boolean
+    adjustment: OrderAdjustment | null
+  }
 }
 
 export const OrderFooter = ({order}: OrderFooterProps) => {
