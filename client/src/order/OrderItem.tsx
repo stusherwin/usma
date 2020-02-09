@@ -67,10 +67,10 @@ export const OrderItem = ({ item
       <td className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})} rowSpan={3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
       </td>
-      <td className={classNames('pb-2 pl-2 font-bold align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
+      <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap', {'pt-4': index == 0, 'pt-8': index > 0})}>
         {checkedOff && '\u2713 '}{item.productCode}
       </td>
-      <td className={classNames('pl-2 pb-2 align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
+      <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap', {'pt-4': index == 0, 'pt-8': index > 0})}>
         {!!editItemQuantity
           ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
               {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
