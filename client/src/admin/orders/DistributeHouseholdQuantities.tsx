@@ -27,10 +27,11 @@ export const DistributeHouseholdQuantities = ({item, index, updateQuantity, save
 
   return <React.Fragment>
     <tr>
-      <td rowSpan={item.householdQuantities.length + 1} className={classNames('w-20 h-20 align-top pl-2', {'pt-4': index == 0, 'pt-8': index > 0})}>
+      <td rowSpan={item.householdQuantities.length + 1} className="pt-4">
       </td>
-      <td colSpan={3} className={classNames('pb-4 pl-2 align-baseline', {'pt-4': index == 0, 'pt-8': index > 0})}>
-        How do you want to share out the new number of items?
+      <td colSpan={3} className="pb-4 pt-4 pl-2 align-baseline">
+        <div className="font-bold">Item quantity changed</div>
+        <div className="text-grey-dark mt-1">How do you want to share out {item.itemQuantity == 1? 'this item' : `these ${item.itemQuantity} items`}?</div>
       </td>
     </tr>
     {item.householdQuantities.map((h, ix) => {
@@ -41,20 +42,20 @@ export const DistributeHouseholdQuantities = ({item, index, updateQuantity, save
       }
 
       return <tr>
-        <td colSpan={2} className={classNames('pb-2 pl-2 align-baseline')}>
+        <td colSpan={2} className={classNames('pl-2 align-baseline', {'pb-2': ix < item.householdQuantities.length - 1, 'pb-4': ix === item.householdQuantities.length - 1 })}>
           <span className="flex justify-between">
             <span>{h.householdName}</span>
             <span>
-              <span className="line-through text-grey-darker mr-2">x {h.oldQuantity}</span>
+              <span className="line-through text-grey-dark mr-2">x {h.oldQuantity}</span>
               <select className="border" value={h.quantity} onChange={e=> updateQuantity(item, h.householdId, parseInt(e.target.value))}>
                 {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
               </select>
             </span>
           </span>
         </td>
-        <td className={classNames('pl-2 pr-2 align-bottom text-right')}>
+        <td className={classNames('pl-2 pr-2 align-bottom text-right', {'pb-2': ix < item.householdQuantities.length - 1, 'pb-4': ix === item.householdQuantities.length - 1 })}>
           {ix === item.householdQuantities.length - 1 &&
-            <button className="ml-4 whitespace-no-wrap" onClick={_ => save()}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
+            <button className="ml-4 -mt-1 whitespace-no-wrap" onClick={_ => save()}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
           }
         </td>
       </tr>
