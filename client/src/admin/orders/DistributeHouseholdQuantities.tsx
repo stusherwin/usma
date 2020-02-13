@@ -18,11 +18,10 @@ export interface HouseholdQuantity { householdId: number
                                    }
 
 export interface DistributeHouseholdQuantitiesProps { item: ReconcilingOrderItem
-                                                      index: number
                                                       updateQuantity: (item: ReconcilingOrderItem, householdId: number, quantity: number) => void
                                                       saveItem: (item: ReconcilingOrderItem) => void
                                                     }
-export const DistributeHouseholdQuantities = ({item, index, updateQuantity, saveItem}: DistributeHouseholdQuantitiesProps) => {
+export const DistributeHouseholdQuantities = ({item, updateQuantity, saveItem}: DistributeHouseholdQuantitiesProps) => {
   const save = () => saveItem(item)
 
   return <React.Fragment>

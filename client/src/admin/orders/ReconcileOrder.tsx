@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useState, useEffect } from 'react'
+import * as classNames from 'classnames'
 
 import { CollectiveOrder, OrderItem as Item, OrderAdjustment, OrderItemAdjustment, VatRate, HouseholdOrder } from 'util/Types'
 import { Icon } from 'util/Icon'
@@ -40,11 +41,12 @@ interface ReconcilingOrder {
 }
 
 export interface ReconcileOrderProps { order: CollectiveOrder
+                                       past?: boolean
                                        endReconcilingItem: (productId: number, productPriceExcVat: number, households: {householdId: number, itemQuantity: number}[]) => void
                                        endReconcilingOrder: () => void 
                                      }
 
-export const ReconcileOrder = ({order, endReconcilingItem, endReconcilingOrder}: ReconcileOrderProps) => {
+export const ReconcileOrder = ({order, past, endReconcilingItem, endReconcilingOrder}: ReconcileOrderProps) => {
   const buildHouseholdQuantities = (item: ReconcilingOrderItem, householdOrders: HouseholdOrder[]) => {
     const householdQuantities: HouseholdQuantity[] = []
     let remainingQuantity = item.itemQuantity
@@ -201,21 +203,21 @@ export const ReconcileOrder = ({order, endReconcilingItem, endReconcilingOrder}:
 
   return (
     <div className="">
-      <div className="bg-list text-white p-2 relative shadow-inner-top">
-        <div className="bg-img-list bg-no-repeat w-16 h-16 absolute"></div>
+      <div className={classNames("text-white p-2 relative shadow-inner-top", {'bg-list': !past, 'bg-list-sepia': past})}>
+        <div className={classNames("bg-img-list bg-no-repeat w-16 h-16 absolute", {'sepia': past})}></div>
         <h2 className="leading-none ml-20">Reconcile order</h2>
         <div className="ml-20 mt-3">
           <button onClick={endReconcilingOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>
         </div>
       </div>
-      <div className="shadow-inner-top border-t bg-white">
+      <div className={classNames("shadow-inner-top border-t", {'bg-white': !past, 'bg-white-sepia': past})}>
         <table className="border-collapse w-full">
           <tbody>
-            {reconcilingOrder.items.map((item, index) => {
+            {reconcilingOrder.items.map(item => {
               return <React.Fragment>
                 <OrderItem key={item.productId}
                            item={item} 
-                           index={index}
+                           past={past}
                            minQuantity={0}
                            maxQuantity={item.adjustment.oldItemQuantity}
                            checkedOff={item.reconciled}
@@ -225,7 +227,6 @@ export const ReconcileOrder = ({order, endReconcilingItem, endReconcilingOrder}:
                            editItem={item.reconciled && editItem || undefined} />
                 {!item.reconciled && showHouseholdQuantities(item) &&
                   <DistributeHouseholdQuantities item={item}
-                                                 index={index}
                                                  updateQuantity={updateHouseholdQuantity}
                                                  saveItem={saveItem} />
                 }

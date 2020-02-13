@@ -10,11 +10,11 @@ import { Money } from 'util/Money'
 import { ProductFlags } from 'product/ProductFlags'
 
 export interface OrderItemProps { item: Item
-                                  index: number
                                   orderAbandoned?: boolean
                                   minQuantity?: number
                                   maxQuantity?: number
                                   checkedOff?: boolean
+                                  past?: boolean
                                   editItemQuantity?: (item: Item, quantity: number) => void
                                   editProductPrice?: (item: Item, price: number) => void
                                   removeItem?: (item: Item) => void
@@ -24,11 +24,11 @@ export interface OrderItemProps { item: Item
                                 }
 
 export const OrderItem = ({ item
-                          , index
                           , orderAbandoned
                           , minQuantity
                           , maxQuantity
                           , checkedOff
+                          , past
                           , editItemQuantity
                           , editProductPrice
                           , removeItem
@@ -64,13 +64,13 @@ export const OrderItem = ({ item
 
   return <React.Fragment>
     <tr>
-      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': checkedOff})} rowSpan={3}>
+      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
       </td>
-      <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': checkedOff})}>
+      <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {checkedOff && <span className="text-red">{'\u2713 '} </span>}{item.productCode}
       </td>
-      <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': checkedOff})}>
+      <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {!!editItemQuantity
           ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
               {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
@@ -89,7 +89,7 @@ export const OrderItem = ({ item
           <span> @ &pound;<input type="text" className={classNames("w-20", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} /></span>
         }
       </td>
-      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': checkedOff})}>
+      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
           <span>
             <Money className="line-through text-grey-darker mr-2" amount={item.adjustment.oldItemTotalExcVat} />
@@ -102,10 +102,10 @@ export const OrderItem = ({ item
       </td>
     </tr>
     <tr>
-      <td className={classNames('pb-2 pl-2 align-top', {'bg-list-lightest': checkedOff})} colSpan={2}>
+      <td className={classNames('pb-2 pl-2 align-top', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={2}>
         {item.productName}
       </td>
-      <td className={classNames('pl-2 pr-2 align-top text-right', {'bg-list-lightest': checkedOff})}>
+      <td className={classNames('pl-2 pr-2 align-top text-right', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {!!removeItem &&
           <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
         }
@@ -121,7 +121,7 @@ export const OrderItem = ({ item
       </td>
     </tr>
     <tr>
-      <td className={classNames('pl-2 pb-4', {'bg-list-lightest': checkedOff})} colSpan={3}>
+      <td className={classNames('pl-2 pb-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={3}>
         <span className="pr-2">
           <ProductFlags p={item} />
         </span>

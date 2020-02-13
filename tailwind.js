@@ -52,12 +52,19 @@ let colors = {
   'household-light': '#7dd5e2',
   'household-lighter': '#c3e6eb', //'#caeff4',
   'household-lightest': '#e3f1f4', //'#dff2f5',
+  'household-lightest-bw': '#eeeeee',
+  'household-light-bw': '#c3c3c3',
+  'household-lightest-sepia': '#ffffde',
+  'household-light-sepia': '#ffe4b1',
 
   'order': '#f0faa0', //#fff07e ?
   'order-dark': '#ffe85c',
   'order-darker': '#efd11e',
   'order-lighter': '#fef6a3',
   'order-lightest': '#fffebb',
+  'order-dark-bw': '#e3e3e3',
+  'order-dark-sepia': '#fbf0c5', //'#f5daaa',
+  'past-orders-sepia': '#ffe7b7',
 
   'past-order': '#ffa868', //#ff6633
   'past-order-lighter': '#feb244',
@@ -75,6 +82,8 @@ let colors = {
 
   'list': '#fb639c', //'#5c6dff', //'#ffaec8',
   'list-lightest': '#fff3f8',
+  'list-sepia': '#ccb68e',
+  'list-lightest-sepia': '#ffffe8',
 
   'black': '#22292f',
   'grey-darkest': '#3d4852',
@@ -86,6 +95,7 @@ let colors = {
   'grey-lighter': '#f1f5f8',
   'grey-lightest': '#f8fafc',
   'white': '#ffffff',
+  'white-sepia': '#ffffef',
 
   'red-darkest': '#3b0d0c',
   'red-darker': '#621b18',
