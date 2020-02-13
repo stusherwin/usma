@@ -201,8 +201,8 @@ export const ReconcileOrder = ({order, endReconcilingItem, endReconcilingOrder}:
 
   return (
     <div className="">
-      <div className="bg-product-light text-white p-2 relative shadow-inner-top">
-        <div className="bg-img-product bg-no-repeat w-16 h-16 absolute"></div>
+      <div className="bg-list text-white p-2 relative shadow-inner-top">
+        <div className="bg-img-list bg-no-repeat w-16 h-16 absolute"></div>
         <h2 className="leading-none ml-20">Reconcile order</h2>
         <div className="ml-20 mt-3">
           <button onClick={endReconcilingOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>

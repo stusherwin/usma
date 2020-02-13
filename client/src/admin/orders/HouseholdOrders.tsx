@@ -42,7 +42,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                            collapsibleKey={ho.householdId}
                            collapsibleState={this.state.collapsibleState}
                            header={
-                             <div className={classNames('p-2 bg-household-lighter min-h-16')}>
+                             <div className={classNames('p-2 bg-household-light min-h-16')}>
                                <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
                                <h3 className="leading-none ml-20 relative flex">
                                  {ho.householdName}

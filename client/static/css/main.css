@@ -100,6 +100,10 @@ button[disabled], button[disabled]:hover {
   background-image: url(/img/wallet.svg);
 }
 
+.bg-img-list {
+  background-image: url(/img/list.svg);
+}
+
 .rotating {
   -webkit-animation: rotate 1.5s linear infinite; 
           animation: rotate 1.5s linear infinite; 

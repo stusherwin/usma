@@ -73,6 +73,9 @@ let colors = {
   'payment-light': '#90e8a4',
   'payment-lightest': '#e6f2f3',
 
+  'list': '#fb639c', //'#5c6dff', //'#ffaec8',
+  'list-lightest': '#fff3f8',
+
   'black': '#22292f',
   'grey-darkest': '#3d4852',
   'grey-darker': '#606f7b',

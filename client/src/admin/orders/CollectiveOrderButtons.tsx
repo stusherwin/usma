@@ -30,7 +30,7 @@ export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrd
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
       }
       {reconcileOrderPossible && reconcileOrder &&
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); reconcileOrder()}}><Icon type="ok" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Reconcile order</button>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); reconcileOrder()}}><Icon type="edit" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Reconcile order</button>
       }
       {abandonOrderPossible && abandonOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); abandonOrder() }}><Icon type="cancel" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Abandon order</button>
