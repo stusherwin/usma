@@ -188,3 +188,11 @@ button[disabled], button[disabled]:hover {
 .shadow-sm-inner-bottom {
   box-shadow: rgba(0, 0, 0, 0.1) 0px -2px -2px 0px inset;
 }
+
+.desaturate {
+  filter: saturate(0);
+}
+
+.sepia {
+  filter: sepia(100%);
+}

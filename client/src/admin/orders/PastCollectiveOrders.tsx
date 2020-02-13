@@ -70,8 +70,8 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
                    header={
-                     <div className="p-2 bg-past-order-lighter min-h-20">
-                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                     <div className="p-2 bg-past-orders-sepia min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <h2 className="leading-none ml-20 relative flex">
                          Past orders
                        </h2>
@@ -90,9 +90,9 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    collapsibleState={this.state.collapsibleState}
                    onCollapsed={this.endReconcilingOrder(o)}
                    header={
-                     <div className={classNames('p-2 bg-past-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
-                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
-                       <h3 className="leading-none ml-20 relative flex">
+                     <div className={classNames('p-2 bg-order-dark-sepia min-h-20', {"shadow-inner-top": i == 0})}>
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
+                       <h3 className={classNames("leading-none ml-20 relative flex", {'line-through': o.isAbandoned})}>
                          {Util.formatDate(o.createdDate)}
                        </h3>
                        <h4 className="flex justify-between ml-20 mt-4 mb-4">
@@ -112,23 +112,24 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    }>
                   { this.state.reconcilingOrder[o.id]?
                     <ReconcileOrder order={o} 
+                                    past={true}
                                     endReconcilingOrder={this.endReconcilingOrder(o)}
                                     endReconcilingItem={this.endReconcilingItem(o)} />
                   : (this.state.tabs[i] || 'households') == 'households'?
-                    <div className="shadow-inner-top border-t bg-household-lightest">
+                    <div className="shadow-inner-top border-t bg-household-lightest-sepia">
                       <div className="flex justify-end mt-4 mr-2 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-household-orders-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <PastHouseholdOrders pastOrder={o} />
                     </div>
                   : this.state.tabs[i] == 'product-list'?
-                    <div className="shadow-inner-top border-t bg-white">
+                    <div className="shadow-inner-top border-t bg-white-sepia">
                       <div className="flex justify-end mr-2 mt-4 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-collective-order-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <OrderItems order={o} />
                     </div>
-                  : <div className="shadow-inner-top border-t bg-white">
+                  : <div className="shadow-inner-top border-t bg-white-sepia">
                       <ProductCodes order={o} />
                     </div>
                   }

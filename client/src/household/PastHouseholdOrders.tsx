@@ -56,8 +56,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
                    header={
-                     <div className="p-2 bg-past-order-lighter min-h-20">
-                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                     <div className="p-2 bg-past-orders-sepia min-h-20">
+                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <h2 className="leading-none ml-20 relative flex">
                          Past orders
                        </h2>
@@ -66,7 +66,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                        </h3>
                      </div>
                    }>
-        <div className="shadow-inner-top bg-past-order-lightest">
+        <div className="shadow-inner-top bg-order-dark-sepia">
           { !pastOrders.length
           ? <div className="px-2 py-4 text-grey-darker">
               <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
@@ -81,9 +81,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                      collapsibleKey={ho.orderId}
                                      collapsibleState={this.state.collapsibleState}
                                      header={
-                                       <div className={classNames('p-2 bg-past-order-lightest min-h-20', {"shadow-inner-top": i == 0})}>
-                                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
-                                         <h3 className="leading-none ml-20 relative flex">
+                                       <div className={classNames('p-2 bg-order-dark-sepia min-h-20', {"shadow-inner-top": i == 0})}>
+                                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
+                                         <h3 className={classNames("leading-none ml-20 relative flex", {'line-through': ho.isAbandoned})}>
                                            {Util.formatDate(ho.orderCreatedDate)}
                                          </h3>
                                          <h4 className="flex justify-between ml-20 mt-4 mb-4">
@@ -97,7 +97,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                          }
                                        </div>
                                      }>
-                          <div className="shadow-inner-top bg-grey-lighter">
+                          <div className="shadow-inner-top bg-white-sepia">
                             {!ho.items.length?
                               <div className="px-2 py-4 text-grey-darker">
                                 <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
@@ -105,9 +105,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                             : <div>
                                 <table className="border-collapse w-full">
                                   <tbody>
-                                    {ho.items.map((item, index) => 
+                                    {ho.items.map(item => 
                                       <OrderItem item={item} 
-                                                 index={index} 
+                                                 past={true}
                                                  orderAbandoned={ho.isAbandoned}
                                                  addToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && this.addToCurrentOrder || undefined} />
                                     )}

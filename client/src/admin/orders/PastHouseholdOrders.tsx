@@ -37,9 +37,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                collapsibleKey={ho.householdId}
                                collapsibleState={this.state.collapsibleState}
                                header={
-                                 <div className={classNames('p-2 bg-household-lighter min-h-24')}>
-                                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
-                                   <h3 className="leading-none ml-20 relative flex mt-2">
+                                 <div className={classNames('p-2 bg-household-light-sepia min-h-24')}>
+                                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household sepia mt-2"></div>
+                                   <h3 className={classNames("leading-none ml-20 relative flex mt-2", {'line-through': ho.isAbandoned})}>
                                      {ho.householdName}
                                    </h3>
                                    <h4 className="flex justify-between ml-20 mt-4 mb-4">
@@ -48,16 +48,16 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                    </h4>
                                  </div>
                                }>
-                    <div className="shadow-inner-top bg-white">
+                    <div className="shadow-inner-top bg-white-sepia">
                       {!ho.items.length?
                         <div className="px-2 py-4 text-grey-darker">
                           <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
                         </div>
-                      : <table className="border-collapse w-full bg-grey-lighter shadow-inner-top">
+                      : <table className="border-collapse w-full shadow-inner-top">
                           <tbody>
                             {ho.items.map((item, index) =>
                               <OrderItem item={item} 
-                                         index={index} 
+                                         past={true}
                                          orderAbandoned={ho.isAbandoned} />
                             )}
                             <OrderFooter order={ho} />

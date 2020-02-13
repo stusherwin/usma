@@ -44,7 +44,6 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
     : <table className="border-collapse w-full">
       { items.map((item, index) => 
         <OrderItem item={item} 
-                   index={index} 
                    orderAbandoned={householdOrder.isAbandoned}
                    editItemQuantity={!this.props.readOnly && householdOrder.isOpen && this.editQuantity || undefined}
                    removeItem={!this.props.readOnly && householdOrder.isOpen && this.removeItem || undefined} />
@@ -58,7 +57,6 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
       </tr>
       { discontinuedItems.map((item, index) => 
         <OrderItem item={item} 
-                   index={index}
                    orderAbandoned={householdOrder.isAbandoned} />
       )}
       <OrderFooter order={householdOrder} />

@@ -16,7 +16,7 @@ export const OrderItems = ({order}: OrderItemsProps) =>
     </div>
   : <table className="border-collapse w-full">
       {order.items.map((item, index) => 
-        <OrderItem item={item} index={index} orderAbandoned={order.isAbandoned} />
+        <OrderItem item={item} orderAbandoned={order.isAbandoned} />
       )}
       <OrderFooter order={order} />
     </table>
