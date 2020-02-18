@@ -336,7 +336,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
           coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
           sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
-          sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
+          sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
         from past_order o
         left join past_household_order ho on ho.order_id = o.id and (o.cancelled or ho.cancelled = false)
         left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
@@ -466,7 +466,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
           coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
           sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
-          sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
+          sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
         from past_household_order ho
         inner join past_order o on o.id = ho.order_id
         left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
