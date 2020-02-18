@@ -65,6 +65,7 @@ let colors = {
   'order-dark-bw': '#e3e3e3',
   'order-dark-sepia': '#fbf0c5', //'#f5daaa',
   'past-orders-sepia': '#ffe7b7',
+  'past-orders-sepia-dark': '#f4d59f',
 
   'past-order': '#ffa868', //#ff6633
   'past-order-lighter': '#feb244',

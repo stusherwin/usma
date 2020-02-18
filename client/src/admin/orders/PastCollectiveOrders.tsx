@@ -70,7 +70,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
                    header={
-                     <div className="p-2 bg-past-orders-sepia min-h-20">
+                     <div className="p-2 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <h2 className="leading-none ml-20 relative flex">
                          Past orders
