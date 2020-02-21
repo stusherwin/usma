@@ -14,6 +14,7 @@ module PastCollectiveOrder where
                                                  , isAbandoned :: Bool
                                                  , isComplete :: Bool
                                                  , isPlaced :: Bool
+                                                 , isReconciled :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int
                                                  , allHouseholdsUpToDate :: Bool
@@ -22,9 +23,9 @@ module PastCollectiveOrder where
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON PastCollectiveOrder
 
-  pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
-  pastCollectiveOrder id createdDate createdBy createdByName isAbandoned totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items = 
-    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+  pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
+  pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items = 
+    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) isReconciled totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
   
-  pastCollectiveOrder id createdDate createdBy createdByName isAbandoned totalExcVat totalIncVat _ _ items = 
-    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat True Nothing items
+  pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat _ _ items = 
+    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) isReconciled totalExcVat totalIncVat True Nothing items

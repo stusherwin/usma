@@ -16,6 +16,7 @@ module PastHouseholdOrder where
                                                , isAbandoned :: Bool
                                                , isComplete :: Bool
                                                , isPlaced :: Bool
+                                               , isReconciled :: Bool
                                                , totalExcVat :: Int
                                                , totalIncVat :: Int
                                                , adjustment :: Maybe OrderAdjustment
@@ -23,9 +24,9 @@ module PastHouseholdOrder where
                                                } deriving (Eq, Show, Generic)
   instance ToJSON PastHouseholdOrder
 
-  pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
-  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
-    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+  pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
+  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
+    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) isReconciled totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
   
-  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned totalExcVat totalIncVat _ _ items =
-    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) totalExcVat totalIncVat Nothing items
+  pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned isReconciled totalExcVat totalIncVat _ _ items =
+    PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName householdId householdName isAbandoned (not isAbandoned) (not isAbandoned) isReconciled totalExcVat totalIncVat Nothing items

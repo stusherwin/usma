@@ -37,6 +37,7 @@ export interface Order {
   isPlaced: boolean
   isAbandoned: boolean
   isOpen: boolean
+  isReconciled: boolean
   adjustment: OrderAdjustment | null
 }
 
