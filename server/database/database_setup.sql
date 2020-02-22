@@ -19,20 +19,9 @@ declare hp3Id integer;
 declare hp4Id integer;
 begin
 
-drop table if exists "household_payment" cascade;
-drop table if exists "household_order_item" cascade;
-drop table if exists "household_order" cascade;
-drop table if exists "order" cascade;
-drop table if exists "household" cascade;
-drop table if exists "product" cascade;
-drop table if exists "catalogue_entry" cascade;
-drop table if exists "vat_rate" cascade;
-drop table if exists past_household_order_item cascade;
-drop table if exists past_household_order cascade;
-drop table if exists past_order cascade;
-drop table if exists "order_group" cascade;
-
----
+if exists(with t as (select to_regclass('order_group') as x) select x from t where x is not null) then
+  raise exception 'Database setup failed: already run.';
+end if;
 
 create table order_group
 ( id     serial not null primary key
