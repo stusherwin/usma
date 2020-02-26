@@ -1,7 +1,7 @@
 begin;
 do $$
 begin
-  perform upgrade_to_version(5);
+  perform upgrade_to_version(?);
 
   -- do upgrade
 end $$ language plpgsql;
