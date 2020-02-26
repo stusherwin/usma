@@ -1,43 +1,39 @@
-* Can't update prices - server error
-* Images not loading properly - server error (investigate - e.g. HJ160)
 * Go from order summary straight to household order
-* Auto update catalogue
 * Splitting items
-* Reconciling orders with delivery note, price changes, items missing etc
 * Lembas, other suppliers
-
-* Clone past orders -> add to current order, or create a new current order if none exists
 * Abandoned order total? 
 * What happens if you unabandon a past order? (can't)
-
 * Add no. of people to household (+ total per person to household order)
-
-* Place order (copy & paste code/quantity)
-* Verify order (check off against invoice)
-
 * server api regression tests
 * Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
-
 * Hide previous error on successful response
 * Error message styling
-
 * household orders - items don't need to be sum()
-* crossed out amounts grey-darker
 * crossed out money separate component?
-* copy new styles to admin area
-
 * Make payment check a config setting
 * Payment section in admin, separate from households
-
+* Hide payment from household view
 * Store current household in session
-
 * Current order stick to top when scrolling down in Add Product
-
 * Back button should trigger a reload
 * Periodic reload (if no activity for a while)
-
-* csv export
-* BGOFV flags
+* Null order created by - should say "Admin"
+* Add all missing items from past order
+* Automatically create household order instead of join/leave
+* Get rid of current order table?
+* Make balance clearer - "Balance (to pay): -£34.40"
+* Show balance on household list
+* Style household list like rest of lists with icon
+* Email contacts when new order/action required
+* Add more spacing to list items
+* Add bigger image/link to product page
+* Auto update catalogue
+* Swap number and arrow for readability (handle long household name - ellipsis?)
+* Better way of displaying/editing household contact details
+* Better way of editing payment dates
+* Make expanding/collapsing sections more obvious
+* Animate transition between list of households and individual household?
+* Add running total/balance to collective order page, with payments, so you can see who owes what - link to household
 
 Investigate:
 Place order -> why does it create a new order by 123 front rd?
@@ -45,6 +41,5 @@ All tabs should say No households/products yet
 No households joined this order yet
 Delete order button?
 Margins
-Available? should be something else
 
 load more bug when scrolling fast on desktop - doesn't trigger
