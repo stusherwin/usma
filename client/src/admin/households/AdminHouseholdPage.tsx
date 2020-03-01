@@ -84,10 +84,10 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
         <HouseholdPayments collapsibleKey="payments"
                            collapsibleState={this.state.collapsibleState}
                            {...this.props} />
-        <div className="bg-household-light p-2 pl-20 text-black">
+        <div className="p-2 pl-20 text-black relative mt-2">
           <h3 className="mt-0 ml-2 flex justify-between">
-            <span>Balance:</span>
-            <span className="text-right">they{this.props.household.balance < 0? ' owe' : '\'re owed' } <Money amount={this.props.household.balance} absolute /></span>
+            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance (to pay):</span>
+            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
           </h3>
         </div>
       </div>

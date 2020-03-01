@@ -25,7 +25,7 @@ export const CollectiveOrderButtons = ({order, newOrder, deleteOrder, abandonOrd
   const reconcileOrderPossible = !!order && order.isPlaced
 
   return (
-    <div className="mt-2 flex flex-wrap content-start items-start">
+    <div className="flex flex-wrap content-start items-start">
       {deleteOrderPossible && deleteOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); deleteOrder() }}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Delete order</button>
       }

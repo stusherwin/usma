@@ -127,13 +127,17 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                    header={
                      <div className="p-2 bg-order-dark min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
-                       <h2 className="leading-none ml-20 relative flex">
-                         Current order
-                       </h2>
+                       <div className="flex justify-between">
+                         <h2 className="leading-none ml-20">
+                           Current order
+                         </h2>
+                         <h3>
+                           <OrderTotal order={householdOrder} />
+                         </h3>
+                       </div>
                        <div>
                          <h3 className="flex justify-between ml-20 mt-4 mb-2">
                            <OrderStatus order={householdOrder} />
-                           <OrderTotal order={householdOrder} />
                          </h3>
                          {!this.state.addingProduct &&
                            <HouseholdOrderButtons unusedProducts={unusedProducts} 

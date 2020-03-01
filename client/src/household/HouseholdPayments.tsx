@@ -66,21 +66,21 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                    header={
                      <div className="p-2 bg-payment-light min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
-                       <h2 className="leading-none ml-20 relative flex">
-                         Payments
-                       </h2>
-                       <div>
-                         <h3 className="flex justify-end ml-20 mt-4">
-                           <span className="text-right"><Money amount={this.props.household.totalPayments} /></span>
+                       <div className="flex justify-between">
+                         <h2 className="leading-none ml-20">
+                           Payments
+                         </h2>
+                         <h3>
+                           <Money className="text-right" amount={-this.props.household.totalPayments} noColour />
                          </h3>
-                         {!this.props.readOnly && 
-                           <div className="flex justify-start mt-4">
-                             <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
-                           </div>
-                         }
                        </div>
                      </div>
-                   }>
+                   }
+                   expandedHeader={!this.props.readOnly && 
+                     <div className="p-2 bg-payment-light flex justify-start">
+                       <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
+                     </div>
+                   || undefined}>
         <div className="shadow-inner-top bg-white">
           {this.state.editing == 'new' &&
             <HouseholdPaymentForm key="create"
@@ -90,7 +90,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           }
           {!this.props.household.householdPayments.length && !this.state.editing &&
             <div className="px-2 py-4 text-grey-darker">
-              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments yet
+              <Icon type="info" className="w-4 h-4 ml-20 mr-2 fill-current nudge-d-2" />No payments made
             </div>
           }
           {!!this.props.household.householdPayments.length &&
@@ -118,7 +118,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                         <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                       </td>
                     }
-                    <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={p.amount} /></td>
+                    <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={-p.amount} noColour /></td>
                   </tr>
                   )
                 ) }
@@ -126,7 +126,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                   <td className="pt-4 pl-20 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>
                     <div className="flex justify-between">
                       <span className="pl-2">Total:</span>
-                      <span className={classNames("font-bold text-right whitespace-no-wrap")}><Money amount={total} /></span>
+                      <span className={classNames("font-bold text-right whitespace-no-wrap")}><Money amount={-total} noColour /></span>
                     </div>
                   </td>
                 </tr>

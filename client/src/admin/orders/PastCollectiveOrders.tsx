@@ -80,7 +80,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
         <div className="bg-white shadow-inner-top">
           {!pastOrders.length
           ? <div className="px-2 py-4 text-grey-darker">
-              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
+              <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No past orders
             </div> 
           : (
             <div>
@@ -92,24 +92,28 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    header={
                      <div className={classNames('p-2 bg-order-dark-sepia min-h-20', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
-                       <h3 className={classNames("leading-none ml-20 relative flex", {'line-through': o.isAbandoned})}>
-                         {Util.formatDate(o.createdDate)}
-                       </h3>
-                       <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                       <div className="flex justify-between">
+                         <h3 className={classNames("leading-none ml-20", {'line-through': o.isAbandoned})}>
+                           {Util.formatDate(o.createdDate)}
+                         </h3>
+                         <h4>
+                           <OrderTotal order={o} />
+                         </h4>
+                       </div>
+                       <h4 className="ml-20 mt-4 mb-4">
                          <OrderStatus order={o} />
-                         <OrderTotal order={o} />
                        </h4>
-                       {!this.state.reconcilingOrder[o.id] &&
-                         <React.Fragment>
-                           <CollectiveOrderButtons order={o}
-                                                   reconcileOrder={this.startReconcilingOrder(o)} />
-                           <div className="mt-5">
-                             <OrderTabs tab={this.state.tabs[i]} setTab={this.setTab(i)} />
-                           </div>
-                         </React.Fragment>
-                       }
                      </div>
-                   }>
+                   }
+                   expandedHeader={!this.state.reconcilingOrder[o.id] && 
+                     <div className="p-2 pt-0 bg-order-dark-sepia">
+                       <CollectiveOrderButtons order={o}
+                                               reconcileOrder={this.startReconcilingOrder(o)} />
+                       <div className="mt-5">
+                         <OrderTabs tab={this.state.tabs[i]} setTab={this.setTab(i)} />
+                       </div>
+                     </div>
+                   || undefined}>
                   { this.state.reconcilingOrder[o.id]?
                     <ReconcileOrder order={o} 
                                     past={true}

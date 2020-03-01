@@ -88,8 +88,8 @@ const query = {
         let ho = householdOrders.concat(pastHouseholdOrders)
 
         for(let h of households) {
-          h.pastHouseholdOrders = pastHouseholdOrders.filter(pho => pho.householdId == h.id)
           h.currentHouseholdOrder = collectiveOrders[0] && (ho.filter(ho => ho.householdId == h.id && ho.orderId == collectiveOrders[0].id)[0])
+          h.pastHouseholdOrders = pastHouseholdOrders.filter(pho => pho.householdId == h.id && (!h.currentHouseholdOrder || pho.orderId != h.currentHouseholdOrder.orderId))
           h.householdPayments = householdPayments.filter(p => p.householdId == h.id)
         }
 

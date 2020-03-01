@@ -32,7 +32,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
 
     return !order.householdOrders.length?
       <div className="px-2 py-4 text-grey-darker">
-        <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order
+        <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No households added to this order
       </div>
     : <div className="mt-4">
         {order.householdOrders.map((ho, i) => {
@@ -44,12 +44,16 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                            header={
                              <div className={classNames('p-2 bg-household-light min-h-16')}>
                                <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                               <h3 className="leading-none ml-20 relative flex">
-                                 {ho.householdName}
-                               </h3>
-                               <h4 className="flex justify-between ml-20 mt-4 mb-4">
+                               <div className="flex justify-between">
+                                 <h3 className="leading-none ml-20">
+                                   {ho.householdName}
+                                 </h3>
+                                 <h4>
+                                   <OrderTotal order={ho} />
+                                 </h4>
+                               </div>
+                               <h4 className="ml-20 mt-4 mb-4">
                                  <OrderStatus order={ho} />
-                                 <OrderTotal order={ho} />
                                </h4>
                              </div>
                            }>

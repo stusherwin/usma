@@ -107,13 +107,21 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                      header={
                        <div className="p-2 bg-order-dark min-h-20">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
-                         <h2 className="leading-none ml-20 relative flex">
-                           Current order
-                         </h2>
+                         <div className="flex justify-between">
+                           <h2 className="leading-none ml-20">
+                             Current order
+                           </h2>
+                           <h3>
+                             <OrderTotal order={order} />
+                           </h3>
+                         </div>
                          <h3 className="flex justify-between ml-20 mt-4">
                            <OrderStatus order={order} />
-                           <OrderTotal order={order} />
                          </h3>
+                       </div>
+                     }
+                     expandedHeader={
+                       <div className="p-2 pt-0 bg-order-dark">
                          {!this.state.reconcilingOrder &&
                            <CollectiveOrderButtons order={order}
                                                    newOrder={this.newOrder} 

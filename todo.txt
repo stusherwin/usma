@@ -1,3 +1,7 @@
+* Only reload changed data
+* Larger buttons on mobile?
+* Loading indicator on button rather than entire page?
+  - what about <select>s?
 * Go from order summary straight to household order
 * Splitting items
 * Lembas, other suppliers

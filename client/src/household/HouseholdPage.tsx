@@ -50,9 +50,14 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                      header={
                        <div className="p-2 bg-household-light min-h-28">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
-                         <h2 className="leading-none ml-20 relative flex mt-2">
-                           {this.props.household.name}
-                         </h2>
+                         <div className="flex justify-between mt-2">
+                           <h2 className="leading-none ml-20">
+                             {this.props.household.name}
+                           </h2>
+                           {/* <h3>
+                             <Money className="text-right" amount={this.props.household.balance} />
+                           </h3> */}
+                         </div>
                          <div>
                            <div className="ml-20 mt-1">
                              <RouterLink path="/households">Change household</RouterLink>
@@ -76,10 +81,10 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                            collapsibleState={this.state.collapsibleState}
                            readOnly={true}
                            {...this.props} />
-        <div className="bg-household-light p-2 pl-20 text-black relative">
+        <div className="p-2 pl-20 text-black relative mt-4">
           <h3 className="mt-0 ml-2 flex justify-between">
-            <span>Balance:</span>
-            <span className="text-right">you{this.props.household.balance < 0? ' owe' : '\'re owed' } <Money amount={this.props.household.balance} absolute /></span>
+            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance (to pay):</span>
+            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
           </h3>
         </div>
       </div>

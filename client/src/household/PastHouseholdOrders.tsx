@@ -58,18 +58,20 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                    header={
                      <div className="p-2 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-20">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
-                       <h2 className="leading-none ml-20 relative flex">
-                         Past orders
-                       </h2>
-                       <h3 className="flex justify-end ml-20 mt-4">
-                         <span className="text-right"><Money amount={total} /></span>
-                       </h3>
+                       <div className="flex justify-between">
+                         <h2 className="leading-none ml-20">
+                           Past orders
+                         </h2>
+                         <h3>
+                           <Money className="text-right" amount={total} />
+                         </h3>
+                       </div>
                      </div>
                    }>
         <div className="shadow-inner-top bg-order-dark-sepia">
           { !pastOrders.length
           ? <div className="px-2 py-4 text-grey-darker">
-              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
+              <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No past orders
             </div>
           : <table className="border-collapse w-full">
               <tbody>
@@ -83,12 +85,16 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                      header={
                                        <div className={classNames('p-2 bg-order-dark-sepia min-h-20', {"shadow-inner-top": i == 0})}>
                                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
-                                         <h3 className={classNames("leading-none ml-20 relative flex", {'line-through': ho.isAbandoned})}>
-                                           {Util.formatDate(ho.orderCreatedDate)}
-                                         </h3>
+                                         <div className="flex justify-between">
+                                           <h3 className={classNames("leading-none ml-20", {'line-through': ho.isAbandoned})}>
+                                             {Util.formatDate(ho.orderCreatedDate)}
+                                           </h3>
+                                           <h4 className="text-right">
+                                             <OrderTotal order={ho} />
+                                           </h4>
+                                         </div>
                                          <h4 className="flex justify-between ml-20 mt-4 mb-4">
                                            <OrderStatus order={ho} />
-                                           <OrderTotal order={ho} />
                                          </h4>
                                          {this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && !!ho.items.length &&
                                            <div className="flex justify-end pt-2">
@@ -100,7 +106,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                           <div className="shadow-inner-top bg-white-sepia">
                             {!ho.items.length?
                               <div className="px-2 py-4 text-grey-darker">
-                                <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
+                                <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No order items
                               </div>
                             : <div>
                                 <table className="border-collapse w-full">
