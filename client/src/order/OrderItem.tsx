@@ -110,7 +110,7 @@ export const OrderItem = ({ item
           <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
         }
         {!!addToCurrentOrder &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Add</button>
+          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add</button>
         }
         {!!saveItem &&
           <button className="ml-4 whitespace-no-wrap" onClick={() => saveItem(item)}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>

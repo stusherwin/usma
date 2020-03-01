@@ -203,7 +203,7 @@ export const ReconcileOrder = ({order, past, endReconcilingItem, endReconcilingO
 
   return (
     <div className="">
-      <div className={classNames("text-white p-2 relative shadow-inner-top", {'bg-list': !past, 'bg-list-sepia': past})}>
+      <div className={classNames("text-white h-24 p-2 pt-4 relative shadow-inner-top", {'bg-list': !past, 'bg-list-sepia': past})}>
         <div className={classNames("bg-img-list bg-no-repeat w-16 h-16 absolute", {'sepia': past})}></div>
         <h2 className="leading-none ml-20">Reconcile order</h2>
         <div className="ml-20 mt-3">

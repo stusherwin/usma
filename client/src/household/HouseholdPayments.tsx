@@ -59,12 +59,12 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     const total = this.props.household.householdPayments.reduce((tot, p) => tot + p.amount, 0)
  
     return (
-      <Collapsible className="min-h-20"
+      <Collapsible className="min-h-24"
                    collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
                    header={
-                     <div className="p-2 bg-payment-light min-h-20">
+                     <div className="p-2 pt-4 bg-payment-light h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
                        <div className="flex justify-between">
                          <h2 className="leading-none ml-20">
@@ -77,7 +77,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                      </div>
                    }
                    expandedHeader={!this.props.readOnly && 
-                     <div className="p-2 bg-payment-light flex justify-start">
+                     <div className="p-2 pt-0 bg-payment-light flex justify-end">
                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
                      </div>
                    || undefined}>

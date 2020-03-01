@@ -99,13 +99,13 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     return (
       <div className="bg-order-dark min-h-screen">
         <AdminTopNav />
-        <Collapsible className="min-h-20"
+        <Collapsible className="min-h-24"
                      collapsibleKey="order"
                      collapsibleState={this.state.collapsibleState}
                      onCollapsed={this.endReconcilingOrder}
                      {...this.props}
                      header={
-                       <div className="p-2 bg-order-dark min-h-20">
+                       <div className="p-2 pt-4 bg-order-dark h-24">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                          <div className="flex justify-between">
                            <h2 className="leading-none ml-20">
@@ -121,7 +121,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                        </div>
                      }
                      expandedHeader={
-                       <div className="p-2 pt-0 bg-order-dark">
+                       <div className="p-2 bg-order-dark -mt-4">
                          {!this.state.reconcilingOrder &&
                            <CollectiveOrderButtons order={order}
                                                    newOrder={this.newOrder} 
@@ -131,7 +131,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                                                    reconcileOrder={this.startReconcilingOrder} />
                          }
                          {!!order && !this.state.reconcilingOrder &&
-                           <div className="mt-4">
+                           <div className="mt-5">
                              <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                            </div>
                          }

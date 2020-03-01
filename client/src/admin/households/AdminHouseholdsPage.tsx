@@ -88,7 +88,7 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
     return (
       <div className="bg-household-light min-h-screen">
         <AdminTopNav />
-        <div className="p-2 text-black min-h-16">
+        <div className="p-2 text-black min-h-24">
           <div className="bg-img-household bg-no-repeat w-16 h-16 absolute mt-2"></div>
           <h2 className="text-household-darker leading-none ml-20 mt-2 relative flex">Households</h2>
           <div className="flex justify-start ml-20 mt-2 mb-2">

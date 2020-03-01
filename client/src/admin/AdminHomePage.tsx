@@ -16,7 +16,7 @@ export class AdminHomePage extends React.Component<AdminHomePageProps, {}> {
             <i className="text-3xl ml-2">#1</i>
             <p className="ml-4">Find some households you want to join in with...</p>
           </div>
-          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-16 relative mt-6 overflow-auto">
+          <div className="bg-img-household bg-no-repeat bg-16 pl-20 min-h-24 relative mt-6 overflow-auto">
             <h2 className="leading-none mb-2 mt-4">Households <Icon type="right-arrow" className="w-4 h-4 fill-current nudge-d-1" /></h2>
           </div>
         </RouterLink>
@@ -25,7 +25,7 @@ export class AdminHomePage extends React.Component<AdminHomePageProps, {}> {
             <i className="text-3xl ml-2">#2</i>
             <p className="ml-4">Have a list of products you want to buy...</p>
           </div>
-          <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-6 overflow-auto">
+          <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-24 relative mt-6 overflow-auto">
             <h2 className="leading-none mb-2 mt-4">Products <Icon type="right-arrow" className="w-4 h-4 fill-current nudge-d-1" /></h2>
           </div>
         </RouterLink>
@@ -34,7 +34,7 @@ export class AdminHomePage extends React.Component<AdminHomePageProps, {}> {
             <i className="text-3xl ml-2">#3</i>
             <p className="ml-4">Combine all your orders into one big order!</p>
           </div>
-          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-16 relative mt-6 overflow-auto">
+          <div className="bg-img-order bg-no-repeat bg-16 pl-20 min-h-24 relative mt-6 overflow-auto">
             <h2 className="leading-none mb-2 mt-4">Orders <Icon type="right-arrow" className="w-4 h-4 fill-current nudge-d-1" /></h2>
           </div>
         </RouterLink>

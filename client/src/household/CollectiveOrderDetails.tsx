@@ -119,13 +119,13 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
     let unusedProducts = this.unusedProducts()
 
     return (
-      <Collapsible className="min-h-20"
+      <Collapsible className="min-h-24"
                    collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    onCollapse={this.cancelAdd}
                    {...this.props}
                    header={
-                     <div className="p-2 bg-order-dark min-h-20">
+                     <div className="p-2 pt-4 bg-order-dark h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                        <div className="flex justify-between">
                          <h2 className="leading-none ml-20">
@@ -135,22 +135,21 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                            <OrderTotal order={householdOrder} />
                          </h3>
                        </div>
-                       <div>
-                         <h3 className="flex justify-between ml-20 mt-4 mb-2">
-                           <OrderStatus order={householdOrder} />
-                         </h3>
-                         {!this.state.addingProduct &&
-                           <HouseholdOrderButtons unusedProducts={unusedProducts} 
-                                                         currentHouseholdOrder={householdOrder} 
-                                                         leaveOrder={this.leaveOrder} 
-                                                         reopenOrder={this.reopenOrder}
-                                                         abandonOrder={this.abandonOrder}
-                                                         completeOrder={this.completeOrder}
-                                                         startAdd={this.startAdd} />
-                         }
-                       </div>
+                       <h3 className="flex justify-between ml-20 mt-4">
+                         <OrderStatus order={householdOrder} />
+                       </h3>
                      </div>
-                   }>
+                   }
+                   expandedHeader={!this.state.addingProduct &&
+                     <HouseholdOrderButtons className="p-2 bg-order-dark -mt-4"
+                                            unusedProducts={unusedProducts} 
+                                            currentHouseholdOrder={householdOrder} 
+                                            leaveOrder={this.leaveOrder} 
+                                            reopenOrder={this.reopenOrder}
+                                            abandonOrder={this.abandonOrder}
+                                            completeOrder={this.completeOrder}
+                                            startAdd={this.startAdd} />
+                   || undefined}>
         <div className="shadow-inner-top bg-white">
         { !order? 
           <div className="px-2 py-4 text-grey-darker">

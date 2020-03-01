@@ -16,7 +16,7 @@ export interface ProductFiltersProps { searchString: string
                                      }
 
 export const ProductFilters = ({searchString, flags, categories, brands, searchChanged, flagChanged, categoryChanged, brandChanged}: ProductFiltersProps) => (
-  <div className="bg-product-light p-2">
+  <div className="bg-product-light p-2 pt-0">
     <label htmlFor="search" className="text-white">Search for a particular product:</label>
     <div className="relative mt-2">
       <span className="absolute text-grey-darker" style={{bottom: '0px', left: '4px'}}><Icon type="search" className="w-4 h-4 fill-current" /></span>

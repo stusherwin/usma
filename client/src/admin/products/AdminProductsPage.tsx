@@ -86,12 +86,23 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
     return (
       <div className="bg-product-light min-h-screen">
         <AdminTopNav />
-        <div className="bg-product-light p-2">
-          <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-16 relative mt-4">
+        {/* <div className="bg-product-light p-2">
+          <div className="bg-img-product bg-no-repeat bg-16 pl-20 min-h-24 relative mt-4">
             <h2 className="text-white leading-none mb-2 -mt-1">Products</h2>
             <div className="flex justify-start">
               <button onClick={this.startUpload} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Upload product list</button>
             </div>
+          </div>
+        </div> */}
+        <div className="p-2 pt-4 bg-product-light h-24 text-white">
+          <div className="bg-no-repeat w-16 h-16 absolute bg-img-product"></div>
+          <div className="flex justify-between">
+            <h2 className="leading-none ml-20">
+              Products
+            </h2>
+          </div>
+          <div className="flex justify-start ml-20 mt-2">
+            <button onClick={this.startUpload} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Upload product list</button>
           </div>
         </div>
         {!this.state.uploading && 
