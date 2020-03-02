@@ -77,7 +77,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                      </div>
                    }
                    expandedHeader={!this.props.readOnly && 
-                     <div className="p-2 pt-0 bg-payment-light flex justify-end">
+                     <div className="p-2 pt-0 bg-payment-light flex justify-start">
                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
                      </div>
                    || undefined}>
@@ -90,7 +90,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           }
           {!this.props.household.householdPayments.length && !this.state.editing &&
             <div className="px-2 py-4 text-grey-darker">
-              <Icon type="info" className="w-4 h-4 ml-20 mr-2 fill-current nudge-d-2" />No payments made
+              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No payments made
             </div>
           }
           {!!this.props.household.householdPayments.length &&

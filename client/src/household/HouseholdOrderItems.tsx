@@ -39,7 +39,7 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
 
     return !householdOrder.items.length?
       <div className="px-2 py-4 text-grey-darker">
-        <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No order items {!!this.props.products && !this.props.products.length && ' - the product catalogue is empty'}
+        <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items {!!this.props.products && !this.props.products.length && ' - the product catalogue is empty'}
       </div>
     : <table className="border-collapse w-full">
       { items.map((item, index) => 

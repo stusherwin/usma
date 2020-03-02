@@ -62,9 +62,14 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                      header={
                        <div className="p-2 pt-4 bg-household-light h-24">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                         <h2 className="leading-none ml-20">
-                           {this.props.household.name}
-                         </h2>
+                         <div className="flex justify-between">
+                           <h2 className="leading-none ml-20">
+                             {this.props.household.name}
+                           </h2>
+                           <h3>
+                             <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
+                           </h3>
+                         </div>
                          <div className="mt-4 ml-20">
                            <div className="text-lg"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
                          </div>

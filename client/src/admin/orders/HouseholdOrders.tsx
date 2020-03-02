@@ -32,7 +32,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
 
     return !order.householdOrders.length?
       <div className="px-2 py-4 text-grey-darker">
-        <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No households added to this order
+        <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order
       </div>
     : <div className="mt-4">
         {order.householdOrders.map((ho, i) => {

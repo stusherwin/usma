@@ -71,7 +71,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
         <div className="shadow-inner-top bg-order-dark-sepia">
           { !pastOrders.length
           ? <div className="px-2 py-4 text-grey-darker">
-              <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No past orders
+              <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No past orders
             </div>
           : <table className="border-collapse w-full">
               <tbody>
@@ -99,14 +99,14 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                        </div>
                                      }
                                      expandedHeader={this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && !!ho.items.length &&
-                                       <div className="flex justify-end p-2 bg-order-dark-sepia pt-0">
+                                       <div className="flex justify-start p-2 bg-order-dark-sepia pt-0">
                                          <button onClick={e => {e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho)}}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add all items to current order</button>
                                        </div>
                                      || undefined}>
                           <div className="shadow-inner-top bg-white-sepia">
                             {!ho.items.length?
                               <div className="px-2 py-4 text-grey-darker">
-                                <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No order items
+                                <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
                               </div>
                             : <div>
                                 <table className="border-collapse w-full">

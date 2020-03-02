@@ -54,9 +54,9 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                            <h2 className="leading-none ml-20">
                              {this.props.household.name}
                            </h2>
-                           {/* <h3>
-                             <Money className="text-right" amount={this.props.household.balance} />
-                           </h3> */}
+                           <h3>
+                             <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
+                           </h3>
                          </div>
                          <div>
                            <div className="ml-20 mt-1">
@@ -81,7 +81,7 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                            collapsibleState={this.state.collapsibleState}
                            readOnly={true}
                            {...this.props} />
-        <div className="p-2 pl-20 text-black relative mt-4">
+        <div className="p-2 pl-20 text-black relative mt-2">
           <h3 className="mt-0 ml-2 flex justify-between">
             <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance (to pay):</span>
             <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />

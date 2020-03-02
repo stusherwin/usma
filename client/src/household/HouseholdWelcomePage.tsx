@@ -5,6 +5,7 @@ import { Household } from 'util/Types'
 import { RouterLink } from 'util/RouterLink'
 import { Icon } from 'util/Icon'
 import { Router } from 'util/Router'
+import { Money } from 'util/Money'
 import { Form, Field, Validate } from 'util/Validation'
 import { TextField } from 'util/Field'
 import { ServerApi } from 'util/ServerApi'
@@ -85,11 +86,27 @@ export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePagePr
           }
         </div>
         {!!this.props.households.length && !this.state.editing &&
-          <div className="shadow-inner-top bg-white px-2 py-4">
+          <div className="bg-household-lighter">
             {this.props.households.map((h, i) => 
-              <RouterLink className={classNames('block', {'mt-2': i > 0})} key={h.id} path={`/households/${h.id}`}>{h.name}</RouterLink>
+               <RouterLink className="block no-underline text-black hover:underline hover:text-black relative" path={`/households/${h.id}`}>
+                 <div className={classNames("p-2 pt-4 bg-household-lighter h-24", {"shadow-inner-top": i == 0})}>
+                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                   <div className="flex justify-between">
+                     <h3 className="leading-none ml-20 pr-20">
+                       {h.name} 
+                       <span className="text-black"><Icon type="right-arrow" className="w-3 h-3 fill-current ml-1 nudge-d-1" /></span>
+                     </h3>
+                     <h4 className="absolute pin-r mr-2 -mt-1 py-1 border-t-2 border-b-2 border-black">
+                       <Money amount={-h.balance} noColour />
+                     </h4>
+                   </div>
+                   <div className="mt-4 ml-20 absolute text-black flex justify-between">
+                     <div className="text-lg"><strong>Contact:</strong> {h.contactName || 'none'}</div>
+                   </div>
+                 </div>
+               </RouterLink>
             )}
-            <div className="mt-4 flex">
+            <div className="flex p-2 pb-4">
               <p className="mt-2 mr-4">Not in the list?</p>
               <button className="" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add your household</button>
             </div>

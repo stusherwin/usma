@@ -4,6 +4,7 @@ import * as classNames from 'classnames'
 import { Household } from 'util/Types'
 import { ServerApi } from 'util/ServerApi'
 import { RouterLink } from 'util/RouterLink'
+import { Money } from 'util/Money'
 import { Icon } from 'util/Icon'
 import { Form, Field, Validate } from 'util/Validation'
 import { TextField } from 'util/Field'
@@ -95,7 +96,7 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
             <button onClick={this.startCreate} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New household</button>
           </div>
         </div>
-        <div className="bg-white shadow-inner-top">
+        <div className="bg-household-lighter shadow-inner-top">
           {this.state.editing == 'new' &&
             <div className="bg-household-lightest shadow-inner-top px-2 py-4">
               <h3 className="mb-4">Create new household</h3>
@@ -155,15 +156,24 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                 </div>
               )
               : (
-                <div key={h.id} className={classNames("flex justify-between items-baseline px-2 pt-4", {
-                    "pb-4": i == this.props.households.length - 1
-                  })}>
-                  <RouterLink className="flex-grow" path={`/admin/households/${h.id}`}>{h.name}</RouterLink>
-                  <span className="flex-no-shrink flex-no-grow">
-                    <button className="ml-2" onClick={_ => this.startEdit(h)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                    <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                  </span>
-                </div>
+               <RouterLink className="block no-underline text-black hover:underline hover:text-black relative" path={`/admin/households/${h.id}`}>
+                 <div className={classNames("p-2 pt-4 bg-household-lighter h-24", {"shadow-inner-top": i == 0})}>
+                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                   <div className="flex justify-between">
+                     <h3 className="leading-none ml-20 pr-20">
+                       {h.name} 
+                       <span className="text-black"><Icon type="right-arrow" className="w-3 h-3 fill-current ml-1 nudge-d-1" /></span>
+                     </h3>
+                     <h4 className="absolute pin-r mr-2 -mt-1 py-1 border-t-2 border-b-2 border-black">
+                       <Money amount={-h.balance} noColour />
+                     </h4>
+                   </div>
+                   <div className="mt-4 ml-20 absolute text-black flex justify-between">
+                     <div className="text-lg"><strong>Contact:</strong> {h.contactName || 'none'}</div>
+                   </div>
+                   <button className="absolute pin-r mr-2 mt-4" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                 </div>
+               </RouterLink>
               )) }
             </div>
           )}

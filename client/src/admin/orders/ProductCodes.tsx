@@ -20,7 +20,7 @@ export class ProductCodes extends React.Component<ProductCodesProps, {}> {
   
     return !items.length?
       <div className="px-2 py-4 text-grey-darker">
-        <Icon type="info" className="w-4 h-4 mr-2 ml-20 fill-current nudge-d-2" />No order items
+        <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
       </div>
     : <div className="px-2 py-4">
         <div className="flex justify-end mb-4">
