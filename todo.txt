@@ -16,7 +16,6 @@
 * crossed out money separate component?
 * Make payment check a config setting
 * Payment section in admin, separate from households
-* Hide payment from household view
 * Store current household in session
 * Current order stick to top when scrolling down in Add Product
 * Back button should trigger a reload
@@ -25,14 +24,10 @@
 * Add all missing items from past order
 * Automatically create household order instead of join/leave
 * Get rid of current order table?
-* Make balance clearer - "Balance (to pay): -£34.40"
-* Show balance on household list
-* Style household list like rest of lists with icon
 * Email contacts when new order/action required
-* Add more spacing to list items
 * Add bigger image/link to product page
 * Auto update catalogue
-* Swap number and arrow for readability (handle long household name - ellipsis?)
+* handle long household name - ellipsis?
 * Better way of displaying/editing household contact details
 * Better way of editing payment dates
 * Make expanding/collapsing sections more obvious
