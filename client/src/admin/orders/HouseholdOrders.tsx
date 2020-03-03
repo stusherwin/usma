@@ -30,12 +30,12 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
   render() {
     const order = this.props.order
 
-    return !order.householdOrders.length?
+    return !order.householdOrders.filter(ho => !!ho.items.length).length?
       <div className="px-2 py-4 text-grey-darker">
         <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order
       </div>
     : <div className="mt-4">
-        {order.householdOrders.map((ho, i) => {
+        {order.householdOrders.filter(ho => !!ho.items.length).map(ho => {
           return (
             <div key={ho.householdId}>
               <Collapsible className="min-h-24"

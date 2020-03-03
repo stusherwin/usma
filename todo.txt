@@ -23,6 +23,7 @@
 * Null order created by - should say "Admin"
 * Add all missing items from past order
 * Automatically create household order instead of join/leave
+* On collective order when no order items don't show households
 * Get rid of current order table?
 * Email contacts when new order/action required
 * Add bigger image/link to product page

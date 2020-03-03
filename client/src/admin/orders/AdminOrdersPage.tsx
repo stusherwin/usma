@@ -130,7 +130,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                                                    placeOrder={this.placeOrder}
                                                    reconcileOrder={this.startReconcilingOrder} />
                          }
-                         {!!order && !this.state.reconcilingOrder &&
+                         {!this.state.reconcilingOrder && !!order && !!order.items.length &&
                            <div className="mt-5">
                              <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
                            </div>
@@ -142,6 +142,10 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
               <ReconcileOrder order={order} 
                               endReconcilingOrder={this.endReconcilingOrder}
                               endReconcilingItem={this.endReconcilingItem} />
+            : !order.items.length?
+              <div className="shadow-inner-top border-t bg-white px-2 py-4 text-grey-darker">
+                <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
+              </div>
             : this.state.tab == 'households'?
               <div className="shadow-inner-top border-t bg-household-lightest">
                 <CollectiveOrderMessages order={order} />
