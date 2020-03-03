@@ -51,13 +51,13 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
       .then(this.props.reload)
   }
 
-  deleteOrder = () => {
-    if(!this.props.collectiveOrder) return
+  // deleteOrder = () => {
+  //   if(!this.props.collectiveOrder) return
 
-    this.props.request(ServerApi.command.deleteOrder(this.props.collectiveOrder.id))
-      .then(this.props.reload)
-      .then(_ => Router.navigate(`/admin/orders`))
-  }
+  //   this.props.request(ServerApi.command.deleteOrder(this.props.collectiveOrder.id))
+  //     .then(this.props.reload)
+  //     .then(_ => Router.navigate(`/admin/orders`))
+  // }
 
   abandonOrder = () => {
     if(!this.props.collectiveOrder) return
@@ -125,7 +125,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                          {!this.state.reconcilingOrder &&
                            <CollectiveOrderButtons order={order}
                                                    newOrder={this.newOrder} 
-                                                   deleteOrder={this.deleteOrder} 
+                                                  //  deleteOrder={this.deleteOrder} 
                                                    abandonOrder={this.abandonOrder} 
                                                    placeOrder={this.placeOrder}
                                                    reconcileOrder={this.startReconcilingOrder} />

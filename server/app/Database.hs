@@ -5,8 +5,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
-                , createOrder, deleteOrder, closeOrder
-                , createHouseholdOrder, deleteHouseholdOrder, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
+                , createOrder {-}, deleteOrder-}, closeOrder
+                {-, createHouseholdOrder-} {-, deleteHouseholdOrder-}, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
                 , ensureHouseholdOrderItem, ensureAllItemsFromPastHouseholdOrder, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
@@ -574,13 +574,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     close conn
     return id
 
-  deleteOrder :: ByteString -> Int -> Int -> IO ()
-  deleteOrder connectionString groupId orderId = do
-    conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      delete from "order" where id = ? and order_group_id = ?
-    |] (orderId, groupId)
-    close conn
+  -- deleteOrder :: ByteString -> Int -> Int -> IO ()
+  -- deleteOrder connectionString groupId orderId = do
+  --   conn <- connectPostgreSQL connectionString
+  --   execute conn [sql|
+  --     delete from "order" where id = ? and order_group_id = ?
+  --   |] (orderId, groupId)
+  --   close conn
 
   closeOrder :: ByteString -> Int -> Bool -> Int -> IO ()
   closeOrder connectionString groupId cancelled orderId = do
@@ -619,21 +619,21 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       |] (orderId, groupId)
     close conn
 
-  createHouseholdOrder :: ByteString -> Int -> UTCTime -> Int -> Int -> IO ()
-  createHouseholdOrder connectionString groupId date orderId householdId = do
-    conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
-    |] (groupId, orderId, householdId, date)
-    close conn
+  -- createHouseholdOrder :: ByteString -> Int -> UTCTime -> Int -> Int -> IO ()
+  -- createHouseholdOrder connectionString groupId date orderId householdId = do
+  --   conn <- connectPostgreSQL connectionString
+  --   execute conn [sql|
+  --     insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
+  --   |] (groupId, orderId, householdId, date)
+  --   close conn
 
-  deleteHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
-  deleteHouseholdOrder connectionString groupId orderId householdId = do
-    conn <- connectPostgreSQL connectionString
-    execute conn [sql|
-      delete from household_order where order_id = ? and household_id = ? and order_group_id = ?
-    |] (orderId, householdId, groupId)
-    close conn
+  -- deleteHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
+  -- deleteHouseholdOrder connectionString groupId orderId householdId = do
+  --   conn <- connectPostgreSQL connectionString
+  --   execute conn [sql|
+  --     delete from household_order where order_id = ? and household_id = ? and order_group_id = ?
+  --   |] (orderId, householdId, groupId)
+  --   close conn
 
   cancelHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
   cancelHouseholdOrder connectionString groupId orderId householdId = do
@@ -660,8 +660,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     |] (orderId, householdId, groupId)
     close conn
 
-  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> String -> HouseholdOrderItemDetails -> IO ()
-  ensureHouseholdOrderItem connectionString groupId orderId householdId productCode details = do
+  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> String ->  UTCTime -> HouseholdOrderItemDetails -> IO ()
+  ensureHouseholdOrderItem connectionString groupId orderId householdId productCode date details = do
     let quantity = hoidQuantity details
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
@@ -699,10 +699,19 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       case maybeProductId of
         Nothing -> return ()
         (Just productId) -> do
-          exists <- query conn [sql|
+          householdOrderExists <- query conn [sql|
+            select household_id from household_order where order_id = ? and household_id = ? and order_group_id = ?
+          |] (orderId, householdId, groupId)
+          case (householdOrderExists :: [Only Int]) of 
+            ((Only existingQuantity):_) -> return ()
+            _ -> do
+              void $ execute conn [sql|
+                insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
+              |] (groupId, orderId, householdId, date)
+          itemExists <- query conn [sql|
             select quantity from household_order_item where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
           |] (orderId, householdId, productId, groupId)
-          case (exists :: [Only Int]) of 
+          case (itemExists :: [Only Int]) of 
             ((Only existingQuantity):_) -> do
               void $ execute conn [sql|
                 update household_order_item hoi set 

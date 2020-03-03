@@ -73,11 +73,11 @@ module Api where
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
-    :<|> "delete-order" :> Capture "orderId" Int :> Post '[JSON] ()
+    -- :<|> "delete-order" :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "place-order"  :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "abandon-order"  :> Capture "orderId" Int :> Post '[JSON] ()
-    :<|> "create-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
-    :<|> "delete-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+    -- :<|> "create-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+    -- :<|> "delete-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "abandon-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "complete-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reopen-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()

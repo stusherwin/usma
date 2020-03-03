@@ -297,11 +297,11 @@ module Main where
 
   commandServer :: Config -> Text -> Server CommandAPI
   commandServer config groupKey = createOrder groupKey
-                             :<|> deleteOrder groupKey
+                            --  :<|> deleteOrder groupKey
                              :<|> placeOrder groupKey
                              :<|> abandonOrder groupKey
-                             :<|> createHouseholdOrder groupKey
-                             :<|> deleteHouseholdOrder groupKey
+                            --  :<|> createHouseholdOrder groupKey
+                            --  :<|> deleteHouseholdOrder groupKey
                              :<|> abandonHouseholdOrder groupKey
                              :<|> completeHouseholdOrder groupKey
                              :<|> reopenHouseholdOrder groupKey
@@ -325,9 +325,9 @@ module Main where
       date <- liftIO $ getCurrentTime
       liftIO $ D.createOrder conn groupId date householdId
 
-    deleteOrder :: Text -> Int -> Handler ()
-    deleteOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.deleteOrder conn groupId orderId
+    -- deleteOrder :: Text -> Int -> Handler ()
+    -- deleteOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
+    --   liftIO $ D.deleteOrder conn groupId orderId
 
     placeOrder :: Text -> Int -> Handler ()
     placeOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
@@ -337,14 +337,14 @@ module Main where
     abandonOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->
       liftIO $ D.closeOrder conn groupId True orderId
 
-    createHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    createHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
-      date <- liftIO $ getCurrentTime
-      liftIO $ D.createHouseholdOrder conn groupId date orderId householdId
+    -- createHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    -- createHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
+    --   date <- liftIO $ getCurrentTime
+    --   liftIO $ D.createHouseholdOrder conn groupId date orderId householdId
 
-    deleteHouseholdOrder :: Text -> Int -> Int -> Handler ()
-    deleteHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.deleteHouseholdOrder conn groupId orderId householdId
+    -- deleteHouseholdOrder :: Text -> Int -> Int -> Handler ()
+    -- deleteHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
+    --   liftIO $ D.deleteHouseholdOrder conn groupId orderId householdId
 
     abandonHouseholdOrder :: Text -> Int -> Int -> Handler ()
     abandonHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
@@ -359,8 +359,9 @@ module Main where
       liftIO $ D.reopenHouseholdOrder conn groupId orderId householdId
  
     ensureHouseholdOrderItem :: Text -> Int -> Int -> String -> HouseholdOrderItemDetails -> Handler ()
-    ensureHouseholdOrderItem groupKey orderId householdId productCode details = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.ensureHouseholdOrderItem conn groupId orderId householdId productCode details
+    ensureHouseholdOrderItem groupKey orderId householdId productCode details = findGroupOr404 conn groupKey $ \groupId -> do
+      date <- liftIO $ getCurrentTime
+      liftIO $ D.ensureHouseholdOrderItem conn groupId orderId householdId productCode date details
 
     ensureAllItemsFromPastHouseholdOrder :: Text -> Int -> Int -> Int -> Handler ()
     ensureAllItemsFromPastHouseholdOrder groupKey orderId householdId pastOrderId = findGroupOr404 conn groupKey $ \groupId ->
