@@ -152,12 +152,12 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                    || undefined}>
         <div className="shadow-inner-top bg-white">
         { !order? 
-          <div className="px-2 py-4 text-grey-darker">
+          <div className="px-2 py-4 text-black">
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
             <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
           </div>
         // : !householdOrder?
-        //   <div className="px-2 py-4 text-grey-darker">
+        //   <div className="px-2 py-4 text-black">
         //     <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
         //     <button className="mt-4" onClick={this.joinOrder}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
         //   </div>
@@ -167,7 +167,7 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                       confirmAdd={this.confirmAdd}
                       {...this.props} />
         : !householdOrder?
-          <div className="px-2 py-4 text-grey-darker">
+          <div className="px-2 py-4 text-black">
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items {!!this.props.products && !this.props.products.length && ' - the product catalogue is empty'}
           </div>
         : <div>

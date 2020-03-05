@@ -31,7 +31,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
     const order = this.props.order
 
     return !order.householdOrders.filter(ho => !!ho.items.length).length?
-      <div className="px-2 py-4 text-grey-darker">
+      <div className="px-2 py-4 text-black">
         <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No households added to this order
       </div>
     : <div className="mt-4">
@@ -45,7 +45,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                              <div className="p-2 pt-4 bg-household-lighter h-24">
                                <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
                                <div className="flex justify-between">
-                                 <h3 className="leading-none ml-20">
+                                 <h3 className={classNames("leading-none ml-20", {"line-through": ho.isAbandoned})}>
                                    {ho.householdName}
                                  </h3>
                                  <h4>
@@ -71,9 +71,9 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
           {/* <span className={classNames('text-right', {'line-through text-grey-dark': order.isAbandoned})}><Money amount={order.totalIncVat} /></span> */}
           <span className="font-bold text-right">
             { order.adjustment == null || order.adjustment.oldTotalIncVat == order.totalIncVat?
-              <Money className={classNames({'line-through text-grey-darker': order.isAbandoned})} amount={order.totalIncVat} />
+              <Money className={classNames({'line-through text-black': order.isAbandoned})} amount={order.totalIncVat} />
             : <span>
-                <Money className="line-through text-grey-darker mr-2" amount={order.adjustment.oldTotalIncVat} />
+                <Money className="line-through text-black mr-2" amount={order.adjustment.oldTotalIncVat} />
                 <Money className="text-red" amount={order.totalIncVat} />
               </span>
             }

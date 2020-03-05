@@ -11,7 +11,7 @@ export interface OrderItemsProps { order: Order
 
 export const OrderItems = ({order}: OrderItemsProps) =>
   !order.items.length?
-    <div className="px-2 py-4 text-grey-darker">
+    <div className="px-2 py-4 text-black">
       <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
     </div>
   : <table className="border-collapse w-full">

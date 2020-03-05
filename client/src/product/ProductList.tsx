@@ -52,7 +52,7 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
       <div>
         <div className="py-4 px-2 shadow-inner-top bg-white">
           {!this.props.products.length
-          ? <div className="text-grey-darker"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />
+          ? <div className="text-black"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />
               {this.props.cataloguePopulated ? 'No matching products found' : 'Product catalogue is empty'}
             </div>
           : <table className="border-collapse w-full">

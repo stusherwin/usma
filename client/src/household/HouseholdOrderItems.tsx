@@ -38,7 +38,7 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
     const discontinuedItems = householdOrder.items.filter(i => i.adjustment && i.adjustment.productDiscontinued)
 
     return !householdOrder.items.length?
-      <div className="px-2 py-4 text-grey-darker">
+      <div className="px-2 py-4 text-black">
         <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items {!!this.props.products && !this.props.products.length && ' - the product catalogue is empty'}
       </div>
     : <table className="border-collapse w-full">

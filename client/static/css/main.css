@@ -15,7 +15,7 @@ a:hover {
 }
 
 button {
-  @apply border bg-grey-light border-grey rounded-sm py-1 px-2 text-grey-darkest;
+  @apply border bg-grey-light border-grey rounded-sm py-1 px-2 text-black;
 }
 
 .nudge-d-1 {

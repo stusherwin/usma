@@ -143,7 +143,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                               endReconcilingOrder={this.endReconcilingOrder}
                               endReconcilingItem={this.endReconcilingItem} />
             : !order.items.length?
-              <div className="shadow-inner-top border-t bg-white px-2 py-4 text-grey-darker">
+              <div className="shadow-inner-top border-t bg-white px-2 py-4 text-black">
                 <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
               </div>
             : this.state.tab == 'households'?

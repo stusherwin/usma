@@ -78,7 +78,7 @@ export const OrderItem = ({ item
           : <span>
               {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
                 <span>
-                  <span className="line-through text-grey-darker mr-2">x {item.adjustment.oldItemQuantity}</span>
+                  <span className="line-through text-black mr-2">x {item.adjustment.oldItemQuantity}</span>
                   <span className="text-red font-bold">x {item.itemQuantity}</span>
                 </span>
               : <span>x {item.itemQuantity}</span>
@@ -92,12 +92,12 @@ export const OrderItem = ({ item
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
           <span>
-            <Money className="line-through text-grey-darker mr-2" amount={item.adjustment.oldItemTotalExcVat} />
+            <Money className="line-through text-black mr-2" amount={item.adjustment.oldItemTotalExcVat} />
             {!item.adjustment.productDiscontinued && 
               <Money className="text-red font-bold" amount={item.itemTotalExcVat} />
             }
           </span>
-        : <Money className={classNames({"line-through text-grey-darker": orderAbandoned})} amount={item.itemTotalExcVat} />
+        : <Money className={classNames({"line-through text-black": orderAbandoned})} amount={item.itemTotalExcVat} />
         }
       </td>
     </tr>
