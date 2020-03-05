@@ -661,7 +661,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     |] (orderId, householdId, groupId)
     close conn
 
-  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> String ->  UTCTime -> HouseholdOrderItemDetails -> IO ()
+  ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> String -> UTCTime -> HouseholdOrderItemDetails -> IO ()
   ensureHouseholdOrderItem connectionString groupId orderId householdId productCode date details = do
     let quantity = hoidQuantity details
     conn <- connectPostgreSQL connectionString
@@ -731,8 +731,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
               |] (groupId, orderId, householdId, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, maybe 1 Prelude.id quantity, productId)
     close conn
 
-  ensureAllItemsFromPastHouseholdOrder :: ByteString -> Int -> Int -> Int -> Int -> IO ()
-  ensureAllItemsFromPastHouseholdOrder connectionString groupId orderId householdId pastOrderId = do
+  ensureAllItemsFromPastHouseholdOrder :: ByteString -> Int -> Int -> Int -> Int -> UTCTime -> IO ()
+  ensureAllItemsFromPastHouseholdOrder connectionString groupId orderId householdId pastOrderId date = do
     conn <- connectPostgreSQL connectionString
     withTransaction conn $ do
       execute conn [sql|
@@ -756,6 +756,15 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         inner join past_household_order_item phoi on ce.code = phoi.product_code
         where phoi.order_group_id = ? and phoi.order_id = ? and phoi.household_id = ? and phoi.product_code not in (select code from product)
       |] (groupId, pastOrderId, householdId)
+      householdOrderExists <- query conn [sql|
+        select household_id from household_order where order_id = ? and household_id = ? and order_group_id = ?
+      |] (orderId, householdId, groupId)
+      case (householdOrderExists :: [Only Int]) of 
+        ((Only existingQuantity):_) -> return ()
+        _ -> do
+          void $ execute conn [sql|
+            insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
+          |] (groupId, orderId, householdId, date)
       execute conn [sql|
         insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
         select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, 1, p.price as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) as item_total_inc_vat

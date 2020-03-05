@@ -18,7 +18,7 @@ export const CollectiveOrderMessages = ({householdOrder, collectiveOrder, accept
 
   if(!!householdOrder.adjustment)
     return (
-      <div className="bg-red-lighter p-2 mb-4">
+      <div className="bg-red-lighter p-2 py-4 mb-4 shadow-inner-top">
         <div className="flex"><Icon type="alert" className="flex-no-shrink w-4 h-4 mr-2 fill-current nudge-d-2" />The product catalogue was updated and your order has been affected. Please review and accept the changes before continuing.</div>
         <div className="flex justify-end mt-2"><button className="whitespace-no-wrap flex-no-shrink flex-no-grow" onClick={e => {e.stopPropagation(); acceptUpdates()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Accept changes</button></div>
       </div>
@@ -32,7 +32,7 @@ export const CollectiveOrderMessages = ({householdOrder, collectiveOrder, accept
   const orderMinimumReached = !!collectiveOrder && collectiveOrder.totalIncVat >= 25000
 
   return (
-    <div className="flex bg-blue-lighter px-2 py-4 text-black">
+    <div className="flex bg-blue-lighter p-2 py-4 text-black shadow-inner-top">
       <Icon type={allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 mr-2 fill-current" />
       { !allHouseholdsUpToDate?
         <span>Waiting for all households to accept latest catalogue updates</span>

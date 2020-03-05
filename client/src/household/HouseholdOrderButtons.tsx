@@ -7,45 +7,50 @@ export interface HouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEn
                                               currentHouseholdOrder: HouseholdOrder | undefined
                                               className: string
                                               // leaveOrder: () => void
+                                              newOrder?: () => void
                                               reopenOrder: () => void
                                               abandonOrder: () => void
                                               completeOrder: () => void
                                               startAdd: () => void
                                             }
 
-export const HouseholdOrderButtons = (props: HouseholdOrderButtonsProps) => {
-  // if(!props.currentHouseholdOrder)
+export const HouseholdOrderButtons = ({unusedProducts, currentHouseholdOrder, className, newOrder, reopenOrder, abandonOrder, completeOrder, startAdd}: HouseholdOrderButtonsProps) => {
+  // if(!currentHouseholdOrder)
   //   return null
 
-  if(props.currentHouseholdOrder && (props.currentHouseholdOrder.orderIsPlaced || props.currentHouseholdOrder.orderIsAbandoned)) 
-    return null
+  if(currentHouseholdOrder && (currentHouseholdOrder.orderIsPlaced || currentHouseholdOrder.orderIsAbandoned)) 
+    return !newOrder?
+      null
+    : <div className={`${className} flex flex-wrap justify-start content-start items-start`}>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new order</button>
+      </div>
 
-  const canAddItem = !props.currentHouseholdOrder || props.currentHouseholdOrder.isOpen && !!props.unusedProducts.length
-  // const canLeaveOrder = !props.currentHouseholdOrder.items.length
-  const canReopenOrder = !!props.currentHouseholdOrder && !!props.currentHouseholdOrder.items.length && !props.currentHouseholdOrder.isOpen
-  const canAbandonOrder = !!props.currentHouseholdOrder && !!props.currentHouseholdOrder.items.length && props.currentHouseholdOrder.isOpen
-  const canCompleteOrder = !!props.currentHouseholdOrder && !!props.currentHouseholdOrder.items.length && props.currentHouseholdOrder.isOpen
+  const canAddItem = !currentHouseholdOrder || currentHouseholdOrder.isOpen && !!unusedProducts.length
+  // const canLeaveOrder = !currentHouseholdOrder.items.length
+  const canReopenOrder = !!currentHouseholdOrder && !!currentHouseholdOrder.items.length && !currentHouseholdOrder.isOpen
+  const canAbandonOrder = !!currentHouseholdOrder && !!currentHouseholdOrder.items.length && currentHouseholdOrder.isOpen
+  const canCompleteOrder = !!currentHouseholdOrder && !!currentHouseholdOrder.items.length && currentHouseholdOrder.isOpen
   const orderButtons = [/*canLeaveOrder,*/ canReopenOrder, canAbandonOrder, canCompleteOrder, canAddItem]
 
   if(!orderButtons.some(b => b))
     return null
 
   return (
-    <div className={`${props.className} flex flex-wrap justify-start content-start items-start`}>
+    <div className={`${className} flex flex-wrap justify-start content-start items-start`}>
       {/* {canLeaveOrder && 
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); props.leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
       } */}
       {canReopenOrder &&
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); props.reopenOrder()}}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); reopenOrder()}}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
       }
       {canAbandonOrder &&
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); props.abandonOrder()}}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); abandonOrder()}}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Abandon</button>
       }
       {canCompleteOrder && 
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); props.completeOrder()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); completeOrder()}}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Complete</button>
       }
       {canAddItem &&
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); props.startAdd()}}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
+        <button className="flex-no-grow flex-no-shrink mt-2 ml-auto" onClick={e => { e.preventDefault(); e.stopPropagation(); startAdd()}}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add items</button>
       }
     </div>
   )

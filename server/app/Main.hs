@@ -364,8 +364,9 @@ module Main where
       liftIO $ D.ensureHouseholdOrderItem conn groupId orderId householdId productCode date details
 
     ensureAllItemsFromPastHouseholdOrder :: Text -> Int -> Int -> Int -> Handler ()
-    ensureAllItemsFromPastHouseholdOrder groupKey orderId householdId pastOrderId = findGroupOr404 conn groupKey $ \groupId ->
-      liftIO $ D.ensureAllItemsFromPastHouseholdOrder conn groupId orderId householdId pastOrderId
+    ensureAllItemsFromPastHouseholdOrder groupKey orderId householdId pastOrderId = findGroupOr404 conn groupKey $ \groupId -> do
+      date <- liftIO $ getCurrentTime
+      liftIO $ D.ensureAllItemsFromPastHouseholdOrder conn groupId orderId householdId pastOrderId date
 
     removeHouseholdOrderItem :: Text -> Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem groupKey orderId householdId productId = findGroupOr404 conn groupKey $ \groupId ->

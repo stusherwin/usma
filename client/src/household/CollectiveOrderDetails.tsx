@@ -145,6 +145,7 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                                             unusedProducts={unusedProducts} 
                                             currentHouseholdOrder={householdOrder} 
                                             // leaveOrder={this.leaveOrder} 
+                                            newOrder={this.newOrder} 
                                             reopenOrder={this.reopenOrder}
                                             abandonOrder={this.abandonOrder}
                                             completeOrder={this.completeOrder}

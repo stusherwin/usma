@@ -21,7 +21,7 @@ export const CollectiveOrderMessages = ({order}: CollectiveOrderMessagesProps) =
   const allHouseholdsUpToDate = order.allHouseholdsUpToDate;
 
   return (
-    <div className="mt-4 mx-2 bg-blue-lighter flex text-black px-2 py-1">
+    <div className="bg-blue-lighter flex text-black p-2 py-4 shadow-inner-top">
       <Icon type={!!order.householdOrders.length && allHouseholdsUpToDate && orderMinimumReached && allComplete? 'ok' : 'info'} className="flex-no-shrink w-4 h-4 fill-current mr-2" />
       { !order.householdOrders.length?
         <span>Waiting for households to join</span>

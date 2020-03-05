@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, OrderItem as Item, Household } from 'util/Types'
+import { HouseholdOrder, OrderItem as Item, CollectiveOrder, Household } from 'util/Types'
 import { Util } from 'util/Util'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
@@ -14,6 +14,7 @@ import { OrderTotal } from 'order/OrderTotal'
 import { OrderFooter } from 'order/OrderFooter'
 
 export interface PastHouseholdOrdersProps { household: Household
+                                          , collectiveOrder: CollectiveOrder | undefined
                                           , collapsibleKey: string
                                           , collapsibleState: CollapsibleState
                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
@@ -33,16 +34,16 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
   }
 
   addToCurrentOrder = (item: Item) => {
-    if(!this.props.household.currentHouseholdOrder) return;
-
-    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, item.productCode, null))
+    if(!this.props.collectiveOrder) return;
+  
+    this.props.request(ServerApi.command.ensureHouseholdOrderItem(this.props.collectiveOrder.id, this.props.household.id, item.productCode, null))
       .then(this.props.reload)
   }
 
   addAllItemsToCurrentOrder = (ho: HouseholdOrder) => {
-    if(!this.props.household.currentHouseholdOrder) return;
-
-    this.props.request(ServerApi.command.ensureAllItemsFromPastHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id, ho.orderId))
+    if(!this.props.collectiveOrder) return;
+    
+    this.props.request(ServerApi.command.ensureAllItemsFromPastHouseholdOrder(this.props.collectiveOrder.id, this.props.household.id, ho.orderId))
       .then(this.props.reload)
   }
 
@@ -98,9 +99,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                          </h4>
                                        </div>
                                      }
-                                     expandedHeader={this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && !!ho.items.length &&
+                                     expandedHeader={!!ho.items.length && (!this.props.household.currentHouseholdOrder || this.props.household.currentHouseholdOrder.isOpen) &&
                                        <div className="flex justify-start p-2 bg-order-dark-sepia pt-0">
-                                         <button onClick={e => {e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho)}}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add all items to current order</button>
+                                         <button className="ml-auto" onClick={e => {e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho)}}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add all items to current order</button>
                                        </div>
                                      || undefined}>
                           <div className="shadow-inner-top bg-white-sepia">
@@ -115,7 +116,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                       <OrderItem item={item} 
                                                  past={true}
                                                  orderAbandoned={ho.isAbandoned}
-                                                 addToCurrentOrder={!!this.props.household.currentHouseholdOrder && this.props.household.currentHouseholdOrder.isOpen && this.addToCurrentOrder || undefined} />
+                                                 addToCurrentOrder={(!this.props.household.currentHouseholdOrder || this.props.household.currentHouseholdOrder.isOpen) && this.addToCurrentOrder || undefined} />
                                     )}
                                     <OrderFooter order={ho} />
                                   </tbody>

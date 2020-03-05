@@ -13,15 +13,15 @@ interface CollectiveOrderButtonsProps {
 }
 
 export const CollectiveOrderButtons = ({order, newOrder /*, deleteOrder*/, abandonOrder, placeOrder, reconcileOrder}: CollectiveOrderButtonsProps) => {
-  const newOrderPossible = !order || order.orderIsPlaced || order.isAbandoned
+  const newOrderPossible = !order || order.orderIsPlaced || order.orderIsAbandoned
   // const deleteOrderPossible = !!order && !order.isPlaced && !order.householdOrders.length
   const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
   const orderMinimumReached = !!order && order.totalIncVat >= 25000
-  const placeOrderPossible = !!order && !order.orderIsPlaced && !order.isAbandoned && !!order.householdOrders.length && allComplete /*&& allPaid*/ && orderMinimumReached
+  const placeOrderPossible = !!order && !order.orderIsPlaced && !order.orderIsAbandoned && !!order.householdOrders.length && allComplete /*&& allPaid*/ && orderMinimumReached
 
   // const placeOrderAllowed = !!order && !order.isPlaced && !order.isAbandoned && allComplete /*&& allPaid*/ && orderMinimumReached
 
-  const abandonOrderPossible = !!order && !order.orderIsPlaced && !order.isAbandoned && !!order.householdOrders.length
+  const abandonOrderPossible = !!order && !order.orderIsPlaced && !order.orderIsAbandoned && !!order.householdOrders.length
   const reconcileOrderPossible = !!order && order.orderIsPlaced
 
   return (
