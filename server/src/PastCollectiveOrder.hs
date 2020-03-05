@@ -8,12 +8,14 @@ module PastCollectiveOrder where
   import OrderItem (OrderItem, OrderAdjustment(..))
 
   data PastCollectiveOrder = PastCollectiveOrder { id :: Int
-                                                 , createdDate :: UTCTime
-                                                 , createdBy :: Int
-                                                 , createdByName :: String
+                                                 , orderCreatedDate :: UTCTime
+                                                 , orderCreatedBy :: Int
+                                                 , orderCreatedByName :: String
+                                                 , orderIsPlaced :: Bool
+                                                 , orderIsAbandoned :: Bool
                                                  , isAbandoned :: Bool
                                                  , isComplete :: Bool
-                                                 , isPlaced :: Bool
+                                                --  , isPlaced :: Bool
                                                  , isReconciled :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int
@@ -25,7 +27,7 @@ module PastCollectiveOrder where
 
   pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
   pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items = 
-    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) isReconciled totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+    PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
   
   pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat _ _ items = 
-    PastCollectiveOrder id createdDate createdBy createdByName isAbandoned (not isAbandoned) (not isAbandoned) isReconciled totalExcVat totalIncVat True Nothing items
+    PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True Nothing items

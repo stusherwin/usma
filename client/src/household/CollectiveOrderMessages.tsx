@@ -13,7 +13,7 @@ export const CollectiveOrderMessages = ({householdOrder, collectiveOrder, accept
   if(!householdOrder)
     return null
 
-  if(collectiveOrder && collectiveOrder.isPlaced)
+  if(collectiveOrder && (collectiveOrder.orderIsPlaced || collectiveOrder.orderIsAbandoned))
     return null
 
   if(!!householdOrder.adjustment)

@@ -10,12 +10,12 @@ export const OrderStatus = ({order}: {order: Order | undefined}) => {
         <span><Icon type="info" className="w-4 h-4 fill-current nudge-d-1 mr-2" />None</span>
       : order.isReconciled?
         <span><Icon type="clipboard-check" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Reconciled</span>
-      : order.isPlaced?
+      : order.isAbandoned || order.orderIsAbandoned?
+        <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Abandoned</span>
+      : order.orderIsPlaced?
         <span><Icon type="cart" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Placed</span>
       : order.isComplete?
         <span><Icon type="ok" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Complete</span>
-      : order.isAbandoned?
-        <span><Icon type="cancel" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Abandoned</span>
       : <span><Icon type="play" className="w-4 h-4 fill-current nudge-d-1 mr-2" />Open</span>
       }
     </span>

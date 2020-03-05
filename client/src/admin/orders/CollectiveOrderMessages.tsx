@@ -12,7 +12,7 @@ export const CollectiveOrderMessages = ({order}: CollectiveOrderMessagesProps) =
     return null
   }
 
-  if(order.isPlaced) {
+  if(order.orderIsPlaced) {
     return null
   }
 

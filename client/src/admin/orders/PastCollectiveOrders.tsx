@@ -94,7 +94,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <div className="flex justify-between">
                          <h3 className={classNames("leading-none ml-20", {'line-through': o.isAbandoned})}>
-                           {Util.formatDate(o.createdDate)}
+                           {Util.formatDate(o.orderCreatedDate)}
                          </h3>
                          <h4>
                            <OrderTotal order={o} />

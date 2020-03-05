@@ -8,9 +8,11 @@ module CollectiveOrder where
   import OrderItem (OrderItem, OrderAdjustment(..))
   
   data CollectiveOrder = CollectiveOrder { id :: Int
-                                         , createdDate :: UTCTime
-                                         , createdBy :: Int
-                                         , createdByName :: String
+                                         , orderCreatedDate :: UTCTime
+                                         , orderCreatedBy :: Int
+                                         , orderCreatedByName :: String
+                                         , orderIsPlaced :: Bool
+                                         , orderIsAbandoned :: Bool
                                          , isComplete :: Bool
                                          , totalExcVat :: Int
                                          , totalIncVat :: Int
@@ -22,7 +24,7 @@ module CollectiveOrder where
 
   collectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> CollectiveOrder
   collectiveOrder id createdDate createdBy createdByName complete _ _ totalExcVat totalIncVat True items = 
-    CollectiveOrder id createdDate createdBy createdByName complete totalExcVat totalIncVat True Nothing items
+    CollectiveOrder id createdDate createdBy createdByName False False complete totalExcVat totalIncVat True Nothing items
 
   collectiveOrder id createdDate createdBy createdByName complete oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat False items = 
-    CollectiveOrder id createdDate createdBy createdByName complete totalExcVat totalIncVat False (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+    CollectiveOrder id createdDate createdBy createdByName False False complete totalExcVat totalIncVat False (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items

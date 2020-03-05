@@ -17,7 +17,7 @@ export const HouseholdOrderButtons = (props: HouseholdOrderButtonsProps) => {
   // if(!props.currentHouseholdOrder)
   //   return null
 
-  if(props.currentHouseholdOrder && props.currentHouseholdOrder.isPlaced) 
+  if(props.currentHouseholdOrder && (props.currentHouseholdOrder.orderIsPlaced || props.currentHouseholdOrder.orderIsAbandoned)) 
     return null
 
   const canAddItem = !props.currentHouseholdOrder || props.currentHouseholdOrder.isOpen && !!props.unusedProducts.length

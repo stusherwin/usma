@@ -11,11 +11,14 @@ module HouseholdOrder where
                                        , orderCreatedDate :: UTCTime
                                        , orderCreatedBy :: Int
                                        , orderCreatedByName :: String
+                                       , orderIsPlaced :: Bool
+                                       , orderIsAbandoned :: Bool
                                        , householdId :: Int
                                        , householdName :: String
                                        , isComplete :: Bool
                                        , isAbandoned :: Bool
                                        , isOpen :: Bool
+                                      --  , isPlaced :: Bool
                                        , totalExcVat :: Int
                                        , totalIncVat :: Int
                                        , adjustment :: Maybe OrderAdjustment
@@ -30,11 +33,11 @@ module HouseholdOrder where
 
   householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> HouseholdOrder
   householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled _ _ totalExcVat totalIncVat False items = 
-    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open totalExcVat totalIncVat Nothing items 
+    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat Nothing items 
     where
     open = not complete && not cancelled
 
   householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat True items = 
-    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled open totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items 
+    HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items 
     where
     open = not complete && not cancelled

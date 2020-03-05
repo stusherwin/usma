@@ -16,7 +16,7 @@ function getCollectiveOrder(): Promise<CollectiveOrder | null> {
   return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
     .then(res => { 
       if(res) {
-        res.createdDate = new Date(res.createdDate)
+        res.orderCreatedDate = new Date(res.orderCreatedDate)
       }
       return res;
     })
@@ -24,7 +24,7 @@ function getCollectiveOrder(): Promise<CollectiveOrder | null> {
 
 function getPastCollectiveOrders(): Promise<CollectiveOrder[]> {
   return Http.get<CollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
-    .then(res => { res.forEach(o => o.createdDate = new Date(o.createdDate)); return res })
+    .then(res => { res.forEach(o => o.orderCreatedDate = new Date(o.orderCreatedDate)); return res })
 }
 
 function getHouseholdOrders(): Promise<HouseholdOrder[]> {

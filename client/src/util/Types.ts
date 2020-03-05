@@ -34,10 +34,14 @@ export interface Order {
   totalExcVat: number
   totalIncVat: number
   isComplete: boolean
-  isPlaced: boolean
-  isAbandoned: boolean
   isOpen: boolean
+  isAbandoned: boolean
   isReconciled: boolean
+  orderCreatedDate: Date
+  orderCreatedBy: number
+  orderCreatedByName: string
+  orderIsPlaced: boolean
+  orderIsAbandoned: boolean
   adjustment: OrderAdjustment | null
 }
 
@@ -78,18 +82,12 @@ export interface Household {
    
 export interface CollectiveOrder extends Order { 
   id: number
-  createdDate: Date
-  createdBy: number
-  createdByName: string
   allHouseholdsUpToDate: boolean
   householdOrders: HouseholdOrder[]
 }
 
 export interface HouseholdOrder extends Order { 
   orderId: number
-  orderCreatedDate: Date
-  orderCreatedBy: number
-  orderCreatedByName: string
   householdId: number
   householdName: string 
 }
