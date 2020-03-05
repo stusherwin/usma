@@ -97,7 +97,7 @@ export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePagePr
                        <span className="text-black"><Icon type="right-arrow" className="w-3 h-3 fill-current ml-1 nudge-d-1" /></span>
                      </h3>
                      <h4 className="absolute pin-r mr-2 -mt-1 py-1 border-t-2 border-b-2 border-black">
-                       <Money amount={-h.balance} noColour />
+                       <Money amount={-h.balance} oppositeColours />
                      </h4>
                    </div>
                    <div className="mt-4 ml-20 absolute text-black flex justify-between">
