@@ -1,15 +1,11 @@
 import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
 import { Util } from './Util'
 
-export interface Data { collectiveOrders: CollectiveOrder[] // | null
-                      // , pastCollectiveOrders: CollectiveOrder[]
-                      // , householdOrders: HouseholdOrder[]
-                      // , pastHouseholdOrders: HouseholdOrder[]
+export interface Data { collectiveOrders: CollectiveOrder[]
                       , productCatalogue: ProductCatalogueEntry[]
                       , categories: string[]
                       , brands: string[]
                       , households: Household[]
-                      // , householdPayments: HouseholdPayment[]
 }
 
 function getCollectiveOrder(): Promise<CollectiveOrder | null> {
@@ -109,10 +105,6 @@ const command = {
     return Http.post(groupUrl(`/command/create-order/${householdId}`), {})
   },
 
-  // deleteOrder(orderId: number): Promise<number> {
-  //   return Http.post(groupUrl(`/command/delete-order/${orderId}`), {})
-  // },
-
   placeOrder(orderId: number): Promise<number> {
     return Http.post(groupUrl(`/command/place-order/${orderId}`), {})
   },
@@ -120,14 +112,6 @@ const command = {
   abandonOrder(orderId: number): Promise<number> {
     return Http.post(groupUrl(`/command/abandon-order/${orderId}`), {})
   },
-
-  // createHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-  //   return Http.post(groupUrl(`/command/create-household-order/${orderId}/${householdId}`), {})
-  // },
-
-  // deleteHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
-  //   return Http.post(groupUrl(`/command/delete-household-order/${orderId}/${householdId}`), {})
-  // },
 
   abandonHouseholdOrder(orderId: number, householdId: number): Promise<{}> {
     return Http.post(groupUrl(`/command/abandon-household-order/${orderId}/${householdId}`), {})

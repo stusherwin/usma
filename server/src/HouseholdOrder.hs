@@ -18,7 +18,6 @@ module HouseholdOrder where
                                        , isComplete :: Bool
                                        , isAbandoned :: Bool
                                        , isOpen :: Bool
-                                      --  , isPlaced :: Bool
                                        , totalExcVat :: Int
                                        , totalIncVat :: Int
                                        , adjustment :: Maybe OrderAdjustment

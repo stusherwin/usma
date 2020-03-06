@@ -15,7 +15,6 @@ module PastCollectiveOrder where
                                                  , orderIsAbandoned :: Bool
                                                  , isAbandoned :: Bool
                                                  , isComplete :: Bool
-                                                --  , isPlaced :: Bool
                                                  , isReconciled :: Bool
                                                  , totalExcVat :: Int
                                                  , totalIncVat :: Int

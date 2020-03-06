@@ -6,7 +6,6 @@ import { Icon } from 'util/Icon'
 export interface HouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEntry[]
                                               currentHouseholdOrder: HouseholdOrder | undefined
                                               className: string
-                                              // leaveOrder: () => void
                                               newOrder?: () => void
                                               reopenOrder: () => void
                                               abandonOrder: () => void
@@ -15,9 +14,6 @@ export interface HouseholdOrderButtonsProps { unusedProducts: ProductCatalogueEn
                                             }
 
 export const HouseholdOrderButtons = ({unusedProducts, currentHouseholdOrder, className, newOrder, reopenOrder, abandonOrder, completeOrder, startAdd}: HouseholdOrderButtonsProps) => {
-  // if(!currentHouseholdOrder)
-  //   return null
-
   if(currentHouseholdOrder && (currentHouseholdOrder.orderIsPlaced || currentHouseholdOrder.orderIsAbandoned)) 
     return !newOrder?
       null
@@ -26,20 +22,16 @@ export const HouseholdOrderButtons = ({unusedProducts, currentHouseholdOrder, cl
       </div>
 
   const canAddItem = !currentHouseholdOrder || currentHouseholdOrder.isOpen && !!unusedProducts.length
-  // const canLeaveOrder = !currentHouseholdOrder.items.length
   const canReopenOrder = !!currentHouseholdOrder && !!currentHouseholdOrder.items.length && !currentHouseholdOrder.isOpen
   const canAbandonOrder = !!currentHouseholdOrder && !!currentHouseholdOrder.items.length && currentHouseholdOrder.isOpen
   const canCompleteOrder = !!currentHouseholdOrder && !!currentHouseholdOrder.items.length && currentHouseholdOrder.isOpen
-  const orderButtons = [/*canLeaveOrder,*/ canReopenOrder, canAbandonOrder, canCompleteOrder, canAddItem]
+  const orderButtons = [canReopenOrder, canAbandonOrder, canCompleteOrder, canAddItem]
 
   if(!orderButtons.some(b => b))
     return null
 
   return (
     <div className={`${className} flex flex-wrap justify-start content-start items-start`}>
-      {/* {canLeaveOrder && 
-        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); leaveOrder()}}><Icon type="leave" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Leave order</button>
-      } */}
       {canReopenOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => { e.preventDefault(); e.stopPropagation(); reopenOrder()}}><Icon type="undo" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Reopen order</button>
       }

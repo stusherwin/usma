@@ -55,16 +55,6 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
       .then(this.props.reload)
   }
 
-  // joinOrder = () => {
-  //   if(!this.props.collectiveOrder)
-  //     return
-
-  //   const orderId = this.props.collectiveOrder.id
-  //   const householdId = this.props.household.id
-  //   this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
-  //     .then(this.props.reload)
-  // }
-
   abandonOrder = () => {
     if(!this.props.household.currentHouseholdOrder)
       return
@@ -88,14 +78,6 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
     this.props.request(ServerApi.command.reopenHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
       .then(this.props.reload)
   }
-
-  // leaveOrder = () => {
-  //   if(!this.props.household.currentHouseholdOrder)
-  //     return
-
-  //   this.props.request(ServerApi.command.deleteHouseholdOrder(this.props.household.currentHouseholdOrder.orderId, this.props.household.id))
-  //     .then(this.props.reload)
-  // }
 
   unusedProducts = () => {
     if(!this.props.household.currentHouseholdOrder)
@@ -144,7 +126,6 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                      <HouseholdOrderButtons className="p-2 bg-order-dark -mt-4"
                                             unusedProducts={unusedProducts} 
                                             currentHouseholdOrder={householdOrder} 
-                                            // leaveOrder={this.leaveOrder} 
                                             newOrder={this.newOrder} 
                                             reopenOrder={this.reopenOrder}
                                             abandonOrder={this.abandonOrder}
@@ -157,11 +138,6 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
             <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />There's no order currently in progress.</p>
             <button className="mt-4" onClick={this.newOrder}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new one</button>
           </div>
-        // : !householdOrder?
-        //   <div className="px-2 py-4 text-black">
-        //     <p><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" /><strong>{order.createdBy == this.props.household.id ? 'You' : order.createdByName}</strong> started an order on <strong>{Util.formatDate(order.createdDate)}</strong></p  >
-        //     <button className="mt-4" onClick={this.joinOrder}><Icon type="enter" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Join this order</button>
-        //   </div>
         : this.state.addingProduct?
           <AddProduct products={unusedProducts}
                       cancelAdd={this.cancelAdd}

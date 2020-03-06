@@ -5,8 +5,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
-                , createOrder {-}, deleteOrder-}, closeOrder
-                {-, createHouseholdOrder-} {-, deleteHouseholdOrder-}, cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
+                , createOrder, closeOrder
+                , cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
                 , ensureHouseholdOrderItem, ensureAllItemsFromPastHouseholdOrder, removeHouseholdOrderItem
                 , createHousehold, updateHousehold, archiveHousehold
                 , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
@@ -575,14 +575,6 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     close conn
     return id
 
-  -- deleteOrder :: ByteString -> Int -> Int -> IO ()
-  -- deleteOrder connectionString groupId orderId = do
-  --   conn <- connectPostgreSQL connectionString
-  --   execute conn [sql|
-  --     delete from "order" where id = ? and order_group_id = ?
-  --   |] (orderId, groupId)
-  --   close conn
-
   closeOrder :: ByteString -> Int -> Bool -> Int -> IO ()
   closeOrder connectionString groupId cancelled orderId = do
     conn <- connectPostgreSQL connectionString
@@ -619,22 +611,6 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         delete from "order" where id = ? and order_group_id = ?
       |] (orderId, groupId)
     close conn
-
-  -- createHouseholdOrder :: ByteString -> Int -> UTCTime -> Int -> Int -> IO ()
-  -- createHouseholdOrder connectionString groupId date orderId householdId = do
-  --   conn <- connectPostgreSQL connectionString
-  --   execute conn [sql|
-  --     insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
-  --   |] (groupId, orderId, householdId, date)
-  --   close conn
-
-  -- deleteHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
-  -- deleteHouseholdOrder connectionString groupId orderId householdId = do
-  --   conn <- connectPostgreSQL connectionString
-  --   execute conn [sql|
-  --     delete from household_order where order_id = ? and household_id = ? and order_group_id = ?
-  --   |] (orderId, householdId, groupId)
-  --   close conn
 
   cancelHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
   cancelHouseholdOrder connectionString groupId orderId householdId = do

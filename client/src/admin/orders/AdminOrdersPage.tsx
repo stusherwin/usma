@@ -3,7 +3,6 @@ import * as React from 'react'
 import { CollectiveOrder, Household } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
-import { Router } from 'util/Router'
 import { Icon } from 'util/Icon'
 
 import { OrderTabs } from 'order/OrderTabs'
@@ -50,14 +49,6 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     this.props.request(ServerApi.command.createOrder(this.props.households[0].id))
       .then(this.props.reload)
   }
-
-  // deleteOrder = () => {
-  //   if(!this.props.collectiveOrder) return
-
-  //   this.props.request(ServerApi.command.deleteOrder(this.props.collectiveOrder.id))
-  //     .then(this.props.reload)
-  //     .then(_ => Router.navigate(`/admin/orders`))
-  // }
 
   abandonOrder = () => {
     if(!this.props.collectiveOrder) return
@@ -125,7 +116,6 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                          {!this.state.reconcilingOrder &&
                            <CollectiveOrderButtons order={order}
                                                    newOrder={this.newOrder} 
-                                                  //  deleteOrder={this.deleteOrder} 
                                                    abandonOrder={this.abandonOrder} 
                                                    placeOrder={this.placeOrder}
                                                    reconcileOrder={this.startReconcilingOrder} />

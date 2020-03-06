@@ -43,12 +43,6 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
       .then(this.props.reload)
   }
 
-  // joinOrder = (orderId: number) => {
-  //   const householdId = this.props.household.id
-  //   this.props.request(ServerApi.command.createHouseholdOrder(orderId, householdId))
-  //     .then(this.props.reload)
-  // }
-  
   render() {
     return (
       <div className="bg-household-light min-h-screen">
