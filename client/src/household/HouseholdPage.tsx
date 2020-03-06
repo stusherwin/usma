@@ -1,8 +1,9 @@
 import * as React from 'react';
 
 import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
-import { Money } from 'util/Money'
+import { Money, Balance } from 'util/Money'
 import { Router } from 'util/Router'
+import { Icon } from 'util/Icon'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { RouterLink } from 'util/RouterLink'
 
@@ -50,19 +51,17 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                      header={
                        <div className="p-2 bg-household-light min-h-28">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
-                         <div className="flex justify-between mt-2">
-                           <h2 className="leading-none ml-20">
-                             {this.props.household.name}
-                           </h2>
-                           <h3>
-                             <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} oppositeColours />
-                           </h3>
+                         <div className="flex items-start justify-between mt-2">
+                           <div className="ml-20">
+                             <h2 className="leading-none">
+                               {this.props.household.name}
+                             </h2>
+                             <RouterLink className="block mt-1 text-black no-underline hover:text-black hover:underline" path="/households"><Icon type="left-arrow" className="w-3 h-3 fill-current mr-1" />Change household</RouterLink>
+                             <div className="text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                           </div>
+                           <Balance className="-mt-1 bg-household-lighter" amount={-this.props.household.balance} />
                          </div>
                          <div>
-                           <div className="ml-20 mt-1">
-                             <RouterLink path="/households">Change household</RouterLink>
-                           </div>
-                           <div className="ml-20 text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
                          </div>
                        </div>
                      }>
@@ -83,8 +82,8 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                            {...this.props} />
         <div className="p-2 pl-20 text-black relative mt-2">
           <h3 className="mt-0 ml-2 flex justify-between">
-            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance (to pay):</span>
-            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} oppositeColours />
+            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance:</span>
+            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
           </h3>
         </div>
       </div>

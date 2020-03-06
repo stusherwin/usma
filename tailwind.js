@@ -49,6 +49,7 @@ let colors = {
   'household-darker': '#27454a',
   'household-dark': '#2f6671',
   'household': '#34a8c0',
+  'household-lightish': '#a3dee7',
   'household-light': '#7dd5e2',
   'household-lighter': '#c3e6eb', //'#caeff4',
   'household-lightest': '#e3f1f4', //'#dff2f5',
@@ -606,6 +607,12 @@ module.exports = {
   minWidth: {
     '0': '0',
     'full': '100%',
+    '32': '8rem',
+    '28': '7rem',
+    '24': '6rem',
+    '20': '5rem',
+    '16': '4rem',
+    '12': '3rem',
   },
 
 

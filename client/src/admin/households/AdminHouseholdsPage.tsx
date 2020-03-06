@@ -4,7 +4,7 @@ import * as classNames from 'classnames'
 import { Household } from 'util/Types'
 import { ServerApi } from 'util/ServerApi'
 import { RouterLink } from 'util/RouterLink'
-import { Money } from 'util/Money'
+import { Balance } from 'util/Money'
 import { Icon } from 'util/Icon'
 import { Form, Field, Validate } from 'util/Validation'
 import { TextField } from 'util/Field'
@@ -156,22 +156,22 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                 </div>
               )
               : (
-               <RouterLink className="block no-underline text-black hover:underline hover:text-black relative" path={`/admin/households/${h.id}`}>
-                 <div className={classNames("p-2 pt-4 bg-household-lighter h-24", {"shadow-inner-top": i == 0})}>
+               <RouterLink className="block no-underline text-black hover:underline hover:text-black relative hover:bg-household-lightish" path={`/admin/households/${h.id}`}>
+                 <div className={classNames("p-2 pt-4 h-24", {"shadow-inner-top": i == 0})}>
                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
                    <div className="flex justify-between">
                      <h3 className="leading-none ml-20 pr-20">
                        {h.name} 
                        <span className="text-black"><Icon type="right-arrow" className="w-3 h-3 fill-current ml-1 nudge-d-1" /></span>
                      </h3>
-                     <h4 className="absolute pin-r mr-2 -mt-1 py-1 border-t-2 border-b-2 border-black">
-                       <Money amount={-h.balance} oppositeColours />
-                     </h4>
+                     <div className="flex items-start absolute pin-r mr-2 -mt-1">
+                       <Balance className="bg-household-lightest" amount={-h.balance} />
+                       <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                     </div>
                    </div>
                    <div className="mt-4 ml-20 absolute text-black flex justify-between">
                      <div className="text-lg"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
-                   <button className="absolute pin-r mr-2 mt-4" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                  </div>
                </RouterLink>
               )) }

@@ -74,9 +74,9 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
                 </tr>
                 ,
                 <tr key={p.code + '-3'}>
-                  <td className={classNames('text-grey')} colSpan={4}>
+                  <td colSpan={4}>
                     <ProductFlags p={p} />
-                    <span className={classNames('text-grey pl-4 whitespace-no-wrap')}>VAT: {p.vatRate} rate</span>
+                    <span className={classNames('text-grey-dark pl-4 whitespace-no-wrap')}>VAT: {p.vatRate} rate</span>
                   </td>
                 </tr>
                 ])

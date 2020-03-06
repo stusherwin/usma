@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
 import { ServerApi } from 'util/ServerApi'
-import { Money } from 'util/Money'
+import { Money, Balance } from 'util/Money'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 
 import { CollectiveOrderDetails } from 'household/CollectiveOrderDetails'
@@ -62,16 +62,14 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                      header={
                        <div className="p-2 pt-4 bg-household-light h-24">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                         <div className="flex justify-between">
-                           <h2 className="leading-none ml-20">
-                             {this.props.household.name}
-                           </h2>
-                           <h3>
-                             <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} oppositeColours />
-                           </h3>
-                         </div>
-                         <div className="mt-4 ml-20">
-                           <div className="text-lg"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                         <div className="flex items-start justify-between">
+                           <div className="ml-20">
+                             <h2 className="leading-none">
+                               {this.props.household.name}
+                             </h2>
+                             <div className="mt-4 text-lg"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                          </div>
+                           <Balance className="-mt-1 bg-household-lighter" amount={-this.props.household.balance} />
                          </div>
                        </div>
                      }>
@@ -91,8 +89,8 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                            {...this.props} />
         <div className="p-2 pl-20 text-black relative mt-2">
           <h3 className="mt-0 ml-2 flex justify-between">
-            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance (to pay):</span>
-            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} oppositeColours />
+            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance:</span>
+            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
           </h3>
         </div>
       </div>

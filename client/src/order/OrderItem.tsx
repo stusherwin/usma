@@ -125,7 +125,7 @@ export const OrderItem = ({ item
         <span className="pr-2">
           <ProductFlags p={item} />
         </span>
-        <span className="text-grey whitespace-no-wrap">VAT: {item.productVatRate} rate</span>
+        <span className="text-grey-dark whitespace-no-wrap">VAT: {item.productVatRate} rate</span>
       </td>
     </tr>
   </React.Fragment>
