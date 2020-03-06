@@ -25,7 +25,7 @@ export interface BalanceProps {
 export const Balance = ({amount, className}: BalanceProps) => 
   <h3 className={classNames("p-1 rounded-sm w-20 text-center", className)}>
     <div className={classNames("", {'text-green-dark': amount <= 0, 'text-red': amount > 0 })}>&pound;{ Util.formatMoney(amount, true)}</div>
-    {amount < 0? 
+    {amount <= 0? 
       <div className="uppercase text-xs text-green-dark">In credit</div>
     : <div className="uppercase text-xs text-red">To pay</div>
     }

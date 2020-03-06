@@ -7,10 +7,6 @@ begin
     );
   end if;
 
-  if not exists(select * from db_upgrade) then
-    insert into db_upgrade(version) values(4);
-  end if;
-
   if not exists(with t as (select to_regproc('upgrade_to_version') as x) select x from t where x is not null) then
     create function upgrade_to_version(to_version int) 
     returns void
