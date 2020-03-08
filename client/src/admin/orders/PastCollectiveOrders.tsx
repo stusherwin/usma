@@ -91,17 +91,19 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    header={ref =>
                      <div ref={ref} className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
-                       <div className="flex justify-between">
-                         <h3 className={classNames("leading-none ml-20", {'line-through': o.isAbandoned})}>
-                           {Util.formatDate(o.orderCreatedDate)}
-                         </h3>
-                         <h4>
+                       <div className="flex items-baseline justify-between ml-20">
+                         <div>
+                           <h3 className={classNames("leading-none", {'line-through': o.isAbandoned})}>
+                             {Util.formatDate(o.orderCreatedDate)}
+                           </h3>
+                           <h4 className="mt-4 mb-4">
+                             <OrderStatus order={o} />
+                           </h4>
+                         </div>
+                         <h4 className="ml-2">
                            <OrderTotal order={o} />
                          </h4>
                        </div>
-                       <h4 className="ml-20 mt-4 mb-4">
-                         <OrderStatus order={o} />
-                       </h4>
                      </div>
                    }
                    expandedHeader={!this.state.reconcilingOrder[o.id] && 

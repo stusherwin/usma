@@ -38,17 +38,19 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                header={ref =>
                                  <div ref={ref} className={classNames('p-2 bg-household-light-sepia min-h-24')}>
                                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household sepia mt-2"></div>
-                                   <div className="flex justify-between mt-2">
-                                     <h3 className={classNames("leading-none ml-20", {'line-through': ho.isAbandoned})}>
-                                       {ho.householdName}
-                                     </h3>
-                                     <h4>
+                                   <div className="flex items-baseline justify-between mt-2 ml-20">
+                                     <div>
+                                       <h3 className={classNames("leading-none", {'line-through': ho.isAbandoned})}>
+                                         {ho.householdName}
+                                       </h3>
+                                       <h4 className="flex justify-between mt-4 mb-4">
+                                         <OrderStatus order={ho} />
+                                       </h4>
+                                     </div>
+                                     <h4 className="ml-2">
                                        <OrderTotal order={ho} />
                                      </h4>
                                    </div>
-                                   <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                                     <OrderStatus order={ho} />
-                                   </h4>
                                  </div>
                                }>
                     <div className="shadow-inner-top bg-white-sepia">

@@ -84,17 +84,19 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                                      header={ref =>
                                        <div ref={ref} className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
                                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
-                                         <div className="flex justify-between">
-                                           <h3 className={classNames("leading-none ml-20", {'line-through': ho.isAbandoned})}>
-                                             {Util.formatDate(ho.orderCreatedDate)}
-                                           </h3>
-                                           <h4 className="text-right">
+                                         <div className="flex items-baseline justify-between ml-20">
+                                           <div>
+                                             <h3 className={classNames("leading-none", {'line-through': ho.isAbandoned})}>
+                                               {Util.formatDate(ho.orderCreatedDate)}
+                                             </h3>
+                                             <h4 className="mt-4 mb-4">
+                                               <OrderStatus order={ho} />
+                                             </h4>
+                                           </div>
+                                           <h4 className="ml-2">
                                              <OrderTotal order={ho} />
                                            </h4>
                                          </div>
-                                         <h4 className="flex justify-between ml-20 mt-4 mb-4">
-                                           <OrderStatus order={ho} />
-                                         </h4>
                                        </div>
                                      }
                                      expandedHeader={!!ho.items.length && (!this.props.household.currentHouseholdOrder || this.props.household.currentHouseholdOrder.isOpen) &&
