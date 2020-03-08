@@ -5,7 +5,7 @@ import { Household } from 'util/Types'
 import { RouterLink } from 'util/RouterLink'
 import { Icon } from 'util/Icon'
 import { Router } from 'util/Router'
-import { Balance } from 'util/Money'
+import { Balance, BalanceSmall } from 'util/Money'
 import { Form, Field, Validate } from 'util/Validation'
 import { TextField } from 'util/Field'
 import { ServerApi } from 'util/ServerApi'
@@ -67,9 +67,6 @@ export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePagePr
   render() {
     return (
       <div className="h-screen bg-household-light text-household-darker">
-        {/* <div className="collective-orders-header">
-          <h1>Collective Orders</h1>
-        </div> */}
         <div className="p-2 block no-underline text-black hover:text-black hover:no-underline min-h-24">
           <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
           <h2 className="leading-none ml-20 relative flex mt-2">Welcome
@@ -81,32 +78,32 @@ export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePagePr
           }
           {!!this.props.households.length &&
             <div>
-              <p className="mt-4 ml-20">Choose your household to continue.</p>
+              <p className="mt-2 ml-20">Choose your household to continue.</p>
             </div>
           }
         </div>
         {!!this.props.households.length && !this.state.editing &&
           <div className="bg-household-lighter">
             {this.props.households.map((h, i) => 
-               <RouterLink className="block no-underline text-black hover:underline hover:text-black relative hover:bg-household-lightish" path={`/households/${h.id}`}>
-                 <div className={classNames("p-2 pt-4 h-24", {"shadow-inner-top": i == 0})}>
-                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                   <div className="flex justify-between">
-                     <h3 className="leading-none ml-20 pr-20">
-                       {h.name} 
-                       <span className="text-black"><Icon type="right-arrow" className="w-3 h-3 fill-current ml-1 nudge-d-1" /></span>
+               <RouterLink className={classNames("p-2 py-4 min-h-24 block no-underline text-black hover:underline hover:text-black relative hover:bg-household-lightish", {"shadow-inner-top": i == 0})}  path={`/households/${h.id}`}>
+                 <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                 <div className="ml-20 flex items-baseline justify-between">
+                   <div>
+                     <h3 className="leading-none">
+                       {h.name}<span className="-ml-3 pl-4 whitespace-no-wrap"><Icon type="right-arrow" className="text-black inline w-3 h-3 fill-current nudge-d-1" /></span>
                      </h3>
-                     <Balance className="absolute pin-r mr-2 -mt-1 bg-household-lightest" amount={-h.balance} />
+                     <div className="mt-4 text-base"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
-                   <div className="mt-4 ml-20 absolute text-black flex justify-between">
-                     <div className="text-lg"><strong>Contact:</strong> {h.contactName || 'none'}</div>
+                   <div className="flex flex-col items-end">
+                     <BalanceSmall className="text-right" amount={-h.balance} />
                    </div>
                  </div>
                </RouterLink>
+
             )}
-            <div className="flex p-2 pb-4">
+            <div className="flex items-start p-2 pb-4">
               <p className="mt-2 mr-4">Not in the list?</p>
-              <button className="" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add your household</button>
+              <button className="whitespace-no-wrap" onClick={this.startCreate}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Add your household</button>
             </div>
           </div>
         }

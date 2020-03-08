@@ -30,3 +30,16 @@ export const Balance = ({amount, className}: BalanceProps) =>
       {amount < 0? 'In credit' : 'To pay' }
     </div>
   </h3>
+
+export interface BalanceSmallProps {
+  amount: number
+  className?: string
+}
+
+export const BalanceSmall = ({amount, className}: BalanceSmallProps) => 
+  <h3 className={classNames("text-base", className, {'text-green-dark': amount <= 0, 'text-red': amount > 0 })}>
+    <span className="inline-block">&pound;{ Util.formatMoney(amount, true)}</span>
+    {/* <div className="uppercase text-xss text-center">
+      {amount < 0? 'In credit' : 'To pay' }
+    </div> */}
+  </h3>

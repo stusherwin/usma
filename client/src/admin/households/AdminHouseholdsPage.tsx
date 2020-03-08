@@ -4,7 +4,7 @@ import * as classNames from 'classnames'
 import { Household } from 'util/Types'
 import { ServerApi } from 'util/ServerApi'
 import { RouterLink } from 'util/RouterLink'
-import { Balance } from 'util/Money'
+import { BalanceSmall } from 'util/Money'
 import { Icon } from 'util/Icon'
 import { Form, Field, Validate } from 'util/Validation'
 import { TextField } from 'util/Field'
@@ -156,21 +156,18 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                 </div>
               )
               : (
-               <RouterLink className="block no-underline text-black hover:underline hover:text-black relative hover:bg-household-lightish" path={`/admin/households/${h.id}`}>
-                 <div className={classNames("p-2 pt-4 h-24", {"shadow-inner-top": i == 0})}>
-                   <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                   <div className="flex justify-between">
-                     <h3 className="leading-none ml-20 pr-20">
-                       {h.name} 
-                       <span className="text-black"><Icon type="right-arrow" className="w-3 h-3 fill-current ml-1 nudge-d-1" /></span>
+               <RouterLink className={classNames("p-2 py-4 min-h-24 block no-underline text-black hover:underline hover:text-black relative hover:bg-household-lightish", {"shadow-inner-top": i == 0})} path={`/admin/households/${h.id}`}>
+                 <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                 <div className="ml-20 flex items-baseline justify-between">
+                   <div>
+                     <h3 className="leading-none">
+                       {h.name}<span className="-ml-3 pl-4 whitespace-no-wrap"><Icon type="right-arrow" className="text-black inline w-3 h-3 fill-current nudge-d-1" /></span>
                      </h3>
-                     <div className="flex items-start absolute pin-r mr-2 -mt-1">
-                       <Balance className="bg-household-lightest" amount={-h.balance} />
-                       <button className="ml-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                     </div>
+                     <div className="mt-4 text-base"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
-                   <div className="mt-4 ml-20 absolute text-black flex justify-between">
-                     <div className="text-lg"><strong>Contact:</strong> {h.contactName || 'none'}</div>
+                   <div className="flex flex-col items-end">
+                     <BalanceSmall className="text-right" amount={-h.balance} />
+                     <button className="mt-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                    </div>
                  </div>
                </RouterLink>

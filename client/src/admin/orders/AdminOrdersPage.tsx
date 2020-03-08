@@ -98,7 +98,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                      header={
                        <div className="p-2 pt-4 bg-order-dark h-24">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
-                         <div className="flex justify-between">
+                         <div className="flex items-baseline justify-between">
                            <h2 className="leading-none ml-20">
                              Current order
                            </h2>
