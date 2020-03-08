@@ -41,8 +41,8 @@ export const OrderFooter = ({order}: OrderFooterProps) => {
             <span className={classNames('text-right align-baseline font-bold whitespace-no-wrap flex-no-shrink flex-no-grow')}>
               {order.adjustment == null || order.adjustment.oldTotalIncVat == order.totalIncVat?
                 <Money className={classNames({"line-through text-black": order.isAbandoned})} amount={order.totalIncVat} />
-              : <span>
-                  <Money className="line-through text-black mr-2" amount={order.adjustment.oldTotalIncVat} />
+              : <span className="inline-flex flex-col">
+                  <Money className="line-through text-black" amount={order.adjustment.oldTotalIncVat} />
                   <Money className="text-red font-bold" amount={order.totalIncVat} />
                 </span>
               }

@@ -68,9 +68,7 @@ export class Collapsible extends React.Component<CollapsibleProps, {}> {
   }
 
   componentDidMount() {
-    // this.minHeight = !!this.container.current && getComputedStyle(this.container.current).minHeight || ((24 / 4) + 'rem');
     this.minHeight = !!this.header.current && (this.header.current.clientHeight + 'px') || ((24 / 4) + 'rem');
-    // console.log(this.header.current)
 
     this.animateHeight()
   }

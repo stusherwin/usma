@@ -69,12 +69,11 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
         )}
         <div className="pt-4 pb-4 pl-20 pr-2 font-bold text-black pl-2 flex justify-between">
           <span className="pl-2">Total:</span>
-          {/* <span className={classNames('text-right', {'line-through text-grey-dark': order.isAbandoned})}><Money amount={order.totalIncVat} /></span> */}
           <span className="font-bold text-right">
             { order.adjustment == null || order.adjustment.oldTotalIncVat == order.totalIncVat?
               <Money className={classNames({'line-through text-black': order.isAbandoned})} amount={order.totalIncVat} />
-            : <span>
-                <Money className="line-through text-black mr-2" amount={order.adjustment.oldTotalIncVat} />
+            : <span className="inline-flex flex-col">
+                <Money className="line-through text-black" amount={order.adjustment.oldTotalIncVat} />
                 <Money className="text-red" amount={order.totalIncVat} />
               </span>
             }
