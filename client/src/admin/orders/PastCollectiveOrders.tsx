@@ -65,12 +65,11 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
     const pastOrders = this.props.pastOrders
 
     return (
-      <Collapsible className="min-h-24"
-                   collapsibleKey={this.props.collapsibleKey}
+      <Collapsible collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={
-                     <div className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t h-24">
+                   header={ref =>
+                     <div ref={ref} className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <h2 className="leading-none ml-20 relative flex">
                          Past orders
@@ -85,12 +84,12 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
           : (
             <div>
               { pastOrders.map((o, i) => 
-                <Collapsible className="min-h-24"
+                <Collapsible
                    collapsibleKey={o.id}
                    collapsibleState={this.state.collapsibleState}
                    onCollapsed={this.endReconcilingOrder(o)}
-                   header={
-                     <div className={classNames('p-2 pt-4 bg-order-dark-sepia h-24', {"shadow-inner-top": i == 0})}>
+                   header={ref =>
+                     <div ref={ref} className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <div className="flex justify-between">
                          <h3 className={classNames("leading-none ml-20", {'line-through': o.isAbandoned})}>

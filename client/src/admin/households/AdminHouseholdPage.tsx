@@ -47,14 +47,13 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
     return (
       <div className="bg-household-light min-h-screen">
         <AdminTopNav />
-        <Collapsible className="min-h-24"
-                     collapsibleKey="household"
+        <Collapsible collapsibleKey="household"
                      collapsibleState={this.state.collapsibleState}
                      onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
                      onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
                      onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
-                     header={
-                       <div className="p-2 pt-4 bg-household-light h-24">
+                     header={ref =>
+                       <div ref={ref} className="p-2 pt-4 bg-household-light min-h-24">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
                          <div className="flex items-start justify-between">
                            <div className="ml-20">

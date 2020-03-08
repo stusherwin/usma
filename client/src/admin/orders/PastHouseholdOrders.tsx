@@ -33,11 +33,10 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
             return (
               <tr key={ho.householdId}>
                 <td colSpan={2}>
-                  <Collapsible className="min-h-24"
-                               collapsibleKey={ho.householdId}
+                  <Collapsible collapsibleKey={ho.householdId}
                                collapsibleState={this.state.collapsibleState}
-                               header={
-                                 <div className={classNames('p-2 bg-household-light-sepia min-h-24')}>
+                               header={ref =>
+                                 <div ref={ref} className={classNames('p-2 bg-household-light-sepia min-h-24')}>
                                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household sepia mt-2"></div>
                                    <div className="flex justify-between mt-2">
                                      <h3 className={classNames("leading-none ml-20", {'line-through': ho.isAbandoned})}>

@@ -59,12 +59,11 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     const total = this.props.household.householdPayments.reduce((tot, p) => tot + p.amount, 0)
  
     return (
-      <Collapsible className="min-h-24"
-                   collapsibleKey={this.props.collapsibleKey}
+      <Collapsible collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={
-                     <div className="p-2 pt-4 bg-payment-light h-24">
+                   header={ref =>
+                     <div ref={ref} className="p-2 pt-4 bg-payment-light min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
                        <div className="flex justify-between">
                          <h2 className="leading-none ml-20">

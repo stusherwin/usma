@@ -90,13 +90,12 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
     return (
       <div className="bg-order-dark min-h-screen">
         <AdminTopNav />
-        <Collapsible className="min-h-24"
-                     collapsibleKey="order"
+        <Collapsible collapsibleKey="order"
                      collapsibleState={this.state.collapsibleState}
                      onCollapsed={this.endReconcilingOrder}
                      {...this.props}
-                     header={
-                       <div className="p-2 pt-4 bg-order-dark h-24">
+                     header={ref =>
+                       <div ref={ref} className="p-2 pt-4 bg-order-dark min-h-24">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                          <div className="flex items-baseline justify-between">
                            <h2 className="leading-none ml-20">

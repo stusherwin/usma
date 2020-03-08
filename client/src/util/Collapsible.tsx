@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
 import { Icon } from './Icon'
 
@@ -27,13 +26,11 @@ export class CollapsibleState {
   }
 }
 
-export interface CollapsibleProps { className?: string 
-                                  , minHeight?: number
-                                  , onExpand?: () => void
+export interface CollapsibleProps { onExpand?: () => void
                                   , onCollapse?: () => void
                                   , onExpanded?: () => void
                                   , onCollapsed?: () => void
-                                  , header: JSX.Element
+                                  , header: (ref: React.RefObject<HTMLDivElement>) => JSX.Element
                                   , expandedHeader?: JSX.Element
                                   , collapsibleKey: string | number
                                   , collapsibleState  : CollapsibleState
@@ -41,13 +38,15 @@ export interface CollapsibleProps { className?: string
 
 export class Collapsible extends React.Component<CollapsibleProps, {}> {
   container: React.RefObject<HTMLDivElement>
+  header: React.RefObject<HTMLDivElement>
   minHeight: string;
 
   constructor(props: CollapsibleProps) {
     super(props)
 
     this.container = React.createRef();
-    this.minHeight = (24 / 4) + 'rem';
+    this.header = React.createRef();
+    // this.minHeight = (24 / 4) + 'rem';
   }
 
   componentDidUpdate(prevProps: CollapsibleProps) {
@@ -69,6 +68,10 @@ export class Collapsible extends React.Component<CollapsibleProps, {}> {
   }
 
   componentDidMount() {
+    // this.minHeight = !!this.container.current && getComputedStyle(this.container.current).minHeight || ((24 / 4) + 'rem');
+    this.minHeight = !!this.header.current && (this.header.current.clientHeight + 'px') || ((24 / 4) + 'rem');
+    // console.log(this.header.current)
+
     this.animateHeight()
   }
 
@@ -106,14 +109,14 @@ export class Collapsible extends React.Component<CollapsibleProps, {}> {
 
   render() {
     return (
-      <div ref={this.container} className={classNames('relative overflow-hidden', this.props.className)} style={{ 
+      <div ref={this.container} className="relative overflow-hidden" style={{ 
             height: this.minHeight,
             transition: `height ${transitionTime / 2}s ease`,
             transitionDelay: this.props.collapsibleState.isExpanded(this.props.collapsibleKey)? '0s' : (this.props.collapsibleState.otherExpanding(this.props.collapsibleKey)? `${transitionTime / 2}s` : '0s')
           }} onTransitionEnd={this.transitionEnded}>
         <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.props.collapsibleState.toggle(this.props.collapsibleKey)() }} className="block no-underline text-black hover:text-black hover:no-underline relative">
            <Icon type={this.props.collapsibleState.isExpanded(this.props.collapsibleKey)? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r pin-b mb-4 mr-2" />
-          { this.props.header }
+          { this.props.header(this.header) }
         </a>
         { this.props.expandedHeader }
         { this.props.children }

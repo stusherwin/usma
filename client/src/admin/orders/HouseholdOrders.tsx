@@ -38,11 +38,10 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
         {order.householdOrders.filter(ho => !!ho.items.length).map(ho => {
           return (
             <div key={ho.householdId}>
-              <Collapsible className="min-h-24"
-                           collapsibleKey={ho.householdId}
+              <Collapsible collapsibleKey={ho.householdId}
                            collapsibleState={this.state.collapsibleState}
-                           header={
-                             <div className="p-2 pt-4 bg-household-lighter h-24">
+                           header={ref =>
+                             <div ref={ref} className="p-2 pt-4 bg-household-lighter min-h-24">
                                <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
                                <div className="flex justify-between">
                                  <h3 className={classNames("leading-none ml-20", {"line-through": ho.isAbandoned})}>
