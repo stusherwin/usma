@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Icon } from './Icon'
 
-const transitionTime = 0.25;
+const transitionTime = 0.125;
 
 export class CollapsibleState {
   expanded: string | number | null
