@@ -53,16 +53,20 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                      onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
                      onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
                      header={ref =>
-                       <div ref={ref} className="p-2 pt-4 bg-household-light min-h-24">
-                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                         <div className="flex items-start justify-between">
+                       <div ref={ref} className="p-2 bg-household-light min-h-28">
+                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
+                         <div className="mt-2">
                            <div className="ml-20">
-                             <h2 className="leading-none">
+                             <h2 className="mt-1 leading-none">
                                {this.props.household.name}
                              </h2>
-                             <div className="mt-4 text-lg"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
-                          </div>
-                           <Balance className="-mt-1 bg-household-lighter" amount={-this.props.household.balance} />
+                             <div className="mt-4 flex items-start items-baseline justify-between">
+                               <div className="text-base"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                               <Balance className="bg-household-lighter mb-8" amount={-this.props.household.balance} />
+                             </div>
+                           </div>
+                         </div>
+                         <div>
                          </div>
                        </div>
                      }>

@@ -42,23 +42,25 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
   render() {
     return (
       <div className="bg-household-light min-h-screen">
+        <RouterLink className="block p-2 text-black no-underline hover:text-black hover:underline" path="/households"><Icon type="left-arrow" className="w-3 h-3 fill-current mr-1" />Change household</RouterLink>
         <Collapsible collapsibleKey="household"
                      collapsibleState={this.state.collapsibleState}
                      onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
                      onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
                      onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
                      header={ref =>
-                       <div ref={ref} className="p-2 bg-household-light min-h-28">
-                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
-                         <div className="flex items-start justify-between mt-2">
+                       <div ref={ref} className="p-2 pt-0 bg-household-light min-h-28">
+                         <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                         <div className="mt-2">
                            <div className="ml-20">
-                             <h2 className="leading-none">
+                             <h2 className="mt-1 leading-none">
                                {this.props.household.name}
                              </h2>
-                             <RouterLink className="block mt-1 text-black no-underline hover:text-black hover:underline" path="/households"><Icon type="left-arrow" className="w-3 h-3 fill-current mr-1" />Change household</RouterLink>
-                             <div className="text-lg mt-4"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                             <div className="mt-4 flex items-start items-baseline justify-between">
+                               <div className="text-base"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
+                               <Balance className="bg-household-lighter mb-8" amount={-this.props.household.balance} />
+                             </div>
                            </div>
-                           <Balance className="-mt-1 bg-household-lighter" amount={-this.props.household.balance} />
                          </div>
                          <div>
                          </div>
