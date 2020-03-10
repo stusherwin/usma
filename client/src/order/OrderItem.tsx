@@ -64,7 +64,7 @@ export const OrderItem = ({ item
 
   return <React.Fragment>
     <tr>
-      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={3}>
+      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={editProductPrice ? 4 : 3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
       </td>
       <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
@@ -85,20 +85,24 @@ export const OrderItem = ({ item
               }
             </span>
         }
-        {editProductPrice &&
-          <span> @ &pound;<input type="text" className={classNames("w-20", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} /></span>
-        }
       </td>
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
-        {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
-          <span className="inline-flex flex-col">
-            <Money className="line-through text-black" amount={item.adjustment.oldItemTotalExcVat} />
-            {!item.adjustment.productDiscontinued && 
-              <Money className="text-red font-bold" amount={item.itemTotalExcVat} />
-            }
-          </span>
-        : <Money className={classNames({"line-through text-black": orderAbandoned})} amount={item.itemTotalExcVat} />
+        {editProductPrice &&
+          <div>
+            @ &pound;<input type="text" className={classNames("w-20", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
+          </div>
         }
+        <div>
+          {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
+            <span className="inline-flex flex-col">
+              <Money className="line-through text-black" amount={item.adjustment.oldItemTotalExcVat} />
+              {!item.adjustment.productDiscontinued && 
+                <Money className="text-red font-bold" amount={item.itemTotalExcVat} />
+              }
+            </span>
+          : <Money className={classNames({"line-through text-black": orderAbandoned})} amount={item.itemTotalExcVat} />
+          }
+        </div>
       </td>
     </tr>
     <tr>
