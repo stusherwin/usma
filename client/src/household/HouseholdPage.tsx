@@ -49,21 +49,15 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                      onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
                      onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
                      header={ref =>
-                       <div ref={ref} className="p-2 pt-0 bg-household-light min-h-28">
+                       <div ref={ref} className="p-2 pt-0 pb-4 bg-household-light min-h-28">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
-                         <div className="mt-2">
-                           <div className="ml-20">
-                             <h2 className="mt-1 leading-none">
-                               {this.props.household.name}
-                             </h2>
-                             <div className="mt-4 flex items-start items-baseline justify-between">
-                               <div className="text-base"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
-                               <Balance className="bg-household-lighter mb-8" amount={-this.props.household.balance} />
-                             </div>
-                           </div>
+                         <div className="ml-20 mt-2 flex items-start items-baseline justify-between">
+                           <h2 className="mt-1 leading-none mr-2 mb-4">
+                             {this.props.household.name}
+                           </h2>
+                           <Balance className="bg-household-lighter ml-auto" amount={-this.props.household.balance} />
                          </div>
-                         <div>
-                         </div>
+                         <div className="ml-20 text-base"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
                        </div>
                      }>
           <EditHousehold ref={this.editHousehold}

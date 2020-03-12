@@ -65,7 +65,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                    header={ref =>
                      <div ref={ref} className="p-2 pt-4 bg-payment-light min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
-                       <div className="flex justify-between">
+                       <div className="flex justify-between items-baseline">
                          <h2 className="leading-none ml-20">
                            Payments
                          </h2>

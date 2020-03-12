@@ -58,7 +58,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                    header={ref =>
                      <div ref={ref} className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
-                       <div className="flex justify-between">
+                       <div className="flex justify-between items-baseline">
                          <h2 className="leading-none ml-20">
                            Past orders
                          </h2>
