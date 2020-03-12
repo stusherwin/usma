@@ -68,8 +68,8 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
       <Collapsible collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={ref =>
-                     <div ref={ref} className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
+                   header={
+                     <div className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <h2 className="leading-none ml-20 relative flex">
                          Past orders
@@ -88,8 +88,8 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                    collapsibleKey={o.id}
                    collapsibleState={this.state.collapsibleState}
                    onCollapsed={this.endReconcilingOrder(o)}
-                   header={ref =>
-                     <div ref={ref} className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
+                   header={
+                     <div className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <div className="flex items-baseline justify-between ml-20">
                          <div>

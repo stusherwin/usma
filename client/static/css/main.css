@@ -193,6 +193,10 @@ button[disabled], button[disabled]:hover {
   filter: saturate(0);
 }
 
+.invert {
+  filter: invert();
+}
+
 .sepia {
   filter: sepia(100%);
 }

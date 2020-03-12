@@ -52,8 +52,8 @@ export class AdminHouseholdPage extends React.Component<AdminHouseholdOrdersPage
                      onExpand={() => { if(this.editHousehold.current) { this.editHousehold.current.reset() } }}
                      onCollapse={() => { if(this.editHousehold.current) { this.editHousehold.current.blur() } }}
                      onExpanded={() => { if(this.editHousehold.current) { this.editHousehold.current.focus() } }}
-                     header={ref =>
-                       <div ref={ref} className="p-2 bg-household-light min-h-28">
+                     header={
+                       <div className="p-2 bg-household-light min-h-28">
                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
                          <div className="mt-2">
                            <div className="ml-20">

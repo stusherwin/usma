@@ -62,8 +62,8 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
       <Collapsible collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={ref =>
-                     <div ref={ref} className="p-2 pt-4 bg-payment-light min-h-24">
+                   header={
+                     <div className="p-2 pt-4 bg-payment-light min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
                        <div className="flex justify-between items-baseline">
                          <h2 className="leading-none ml-20">

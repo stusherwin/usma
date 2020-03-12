@@ -55,8 +55,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       <Collapsible collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
                    {...this.props}
-                   header={ref =>
-                     <div ref={ref} className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
+                   header={
+                     <div className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                        <div className="flex justify-between items-baseline">
                          <h2 className="leading-none ml-20">
@@ -81,8 +81,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                       <td>
                         <Collapsible collapsibleKey={ho.orderId}
                                      collapsibleState={this.state.collapsibleState}
-                                     header={ref =>
-                                       <div ref={ref} className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
+                                     header={
+                                       <div className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', {"shadow-inner-top": i == 0})}>
                                          <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
                                          <div className="flex items-baseline justify-between ml-20">
                                            <div>

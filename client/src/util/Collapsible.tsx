@@ -31,7 +31,7 @@ export interface CollapsibleProps { onExpand?: () => void
                                   , onCollapse?: () => void
                                   , onExpanded?: () => void
                                   , onCollapsed?: () => void
-                                  , header: (ref: React.RefObject<HTMLDivElement>) => JSX.Element
+                                  , header: JSX.Element
                                   , expandedHeader?: JSX.Element
                                   , collapsibleKey: string | number
                                   , collapsibleState  : CollapsibleState
@@ -42,6 +42,7 @@ interface State { minHeight: string }
 export class Collapsible extends React.Component<CollapsibleProps, State> {
   container: React.RefObject<HTMLDivElement>
   header: React.RefObject<HTMLDivElement>
+  id: number
 
   constructor(props: CollapsibleProps) {
     super(props)
@@ -70,9 +71,20 @@ export class Collapsible extends React.Component<CollapsibleProps, State> {
   }
 
   componentDidMount() {
-    this.setState({minHeight: !!this.header.current && (this.header.current.clientHeight + 'px') || ((24 / 4) + 'rem')});
+    window.addEventListener('resize', this.resize);
+    this.resize();
+  }
 
+  resize = () => {
+    if(!this.header.current) return
+
+    let minHeight = (this.header.current.scrollHeight - 1) + 'px';
+    this.setState({minHeight});
     this.animateHeight()
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.resize);
   }
 
   animateHeight() {
@@ -115,8 +127,10 @@ export class Collapsible extends React.Component<CollapsibleProps, State> {
             transitionDelay: this.props.collapsibleState.isExpanded(this.props.collapsibleKey)? '0s' : (this.props.collapsibleState.otherExpanding(this.props.collapsibleKey)? `${transitionTime / 2}s` : '0s')
           }} onTransitionEnd={this.transitionEnded}>
         <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.props.collapsibleState.toggle(this.props.collapsibleKey)() }} className="block no-underline text-black hover:text-black hover:no-underline relative">
-           <Icon type={this.props.collapsibleState.isExpanded(this.props.collapsibleKey)? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r pin-b mb-4 mr-2" />
-          { this.props.header(this.header) }
+          <Icon type={this.props.collapsibleState.isExpanded(this.props.collapsibleKey)? 'collapse' : 'expand'} className="w-4 h-4 fill-current absolute pin-r pin-b mb-4 mr-2" />
+          <div ref={this.header}>
+            { this.props.header }
+          </div>
         </a>
         { this.props.expandedHeader }
         { this.props.children }
