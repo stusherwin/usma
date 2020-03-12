@@ -64,34 +64,24 @@ export const OrderItem = ({ item
 
   return <React.Fragment>
     <tr>
-      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={editProductPrice ? 4 : 3}>
+      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={editProductPrice? 4 : 3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
       </td>
       <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {checkedOff && <span className="text-red">{'\u2713 '} </span>}{item.productCode}
       </td>
       <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
-        {!!editItemQuantity
-          ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
-              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
-            </select>
-          : <span>
-              {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
-                <span>
-                  <span className="line-through text-black mr-2">x {item.adjustment.oldItemQuantity}</span>
-                  <span className="text-red font-bold">x {item.itemQuantity}</span>
-                </span>
-              : <span>x {item.itemQuantity}</span>
-              }
+        <span>
+          {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
+            <span className="inline-flex flex-col">
+              <span className="line-through text-black">x {item.adjustment.oldItemQuantity}</span>
+              <span className="text-red font-bold">x {item.itemQuantity}</span>
             </span>
-        }
+          : <span>x {item.itemQuantity}</span>
+          }
+        </span>
       </td>
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
-        {editProductPrice &&
-          <div>
-            @ &pound;<input type="text" className={classNames("w-20", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
-          </div>
-        }
         <div>
           {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
             <span className="inline-flex flex-col">
@@ -105,6 +95,28 @@ export const OrderItem = ({ item
         </div>
       </td>
     </tr>
+    {!!editProductPrice && !!editItemQuantity &&
+      // <tr>
+      //   <td colSpan={2} className="pb-2 pl-2 align-baseline">
+      //     &pound;<input type="text" className={classNames("w-20 mr-2 ml-1", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
+      //     each
+      //   </td>
+      // </tr>
+      <tr>
+        <td className="pb-2 pl-2 align-baseline text-right">
+          <div className="flex justify-between items-baseline content-start">
+            <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
+              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
+            </select>
+            {/* <span className="">Price</span> */}
+            <span className="text-right -mr-1 whitespace-no-wrap">@ &pound;</span>
+          </div>
+        </td>
+        <td colSpan={2} className="pb-2 pl-2 align-baseline">
+          <input type="text" className={classNames("w-20 mr-2", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
+        </td>
+      </tr>
+    }
     <tr>
       <td className={classNames('pb-2 pl-2 align-top', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={2}>
         {item.productName}

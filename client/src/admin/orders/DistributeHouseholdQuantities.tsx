@@ -26,11 +26,9 @@ export const DistributeHouseholdQuantities = ({item, updateQuantity, saveItem}: 
 
   return <React.Fragment>
     <tr>
-      <td rowSpan={item.householdQuantities.length + 1} className="pt-4">
-      </td>
-      <td colSpan={3} className="pb-4 pt-4 pl-2 align-baseline">
+      <td colSpan={4} className="pb-4 pt-4 pl-2 align-baseline bg-red-lighter">
         <div className="font-bold">Item quantity changed</div>
-        <div className="text-grey-dark mt-1">How do you want to share out {item.itemQuantity == 1? 'this item' : `these ${item.itemQuantity} items`}?</div>
+        <div className="mt-1">How do you want to share out {item.itemQuantity == 1? 'this item' : `these ${item.itemQuantity} items`}?</div>
       </td>
     </tr>
     {item.householdQuantities.map((h, ix) => {
@@ -41,23 +39,27 @@ export const DistributeHouseholdQuantities = ({item, updateQuantity, saveItem}: 
       }
 
       return <tr>
-        <td colSpan={2} className={classNames('pl-2 align-baseline', {'pb-2': ix < item.householdQuantities.length - 1, 'pb-4': ix === item.householdQuantities.length - 1 })}>
-          <span className="flex justify-between">
+        <td colSpan={2} className={classNames("pl-2 align-baseline bg-red-lighter", {"pb-2": ix < item.householdQuantities.length - 1, "pb-4": ix == item.householdQuantities.length - 1})}>
+          <span className="flex justify-between items-baseline">
             <span>{h.householdName}</span>
-            <span>
-              <span className="line-through text-grey-dark mr-2">x {h.oldQuantity}</span>
-              <select className="border" value={h.quantity} onChange={e=> updateQuantity(item, h.householdId, parseInt(e.target.value))}>
-                {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
-              </select>
-            </span>
           </span>
         </td>
-        <td className={classNames('pl-2 pr-2 align-bottom text-right', {'pb-2': ix < item.householdQuantities.length - 1, 'pb-4': ix === item.householdQuantities.length - 1 })}>
-          {ix === item.householdQuantities.length - 1 &&
-            <button className="ml-4 -mt-1 whitespace-no-wrap" onClick={_ => save()}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
-          }
+        <td colSpan={2} className={classNames("pl-2 pr-2 pb-2 align-baseline bg-red-lighter", {"pb-2": ix < item.householdQuantities.length - 1, "pb-4": ix == item.householdQuantities.length - 1})}>
+          <div className="flex justify-end items-baseline">
+            <span className="w-10 line-through whitespace-no-wrap">x {h.oldQuantity}</span>
+            <select className="ml-1 border" value={h.quantity} onChange={e=> updateQuantity(item, h.householdId, parseInt(e.target.value))}>
+              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
+            </select>
+          </div>
         </td>
       </tr>
     })}
+    <tr>
+      <td className="pt-2 pl-2 pb-4" colSpan={3}>
+      </td>
+      <td className="pt-2 pl-2 pr-2 pb-4 text-right">
+        <button className="ml-4 whitespace-no-wrap" onClick={_ => save()}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
+      </td>
+    </tr>
   </React.Fragment>
 }

@@ -1,12 +1,8 @@
 Do next
 * 0 balance should be black not green
-* Collapsible has race condition bug - rewrite with hooks?
-  - also resize page doesn't work with collapsibles
-  - also when expanded doesn't resize when content inside changes
 * Household that wasn't in order that's placed shouldn't be able to add items until new order started?
   - or should be able to start new order
 * Household balance/title layout
-* Fix reconcile order layout
 
 Bugs/Quick wins
 * Null order created by - should say "Admin"
@@ -58,6 +54,7 @@ New features
   * Lembas, other suppliers
 * Add no. of people to household (+ total per person to household order)
 * Email contacts when new order/action required
+* Reconcile individual households
 
 Investigate
 * What happens if you unabandon a past order? (can't)
