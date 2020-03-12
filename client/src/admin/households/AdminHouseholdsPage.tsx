@@ -163,7 +163,7 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                      <h3 className="leading-none">
                        {h.name}<span className="-ml-3 pl-4 whitespace-no-wrap"><Icon type="right-arrow" className="text-black inline w-3 h-3 fill-current nudge-d-1" /></span>
                      </h3>
-                     <div className="mt-4 text-base"><strong>Contact:</strong> {h.contactName || 'none'}</div>
+                     <div className="mt-4 text-base inline-block"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
                    <div className="flex flex-col items-end">
                      <BalanceSmall className="text-right" amount={-h.balance} />
