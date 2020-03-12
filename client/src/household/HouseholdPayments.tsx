@@ -61,6 +61,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
     return (
       <Collapsible collapsibleKey={this.props.collapsibleKey}
                    collapsibleState={this.props.collapsibleState}
+                   onCollapsed={() => this.setState({ editing: null })}
                    {...this.props}
                    header={
                      <div className="p-2 pt-4 bg-payment-light min-h-24">
@@ -76,7 +77,7 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                      </div>
                    }
                    expandedHeader={!this.props.readOnly && 
-                     <div className="p-2 pt-0 bg-payment-light flex justify-start">
+                     <div className="p-2 pt-0 bg-payment-light flex justify-end">
                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
                      </div>
                    || undefined}>
@@ -108,18 +109,22 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                       </td>
                     </tr>
                   )
-                  : (
-                  <tr key={p.id}>
-                    <td className={classNames('pt-4 pl-20 pr-2 whitespace-no-wrap')}><span className="pl-2">{ Util.formatDate(p.date) }</span></td>
-                    {!this.props.readOnly && 
-                      <td className={classNames("pt-4 pr-2 w-full whitespace-no-wrap")}>
-                        <button onClick={_ => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                        <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                      </td>
-                    }
-                    <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={-p.amount} noColour /></td>
-                  </tr>
-                  )
+                  : <React.Fragment key={p.id}>
+                      <tr>
+                        <td className={classNames('pt-4 pr-2 pl-20 whitespace-no-wrap')}><span className="pl-2">{ Util.formatDate(p.date) }</span></td>
+                        <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={-p.amount} noColour /></td>
+                      </tr>
+                      {!this.props.readOnly && 
+                        <tr>
+                          <td colSpan={2} className={classNames("pt-2 pr-2 w-full whitespace-no-wrap")}>
+                            <div className="flex justify-end">
+                              <button onClick={_ => this.startEdit(p)} disabled={!!this.state.editing}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                              <button className="ml-2" onClick={_ => this.delete(p)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </React.Fragment>
                 ) }
                 <tr>
                   <td className="pt-4 pl-20 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>

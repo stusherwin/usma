@@ -37,19 +37,17 @@ export interface CollapsibleProps { onExpand?: () => void
                                   , collapsibleState  : CollapsibleState
                                   }
 
-interface State { minHeight: string }
-
-export class Collapsible extends React.Component<CollapsibleProps, State> {
+export class Collapsible extends React.Component<CollapsibleProps, {}> {
   container: React.RefObject<HTMLDivElement>
   header: React.RefObject<HTMLDivElement>
-  id: number
+  minHeight: string
 
   constructor(props: CollapsibleProps) {
     super(props)
 
     this.container = React.createRef();
     this.header = React.createRef();
-    this.state = { minHeight: (24 / 4) + 'rem' }
+    this.minHeight = (24 / 4) + 'rem'
   }
 
   componentDidUpdate(prevProps: CollapsibleProps) {
@@ -78,8 +76,7 @@ export class Collapsible extends React.Component<CollapsibleProps, State> {
   resize = () => {
     if(!this.header.current) return
 
-    let minHeight = (this.header.current.scrollHeight - 1) + 'px';
-    this.setState({minHeight});
+    this.minHeight = (this.header.current.scrollHeight - 1) + 'px';
     this.animateHeight()
   }
 
@@ -93,10 +90,11 @@ export class Collapsible extends React.Component<CollapsibleProps, State> {
 
     if(this.props.collapsibleState.isExpanded(this.props.collapsibleKey)) {
       el.style.height = el.scrollHeight + 'px';
+      setTimeout(() => el.style.height = null, transitionTime * 1000);
     } else {
       el.style.height = el.scrollHeight + 'px';
       el.offsetHeight; // trigger reflow
-      el.style.height = this.state.minHeight;
+      el.style.height = this.minHeight;
     }
   }
 
@@ -122,7 +120,7 @@ export class Collapsible extends React.Component<CollapsibleProps, State> {
   render() {
     return (
       <div ref={this.container} className="relative overflow-hidden" style={{ 
-            height: this.props.collapsibleState.isExpanded(this.props.collapsibleKey) ? undefined : this.state.minHeight,
+            height: this.props.collapsibleState.isExpanded(this.props.collapsibleKey) ? undefined : this.minHeight,
             transition: `height ${transitionTime / 2}s ease`,
             transitionDelay: this.props.collapsibleState.isExpanded(this.props.collapsibleKey)? '0s' : (this.props.collapsibleState.otherExpanding(this.props.collapsibleKey)? `${transitionTime / 2}s` : '0s')
           }} onTransitionEnd={this.transitionEnded}>
