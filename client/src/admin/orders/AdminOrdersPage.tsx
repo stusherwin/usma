@@ -123,7 +123,11 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                          }
                          {!this.state.reconcilingOrder && !!order && !!order.items.length &&
                            <div className="mt-5">
-                             <OrderTabs tab={this.state.tab} setTab={tab => this.setState({tab})} />
+                             <OrderTabs tab={this.state.tab} 
+                                        setTab={tab => this.setState({tab})}
+                                        householdsBg="bg-household-lightest"
+                                        productsBg="bg-white"
+                                        productCodesBg="bg-white" />
                            </div>
                          }
                        </div>

@@ -111,7 +111,11 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                        <CollectiveOrderButtons order={o}
                                                reconcileOrder={this.startReconcilingOrder(o)} />
                        <div className="mt-5">
-                         <OrderTabs tab={this.state.tabs[i]} setTab={this.setTab(i)} />
+                         <OrderTabs tab={this.state.tabs[i]} 
+                                    setTab={this.setTab(i)} 
+                                    householdsBg="bg-household-lightest-sepia"
+                                    productsBg="bg-white-sepia"
+                                    productCodesBg="bg-white-sepia" />
                        </div>
                      </div>
                    || undefined}>

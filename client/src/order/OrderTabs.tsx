@@ -1,25 +1,30 @@
 import * as React from 'react';
-import * as classNames from 'classnames'
 
 export type OrderTab = 'households' | 'product-list' | 'product-codes'
 
 export interface OrderTabsProps {
   tab: OrderTab | undefined
+  householdsBg: string
+  productsBg: string
+  productCodesBg: string
   setTab: (tab: OrderTab) => void
 }
 
-export const OrderTabs = ({tab, setTab}: OrderTabsProps) => 
-    <div className="flex justify-center rounded-sm items-baseline border border-order-darker p-1 bg-white shadow-sm-inner-top">
-      <a href="#" className={classNames("border rounded-sm whitespace-no-wrap flex-grow text-center px-2 py-1 no-underline hover:no-underline", {
-          "border-transparent text-black hover:text-black": (tab || 'households') == 'households', 
-          "bg-grey-light border-grey-dark text-black shadow hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'households' 
-        })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('households'); }}>Households</a>
-      <a href="#" className={classNames("ml-1 border rounded-sm whitespace-no-wrap flex-grow text-center px-2 py-1 no-underline hover:no-underline", {
-          "border-transparent text-black hover:text-black": tab == 'product-list', 
-          "bg-grey-light border-grey-dark text-black shadow hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'product-list' 
-        })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-list'); }}>Products</a>
-      <a href="#" className={classNames("ml-1 border rounded-sm whitespace-no-wrap flex-grow text-center px-2 py-1 no-underline hover:no-underline", {
-          "border-transparent text-black hover:text-black": tab == 'product-codes', 
-          "bg-grey-light border-grey-dark text-black shadow hover:bg-grey hover:border-grey-dark hover:text-black": tab != 'product-codes' 
-        })} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-codes'); }}>Product codes</a>
+export const OrderTabs = ({tab, setTab, householdsBg, productsBg, productCodesBg}: OrderTabsProps) => 
+    <div className="flex -ml-2 -mr-2 -mb-4">
+      <a href="#" className={"relative pt-2 pb-3 flex-grow text-center rounded-tr-lg mr-1 text-black no-underline hover:text-black hover:underline flex justify-center items-center"
+        + ((tab || 'households') == 'households' ? ` ${householdsBg} shadow-inner-top` : '')} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('households'); }}>
+          <div className="bg-no-repeat w-6 h-6 mr-2 bg-img-household desaturate" ></div>
+          <span>Households</span>
+      </a>
+      <a href="#" className={"relative pt-2 pb-3 flex-grow text-center rounded-tr-lg rounded-tl-lg mr-1 text-black no-underline hover:text-black hover:underline flex justify-center items-center"
+        + (tab == 'product-list'? ` ${productsBg} shadow-inner-top` : '')} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-list'); }}>
+          <div className="bg-no-repeat w-6 h-6 mr-2 bg-img-product desaturate"></div>
+          <span>Products</span>
+      </a>
+      <a href="#" className={"relative pt-2 pb-3 flex-grow text-center rounded-tl-lg text-black no-underline hover:text-black hover:underline flex justify-center items-center"
+        + (tab == 'product-codes'? ` ${productCodesBg} shadow-inner-top` : '')} onClick={e => { e.preventDefault(); e.stopPropagation(); setTab('product-codes'); }}>
+          <div className="bg-no-repeat w-6 h-6 mr-2 bg-img-product desaturate"></div>
+          <span>Codes</span>
+      </a>
     </div>
