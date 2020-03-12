@@ -1,45 +1,70 @@
-* Only reload changed data
-* Larger buttons on mobile?
-* Loading indicator on button rather than entire page?
-  - what about <select>s?
-* Go from order summary straight to household order
-* Splitting items
-* Lembas, other suppliers
-* Abandoned order total? 
-* What happens if you unabandon a past order? (can't)
-* Add no. of people to household (+ total per person to household order)
-* server api regression tests
-* Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
-* Hide previous error on successful response
-* Error message styling
-* household orders - items don't need to be sum()
-* crossed out money separate component?
-* Make payment check a config setting
-* Payment section in admin, separate from households
-* Store current household in session
-* Current order stick to top when scrolling down in Add Product
-* Back button should trigger a reload
-* Periodic reload (if no activity for a while)
+Do next
+* 0 balance should be black not green
+* Collapsible has race condition bug - rewrite with hooks?
+  - also resize page doesn't work with collapsibles
+  - also when expanded doesn't resize when content inside changes
+* Household that wasn't in order that's placed shouldn't be able to add items until new order started?
+  - or should be able to start new order
+* Household balance/title layout
+* Fix reconcile order layout
+
+Bugs/Quick wins
 * Null order created by - should say "Admin"
 * Add all missing items from past order
-* Automatically create household order instead of join/leave
-* On collective order when no order items don't show households
-* Get rid of current order table?
-* Email contacts when new order/action required
+* delete admin home page - should just redirect to orders page like households welcome page
+* Hide previous error on successful response
 * Add bigger image/link to product page
-* Auto update catalogue
-* handle long household name - ellipsis?
+
+Styling/UX issues
+* Balances on household list should still show "to pay" or "in credit"
+* Icons too big?
+* Make expanding/collapsing sections more obvious
+* Larger buttons on mobile?
+* Error message styling
 * Better way of displaying/editing household contact details
 * Better way of editing payment dates
-* Make expanding/collapsing sections more obvious
-* Animate transition between list of households and individual household?
+* Past order/household icons should have clock on them
+* Order tabs slightly too big on small mobile screen
+* Order tabs better as actual tabs?
+
+Payments/balance
 * Add running total/balance to collective order page, with payments, so you can see who owes what - link to household
+* Payment section in admin, separate from households
+* Make payment check a config setting
+* Enable/disable payments by group
 
-Investigate:
-Place order -> why does it create a new order by 123 front rd?
-All tabs should say No households/products yet
-No households joined this order yet
-Delete order button?
-Margins
+Reload
+* Only reload changed data
+* Back button should trigger a reload
+* Loading indicator on button rather than entire page?
+  - what about <select>s?
 
-load more bug when scrolling fast on desktop - doesn't trigger
+Enhancements
+* Go from order summary straight to household order
+* Current order stick to top when scrolling down in Add Product
+* Periodic reload (if no activity for a while)
+* Store current household in session
+* Auto update catalogue
+* Animate transition between list of households and individual household?
+
+Refactors
+* crossed out money separate component?
+* server api regression tests
+* household orders - items don't need to be sum()
+* Get rid of current order table?
+
+New features
+* Splitting items
+  * Lembas, other suppliers
+* Add no. of people to household (+ total per person to household order)
+* Email contacts when new order/action required
+
+Investigate
+* What happens if you unabandon a past order? (can't)
+* Order finite state machine - Abandoned -> Open : ReopenPossible vs ReopenAllowed
+* handle long household name - ellipsis?
+* Place order -> why does it create a new order by 123 front rd?
+* All tabs should say No households/products yet
+* Delete order button?
+* Margins
+* load more bug when scrolling fast on desktop - doesn't trigger
