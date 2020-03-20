@@ -71,15 +71,20 @@ export const OrderItem = ({ item
         {checkedOff && <span className="text-red">{'\u2713 '} </span>}{item.productCode}
       </td>
       <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
-        <span>
-          {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
-            <span className="inline-flex flex-col">
-              <span className="line-through text-black">x {item.adjustment.oldItemQuantity}</span>
-              <span className="text-red font-bold">x {item.itemQuantity}</span>
-            </span>
-          : <span>x {item.itemQuantity}</span>
-          }
-        </span>
+        {!!editItemQuantity && !editProductPrice
+        ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
+            {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
+          </select>
+        : <span>
+            {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
+              <span className="inline-flex flex-col">
+                <span className="line-through text-black">x {item.adjustment.oldItemQuantity}</span>
+                <span className="text-red font-bold">x {item.itemQuantity}</span>
+              </span>
+            : <span>x {item.itemQuantity}</span>
+            }
+          </span>
+        }
       </td>
       <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         <div>
@@ -95,20 +100,16 @@ export const OrderItem = ({ item
         </div>
       </td>
     </tr>
-    {!!editProductPrice && !!editItemQuantity &&
-      // <tr>
-      //   <td colSpan={2} className="pb-2 pl-2 align-baseline">
-      //     &pound;<input type="text" className={classNames("w-20 mr-2 ml-1", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
-      //     each
-      //   </td>
-      // </tr>
+    {!!editProductPrice && 
       <tr>
         <td className="pb-2 pl-2 align-baseline text-right">
           <div className="flex justify-between items-baseline content-start">
-            <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
-              {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
-            </select>
-            {/* <span className="">Price</span> */}
+            {editItemQuantity
+            ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
+                {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
+              </select>
+            : <span></span>
+            }
             <span className="text-right -mr-1 whitespace-no-wrap">@ &pound;</span>
           </div>
         </td>
@@ -118,30 +119,34 @@ export const OrderItem = ({ item
       </tr>
     }
     <tr>
-      <td className={classNames('pb-2 pl-2 align-top', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={2}>
+      <td className={classNames('pb-2 pl-2 align-top', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={removeItem || addToCurrentOrder || saveItem || editItem? 2 : 3}>
         {item.productName}
       </td>
-      <td className={classNames('pl-2 pr-2 align-top text-right', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
-        {!!removeItem &&
-          <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-        }
-        {!!addToCurrentOrder &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add</button>
-        }
-        {!!saveItem &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => saveItem(item)}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
-        }
-        {!!editItem &&
-          <button className="ml-4 whitespace-no-wrap" onClick={() => editItem(item)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
-        }
-      </td>
+      {(removeItem || addToCurrentOrder || saveItem || editItem) &&
+        <td className={classNames('pl-2 pr-2 align-top text-right', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
+          {!!removeItem &&
+            <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+          }
+          {!!addToCurrentOrder &&
+            <button className="ml-4 whitespace-no-wrap" onClick={() => addToCurrentOrder(item)}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add</button>
+          }
+          {!!saveItem &&
+            <button className="ml-4 whitespace-no-wrap" onClick={() => saveItem(item)}><Icon type="ok" className="w-4 h-4 fill-current nudge-d-2" /></button>
+          }
+          {!!editItem &&
+            <button className="ml-4 whitespace-no-wrap" onClick={() => editItem(item)}><Icon type="edit" className="w-4 h-4 fill-current nudge-d-1" /></button>
+          }
+        </td>
+      }
     </tr>
     <tr>
-      <td className={classNames('pl-2 pb-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={3}>
-        <span className="pr-2">
-          <ProductFlags p={item} />
-        </span>
-        <span className="text-grey-dark whitespace-no-wrap">VAT: {item.productVatRate} rate</span>
+      <td className={classNames('`pl-1 pr-1 pb-2`', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={editProductPrice? 2 : 3}>
+        <div className="flex flex-wrap justify-start">
+          <span className="pl-1 pr-1 pb-2 whitespace-no-wrap">
+            <ProductFlags p={item} />
+          </span>
+          <span className="pl-1 pr-1 pb-2 text-grey-dark whitespace-no-wrap">VAT: {item.productVatRate} rate</span>
+        </div>
       </td>
     </tr>
   </React.Fragment>

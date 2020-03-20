@@ -1,8 +1,10 @@
 Do next
-* 0 balance should be black not green
-* Household that wasn't in order that's placed shouldn't be able to add items until new order started?
+* Bug: quantity select missing
+* Bug: Household that wasn't in order that's placed shouldn't be able to add items until new order started?
   - or should be able to start new order
-* Household balance/title layout
+* Bug: Messages look wierd with order tabs
+* Product price alignment
+* Enable/disable payments by group
 
 Bugs/Quick wins
 * Null order created by - should say "Admin"
@@ -27,7 +29,6 @@ Payments/balance
 * Add running total/balance to collective order page, with payments, so you can see who owes what - link to household
 * Payment section in admin, separate from households
 * Make payment check a config setting
-* Enable/disable payments by group
 
 Reload
 * Only reload changed data
