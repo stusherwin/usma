@@ -8,7 +8,7 @@ export interface AcceptUpdatesProps { householdOrder: HouseholdOrder
                                     }
 
 export const AcceptUpdates = ({householdOrder, acceptUpdates}: AcceptUpdatesProps) => {
-  if(!householdOrder.adjustment)
+  if(!householdOrder.adjustment || householdOrder.orderIsPlaced || householdOrder.orderIsAbandoned)
     return null
 
   return (
