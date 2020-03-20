@@ -114,7 +114,7 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                              Current order
                            </h2>
                            <h3 className="mt-4">
-                             <OrderStatus order={householdOrder} />
+                             <OrderStatus order={householdOrder || order} />
                            </h3>
                          </div>
                          <h3 className="ml-2">

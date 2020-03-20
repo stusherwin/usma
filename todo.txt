@@ -1,7 +1,4 @@
 Do next
-* Bug: quantity select missing
-* Bug: Household that wasn't in order that's placed shouldn't be able to add items until new order started?
-  - or should be able to start new order
 * Bug: Messages look wierd with order tabs
 * Product price alignment
 * Enable/disable payments by group

@@ -22,7 +22,6 @@ export class CollapsibleState {
   }
   
   toggle = (toExpand: string | number) => () => { 
-    console.log('click');
     this.update(new CollapsibleState(toExpand == this.expanded? null : toExpand, this.update))
   }
 }
