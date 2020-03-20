@@ -9,6 +9,7 @@ import { OrderTabs } from 'order/OrderTabs'
 import { OrderItems } from 'order/OrderItems'
 import { OrderTotal } from 'order/OrderTotal'
 import { OrderStatus } from 'order/OrderStatus'
+import { OrderMessages, getMessages } from 'order/OrderMessages'
 
 import { AdminTopNav } from 'admin/AdminTopNav'
 
@@ -16,7 +17,6 @@ import { PastCollectiveOrders } from './PastCollectiveOrders'
 import { HouseholdOrders } from './HouseholdOrders'
 import { ProductCodes } from './ProductCodes'
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
-import { CollectiveOrderMessages } from './CollectiveOrderMessages'
 import { ReconcileOrder } from './ReconcileOrder'
 
 export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undefined
@@ -86,6 +86,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
 
   render() {
     const order = this.props.collectiveOrder
+    const messages = getMessages(order)
 
     return (
       <div className="bg-order-dark min-h-screen">
@@ -125,9 +126,9 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
                            <div className="mt-5">
                              <OrderTabs tab={this.state.tab} 
                                         setTab={tab => this.setState({tab})}
-                                        householdsBg="bg-household-lightest"
-                                        productsBg="bg-white"
-                                        productCodesBg="bg-white" />
+                                        householdsBg={messages.length? 'bg-blue-lighter' : 'bg-household-lightest'}
+                                        productsBg={messages.length? 'bg-blue-lighter' : 'bg-white'}
+                                        productCodesBg={messages.length? 'bg-blue-lighter' : 'bg-white'} />
                            </div>
                          }
                        </div>
@@ -143,7 +144,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
               </div>
             : this.state.tab == 'households'?
               <div className="shadow-inner-top border-t bg-household-lightest">
-                <CollectiveOrderMessages order={order} />
+                <OrderMessages order={order} />
                 <div className="flex justify-end mt-4 mr-2">
                   <button className="flex-no-grow flex-no-shrink" onClick={() => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                 </div>
@@ -152,14 +153,14 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
               </div>
             : this.state.tab == 'product-list'?
               <div className="shadow-inner-top border-t bg-white">
-                <CollectiveOrderMessages order={order} />
+                <OrderMessages order={order} />
                 <div className="flex justify-end mr-2 mt-4 mb-2">
                   <button className="flex-no-grow flex-no-shrink" onClick={() => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                 </div>
                 <OrderItems order={order} />
               </div>
             : <div className="shadow-inner-top border-t bg-white">
-                <CollectiveOrderMessages order={order} />
+                <OrderMessages order={order} />
                 <ProductCodes order={order} />
               </div>
             )

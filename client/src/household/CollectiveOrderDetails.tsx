@@ -1,18 +1,18 @@
 import * as React from 'react';
 
 import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
-import { Util } from 'util/Util'
 import { Icon } from 'util/Icon'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 
 import { OrderStatus } from 'order/OrderStatus'
 import { OrderTotal } from 'order/OrderTotal'
+import { OrderMessages } from 'order/OrderMessages'
 
 import { AddProduct } from './AddProduct'
 import { HouseholdOrderItems } from './HouseholdOrderItems'
 import { HouseholdOrderButtons } from './HouseholdOrderButtons'
-import { CollectiveOrderMessages } from './CollectiveOrderMessages'
+import { AcceptUpdates } from './AcceptUpdates'
 
 export interface CollectiveOrderDetailsProps { household: Household
                                                collectiveOrder: CollectiveOrder | undefined
@@ -81,7 +81,7 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
 
   unusedProducts = () => {
     if(!this.props.household.currentHouseholdOrder)
-      return []
+      return this.props.products
 
     const items = this.props.household.currentHouseholdOrder.items
     return this.props.products.filter(p => !items.find(i => i.productCode == p.code))
@@ -127,6 +127,7 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
                      <HouseholdOrderButtons className="p-2 bg-order-dark -mt-4"
                                             unusedProducts={unusedProducts} 
                                             currentHouseholdOrder={householdOrder} 
+                                            collectiveOrder={order}
                                             newOrder={this.newOrder} 
                                             reopenOrder={this.reopenOrder}
                                             abandonOrder={this.abandonOrder}
@@ -149,9 +150,9 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
             <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items {!!this.props.products && !this.props.products.length && ' - the product catalogue is empty'}
           </div>
         : <div>
-            <CollectiveOrderMessages householdOrder={householdOrder} 
-                                     collectiveOrder={order} 
-                                     acceptUpdates={this.acceptUpdates} />
+            <AcceptUpdates householdOrder={householdOrder}
+                           acceptUpdates={this.acceptUpdates} /> 
+            <OrderMessages order={order} />
             <HouseholdOrderItems householdOrder={householdOrder}
                                  {...this.props} />
           </div>
