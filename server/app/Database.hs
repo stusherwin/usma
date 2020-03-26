@@ -14,6 +14,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , getProductCatalogueCategories, getProductCatalogueBrands, getProductImage, saveProductImage
                 , getGroup
                 , reconcileOrderItem
+                , getGroupSettings
                 ) where
   import Control.Monad (mzero, when, void, forM_)
   import Control.Monad.IO.Class (liftIO)
@@ -42,6 +43,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   import ProductCatalogueEntry
   import OrderItem
   import Product (VatRate(..))
+  import GroupSettings
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
@@ -244,6 +246,9 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
 
   instance FromRow ProductCatalogueEntryData where
     fromRow = ProductCatalogueEntryData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+  instance FromRow GroupSettings where
+    fromRow = GroupSettings <$> field
 
   (<&>) :: Functor f => f a -> (a -> b) -> f b
   (<&>) = flip (<$>)
@@ -1009,3 +1014,14 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           where phoi.order_id = phoi2.order_id and phoi.household_id = phoi2.household_id and phoi.product_id = phoi2.product_id and phoi.order_group_id = phoi2.order_group_id
         |] (price, quantity, orderId, householdId, productId, groupId)
     close conn
+
+  getGroupSettings :: ByteString -> Int -> IO (Maybe GroupSettings)
+  getGroupSettings connectionString groupId = do
+    conn <- connectPostgreSQL connectionString
+    rSettings <- query conn [sql|
+      select enable_payments
+      from order_group g
+      where id = ?
+    |] (Only groupId)
+    close conn
+    return $ listToMaybe $ rSettings

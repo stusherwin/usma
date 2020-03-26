@@ -21,6 +21,7 @@ module Api where
   import HouseholdPayment
   import OrderItem
   import ProductCatalogueEntry
+  import GroupSettings
   import qualified Data.ByteString.Lazy as L
   import Network.HTTP.Media ((//))
 
@@ -50,7 +51,7 @@ module Api where
          Capture "groupKey" Text :> Post '[JSON] Bool
 
   type WithGroupAPI =
-    Capture "rotaKey" Text :> (
+    Capture "groupKey" Text :> (
               "query" :> QueryAPI
          :<|> "command" :> CommandAPI
     )
@@ -70,6 +71,7 @@ module Api where
     :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
     :<|> "product-catalogue-categories" :> Get '[JSON] [String]
     :<|> "product-catalogue-brands" :> Get '[JSON] [String]
+    :<|> "group-settings" :> Get '[JSON] (Maybe GroupSettings)
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

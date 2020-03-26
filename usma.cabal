@@ -25,6 +25,7 @@ library
                      , HouseholdPayment
                      , ProductCatalogueData
                      , ProductCatalogueEntry
+                     , GroupSettings
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , time
