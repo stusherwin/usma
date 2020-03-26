@@ -104,7 +104,7 @@ const command = {
   },
 
   ensureHouseholdOrderItem(orderId: number, householdId: number, productCode: string, quantity: number | null): Promise<{}> {
-    return Http.post(groupUrl(`/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`), { hoidQuantity: quantity })
+    return Http.post(groupUrl(`/command/ensure-household-order-item/${orderId}/${householdId}/${productCode}`), { quantity })
   },
 
   ensureAllItemsFromPastHouseholdOrder(orderId: number, householdId: number, pastOrderId: number): Promise<{}> {
@@ -116,19 +116,11 @@ const command = {
   },
 
   createHousehold(name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
-    return Http.post(groupUrl(`/command/create-household/`), { hdName: name
-                                                             , hdContactName: contactName
-                                                             , hdContactEmail: contactEmail
-                                                             , hdContactPhone: contactPhone 
-                                                             })
+    return Http.post(groupUrl(`/command/create-household/`), { name, contactName, contactEmail, contactPhone })
   },
 
   updateHousehold(id: number, name: string, contactName: string | null, contactEmail: string | null, contactPhone: string | null): Promise<number> {
-    return Http.post(groupUrl(`/command/update-household/${id}`), { hdName: name
-                                                                  , hdContactName: contactName
-                                                                  , hdContactEmail: contactEmail
-                                                                  , hdContactPhone: contactPhone 
-                                                                  })
+    return Http.post(groupUrl(`/command/update-household/${id}`), { name, contactName, contactEmail, contactPhone })
   },
 
   archiveHousehold(id: number): Promise<{}> {
@@ -136,14 +128,14 @@ const command = {
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), { hpdDate: Util.dateString(date)
-                                                                                   , hpdAmount: amount
+    return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), { date: Util.dateString(date)
+                                                                                   , amount
                                                                                    })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
-    return Http.post(groupUrl(`/command/update-household-payment/${id}`), { hpdDate: Util.dateString(date)
-                                                                          , hpdAmount: amount
+    return Http.post(groupUrl(`/command/update-household-payment/${id}`), { date: Util.dateString(date)
+                                                                          , amount
                                                                           })
   },
 
@@ -162,7 +154,7 @@ const command = {
   reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: {householdId: number, itemQuantity: number}[]): Promise<{}> {
     return Http.post(groupUrl(`/command/reconcile-order-item/${orderId}/${productId}`), 
       { roidProductPriceExcVat: productPriceExcVat
-      , roidHouseholdQuantities: householdQuantities.map(h => ({ hqdHouseholdId: h.householdId, hqdItemQuantity: h.itemQuantity }))
+      , roidHouseholdQuantities: householdQuantities.map(h => ({ householdId: h.householdId, itemQuantity: h.itemQuantity }))
       })
   }
 }

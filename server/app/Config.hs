@@ -3,7 +3,7 @@
 
 module Config where
   import Data.ByteString (ByteString)
-  import qualified Data.ByteString.Char8 as B (pack, unpack)
+  import qualified Data.ByteString.Char8 as B (pack)
   import System.Environment (getEnv, getArgs)
 
   data Config = Config { port :: Int
