@@ -75,6 +75,7 @@ module Api where
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
+    :<|> "create-order" :> Post '[JSON] Int
     :<|> "place-order"  :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "abandon-order"  :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "abandon-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()

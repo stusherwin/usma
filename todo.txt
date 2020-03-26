@@ -1,7 +1,5 @@
 Bugs/Quick wins
-* Null order created by - should say "Admin"
 * Add all missing items from past order
-* delete admin home page - should just redirect to orders page like households welcome page
 * Hide previous error on successful response
 * Add bigger image/link to product page
 * Product price alignment

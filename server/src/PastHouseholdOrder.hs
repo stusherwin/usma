@@ -9,8 +9,8 @@ module PastHouseholdOrder where
   
   data PastHouseholdOrder = PastHouseholdOrder { orderId :: Int
                                                , orderCreatedDate :: UTCTime
-                                               , orderCreatedBy :: Int
-                                               , orderCreatedByName :: String
+                                               , orderCreatedBy :: Maybe Int
+                                               , orderCreatedByName :: Maybe String
                                                , orderIsPlaced :: Bool
                                                , orderIsAbandoned :: Bool
                                                , householdId :: Int
@@ -26,7 +26,7 @@ module PastHouseholdOrder where
                                                } deriving (Eq, Show, Generic)
   instance ToJSON PastHouseholdOrder
 
-  pastHouseholdOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
+  pastHouseholdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
   pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
     PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
   

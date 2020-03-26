@@ -46,8 +46,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
   }
 
   newOrder = () => {
-    // TODO: Have some way of choosing the household to create order
-    this.props.request(ServerApi.command.createOrder(this.props.households[0].id))
+    this.props.request(ServerApi.command.createOrder())
       .then(this.props.reload)
   }
 

@@ -9,8 +9,8 @@ module PastCollectiveOrder where
 
   data PastCollectiveOrder = PastCollectiveOrder { id :: Int
                                                  , orderCreatedDate :: UTCTime
-                                                 , orderCreatedBy :: Int
-                                                 , orderCreatedByName :: String
+                                                 , orderCreatedBy :: Maybe Int
+                                                 , orderCreatedByName :: Maybe String
                                                  , orderIsPlaced :: Bool
                                                  , orderIsAbandoned :: Bool
                                                  , isAbandoned :: Bool
@@ -24,7 +24,7 @@ module PastCollectiveOrder where
                                                  } deriving (Eq, Show, Generic)
   instance ToJSON PastCollectiveOrder
 
-  pastCollectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
+  pastCollectiveOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
   pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items = 
     PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
   

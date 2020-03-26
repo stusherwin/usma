@@ -301,7 +301,8 @@ module Main where
     groupSettings groupKey = findGroupOr404 conn groupKey $ \groupId -> liftIO $ D.getGroupSettings conn groupId
 
   commandServer :: Config -> Text -> Server CommandAPI
-  commandServer config groupKey = createOrder groupKey
+  commandServer config groupKey = createOrderForHousehold groupKey
+                             :<|> createOrder groupKey
                              :<|> placeOrder groupKey
                              :<|> abandonOrder groupKey
                              :<|> abandonHouseholdOrder groupKey
@@ -322,10 +323,15 @@ module Main where
     where
     conn = connectionString config
     
-    createOrder :: Text -> Int -> Handler Int
-    createOrder groupKey householdId = findGroupOr404 conn groupKey $ \groupId -> do
+    createOrderForHousehold :: Text -> Int -> Handler Int
+    createOrderForHousehold groupKey householdId = findGroupOr404 conn groupKey $ \groupId -> do
       date <- liftIO $ getCurrentTime
-      liftIO $ D.createOrder conn groupId date householdId
+      liftIO $ D.createOrder conn groupId date (Just householdId)
+
+    createOrder :: Text -> Handler Int
+    createOrder groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+      date <- liftIO $ getCurrentTime
+      liftIO $ D.createOrder conn groupId date Nothing
 
     placeOrder :: Text -> Int -> Handler ()
     placeOrder groupKey orderId = findGroupOr404 conn groupKey $ \groupId ->

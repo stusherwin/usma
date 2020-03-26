@@ -9,8 +9,8 @@ module HouseholdOrder where
   
   data HouseholdOrder = HouseholdOrder { orderId :: Int
                                        , orderCreatedDate :: UTCTime
-                                       , orderCreatedBy :: Int
-                                       , orderCreatedByName :: String
+                                       , orderCreatedBy :: Maybe Int
+                                       , orderCreatedByName :: Maybe String
                                        , orderIsPlaced :: Bool
                                        , orderIsAbandoned :: Bool
                                        , householdId :: Int
@@ -30,7 +30,7 @@ module HouseholdOrder where
   instance ToJSON HouseholdOrderItemDetails
   instance FromJSON HouseholdOrderItemDetails
 
-  householdOrder :: Int -> UTCTime -> Int -> String -> Int -> String -> Bool -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> HouseholdOrder
+  householdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Int -> String -> Bool -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> HouseholdOrder
   householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled _ _ totalExcVat totalIncVat False items = 
     HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat Nothing items 
     where

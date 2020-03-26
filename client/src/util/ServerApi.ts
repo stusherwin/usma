@@ -108,8 +108,8 @@ const query = {
 }
 
 const command = {
-  createOrder(householdId: number): Promise<number> {
-    return Http.post(groupUrl(`/command/create-order/${householdId}`), {})
+  createOrder(householdId?: number): Promise<number> {
+    return Http.post(groupUrl(`/command/create-order/${householdId || ''}`), {})
   },
 
   placeOrder(orderId: number): Promise<number> {

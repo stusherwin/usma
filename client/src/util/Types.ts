@@ -38,8 +38,8 @@ export interface Order {
   isAbandoned: boolean
   isReconciled: boolean
   orderCreatedDate: Date
-  orderCreatedBy: number
-  orderCreatedByName: string
+  orderCreatedBy: number | null
+  orderCreatedByName: string | null
   orderIsPlaced: boolean
   orderIsAbandoned: boolean
   adjustment: OrderAdjustment | null

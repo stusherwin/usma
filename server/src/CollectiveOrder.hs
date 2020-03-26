@@ -9,8 +9,8 @@ module CollectiveOrder where
   
   data CollectiveOrder = CollectiveOrder { id :: Int
                                          , orderCreatedDate :: UTCTime
-                                         , orderCreatedBy :: Int
-                                         , orderCreatedByName :: String
+                                         , orderCreatedBy :: Maybe Int
+                                         , orderCreatedByName :: Maybe String
                                          , orderIsPlaced :: Bool
                                          , orderIsAbandoned :: Bool
                                          , isComplete :: Bool
@@ -22,7 +22,7 @@ module CollectiveOrder where
                                          } deriving (Eq, Show, Generic)
   instance ToJSON CollectiveOrder
 
-  collectiveOrder :: Int -> UTCTime -> Int -> String -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> CollectiveOrder
+  collectiveOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> CollectiveOrder
   collectiveOrder id createdDate createdBy createdByName complete _ _ totalExcVat totalIncVat True items = 
     CollectiveOrder id createdDate createdBy createdByName False False complete totalExcVat totalIncVat True Nothing items
 

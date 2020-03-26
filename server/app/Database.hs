@@ -177,8 +177,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   data HouseholdOrderData = HouseholdOrderData {
     ho_orderId :: Int, 
     ho_orderCreated :: UTCTime, 
-    ho_orderCreatedBy :: Int, 
-    ho_orderCreatedByName :: String, 
+    ho_orderCreatedBy :: Maybe Int, 
+    ho_orderCreatedByName :: Maybe String, 
     ho_householdId :: Int, 
     ho_householdName :: String, 
     ho_complete :: Bool, 
@@ -196,8 +196,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   data PastCollectiveOrderData = PastCollectiveOrderData {
     pco_orderId :: Int, 
     pco_orderCreated :: UTCTime, 
-    pco_orderCreatedBy :: Int, 
-    pco_orderCreatedByName :: String, 
+    pco_orderCreatedBy :: Maybe Int, 
+    pco_orderCreatedByName :: Maybe String, 
     pco_cancelled :: Bool, 
     pco_reconciled :: Bool, 
     pco_totalExcVat :: Int, 
@@ -212,8 +212,8 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   data PastHouseholdOrderData = PastHouseholdOrderData {
     pho_orderId :: Int, 
     pho_orderCreated :: UTCTime, 
-    pho_orderCreatedBy :: Int, 
-    pho_orderCreatedByName :: String, 
+    pho_orderCreatedBy :: Maybe Int, 
+    pho_orderCreatedByName :: Maybe String, 
     pho_orderAbandoned :: Bool,
     pho_householdId :: Int, 
     pho_householdName :: String, 
@@ -267,7 +267,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           select o.id, o.created_date, h.id as created_by_id, h.name as created_by_name, 
             coalesce(bool_and(ho.complete), false) as complete
           from "order" o
-          inner join household h on h.id = o.created_by_id
+          left join household h on h.id = o.created_by_id
           left join household_order ho on ho.order_id = o.id
           where o.order_group_id = ?
           group by o.id, o.created_date, h.id, h.name
@@ -326,7 +326,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
         order by p.code asc
       |] (Only groupId)
-      return (os :: [(Int, UTCTime, Int, String, Bool, Int, Int, Int, Int, Bool)], is :: [OrderItemData])
+      return (os :: [(Int, UTCTime, Maybe Int, Maybe String, Bool, Int, Int, Int, Int, Bool)], is :: [OrderItemData])
     close conn
     return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, oldTotalExcVat, oldTotalIncVat, totalExcVat, totalIncVat, allUpToDate) ->
       let item (OrderItemData { oi_productId, oi_code, oi_name, oi_vatRate, oi_quantity, oi_priceExcVat, oi_priceIncVat, oi_itemTotalExcVat, oi_itemTotalIncVat, oi_b, oi_f, oi_g, oi_o, oi_s, oi_v }) 
@@ -409,7 +409,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
              , max(p.updated) is not null and max(p.updated) > ho.updated as updated
         from household_order ho
         inner join "order" o on o.id = ho.order_id
-        inner join household cb on cb.id = o.created_by_id
+        left join household cb on cb.id = o.created_by_id
         inner join household h on h.id = ho.household_id
         left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
         left join product p on p.id = hoi.product_id
@@ -566,16 +566,19 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     close conn
     return $ (rPayments :: [(Int, Int, UTCTime, Int)]) <&> \(id, householdId, date, amount) -> HouseholdPayment id householdId date amount
 
-  createOrder :: ByteString -> Int -> UTCTime -> Int -> IO Int
+  createOrder :: ByteString -> Int -> UTCTime -> Maybe Int -> IO Int
   createOrder connectionString groupId date householdId = do
     conn <- connectPostgreSQL connectionString
     id <- withTransaction conn $ do
       [Only id] <- query conn [sql|
         insert into "order" (order_group_id, created_date, created_by_id) values (?, ?, ?) returning id
       |] (groupId, date, householdId)
-      void $ execute conn [sql|
-        insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
-      |] (groupId, id, householdId, date)
+      case householdId of
+        (Just householdId) -> do
+          void $ execute conn [sql|
+            insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
+          |] (groupId, id, householdId, date)
+        _ -> return ()
       return id
     close conn
     return id
@@ -588,7 +591,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         insert into past_order (order_group_id, id, created_date, created_by_id, created_by_name, cancelled)
         select o.order_group_id, o.id, o.created_date, h.id, h.name, ?
         from "order" o
-        inner join household h on h.id = o.created_by_id
+        left join household h on h.id = o.created_by_id
         where o.id = ? and o.order_group_id = ?
       |] (cancelled, orderId, groupId)
       execute conn [sql|
