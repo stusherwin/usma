@@ -13,9 +13,12 @@ module Config where
   getConfig :: IO Config
   getConfig = do
     args <- getArgs
-    let port = read $ head args
+    let port = case args of
+                (a:_) -> read $ a
+                _     -> 0
     putStrLn $ "port: " ++ (show port)
-    connectionString <- if length args > 1 then return (args !! 1)
-                                           else getEnv "DATABASE_URL"
+    connectionString <- case args of
+                          (_:cs:_) -> return cs
+                          _        -> getEnv "DATABASE_URL"
     putStrLn $ "connection string: " ++ connectionString
     return $ Config port (B.pack connectionString)

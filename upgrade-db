@@ -1,0 +1,9 @@
+#!/bin/bash
+shutdown() {
+  ps -W | grep "usma" | awk '{print $1}' | xargs kill -f
+  exit 0
+}
+
+trap "shutdown" SIGINT SIGTERM
+
+stack exec usma-upgradedb 8082 postgres://col_ord_user:password@localhost:5432/col_ord CurrentSumaPrices.csv
