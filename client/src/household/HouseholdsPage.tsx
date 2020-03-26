@@ -10,19 +10,19 @@ import { Form, Field, Validate } from 'util/Validation'
 import { TextField } from 'util/Field'
 import { ServerApi } from 'util/ServerApi'
 
-export interface HouseholdWelcomePageProps { households: Household[]
-                                             groupSettings: GroupSettings
-                                             request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                             reload: () => Promise<void>
-                                           }
+export interface HouseholdsPageProps { households: Household[]
+                                       groupSettings: GroupSettings
+                                       request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                       reload: () => Promise<void>
+                                     }
 
-export interface HouseholdWelcomePageState { selectedHouseholdId: number | undefined
-                                             editing: 'new' | number | null
-                                             form: Form
-                                           }
+export interface HouseholdsPageState { selectedHouseholdId: number | undefined
+                                       editing: 'new' | number | null
+                                       form: Form
+                                     }
 
-export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePageProps, HouseholdWelcomePageState> {
-  constructor(props: HouseholdWelcomePageProps) {
+export class HouseholdsPage extends React.Component<HouseholdsPageProps, HouseholdsPageState> {
+  constructor(props: HouseholdsPageProps) {
     super(props)
 
     this.state = { selectedHouseholdId: !!props.households.length ? props.households[0].id : undefined

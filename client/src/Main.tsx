@@ -6,13 +6,12 @@ import { Router } from './util/Router'
 import { Loading } from './util/Loading'
 import { Icon } from './util/Icon'
 
-import { AdminHomePage } from 'admin/AdminHomePage'
 import { AdminOrdersPage } from 'admin/orders/AdminOrdersPage'
 import { AdminProductsPage } from 'admin/products/AdminProductsPage'
 import { AdminHouseholdPage } from 'admin/households/AdminHouseholdPage'
 import { AdminHouseholdsPage } from 'admin/households/AdminHouseholdsPage'
 
-import { HouseholdWelcomePage } from './household/HouseholdWelcomePage'
+import { HouseholdsPage } from './household/HouseholdsPage'
 import { HouseholdPage } from './household/HouseholdPage'
 
 export interface MainProps {}
@@ -133,20 +132,22 @@ export class Main extends React.Component<MainProps, MainState> {
   render() {
     const router = new Router('')    
     
-    router.route('/admin/orders', c => {
-      return <AdminOrdersPage collectiveOrder={this.state.collectiveOrders[0]}
-                              households={this.state.households}
-                              pastOrders={this.state.collectiveOrders.slice(1)}
-                              groupSettings={this.state.groupSettings}
-                              reload={this.reload}
-                              request={this.request} />
-    })
+    router.route('/admin/orders', c => 
+      <AdminOrdersPage collectiveOrder={this.state.collectiveOrders[0]}
+                       households={this.state.households}
+                       pastOrders={this.state.collectiveOrders.slice(1)}
+                       groupSettings={this.state.groupSettings}
+                       reload={this.reload}
+                       request={this.request} />
+    )
     
-    router.route('/admin/products', _ => <AdminProductsPage products={this.state.productCatalogue}
-                                                            categories={this.state.categories}
-                                                            brands={this.state.brands}
-                                                            reload={this.reload}
-                                                            request={this.request} />)
+    router.route('/admin/products', _ => 
+      <AdminProductsPage products={this.state.productCatalogue}
+                         categories={this.state.categories}
+                         brands={this.state.brands}
+                         reload={this.reload}
+                         request={this.request} />
+    )
     
     router.route('/admin/households/{householdId}', c => {
       const household = this.state.households.find(h => h.id == c.householdId)
@@ -163,12 +164,20 @@ export class Main extends React.Component<MainProps, MainState> {
                             request={this.request} />
     })
     
-    router.route('/admin/households', _ => <AdminHouseholdsPage households={this.state.households}
-                                                                groupSettings={this.state.groupSettings}
-                                                                reload={this.reload}
-                                                                request={this.request} />)
+    router.route('/admin/households', _ => 
+      <AdminHouseholdsPage households={this.state.households}
+                           groupSettings={this.state.groupSettings}
+                           reload={this.reload}
+                           request={this.request} />)
     
-    router.route('/admin', _ => <AdminHomePage />)
+    router.route('/admin', _ => 
+      <AdminOrdersPage collectiveOrder={this.state.collectiveOrders[0]}
+                       households={this.state.households}
+                       pastOrders={this.state.collectiveOrders.slice(1)}
+                       groupSettings={this.state.groupSettings}
+                       reload={this.reload}
+                       request={this.request} />
+    )
 
     router.route('/households/{householdId}', (c, r) => {
       const household = this.state.households.find(h => h.id == c.householdId)
@@ -186,15 +195,15 @@ export class Main extends React.Component<MainProps, MainState> {
                        router={r} />
     })
 
-    router.route('/households', _ => <HouseholdWelcomePage households={this.state.households}
-                                                           groupSettings={this.state.groupSettings}
-                                                           request={this.request}
-                                                           reload={this.reload} />)
+    router.route('/households', _ => <HouseholdsPage households={this.state.households}
+                                                     groupSettings={this.state.groupSettings}
+                                                     request={this.request}
+                                                     reload={this.reload} />)
     
-    router.route('/$', _ => <HouseholdWelcomePage households={this.state.households}
-                                                  groupSettings={this.state.groupSettings}
-                                                  request={this.request}
-                                                  reload={this.reload} />)
+    router.route('/$', _ => <HouseholdsPage households={this.state.households}
+                                            groupSettings={this.state.groupSettings}
+                                            request={this.request}
+                                            reload={this.reload} />)
     
     return (
       <div>

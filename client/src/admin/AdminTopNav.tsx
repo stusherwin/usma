@@ -11,7 +11,7 @@ export const AdminTopNav = () => {
       path: '/admin/orders',
       iconClassName: 'bg-img-order',
       className: 'bg-order-dark text-black hover:text-black',
-      current: Router.isCurrent('/admin/orders'),
+      current: Router.isCurrent('/admin/orders') || Router.isCurrentExact('/admin'),
     },
     { 
       text: 'Products',

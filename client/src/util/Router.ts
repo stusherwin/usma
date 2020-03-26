@@ -76,6 +76,10 @@ export class Router {
     return this.path.startsWith(Router.normalise(path))
   }
 
+  static isCurrentExact(path: string) {
+    return Router.normalise(this.path) == Router.normalise(path)
+  }
+
   private static normalise(url: string) {
     return url.endsWith('/') ? url : url + '/';
   }
