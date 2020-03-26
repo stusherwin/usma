@@ -17,9 +17,9 @@ module ProductCatalogueImport where
   import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
   import Data.ByteString (ByteString)
   import System.Directory (copyFile)
-  import ProductCatalogueData
-  import Database
-  import Product (VatRate(..))
+
+  import Types (ProductCatalogueData(..), VatRate(..))
+  import Database (replaceProductCatalogue)
 
   splitOn :: Eq a => a -> [a] -> [[a]]
   splitOn ch list = f list [[]] where
