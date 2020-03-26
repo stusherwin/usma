@@ -26,7 +26,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   import Database.PostgreSQL.Simple.Time (Unbounded(..))
   import Database.PostgreSQL.Simple.SqlQQ
   import Data.ByteString (ByteString)
-  import Data.Maybe (listToMaybe, fromJust)
+  import Data.Maybe (listToMaybe, fromJust, fromMaybe)
   import Data.Map.Lazy (fromListWith, assocs)
   import qualified Data.Text as T
   import Data.Text.Encoding (encodeUtf8)
@@ -1015,7 +1015,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
         |] (price, quantity, orderId, householdId, productId, groupId)
     close conn
 
-  getGroupSettings :: ByteString -> Int -> IO (Maybe GroupSettings)
+  getGroupSettings :: ByteString -> Int -> IO GroupSettings
   getGroupSettings connectionString groupId = do
     conn <- connectPostgreSQL connectionString
     rSettings <- query conn [sql|
@@ -1024,4 +1024,4 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       where id = ?
     |] (Only groupId)
     close conn
-    return $ listToMaybe $ rSettings
+    return $ fromMaybe (GroupSettings True) $ listToMaybe $ rSettings

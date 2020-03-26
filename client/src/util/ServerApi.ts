@@ -1,4 +1,4 @@
-import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry } from './Types'
+import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry, GroupSettings } from './Types'
 import { Util } from './Util'
 
 export interface Data { collectiveOrders: CollectiveOrder[]
@@ -6,6 +6,7 @@ export interface Data { collectiveOrders: CollectiveOrder[]
                       , categories: string[]
                       , brands: string[]
                       , households: Household[]
+                      , groupSettings: GroupSettings
 }
 
 function getCollectiveOrder(): Promise<CollectiveOrder | null> {
@@ -55,6 +56,10 @@ function getProductCatalogueBrands(): Promise<string[]> {
   return Http.get<string[]>(groupUrl('/query/product-catalogue-brands'))
 }
 
+function getGroupSettings(): Promise<GroupSettings> {
+  return Http.get<GroupSettings>(groupUrl('/query/group-settings'))
+}
+
 const query = {
   getData(): Promise<Data> {
     return Promise.all([ getCollectiveOrder()
@@ -66,8 +71,9 @@ const query = {
                        , getProductCatalogue()
                        , getProductCatalogueCategories()
                        , getProductCatalogueBrands()
+                       , getGroupSettings()
                        ])
-      .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue, categories, brands]) => {
+      .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue, categories, brands, groupSettings]) => {
         if(collectiveOrder) {
           collectiveOrder.householdOrders = householdOrders.filter(ho => ho.orderId == collectiveOrder.id)
         }
@@ -94,7 +100,8 @@ const query = {
           households,
           productCatalogue,
           categories,
-          brands
+          brands,
+          groupSettings
         }                               
       })
   }

@@ -297,7 +297,7 @@ module Main where
     productCatalogueBrands :: Handler [String]
     productCatalogueBrands = liftIO $ D.getProductCatalogueBrands conn
 
-    groupSettings :: Text -> Handler (Maybe GroupSettings)
+    groupSettings :: Text -> Handler GroupSettings
     groupSettings groupKey = findGroupOr404 conn groupKey $ \groupId -> liftIO $ D.getGroupSettings conn groupId
 
   commandServer :: Config -> Text -> Server CommandAPI

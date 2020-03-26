@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household } from 'util/Types'
+import { Household, GroupSettings } from 'util/Types'
 import { ServerApi } from 'util/ServerApi'
 import { RouterLink } from 'util/RouterLink'
 import { BalanceSmall } from 'util/Money'
@@ -12,12 +12,13 @@ import { TextField } from 'util/Field'
 import { AdminTopNav } from 'admin/AdminTopNav'
 
 export interface AdminHouseholdsPageProps { households: Household[]
-                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                          , reload: () => Promise<void>
+                                            groupSettings: GroupSettings
+                                            request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                            reload: () => Promise<void>
                                           }
 
 export interface AdminHouseholdsPageState { editing: 'new' | number | null
-                                          , form: Form
+                                            form: Form
                                           }
 
 export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProps, AdminHouseholdsPageState> {
@@ -165,10 +166,12 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                      </h3>
                      <div className="mt-4 text-base inline-block"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
-                   <div className="flex flex-col items-end">
-                     <BalanceSmall className="text-right" amount={-h.balance} />
-                     <button className="mt-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                   </div>
+                   {this.props.groupSettings.enablePayments &&
+                     <div className="flex flex-col items-end">
+                       <BalanceSmall className="text-right" amount={-h.balance} />
+                       <button className="mt-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                     </div>
+                   }
                  </div>
                </RouterLink>
               )) }

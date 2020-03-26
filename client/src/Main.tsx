@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CollectiveOrder, HouseholdOrder, Household, HouseholdPayment, ProductCatalogueEntry } from './util/Types'
+import { CollectiveOrder, Household, ProductCatalogueEntry, GroupSettings } from './util/Types'
 import { ServerApi, ApiError } from './util/ServerApi'
 import { Router } from './util/Router'
 import { Loading } from './util/Loading'
@@ -23,16 +23,12 @@ export interface MainState { loading: boolean
                            , groupKey: string | null
                            , groupValid: boolean
                            , initialised: boolean
-                          //  , collectiveOrder: CollectiveOrder | undefined
-                          //  , pastCollectiveOrders: CollectiveOrder[]
                            , collectiveOrders: CollectiveOrder[]
-                          //  , householdOrders: HouseholdOrder[]
-                          //  , pastHouseholdOrders: HouseholdOrder[]
                            , productCatalogue: ProductCatalogueEntry[]
                            , categories: string[]
                            , brands: string[]
                            , households: Household[]
-                          //  , householdPayments: HouseholdPayment[]
+                           , groupSettings: GroupSettings
                            }
 
 export class Main extends React.Component<MainProps, MainState> {
@@ -48,17 +44,13 @@ export class Main extends React.Component<MainProps, MainState> {
                  , url: urlInfo.url
                  , groupKey: urlInfo.groupKey
                  , groupValid: false
-                //  , collectiveOrder: null
-                //  , pastCollectiveOrders: []
                  , collectiveOrders: []
-                //  , householdOrders: []
-                //  , pastHouseholdOrders: []
                  , productCatalogue: []
                  , categories: []
                  , brands: []
                  , households: []
-                //  , householdPayments: []
                  , initialised: !urlInfo.groupKey
+                 , groupSettings: { enablePayments: false }
                  }
   }
 
@@ -113,16 +105,12 @@ export class Main extends React.Component<MainProps, MainState> {
 
   reload = () =>
     this.request(ServerApi.query.getData())
-        .then(data => this.setState({ //collectiveOrder: data.collectiveOrder
-                                    // , pastCollectiveOrders: data.pastCollectiveOrders
-                                     collectiveOrders: data.collectiveOrders
-                                    // , householdOrders: data.householdOrders
-                                    // , pastHouseholdOrders: data.pastHouseholdOrders
+        .then(data => this.setState({ collectiveOrders: data.collectiveOrders
                                     , households: data.households
-                                    // , householdPayments: data.householdPayments
                                     , productCatalogue: data.productCatalogue
                                     , categories: data.categories
                                     , brands: data.brands
+                                    , groupSettings: data.groupSettings
                                     })
     )
 
@@ -149,6 +137,7 @@ export class Main extends React.Component<MainProps, MainState> {
       return <AdminOrdersPage collectiveOrder={this.state.collectiveOrders[0]}
                               households={this.state.households}
                               pastOrders={this.state.collectiveOrders.slice(1)}
+                              groupSettings={this.state.groupSettings}
                               reload={this.reload}
                               request={this.request} />
     })
@@ -169,11 +158,13 @@ export class Main extends React.Component<MainProps, MainState> {
                             categories={this.state.categories}
                             brands={this.state.brands}
                             households={this.state.households}
+                            groupSettings={this.state.groupSettings}
                             reload={this.reload}
                             request={this.request} />
     })
     
     router.route('/admin/households', _ => <AdminHouseholdsPage households={this.state.households}
+                                                                groupSettings={this.state.groupSettings}
                                                                 reload={this.reload}
                                                                 request={this.request} />)
     
@@ -189,16 +180,19 @@ export class Main extends React.Component<MainProps, MainState> {
                        categories={this.state.categories}
                        brands={this.state.brands}
                        households={this.state.households}
+                       groupSettings={this.state.groupSettings}
                        reload={this.reload}
                        request={this.request}
                        router={r} />
     })
 
     router.route('/households', _ => <HouseholdWelcomePage households={this.state.households}
+                                                           groupSettings={this.state.groupSettings}
                                                            request={this.request}
                                                            reload={this.reload} />)
     
     router.route('/$', _ => <HouseholdWelcomePage households={this.state.households}
+                                                  groupSettings={this.state.groupSettings}
                                                   request={this.request}
                                                   reload={this.reload} />)
     

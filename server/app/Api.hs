@@ -71,7 +71,7 @@ module Api where
     :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
     :<|> "product-catalogue-categories" :> Get '[JSON] [String]
     :<|> "product-catalogue-brands" :> Get '[JSON] [String]
-    :<|> "group-settings" :> Get '[JSON] (Maybe GroupSettings)
+    :<|> "group-settings" :> Get '[JSON] GroupSettings
  
   type CommandAPI =
          "create-order" :> Capture "householdId" Int :> Post '[JSON] Int

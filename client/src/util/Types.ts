@@ -98,3 +98,7 @@ export interface HouseholdPayment {
   date: Date
   amount: number
 }
+
+export interface GroupSettings {
+  enablePayments: boolean
+}

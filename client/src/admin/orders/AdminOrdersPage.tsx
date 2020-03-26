@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { CollectiveOrder, Household } from 'util/Types'
+import { CollectiveOrder, Household, GroupSettings } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 import { Icon } from 'util/Icon'
@@ -22,6 +22,7 @@ import { ReconcileOrder } from './ReconcileOrder'
 export interface AdminOrdersPageProps { collectiveOrder: CollectiveOrder | undefined
                                         pastOrders: CollectiveOrder[]
                                         households: Household[]
+                                        groupSettings: GroupSettings
                                         request: <T extends {}>(p: Promise<T>) => Promise<T>
                                         reload: () => Promise<void>
                                       }

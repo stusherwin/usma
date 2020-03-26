@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Household, CollectiveOrder, ProductCatalogueEntry } from 'util/Types'
+import { Household, CollectiveOrder, ProductCatalogueEntry, GroupSettings } from 'util/Types'
 import { Money, Balance } from 'util/Money'
 import { Router } from 'util/Router'
 import { Icon } from 'util/Icon'
@@ -18,6 +18,7 @@ export interface HouseholdPageProps { household: Household
                                       categories: string[]
                                       brands: string[]
                                       households: Household[]
+                                      groupSettings: GroupSettings
                                       request: <T extends {}>(p: Promise<T>) => Promise<T>
                                       reload: () => Promise<void>
                                       router: Router
@@ -55,7 +56,9 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                            <h2 className="mt-1 leading-none mr-2 mb-4">
                              {this.props.household.name}
                            </h2>
-                           <Balance className="bg-household-lighter ml-auto" amount={-this.props.household.balance} />
+                           {this.props.groupSettings.enablePayments && 
+                             <Balance className="bg-household-lighter ml-auto" amount={-this.props.household.balance} />
+                           }
                          </div>
                          <div className="ml-20 text-base"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>
                        </div>
@@ -71,16 +74,20 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
         <PastHouseholdOrders collapsibleKey="past-orders"
                              collapsibleState={this.state.collapsibleState}
                              {...this.props} />
-        <HouseholdPayments collapsibleKey="payments"
-                           collapsibleState={this.state.collapsibleState}
-                           readOnly={true}
-                           {...this.props} />
-        <div className="p-2 pl-20 text-black relative mt-2">
-          <h3 className="mt-0 ml-2 flex justify-between">
-            <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance:</span>
-            <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
-          </h3>
-        </div>
+        {this.props.groupSettings.enablePayments && 
+          <HouseholdPayments collapsibleKey="payments"
+                             collapsibleState={this.state.collapsibleState}
+                             readOnly={true}
+                             {...this.props} />
+        }
+        {this.props.groupSettings.enablePayments && 
+          <div className="p-2 pl-20 text-black relative mt-2">
+            <h3 className="mt-0 ml-2 flex justify-between">
+              <span className="border-t-2 border-b-2 border-household-light pt-1 pb-1">Balance:</span>
+              <Money className="text-right border-t-2 border-b-2 border-black pt-1 pb-1" amount={-this.props.household.balance} noColour />
+            </h3>
+          </div>
+        }
       </div>
     )
   }

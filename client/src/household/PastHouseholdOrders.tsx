@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { HouseholdOrder, OrderItem as Item, CollectiveOrder, Household } from 'util/Types'
+import { HouseholdOrder, OrderItem as Item, CollectiveOrder, Household, GroupSettings } from 'util/Types'
 import { Util } from 'util/Util'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
@@ -14,11 +14,12 @@ import { OrderTotal } from 'order/OrderTotal'
 import { OrderFooter } from 'order/OrderFooter'
 
 export interface PastHouseholdOrdersProps { household: Household
-                                          , collectiveOrder: CollectiveOrder | undefined
-                                          , collapsibleKey: string
-                                          , collapsibleState: CollapsibleState
-                                          , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                          , reload: () => Promise<void>
+                                            collectiveOrder: CollectiveOrder | undefined
+                                            groupSettings: GroupSettings
+                                            collapsibleKey: string
+                                            collapsibleState: CollapsibleState
+                                            request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                            reload: () => Promise<void>
                                           }
 
 export interface HouseholdPaymentsState { collapsibleState: CollapsibleState
@@ -62,9 +63,11 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                          <h2 className="leading-none ml-20">
                            Past orders
                          </h2>
-                         <h3>
-                           <Money className="text-right" amount={total} />
-                         </h3>
+                         {this.props.groupSettings.enablePayments && 
+                           <h3>
+                             <Money className="text-right" amount={total} />
+                           </h3>
+                          }
                        </div>
                      </div>
                    }>
@@ -128,14 +131,16 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                     </td>
                   </tr>
                 )}) }
-                <tr>
-                  <td className="pt-4 pl-20 pr-2 pb-4 font-bold">
-                    <div className="pl-2 flex justify-between">
-                      <span>Total:</span>
-                      <span className="font-bold text-right"><Money amount={total} /></span>
-                    </div>
-                  </td>
-                </tr>
+                {this.props.groupSettings.enablePayments && 
+                  <tr>
+                    <td className="pt-4 pl-20 pr-2 pb-4 font-bold">
+                      <div className="pl-2 flex justify-between">
+                        <span>Total:</span>
+                        <span className="font-bold text-right"><Money amount={total} /></span>
+                      </div>
+                    </td>
+                  </tr>
+                }
               </tbody>
             </table>
           }

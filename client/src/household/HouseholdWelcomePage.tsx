@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { Household } from 'util/Types'
+import { Household, GroupSettings } from 'util/Types'
 import { RouterLink } from 'util/RouterLink'
 import { Icon } from 'util/Icon'
 import { Router } from 'util/Router'
@@ -11,13 +11,14 @@ import { TextField } from 'util/Field'
 import { ServerApi } from 'util/ServerApi'
 
 export interface HouseholdWelcomePageProps { households: Household[]
-                                           , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                           , reload: () => Promise<void>
+                                             groupSettings: GroupSettings
+                                             request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                             reload: () => Promise<void>
                                            }
 
 export interface HouseholdWelcomePageState { selectedHouseholdId: number | undefined
-                                           , editing: 'new' | number | null
-                                           , form: Form
+                                             editing: 'new' | number | null
+                                             form: Form
                                            }
 
 export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePageProps, HouseholdWelcomePageState> {
@@ -94,9 +95,11 @@ export class HouseholdWelcomePage extends React.Component<HouseholdWelcomePagePr
                      </h3>
                      <div className="mt-4 text-base"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
-                   <div className="flex flex-col items-end">
-                     <BalanceSmall className="text-right" amount={-h.balance} />
-                   </div>
+                   {this.props.groupSettings.enablePayments &&
+                     <div className="flex flex-col items-end">
+                       <BalanceSmall className="text-right" amount={-h.balance} />
+                     </div>
+                   }
                  </div>
                </RouterLink>
 
