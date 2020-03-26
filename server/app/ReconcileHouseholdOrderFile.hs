@@ -15,7 +15,7 @@ module ReconcileHouseholdOrderFile where
   import Text.Read (readMaybe)
 
   import UploadedOrderFile
-  import HouseholdOrder
+  import Types
   import Database
 
   getHouseholdOrderFileDetails :: String -> String -> Maybe UploadedOrderFile

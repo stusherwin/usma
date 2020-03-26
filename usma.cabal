@@ -15,17 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
-  exposed-modules:     CollectiveOrder
-                     , HouseholdOrder
-                     , PastCollectiveOrder
-                     , PastHouseholdOrder
-                     , OrderItem
-                     , Household
-                     , Product
-                     , HouseholdPayment
-                     , ProductCatalogueData
-                     , ProductCatalogueEntry
-                     , GroupSettings
+  exposed-modules:     Types
                      , UploadedOrderFile
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -38,6 +28,7 @@ executable usma
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Database
+                     , DatabaseTypes
                      , Api
                      , Config
                      , ProductCatalogueImport

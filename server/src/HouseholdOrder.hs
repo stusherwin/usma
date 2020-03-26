@@ -40,10 +40,3 @@ module HouseholdOrder where
     HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items 
     where
     open = not complete && not cancelled
-
-  data ReconcileHouseholdOrderItemDetails = ReconcileHouseholdOrderItemDetails { rhoidProductCode :: String
-                                                                               , rhoidProductPriceExcVat :: Int
-                                                                               , rhoidQuantity :: Int
-                                                                               } deriving (Eq, Show, Generic)
-  instance ToJSON ReconcileHouseholdOrderItemDetails
-  instance FromJSON ReconcileHouseholdOrderItemDetails  
