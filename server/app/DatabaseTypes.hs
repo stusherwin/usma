@@ -329,13 +329,6 @@ fromHouseholdOrderData items d
                    (if hodUpdated d then Just $ OrderAdjustment (hodOldTotalExcVat d) (hodOldTotalIncVat d) else Nothing)
                    $ map fromHouseholdOrderItemData $ filter (\i -> hoidOrderId i == hodOrderId d && hoidHouseholdId i == hodHouseholdId d) items
 
--- return $ rOrders <&> \(HouseholdOrderData { hodOrderId, hodOrderCreated, hodOrderCreatedBy, hodOrderCreatedByName, hodHouseholdId, hodHouseholdName, hodComplete, hodCancelled, hodOldTotalExcVat, hodOldTotalIncVat, hodTotalExcVat, hodTotalIncVat, hodUpdated }) ->
---     let item (HouseholdOrderItemData { hoidProductId, hoidCode, hoidName, hoidOldPriceExcVat, hoidOldPriceIncVat, hoidVatRate, hoidQuantity, hoidOldItemTotalExcVat, hoidOldItemTotalIncVat, hoidDiscontinued, hoidPriceExcVat, hoidPriceIncVat, hoidItemTotalExcVat, hoidItemTotalIncVat, hoidBiodynamic, hoidFairTrade, hoidGlutenFree, hoidOrganic, hoidAddedSugar, hoidVegan, hoidUpdated }) 
---           = householdOrderItem hoidProductId hoidCode hoidName hoidVatRate hoidPriceExcVat hoidPriceIncVat hoidQuantity hoidItemTotalExcVat hoidItemTotalIncVat hoidBiodynamic hoidFairTrade hoidGlutenFree hoidOrganic hoidAddedSugar hoidVegan (if hodUpdated then (Just hoidOldPriceExcVat) else Nothing) (if hodUpdated then (Just hoidOldPriceIncVat) else Nothing) (if hodUpdated then (Just hoidQuantity) else Nothing) (if hodUpdated then (Just hoidOldItemTotalExcVat) else Nothing) (if hodUpdated then (Just hoidOldItemTotalIncVat) else Nothing) (if hodUpdated then (Just hoidDiscontinued) else Nothing)
---         thisOrder (HouseholdOrderItemData { hoidOrderId, hoidHouseholdId }) = hoidOrderId == hodOrderId && hoidHouseholdId == hodHouseholdId
---         items = map item $ filter thisOrder rItems
---     in  householdOrder hodOrderId hodOrderCreated hodOrderCreatedBy hodOrderCreatedByName hodHouseholdId hodHouseholdName hodComplete hodCancelled hodOldTotalExcVat hodOldTotalIncVat hodTotalExcVat hodTotalIncVat hodUpdated items
-
 fromPastHouseholdOrderData :: [PastHouseholdOrderItemData] -> PastHouseholdOrderData -> PastHouseholdOrder
 fromPastHouseholdOrderData items (d@PastHouseholdOrderData { phodOldTotalExcVat = Just oldTotalExcVat
                                                            , phodOldTotalIncVat = Just oldTotalIncVat })
@@ -373,20 +366,6 @@ fromPastHouseholdOrderData items d
                        (phodTotalIncVat d)
                        Nothing
                        $ map fromPastHouseholdOrderItemData $ filter (\i -> phoidOrderId i == phodOrderId d && phoidHouseholdId i == phodHouseholdId d) items
-
-  -- return $ rOrders <&> \(PastHouseholdOrderData { phodOrderId, phodOrderCreated, phodOrderCreatedBy, phodOrderCreatedByName, phodOrderAbandoned, phodHouseholdId, phodHouseholdName, phodCancelled, phodReconciled, phodTotalExcVat, phodTotalIncVat, phodOldTotalExcVat, phodOldTotalIncVat }) ->
-  --   let item (PastHouseholdOrderItemData { phoidProductId, phoidCode, phoidName, phoidPriceExcVat, phoidPriceIncVat, phoidVatRate, phoidQuantity, phoidItemTotalExcVat, phoidItemTotalIncVat, phoidBiodynamic, phoidFairTrade, phoidGlutenFree, phoidOrganic, phoidAddedSugar, phoidVegan, phoidOldProductPriceExcVat, phoidOldProductPriceIncVat, phoidOldQuantity, phoidOldItemTotalExcVat, phoidOldItemTotalIncVat }) 
-  --         = householdOrderItem phoidProductId phoidCode phoidName phoidVatRate phoidPriceExcVat phoidPriceIncVat phoidQuantity phoidItemTotalExcVat phoidItemTotalIncVat phoidBiodynamic phoidFairTrade phoidGlutenFree phoidOrganic phoidAddedSugar phoidVegan phoidOldProductPriceExcVat phoidOldProductPriceIncVat phoidOldQuantity phoidOldItemTotalExcVat phoidOldItemTotalIncVat (Just False)
-  --       thisOrder (PastHouseholdOrderItemData { phoidOrderId, phoidHouseholdId }) = phoidOrderId == phodOrderId && phoidHouseholdId == phodHouseholdId
-  --       items = map item $ filter thisOrder rItems
-  --   in  pastHouseholdOrder phodOrderId phodOrderCreated phodOrderCreatedBy phodOrderCreatedByName phodOrderAbandoned phodHouseholdId phodHouseholdName phodCancelled phodReconciled phodTotalExcVat phodTotalIncVat phodOldTotalExcVat phodOldTotalIncVat items
-
--- pastHouseholdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
--- pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
---   PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
-
--- pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat _ _ items =
---   PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat Nothing items
 
 fromCollectiveOrderItemData :: CollectiveOrderItemData -> OrderItem
 fromCollectiveOrderItemData d 
@@ -526,15 +505,6 @@ fromPastHouseholdOrderItemData d
               (phoidAddedSugar d)
               (phoidVegan d)
               Nothing
-
---  let item (PastHouseholdOrderItemData { phoidProductId, phoidCode, phoidName, phoidPriceExcVat, phoidPriceIncVat, phoidVatRate, phoidQuantity, phoidItemTotalExcVat, phoidItemTotalIncVat, phoidBiodynamic, phoidFairTrade, phoidGlutenFree, phoidOrganic, phoidAddedSugar, phoidVegan, phoidOldProductPriceExcVat, phoidOldProductPriceIncVat, phoidOldQuantity, phoidOldItemTotalExcVat, phoidOldItemTotalIncVat }) 
---           = householdOrderItem phoidProductId phoidCode phoidName phoidVatRate phoidPriceExcVat phoidPriceIncVat phoidQuantity phoidItemTotalExcVat phoidItemTotalIncVat phoidBiodynamic phoidFairTrade phoidGlutenFree phoidOrganic phoidAddedSugar phoidVegan phoidOldProductPriceExcVat phoidOldProductPriceIncVat phoidOldQuantity phoidOldItemTotalExcVat phoidOldItemTotalIncVat (Just False)
---    householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan (Just oldProductPriceExcVat) (Just oldProductPriceIncVat) (Just oldItemQuantity) (Just oldItemTotalExcVat) (Just oldItemTotalIncVat) (Just productDiscontinued)
---   = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldItemQuantity oldItemTotalExcVat oldItemTotalIncVat productDiscontinued
-
--- householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan _ _ _ _ _ _
---   = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing                     
-
 
 (<&>) :: Functor f => f a -> (a -> b) -> f b
 (<&>) = flip (<$>)
