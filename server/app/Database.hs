@@ -44,7 +44,7 @@ getCollectiveOrder :: ByteString -> Int -> IO (Maybe CollectiveOrder)
 getCollectiveOrder connectionString groupId = do
   conn <- connectPostgreSQL connectionString
   (rOrders, rItems) <- withTransaction conn $ do
-    os <- query conn [sql|
+    rOrders <- query conn [sql|
       with orders as (
         select o.id, o.created_date, h.id as created_by_id, h.name as created_by_name, 
           coalesce(bool_and(ho.complete), false) as complete
@@ -83,7 +83,7 @@ getCollectiveOrder connectionString groupId = do
       group by o.id, o.created_date, o.created_by_id, o.created_by_name, o.complete
       order by o.id desc
     |] (groupId, groupId)
-    is <- query conn [sql|
+    rItems <- query conn [sql|
       select hoi.order_id
            , p.id
            , p.code
@@ -108,12 +108,9 @@ getCollectiveOrder connectionString groupId = do
       group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
       order by p.code asc
     |] (Only groupId)
-    return (os :: [CollectiveOrderData], is :: [OrderItemData])
+    return (rOrders :: [CollectiveOrderData], rItems :: [CollectiveOrderItemData])
   close conn
-  return $ listToMaybe $ rOrders <&> \orderData ->
-    let thisOrder (OrderItemData { oidOrderId }) = oidOrderId == (codId orderData)
-        items = map fromOrderItemData $ filter thisOrder rItems
-    in fromCollectiveOrderData orderData items
+  return $ listToMaybe $ map (fromCollectiveOrderData rItems) rOrders
 
 getPastCollectiveOrders :: ByteString -> Int -> IO [PastCollectiveOrder]
 getPastCollectiveOrders connectionString groupId = do
