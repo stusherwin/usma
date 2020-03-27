@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module DatabaseTypes where
   
 import Control.Monad (mzero, when, void, forM_)
@@ -68,12 +70,12 @@ data HouseholdOrderItemData = HouseholdOrderItemData {
   hoidPriceIncVat :: Int,
   hoidItemTotalExcVat :: Int,
   hoidItemTotalIncVat :: Int,
-  hoidB :: Bool,
-  hoidF :: Bool,
-  hoidG :: Bool,
-  hoidO :: Bool,
-  hoidS :: Bool,
-  hoidV :: Bool,
+  hoidBiodynamic :: Bool,
+  hoidFairTrade :: Bool,
+  hoidGlutenFree :: Bool,
+  hoidOrganic :: Bool,
+  hoidAddedSugar :: Bool,
+  hoidVegan :: Bool,
   hoidUpdated :: Bool
 }
 
@@ -91,17 +93,35 @@ data OrderItemData = OrderItemData {
   oidPriceIncVat :: Int,
   oidItemTotalExcVat :: Int,
   oidItemTotalIncVat :: Int,
-  oidB :: Bool,
-  oidF :: Bool,
-  oidG :: Bool,
-  oidO :: Bool,
-  oidS :: Bool,
-  oidV :: Bool
+  oidBiodynamic :: Bool,
+  oidFairTrade :: Bool,
+  oidGlutenFree :: Bool,
+  oidOrganic :: Bool,
+  oidAddedSugar :: Bool,
+  oidVegan :: Bool
 }
 
 instance FromRow OrderItemData where
   fromRow = OrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
+fromOrderItemData :: OrderItemData -> OrderItem
+fromOrderItemData d = OrderItem (oidProductId d)
+                                (oidCode d)
+                                (oidName d)
+                                (oidVatRate d)
+                                (oidPriceExcVat d)
+                                (oidPriceIncVat d)
+                                (oidQuantity d)
+                                (oidItemTotalExcVat d)
+                                (oidItemTotalIncVat d)
+                                (oidBiodynamic d)
+                                (oidFairTrade d)
+                                (oidGlutenFree d)
+                                (oidOrganic d)
+                                (oidAddedSugar d)
+                                (oidVegan d)
+                                Nothing
+             
 data PastHouseholdOrderItemData = PastHouseholdOrderItemData {
   phoidOrderId :: Int,
   phoidHouseholdId :: Int,
@@ -114,12 +134,12 @@ data PastHouseholdOrderItemData = PastHouseholdOrderItemData {
   phoidQuantity :: Int,
   phoidItemTotalExcVat :: Int,
   phoidItemTotalIncVat :: Int,
-  phoidB :: Bool,
-  phoidF :: Bool,
-  phoidG :: Bool,
-  phoidO :: Bool,
-  phoidS :: Bool,
-  phoidV :: Bool,
+  phoidBiodynamic :: Bool,
+  phoidFairTrade :: Bool,
+  phoidGlutenFree :: Bool,
+  phoidOrganic :: Bool,
+  phoidAddedSugar :: Bool,
+  phoidVegan :: Bool,
   phoidOldProductPriceExcVat :: Maybe Int,
   phoidOldProductPriceIncVat :: Maybe Int,
   phoidOldQuantity :: Maybe Int,
@@ -141,12 +161,12 @@ data PastOrderItemData = PastOrderItemData {
   poidQuantity :: Int,
   poidItemTotalExcVat :: Int,
   poidItemTotalIncVat :: Int,
-  poidB :: Bool,
-  poidF :: Bool,
-  poidG :: Bool,
-  poidO :: Bool,
-  poidS :: Bool,
-  poidV :: Bool,
+  poidBiodynamic :: Bool,
+  poidFairTrade :: Bool,
+  poidGlutenFree :: Bool,
+  poidOrganic :: Bool,
+  poidAddedSugar :: Bool,
+  poidVegan :: Bool,
   poidOldProductPriceExcVat :: Maybe Int,
   poidOldProductPriceIncVat :: Maybe Int,
   poidOldQuantity :: Maybe Int,
@@ -156,6 +176,51 @@ data PastOrderItemData = PastOrderItemData {
 
 instance FromRow PastOrderItemData where
   fromRow = PastOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+data CollectiveOrderData = CollectiveOrderData {
+  codId :: Int, 
+  codCreated :: UTCTime, 
+  codCreatedBy :: Maybe Int, 
+  codCreatedByName :: Maybe String, 
+  codComplete :: Bool, 
+  codOldTotalExcVat :: Int, 
+  codOldTotalIncVat :: Int,
+  codTotalExcVat :: Int, 
+  codTotalIncVat :: Int,
+  codAllUpToDate :: Bool
+}
+
+instance FromRow CollectiveOrderData where
+  fromRow = CollectiveOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+fromCollectiveOrderData :: CollectiveOrderData -> [OrderItem] -> CollectiveOrder
+fromCollectiveOrderData (d@CollectiveOrderData { codAllUpToDate = True }) items =
+  CollectiveOrder (codId d) 
+                  (codCreated d) 
+                  (codCreatedBy d) 
+                  (codCreatedByName d) 
+                  False 
+                  False 
+                  (codComplete d) 
+                  (codTotalExcVat d) 
+                  (codTotalIncVat d) 
+                  True 
+                  Nothing 
+                  items
+
+fromCollectiveOrderData d items =
+  CollectiveOrder (codId d)
+                  (codCreated d)
+                  (codCreatedBy d)
+                  (codCreatedByName d)
+                  False 
+                  False 
+                  (codComplete d)
+                  (codTotalExcVat d)
+                  (codTotalIncVat d)
+                  False 
+                  (Just $ OrderAdjustment (codOldTotalExcVat d) (codOldTotalIncVat d))
+                  items
 
 data HouseholdOrderData = HouseholdOrderData {
   hodOrderId :: Int, 

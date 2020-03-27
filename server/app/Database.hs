@@ -40,7 +40,6 @@ import DatabaseTypes
 instance FromRow GroupSettings where
   fromRow = GroupSettings <$> field
 
-
 getCollectiveOrder :: ByteString -> Int -> IO (Maybe CollectiveOrder)
 getCollectiveOrder connectionString groupId = do
   conn <- connectPostgreSQL connectionString
@@ -109,14 +108,12 @@ getCollectiveOrder connectionString groupId = do
       group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
       order by p.code asc
     |] (Only groupId)
-    return (os :: [(Int, UTCTime, Maybe Int, Maybe String, Bool, Int, Int, Int, Int, Bool)], is :: [OrderItemData])
+    return (os :: [CollectiveOrderData], is :: [OrderItemData])
   close conn
-  return $ listToMaybe $ rOrders <&> \(id, created, createdBy, createdByName, complete, oldTotalExcVat, oldTotalIncVat, totalExcVat, totalIncVat, allUpToDate) ->
-    let item (OrderItemData { oidProductId, oidCode, oidName, oidVatRate, oidQuantity, oidPriceExcVat, oidPriceIncVat, oidItemTotalExcVat, oidItemTotalIncVat, oidB, oidF, oidG, oidO, oidS, oidV }) 
-          = orderItem oidProductId oidCode oidName oidVatRate oidPriceExcVat oidPriceIncVat oidQuantity oidItemTotalExcVat oidItemTotalIncVat oidB oidF oidG oidO oidS oidV
-        thisOrder (OrderItemData { oidOrderId }) = oidOrderId == id
-        items = map item $ filter thisOrder rItems
-    in  collectiveOrder id created createdBy createdByName complete oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat allUpToDate items
+  return $ listToMaybe $ rOrders <&> \orderData ->
+    let thisOrder (OrderItemData { oidOrderId }) = oidOrderId == (codId orderData)
+        items = map fromOrderItemData $ filter thisOrder rItems
+    in fromCollectiveOrderData orderData items
 
 getPastCollectiveOrders :: ByteString -> Int -> IO [PastCollectiveOrder]
 getPastCollectiveOrders connectionString groupId = do
@@ -162,8 +159,8 @@ getPastCollectiveOrders connectionString groupId = do
     return (os :: [PastCollectiveOrderData], is :: [PastOrderItemData])
   close conn
   return $ rOrders <&> \(PastCollectiveOrderData { pcodOrderId, pcodOrderCreated, pcodOrderCreatedBy, pcodOrderCreatedByName, pcodCancelled, pcodReconciled, pcodTotalExcVat, pcodTotalIncVat, pcodOldTotalExcVat, pcodOldTotalIncVat }) ->
-    let item (PastOrderItemData { poidProductId, poidCode, poidName, poidPriceExcVat, poidPriceIncVat, poidVatRate, poidQuantity, poidItemTotalExcVat, poidItemTotalIncVat, poidB, poidF, poidG, poidO, poidS, poidV, poidOldProductPriceExcVat, poidOldProductPriceIncVat, poidOldQuantity, poidOldItemTotalExcVat, poidOldItemTotalIncVat }) 
-          = householdOrderItem poidProductId poidCode poidName poidVatRate poidPriceExcVat poidPriceIncVat  poidQuantity poidItemTotalExcVat poidItemTotalIncVat poidB poidF poidG poidO poidS poidV poidOldProductPriceExcVat poidOldProductPriceIncVat poidOldQuantity poidOldItemTotalExcVat poidOldItemTotalIncVat (Just False)
+    let item (PastOrderItemData { poidProductId, poidCode, poidName, poidPriceExcVat, poidPriceIncVat, poidVatRate, poidQuantity, poidItemTotalExcVat, poidItemTotalIncVat, poidBiodynamic, poidFairTrade, poidGlutenFree, poidOrganic, poidAddedSugar, poidVegan, poidOldProductPriceExcVat, poidOldProductPriceIncVat, poidOldQuantity, poidOldItemTotalExcVat, poidOldItemTotalIncVat }) 
+          = householdOrderItem poidProductId poidCode poidName poidVatRate poidPriceExcVat poidPriceIncVat  poidQuantity poidItemTotalExcVat poidItemTotalIncVat poidBiodynamic poidFairTrade poidGlutenFree poidOrganic poidAddedSugar poidVegan poidOldProductPriceExcVat poidOldProductPriceIncVat poidOldQuantity poidOldItemTotalExcVat poidOldItemTotalIncVat (Just False)
         thisOrder (PastOrderItemData { poidOrderId }) = poidOrderId == pcodOrderId
         items = map item $ filter thisOrder rItems
     in  pastCollectiveOrder pcodOrderId pcodOrderCreated pcodOrderCreatedBy pcodOrderCreatedByName pcodCancelled pcodReconciled pcodTotalExcVat pcodTotalIncVat pcodOldTotalExcVat pcodOldTotalIncVat items
@@ -243,8 +240,8 @@ getHouseholdOrders connectionString groupId = do
     return (os :: [HouseholdOrderData], is :: [HouseholdOrderItemData])
   close conn
   return $ rOrders <&> \(HouseholdOrderData { hodOrderId, hodOrderCreated, hodOrderCreatedBy, hodOrderCreatedByName, hodHouseholdId, hodHouseholdName, hodComplete, hodCancelled, hodOldTotalExcVat, hodOldTotalIncVat, hodTotalExcVat, hodTotalIncVat, hodUpdated }) ->
-    let item (HouseholdOrderItemData { hoidProductId, hoidCode, hoidName, hoidOldPriceExcVat, hoidOldPriceIncVat, hoidVatRate, hoidQuantity, hoidOldItemTotalExcVat, hoidOldItemTotalIncVat, hoidDiscontinued, hoidPriceExcVat, hoidPriceIncVat, hoidItemTotalExcVat, hoidItemTotalIncVat, hoidB, hoidF, hoidG, hoidO, hoidS, hoidV, hoidUpdated }) 
-          = householdOrderItem hoidProductId hoidCode hoidName hoidVatRate hoidPriceExcVat hoidPriceIncVat hoidQuantity hoidItemTotalExcVat hoidItemTotalIncVat hoidB hoidF hoidG hoidO hoidS hoidV (if hodUpdated then (Just hoidOldPriceExcVat) else Nothing) (if hodUpdated then (Just hoidOldPriceIncVat) else Nothing) (if hodUpdated then (Just hoidQuantity) else Nothing) (if hodUpdated then (Just hoidOldItemTotalExcVat) else Nothing) (if hodUpdated then (Just hoidOldItemTotalIncVat) else Nothing) (if hodUpdated then (Just hoidDiscontinued) else Nothing)
+    let item (HouseholdOrderItemData { hoidProductId, hoidCode, hoidName, hoidOldPriceExcVat, hoidOldPriceIncVat, hoidVatRate, hoidQuantity, hoidOldItemTotalExcVat, hoidOldItemTotalIncVat, hoidDiscontinued, hoidPriceExcVat, hoidPriceIncVat, hoidItemTotalExcVat, hoidItemTotalIncVat, hoidBiodynamic, hoidFairTrade, hoidGlutenFree, hoidOrganic, hoidAddedSugar, hoidVegan, hoidUpdated }) 
+          = householdOrderItem hoidProductId hoidCode hoidName hoidVatRate hoidPriceExcVat hoidPriceIncVat hoidQuantity hoidItemTotalExcVat hoidItemTotalIncVat hoidBiodynamic hoidFairTrade hoidGlutenFree hoidOrganic hoidAddedSugar hoidVegan (if hodUpdated then (Just hoidOldPriceExcVat) else Nothing) (if hodUpdated then (Just hoidOldPriceIncVat) else Nothing) (if hodUpdated then (Just hoidQuantity) else Nothing) (if hodUpdated then (Just hoidOldItemTotalExcVat) else Nothing) (if hodUpdated then (Just hoidOldItemTotalIncVat) else Nothing) (if hodUpdated then (Just hoidDiscontinued) else Nothing)
         thisOrder (HouseholdOrderItemData { hoidOrderId, hoidHouseholdId }) = hoidOrderId == hodOrderId && hoidHouseholdId == hodHouseholdId
         items = map item $ filter thisOrder rItems
     in  householdOrder hodOrderId hodOrderCreated hodOrderCreatedBy hodOrderCreatedByName hodHouseholdId hodHouseholdName hodComplete hodCancelled hodOldTotalExcVat hodOldTotalIncVat hodTotalExcVat hodTotalIncVat hodUpdated items
@@ -289,8 +286,8 @@ getPastHouseholdOrders connectionString groupId = do
     return (os :: [PastHouseholdOrderData], is :: [PastHouseholdOrderItemData])
   close conn
   return $ rOrders <&> \(PastHouseholdOrderData { phodOrderId, phodOrderCreated, phodOrderCreatedBy, phodOrderCreatedByName, phodOrderAbandoned, phodHouseholdId, phodHouseholdName, phodCancelled, phodReconciled, phodTotalExcVat, phodTotalIncVat, phodOldTotalExcVat, phodOldTotalIncVat }) ->
-    let item (PastHouseholdOrderItemData { phoidProductId, phoidCode, phoidName, phoidPriceExcVat, phoidPriceIncVat, phoidVatRate, phoidQuantity, phoidItemTotalExcVat, phoidItemTotalIncVat, phoidB, phoidF, phoidG, phoidO, phoidS, phoidV, phoidOldProductPriceExcVat, phoidOldProductPriceIncVat, phoidOldQuantity, phoidOldItemTotalExcVat, phoidOldItemTotalIncVat }) 
-          = householdOrderItem phoidProductId phoidCode phoidName phoidVatRate phoidPriceExcVat phoidPriceIncVat phoidQuantity phoidItemTotalExcVat phoidItemTotalIncVat phoidB phoidF phoidG phoidO phoidS phoidV phoidOldProductPriceExcVat phoidOldProductPriceIncVat phoidOldQuantity phoidOldItemTotalExcVat phoidOldItemTotalIncVat (Just False)
+    let item (PastHouseholdOrderItemData { phoidProductId, phoidCode, phoidName, phoidPriceExcVat, phoidPriceIncVat, phoidVatRate, phoidQuantity, phoidItemTotalExcVat, phoidItemTotalIncVat, phoidBiodynamic, phoidFairTrade, phoidGlutenFree, phoidOrganic, phoidAddedSugar, phoidVegan, phoidOldProductPriceExcVat, phoidOldProductPriceIncVat, phoidOldQuantity, phoidOldItemTotalExcVat, phoidOldItemTotalIncVat }) 
+          = householdOrderItem phoidProductId phoidCode phoidName phoidVatRate phoidPriceExcVat phoidPriceIncVat phoidQuantity phoidItemTotalExcVat phoidItemTotalIncVat phoidBiodynamic phoidFairTrade phoidGlutenFree phoidOrganic phoidAddedSugar phoidVegan phoidOldProductPriceExcVat phoidOldProductPriceIncVat phoidOldQuantity phoidOldItemTotalExcVat phoidOldItemTotalIncVat (Just False)
         thisOrder (PastHouseholdOrderItemData { phoidOrderId, phoidHouseholdId }) = phoidOrderId == phodOrderId && phoidHouseholdId == phodHouseholdId
         items = map item $ filter thisOrder rItems
     in  pastHouseholdOrder phodOrderId phodOrderCreated phodOrderCreatedBy phodOrderCreatedByName phodOrderAbandoned phodHouseholdId phodHouseholdName phodCancelled phodReconciled phodTotalExcVat phodTotalIncVat phodOldTotalExcVat phodOldTotalIncVat items

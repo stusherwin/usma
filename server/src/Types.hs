@@ -33,13 +33,6 @@ data CollectiveOrder = CollectiveOrder { coId :: Int
 instance ToJSON CollectiveOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
 
-collectiveOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> CollectiveOrder
-collectiveOrder id createdDate createdBy createdByName complete _ _ totalExcVat totalIncVat True items = 
-  CollectiveOrder id createdDate createdBy createdByName False False complete totalExcVat totalIncVat True Nothing items
-
-collectiveOrder id createdDate createdBy createdByName complete oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat False items = 
-  CollectiveOrder id createdDate createdBy createdByName False False complete totalExcVat totalIncVat False (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
-
 data Household = Household { hId :: Int
                            , hName :: String
                            , hContactName :: Maybe String
@@ -138,9 +131,6 @@ data OrderItemAdjustment = OrderItemAdjustment { oiaOldProductPriceExcVat :: Int
                                                } deriving (Eq, Show, Generic)
 instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
-
-orderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan
-  = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing
 
 householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan (Just oldProductPriceExcVat) (Just oldProductPriceIncVat) (Just oldItemQuantity) (Just oldItemTotalExcVat) (Just oldItemTotalIncVat) (Just productDiscontinued)
   = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldItemQuantity oldItemTotalExcVat oldItemTotalIncVat productDiscontinued

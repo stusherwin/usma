@@ -16,6 +16,7 @@ Styling/UX issues
 * Past order/household icons should have clock on them
 * Order tabs slightly too big on small mobile screen
 * Order tabs better as actual tabs?
+* Brands/categories dropdowns too many items
 
 Payments/balance
 * Add running total/balance to collective order page, with payments, so you can see who owes what - link to household
