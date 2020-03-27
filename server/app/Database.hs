@@ -60,6 +60,28 @@ getPastCollectiveOrders connectionString groupId = do
   close conn
   return $ map (fromPastCollectiveOrderData rItems) rOrders
 
+getHouseholdOrders :: ByteString -> Int -> IO [HouseholdOrder]
+getHouseholdOrders connectionString groupId = do
+  conn <- connectPostgreSQL connectionString
+  (rOrders, rItems) <- withTransaction conn $ do
+    rOrders <- getHouseholdOrderData conn groupId
+    rItems <- getHouseholdOrderItemData conn groupId
+    return (rOrders, rItems)
+  close conn
+  return $ map (fromHouseholdOrderData rItems) rOrders
+
+getPastHouseholdOrders :: ByteString -> Int -> IO [PastHouseholdOrder]
+getPastHouseholdOrders connectionString groupId = do
+  conn <- connectPostgreSQL connectionString
+  (rOrders, rItems) <- withTransaction conn $ do
+    rOrders <- getPastHouseholdOrderData conn groupId
+    rItems <- getPastHouseholdOrderItemData conn groupId
+    return (rOrders, rItems)
+  close conn
+  return $ map (fromPastHouseholdOrderData rItems) rOrders
+
+
+
 getCollectiveOrderData :: Connection -> Int -> IO [CollectiveOrderData]
 getCollectiveOrderData conn groupId = 
   query conn [sql|
@@ -173,132 +195,118 @@ getPastOrderItemData conn groupId =
       order by hoi.order_id, hoi.product_code asc
     |] (Only groupId)
 
-getHouseholdOrders :: ByteString -> Int -> IO [HouseholdOrder]
-getHouseholdOrders connectionString groupId = do
-  conn <- connectPostgreSQL connectionString
-  (rOrders, rItems) <- withTransaction conn $ do
-    os <- query conn [sql|
-      select o.id
-           , o.created_date
-           , cb.id as created_by_id
-           , cb.name as created_by_name
-           , h.id
-           , h.name
-           , ho.complete
-           , ho.cancelled
-           , coalesce(sum(hoi.item_total_exc_vat), 0) as old_total_exc_vat
-           , coalesce(sum(hoi.item_total_inc_vat), 0) as old_total_inc_vat
-           , coalesce(sum(case when p.discontinued then 0 
-                               else p.price * hoi.quantity
-                          end), 0) as total_exc_vat
-           , coalesce(sum(case when p.discontinued then 0 
-                               else cast(round(p.price * v.multiplier) as int) * hoi.quantity
-                          end), 0) as total_inc_vat
-           , max(p.updated) is not null and max(p.updated) > ho.updated as updated
-      from household_order ho
-      inner join "order" o on o.id = ho.order_id
-      left join household cb on cb.id = o.created_by_id
-      inner join household h on h.id = ho.household_id
-      left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join product p on p.id = hoi.product_id
-      left join vat_rate v on v.code = p.vat_rate
-      where o.order_group_id = ?
-      group by o.id, o.created_date, cb.id, cb.name, h.id, h.name, ho.complete, ho.cancelled, ho.updated
-      order by o.id desc, h.name asc
-    |] (Only groupId)
-    is <- query conn [sql|
-      select hoi.order_id
-           , hoi.household_id
-           , p.id
-           , p.code
-           , p.name
-           , hoi.product_price_exc_vat as old_product_price_exc_vat         
-           , hoi.product_price_inc_vat as old_product_price_inc_vat
-           , p.vat_rate
-           , hoi.quantity
-           , hoi.item_total_exc_vat as old_item_total_exc_vat
-           , hoi.item_total_inc_vat as old_item_total_inc_vat
-           , p.discontinued
-           , case when p.discontinued then 0 
-                  else p.price 
-             end as product_price_exc_vat
-           , case when p.discontinued then 0 
-                  else cast(round(p.price * v.multiplier) as int) 
-             end as product_price_exc_vat
-           , case when p.discontinued then 0 
-                  else p.price * hoi.quantity
-             end as item_total_exc_vat
-           , case when p.discontinued then 0 
-                  else cast(round(p.price * v.multiplier) as int) * hoi.quantity
-             end as item_total_inc_vat
-           , p.biodynamic
-           , p.fair_trade
-           , p.gluten_free
-           , p.organic
-           , p.added_sugar
-           , p.vegan
-           , p.updated > ho.updated as updated
-      from household_order_item hoi
-      inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
-      inner join product p on p.id = hoi.product_id
-      inner join vat_rate v on v.code = p.vat_rate
-      where ho.order_group_id = ?
-      order by hoi.ix
-    |] (Only groupId)
-    return (os :: [HouseholdOrderData], is :: [HouseholdOrderItemData])
-  close conn
-  return $ rOrders <&> \(HouseholdOrderData { hodOrderId, hodOrderCreated, hodOrderCreatedBy, hodOrderCreatedByName, hodHouseholdId, hodHouseholdName, hodComplete, hodCancelled, hodOldTotalExcVat, hodOldTotalIncVat, hodTotalExcVat, hodTotalIncVat, hodUpdated }) ->
-    let item (HouseholdOrderItemData { hoidProductId, hoidCode, hoidName, hoidOldPriceExcVat, hoidOldPriceIncVat, hoidVatRate, hoidQuantity, hoidOldItemTotalExcVat, hoidOldItemTotalIncVat, hoidDiscontinued, hoidPriceExcVat, hoidPriceIncVat, hoidItemTotalExcVat, hoidItemTotalIncVat, hoidBiodynamic, hoidFairTrade, hoidGlutenFree, hoidOrganic, hoidAddedSugar, hoidVegan, hoidUpdated }) 
-          = householdOrderItem hoidProductId hoidCode hoidName hoidVatRate hoidPriceExcVat hoidPriceIncVat hoidQuantity hoidItemTotalExcVat hoidItemTotalIncVat hoidBiodynamic hoidFairTrade hoidGlutenFree hoidOrganic hoidAddedSugar hoidVegan (if hodUpdated then (Just hoidOldPriceExcVat) else Nothing) (if hodUpdated then (Just hoidOldPriceIncVat) else Nothing) (if hodUpdated then (Just hoidQuantity) else Nothing) (if hodUpdated then (Just hoidOldItemTotalExcVat) else Nothing) (if hodUpdated then (Just hoidOldItemTotalIncVat) else Nothing) (if hodUpdated then (Just hoidDiscontinued) else Nothing)
-        thisOrder (HouseholdOrderItemData { hoidOrderId, hoidHouseholdId }) = hoidOrderId == hodOrderId && hoidHouseholdId == hodHouseholdId
-        items = map item $ filter thisOrder rItems
-    in  householdOrder hodOrderId hodOrderCreated hodOrderCreatedBy hodOrderCreatedByName hodHouseholdId hodHouseholdName hodComplete hodCancelled hodOldTotalExcVat hodOldTotalIncVat hodTotalExcVat hodTotalIncVat hodUpdated items
+getHouseholdOrderData :: Connection -> Int -> IO [HouseholdOrderData]
+getHouseholdOrderData conn groupId = 
+  query conn [sql|
+    select o.id
+         , o.created_date
+         , cb.id as created_by_id
+         , cb.name as created_by_name
+         , h.id
+         , h.name
+         , ho.complete
+         , ho.cancelled
+         , coalesce(sum(hoi.item_total_exc_vat), 0) as old_total_exc_vat
+         , coalesce(sum(hoi.item_total_inc_vat), 0) as old_total_inc_vat
+         , coalesce(sum(case when p.discontinued then 0 
+                             else p.price * hoi.quantity
+                        end), 0) as total_exc_vat
+         , coalesce(sum(case when p.discontinued then 0 
+                             else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+                        end), 0) as total_inc_vat
+         , max(p.updated) is not null and max(p.updated) > ho.updated as updated
+    from household_order ho
+    inner join "order" o on o.id = ho.order_id
+    left join household cb on cb.id = o.created_by_id
+    inner join household h on h.id = ho.household_id
+    left join household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+    left join product p on p.id = hoi.product_id
+    left join vat_rate v on v.code = p.vat_rate
+    where o.order_group_id = ?
+    group by o.id, o.created_date, cb.id, cb.name, h.id, h.name, ho.complete, ho.cancelled, ho.updated
+    order by o.id desc, h.name asc
+  |] (Only groupId)
 
-getPastHouseholdOrders :: ByteString -> Int -> IO [PastHouseholdOrder]
-getPastHouseholdOrders connectionString groupId = do
-  conn <- connectPostgreSQL connectionString
-  (rOrders, rItems) <- withTransaction conn $ do
-    os <- query conn [sql|
-      select o.id, o.created_date, o.created_by_id, o.created_by_name, o.cancelled, ho.household_id, ho.household_name, ho.cancelled, 
-        bool_and(adj.order_id is not null) as reconciled,
-        coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
-        coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
-        sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
-        sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
-      from past_household_order ho
-      inner join past_order o on o.id = ho.order_id
-      left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-      left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
-      where o.order_group_id = ?
-      group by o.id, o.created_date, o.created_by_id, o.created_by_name, ho.household_id, ho.household_name, ho.cancelled
-      order by o.id desc, ho.household_name asc
-    |] (Only groupId)
-    is <- query conn [sql|
-      select hoi.order_id, hoi.household_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.quantity, hoi.item_total_exc_vat, hoi.item_total_inc_vat,
-         hoi.product_biodynamic,
-         hoi.product_fair_trade,
-         hoi.product_gluten_free,
-         hoi.product_organic,
-         hoi.product_added_sugar,
-         hoi.product_vegan,
-         adj.old_product_price_exc_vat,
-         adj.old_product_price_inc_vat,
-         adj.old_quantity,
-         adj.old_item_total_exc_vat,
-         adj.old_item_total_inc_vat
-      from past_household_order_item hoi
-      left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
-      where hoi.order_group_id = ?
-      order by hoi.household_id, hoi.product_code
-    |] (Only groupId)
-    return (os :: [PastHouseholdOrderData], is :: [PastHouseholdOrderItemData])
-  close conn
-  return $ rOrders <&> \(PastHouseholdOrderData { phodOrderId, phodOrderCreated, phodOrderCreatedBy, phodOrderCreatedByName, phodOrderAbandoned, phodHouseholdId, phodHouseholdName, phodCancelled, phodReconciled, phodTotalExcVat, phodTotalIncVat, phodOldTotalExcVat, phodOldTotalIncVat }) ->
-    let item (PastHouseholdOrderItemData { phoidProductId, phoidCode, phoidName, phoidPriceExcVat, phoidPriceIncVat, phoidVatRate, phoidQuantity, phoidItemTotalExcVat, phoidItemTotalIncVat, phoidBiodynamic, phoidFairTrade, phoidGlutenFree, phoidOrganic, phoidAddedSugar, phoidVegan, phoidOldProductPriceExcVat, phoidOldProductPriceIncVat, phoidOldQuantity, phoidOldItemTotalExcVat, phoidOldItemTotalIncVat }) 
-          = householdOrderItem phoidProductId phoidCode phoidName phoidVatRate phoidPriceExcVat phoidPriceIncVat phoidQuantity phoidItemTotalExcVat phoidItemTotalIncVat phoidBiodynamic phoidFairTrade phoidGlutenFree phoidOrganic phoidAddedSugar phoidVegan phoidOldProductPriceExcVat phoidOldProductPriceIncVat phoidOldQuantity phoidOldItemTotalExcVat phoidOldItemTotalIncVat (Just False)
-        thisOrder (PastHouseholdOrderItemData { phoidOrderId, phoidHouseholdId }) = phoidOrderId == phodOrderId && phoidHouseholdId == phodHouseholdId
-        items = map item $ filter thisOrder rItems
-    in  pastHouseholdOrder phodOrderId phodOrderCreated phodOrderCreatedBy phodOrderCreatedByName phodOrderAbandoned phodHouseholdId phodHouseholdName phodCancelled phodReconciled phodTotalExcVat phodTotalIncVat phodOldTotalExcVat phodOldTotalIncVat items
+getHouseholdOrderItemData :: Connection -> Int -> IO [HouseholdOrderItemData]
+getHouseholdOrderItemData conn groupId = 
+  query conn [sql|
+    select hoi.order_id
+         , hoi.household_id
+         , p.id
+         , p.code
+         , p.name
+         , hoi.product_price_exc_vat as old_product_price_exc_vat         
+         , hoi.product_price_inc_vat as old_product_price_inc_vat
+         , p.vat_rate
+         , hoi.quantity
+         , hoi.item_total_exc_vat as old_item_total_exc_vat
+         , hoi.item_total_inc_vat as old_item_total_inc_vat
+         , p.discontinued
+         , case when p.discontinued then 0 
+                else p.price 
+           end as product_price_exc_vat
+         , case when p.discontinued then 0 
+                else cast(round(p.price * v.multiplier) as int) 
+           end as product_price_exc_vat
+         , case when p.discontinued then 0 
+                else p.price * hoi.quantity
+           end as item_total_exc_vat
+         , case when p.discontinued then 0 
+                else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+           end as item_total_inc_vat
+         , p.biodynamic
+         , p.fair_trade
+         , p.gluten_free
+         , p.organic
+         , p.added_sugar
+         , p.vegan
+         , p.updated > ho.updated as updated
+    from household_order_item hoi
+    inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
+    inner join product p on p.id = hoi.product_id
+    inner join vat_rate v on v.code = p.vat_rate
+    where ho.order_group_id = ?
+    order by hoi.ix
+  |] (Only groupId)
+
+getPastHouseholdOrderData :: Connection -> Int -> IO [PastHouseholdOrderData]
+getPastHouseholdOrderData conn groupId =
+  query conn [sql|
+    select o.id, o.created_date, o.created_by_id, o.created_by_name, o.cancelled, ho.household_id, ho.household_name, ho.cancelled, 
+      bool_and(adj.order_id is not null) as reconciled,
+      coalesce(sum(hoi.item_total_exc_vat), 0) as total_exc_vat, 
+      coalesce(sum(hoi.item_total_inc_vat), 0) as total_inc_vat,
+      sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
+      sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
+    from past_household_order ho
+    inner join past_order o on o.id = ho.order_id
+    left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+    left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
+    where o.order_group_id = ?
+    group by o.id, o.created_date, o.created_by_id, o.created_by_name, ho.household_id, ho.household_name, ho.cancelled
+    order by o.id desc, ho.household_name asc
+  |] (Only groupId)
+
+getPastHouseholdOrderItemData :: Connection -> Int -> IO [PastHouseholdOrderItemData]
+getPastHouseholdOrderItemData conn groupId =
+  query conn [sql|
+    select hoi.order_id, hoi.household_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.quantity, hoi.item_total_exc_vat, hoi.item_total_inc_vat,
+       hoi.product_biodynamic,
+       hoi.product_fair_trade,
+       hoi.product_gluten_free,
+       hoi.product_organic,
+       hoi.product_added_sugar,
+       hoi.product_vegan,
+       adj.old_product_price_exc_vat,
+       adj.old_product_price_inc_vat,
+       adj.old_quantity,
+       adj.old_item_total_exc_vat,
+       adj.old_item_total_inc_vat
+    from past_household_order_item hoi
+    left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
+    where hoi.order_group_id = ?
+    order by hoi.household_id, hoi.product_code
+  |] (Only groupId)
 
 getHouseholds :: ByteString -> Int -> IO [Household]
 getHouseholds connectionString groupId = do

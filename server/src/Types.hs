@@ -78,16 +78,16 @@ data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidetQuantity :: M
 instance FromJSON HouseholdOrderItemDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
-householdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Int -> String -> Bool -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> HouseholdOrder
-householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled _ _ totalExcVat totalIncVat False items = 
-  HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat Nothing items 
-  where
-  open = not complete && not cancelled
+-- householdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Int -> String -> Bool -> Bool -> Int -> Int -> Int -> Int -> Bool -> [OrderItem] -> HouseholdOrder
+-- householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled _ _ totalExcVat totalIncVat False items = 
+--   HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat Nothing items 
+--   where
+--   open = not complete && not cancelled
 
-householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat True items = 
-  HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items 
-  where
-  open = not complete && not cancelled
+-- householdOrder orderId orderCreated orderCreatedBy orderCreatedByName householdId householdName complete cancelled oldTotalExcVat oldTotalIncVat totalExcVat totalIncVat True items = 
+--   HouseholdOrder orderId orderCreated orderCreatedBy orderCreatedByName False False householdId householdName complete cancelled open totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items 
+--   where
+--   open = not complete && not cancelled
 
 data HouseholdPayment = HouseholdPayment { hpId :: Int
                                          , hpHouseholdId :: Int
@@ -133,11 +133,11 @@ data OrderItemAdjustment = OrderItemAdjustment { oiaOldProductPriceExcVat :: Int
 instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
 
-householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan (Just oldProductPriceExcVat) (Just oldProductPriceIncVat) (Just oldItemQuantity) (Just oldItemTotalExcVat) (Just oldItemTotalIncVat) (Just productDiscontinued)
-  = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldItemQuantity oldItemTotalExcVat oldItemTotalIncVat productDiscontinued
+-- householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan (Just oldProductPriceExcVat) (Just oldProductPriceIncVat) (Just oldItemQuantity) (Just oldItemTotalExcVat) (Just oldItemTotalIncVat) (Just productDiscontinued)
+--   = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldItemQuantity oldItemTotalExcVat oldItemTotalIncVat productDiscontinued
 
-householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan _ _ _ _ _ _
-  = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing                     
+-- householdOrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan _ _ _ _ _ _
+--   = OrderItem productId productCode productName productVatRate productPriceExcVat productPriceIncVat itemQuantity itemTotalExcVat itemTotalIncVat biodynamic fairTrade glutenFree organic addedSugar vegan Nothing                     
 
 data OrderAdjustment = OrderAdjustment { oaOldTotalExcVat :: Int
                                        , oaOldTotalIncVat :: Int 
@@ -202,12 +202,12 @@ data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
 instance ToJSON PastHouseholdOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
 
-pastHouseholdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
-pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
-  PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+-- pastHouseholdOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Int -> String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastHouseholdOrder
+-- pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items =
+--   PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
 
-pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat _ _ items =
-  PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat Nothing items
+-- pastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName isOrderAbandoned householdId householdName isAbandoned isReconciled totalExcVat totalIncVat _ _ items =
+--   PastHouseholdOrder orderId orderCreatedDate orderCreatedBy orderCreatedByName (not isOrderAbandoned) isOrderAbandoned householdId householdName isAbandoned (not isAbandoned) False isReconciled totalExcVat totalIncVat Nothing items
 
 data VatRate = Zero | Standard | Reduced deriving (Eq, Show, Generic)
 instance ToJSON VatRate
