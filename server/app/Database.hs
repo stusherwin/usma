@@ -142,59 +142,6 @@ getPastCollectiveOrderData conn groupId =
     order by o.id desc
   |] (Only groupId)
 
-getCollectiveOrderItemData :: Connection -> Int -> IO [CollectiveOrderItemData]
-getCollectiveOrderItemData conn groupId =
-  query conn [sql|
-    select hoi.order_id
-         , p.id
-         , p.code
-         , p.name
-         , p.vat_rate
-         , sum(hoi.quantity) as quantity
-         , p.price as product_price_exc_vat
-         , cast(round(p.price * v.multiplier) as int) as product_price_inc_vat
-         , sum(p.price * hoi.quantity) as item_total_exc_vat
-         , sum(cast(round(p.price * v.multiplier) as int) * hoi.quantity) as item_total_inc_vat
-         , p.biodynamic
-         , p.fair_trade
-         , p.gluten_free
-         , p.organic
-         , p.added_sugar
-         , p.vegan
-    from household_order_item hoi
-    inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
-    inner join product p on p.id = hoi.product_id
-    inner join vat_rate v on v.code = p.vat_rate
-    where ho.order_group_id = ? and not ho.cancelled
-    group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
-    order by p.code asc
-  |] (Only groupId)
-
-getPastOrderItemData :: Connection -> Int -> IO [PastOrderItemData]
-getPastOrderItemData conn groupId = 
-  query conn [sql|
-      select hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, 
-         sum(hoi.quantity) as quantity, 
-         sum(hoi.item_total_exc_vat) as item_total_exc_vat, 
-         sum(hoi.item_total_inc_vat) as item_total_inc_vat,
-         hoi.product_biodynamic,
-         hoi.product_fair_trade,
-         hoi.product_gluten_free,
-         hoi.product_organic,
-         hoi.product_added_sugar,
-         hoi.product_vegan,
-         max(adj.old_product_price_exc_vat) as old_product_price_exc_vat,
-         max(adj.old_product_price_inc_vat) as old_product_price_inc_vat,
-         sum(adj.old_quantity) as old_quantity,
-         sum(adj.old_item_total_exc_vat) as old_item_total_exc_vat,
-         sum(adj.old_item_total_inc_vat) as old_item_total_inc_vat
-      from past_household_order_item hoi
-      left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
-      where hoi.order_group_id = ?
-      group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.product_biodynamic, hoi.product_fair_trade, hoi.product_gluten_free, hoi.product_organic, hoi.product_added_sugar, hoi.product_vegan
-      order by hoi.order_id, hoi.product_code asc
-    |] (Only groupId)
-
 getHouseholdOrderData :: Connection -> Int -> IO [HouseholdOrderData]
 getHouseholdOrderData conn groupId = 
   query conn [sql|
@@ -226,49 +173,7 @@ getHouseholdOrderData conn groupId =
     group by o.id, o.created_date, cb.id, cb.name, h.id, h.name, ho.complete, ho.cancelled, ho.updated
     order by o.id desc, h.name asc
   |] (Only groupId)
-
-getHouseholdOrderItemData :: Connection -> Int -> IO [HouseholdOrderItemData]
-getHouseholdOrderItemData conn groupId = 
-  query conn [sql|
-    select hoi.order_id
-         , hoi.household_id
-         , p.id
-         , p.code
-         , p.name
-         , hoi.product_price_exc_vat as old_product_price_exc_vat         
-         , hoi.product_price_inc_vat as old_product_price_inc_vat
-         , p.vat_rate
-         , hoi.quantity
-         , hoi.item_total_exc_vat as old_item_total_exc_vat
-         , hoi.item_total_inc_vat as old_item_total_inc_vat
-         , p.discontinued
-         , case when p.discontinued then 0 
-                else p.price 
-           end as product_price_exc_vat
-         , case when p.discontinued then 0 
-                else cast(round(p.price * v.multiplier) as int) 
-           end as product_price_exc_vat
-         , case when p.discontinued then 0 
-                else p.price * hoi.quantity
-           end as item_total_exc_vat
-         , case when p.discontinued then 0 
-                else cast(round(p.price * v.multiplier) as int) * hoi.quantity
-           end as item_total_inc_vat
-         , p.biodynamic
-         , p.fair_trade
-         , p.gluten_free
-         , p.organic
-         , p.added_sugar
-         , p.vegan
-         , p.updated > ho.updated as updated
-    from household_order_item hoi
-    inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
-    inner join product p on p.id = hoi.product_id
-    inner join vat_rate v on v.code = p.vat_rate
-    where ho.order_group_id = ?
-    order by hoi.ix
-  |] (Only groupId)
-
+  
 getPastHouseholdOrderData :: Connection -> Int -> IO [PastHouseholdOrderData]
 getPastHouseholdOrderData conn groupId =
   query conn [sql|
@@ -287,26 +192,145 @@ getPastHouseholdOrderData conn groupId =
     order by o.id desc, ho.household_name asc
   |] (Only groupId)
 
-getPastHouseholdOrderItemData :: Connection -> Int -> IO [PastHouseholdOrderItemData]
-getPastHouseholdOrderItemData conn groupId =
+
+
+getCollectiveOrderItemData :: Connection -> Int -> IO [CollectiveOrderItemData]
+getCollectiveOrderItemData conn groupId =
   query conn [sql|
-    select hoi.order_id, hoi.household_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.quantity, hoi.item_total_exc_vat, hoi.item_total_inc_vat,
-       hoi.product_biodynamic,
-       hoi.product_fair_trade,
-       hoi.product_gluten_free,
-       hoi.product_organic,
-       hoi.product_added_sugar,
-       hoi.product_vegan,
-       adj.old_product_price_exc_vat,
-       adj.old_product_price_inc_vat,
-       adj.old_quantity,
-       adj.old_item_total_exc_vat,
-       adj.old_item_total_inc_vat
+    select hoi.order_id
+         , p.id
+         , p.code
+         , p.name
+         , p.vat_rate
+         , sum(hoi.quantity) as quantity
+         , p.price as product_price_exc_vat
+         , cast(round(p.price * v.multiplier) as int) as product_price_inc_vat
+         , sum(p.price * hoi.quantity) as item_total_exc_vat
+         , sum(cast(round(p.price * v.multiplier) as int) * hoi.quantity) as item_total_inc_vat
+         , p.biodynamic
+         , p.fair_trade
+         , p.gluten_free
+         , p.organic
+         , p.added_sugar
+         , p.vegan
+    from household_order_item hoi
+    inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
+    inner join product p on p.id = hoi.product_id
+    inner join vat_rate v on v.code = p.vat_rate
+    where ho.order_group_id = ? and not ho.cancelled
+    group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
+    order by p.code asc
+  |] (Only groupId)
+
+getPastOrderItemData :: Connection -> Int -> IO [(Int, PastOrderItemData)]
+getPastOrderItemData conn groupId = do
+  items <- query conn [sql|
+    select hoi.order_id, 
+           hoi.product_id, 
+           hoi.product_code, 
+           hoi.product_name, 
+           hoi.product_price_exc_vat, 
+           hoi.product_price_inc_vat,
+           hoi.product_vat_rate, 
+           sum(hoi.quantity) as quantity, 
+           sum(hoi.item_total_exc_vat) as item_total_exc_vat, 
+           sum(hoi.item_total_inc_vat) as item_total_inc_vat,
+           hoi.product_biodynamic,
+           hoi.product_fair_trade,
+           hoi.product_gluten_free,
+           hoi.product_organic,
+           hoi.product_added_sugar,
+           hoi.product_vegan,
+           max(adj.old_product_price_exc_vat) as old_product_price_exc_vat,
+           max(adj.old_product_price_inc_vat) as old_product_price_inc_vat,
+           sum(adj.old_quantity) as old_quantity,
+           sum(adj.old_item_total_exc_vat) as old_item_total_exc_vat,
+           sum(adj.old_item_total_inc_vat) as old_item_total_inc_vat
+    from past_household_order_item hoi
+    left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
+    where hoi.order_group_id = ?
+    group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.product_biodynamic, hoi.product_fair_trade, hoi.product_gluten_free, hoi.product_organic, hoi.product_added_sugar, hoi.product_vegan
+    order by hoi.order_id, hoi.product_code asc
+  |] (Only groupId)
+  return $ map (\((Only id) :. d) -> (id, d)) items
+
+getHouseholdOrderItemData :: Connection -> Int -> IO [HouseholdOrderItemData]
+getHouseholdOrderItemData conn groupId = 
+  query conn [sql|
+    select hoi.order_id
+         , hoi.household_id
+
+         , p.id
+         , p.code
+         , p.name
+         , case when p.discontinued then 0 
+                else p.price 
+           end as product_price_exc_vat
+         , case when p.discontinued then 0 
+                else cast(round(p.price * v.multiplier) as int) 
+           end as product_price_inc_vat
+         , p.vat_rate
+         , hoi.quantity
+         , case when p.discontinued then 0 
+                else p.price * hoi.quantity
+           end as item_total_exc_vat
+         , case when p.discontinued then 0 
+                else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+           end as item_total_inc_vat
+         , p.biodynamic
+         , p.fair_trade
+         , p.gluten_free
+         , p.organic
+         , p.added_sugar
+         , p.vegan
+         , hoi.product_price_exc_vat as old_product_price_exc_vat         
+         , hoi.product_price_inc_vat as old_product_price_inc_vat
+         , hoi.item_total_exc_vat as old_item_total_exc_vat
+         , hoi.item_total_inc_vat as old_item_total_inc_vat
+         , p.discontinued
+         
+         , p.updated > ho.updated as updated
+    from household_order_item hoi
+    inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
+    inner join product p on p.id = hoi.product_id
+    inner join vat_rate v on v.code = p.vat_rate
+    where ho.order_group_id = ?
+    order by hoi.ix
+  |] (Only groupId)
+
+getPastHouseholdOrderItemData :: Connection -> Int -> IO [((Int, Int), PastOrderItemData)]
+getPastHouseholdOrderItemData conn groupId = do
+  items <- query conn [sql|
+    select hoi.order_id, 
+           hoi.household_id, 
+           hoi.product_id, 
+           hoi.product_code, 
+           hoi.product_name, 
+           hoi.product_price_exc_vat, 
+           hoi.product_price_inc_vat, 
+           hoi.product_vat_rate,
+           hoi.quantity,
+           hoi.item_total_exc_vat,
+           hoi.item_total_inc_vat,
+           hoi.product_biodynamic,
+           hoi.product_fair_trade,
+           hoi.product_gluten_free,
+           hoi.product_organic,
+           hoi.product_added_sugar,
+           hoi.product_vegan,
+           adj.old_product_price_exc_vat,
+           adj.old_product_price_inc_vat,
+           adj.old_quantity,
+           adj.old_item_total_exc_vat,
+           adj.old_item_total_inc_vat
     from past_household_order_item hoi
     left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
     where hoi.order_group_id = ?
     order by hoi.household_id, hoi.product_code
   |] (Only groupId)
+  return $ map (\(id :. d) -> (id, d)) items
+
+
 
 getHouseholds :: ByteString -> Int -> IO [Household]
 getHouseholds connectionString groupId = do
