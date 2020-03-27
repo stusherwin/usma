@@ -110,33 +110,6 @@ data PastHouseholdOrderItemData = PastHouseholdOrderItemData {
 instance FromRow PastHouseholdOrderItemData where
   fromRow = PastHouseholdOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
-data PastOrderItemData = PastOrderItemData {
-  poidOrderId :: Int,
-  poidProductId :: Int,
-  poidCode :: String,
-  poidName :: String,
-  poidPriceExcVat :: Int,
-  poidPriceIncVat :: Int,
-  poidVatRate :: VatRate,
-  poidQuantity :: Int,
-  poidItemTotalExcVat :: Int,
-  poidItemTotalIncVat :: Int,
-  poidBiodynamic :: Bool,
-  poidFairTrade :: Bool,
-  poidGlutenFree :: Bool,
-  poidOrganic :: Bool,
-  poidAddedSugar :: Bool,
-  poidVegan :: Bool,
-  poidOldProductPriceExcVat :: Maybe Int,
-  poidOldProductPriceIncVat :: Maybe Int,
-  poidOldQuantity :: Maybe Int,
-  poidOldItemTotalExcVat :: Maybe Int,
-  poidOldItemTotalIncVat :: Maybe Int
-}
-
-instance FromRow PastOrderItemData where
-  fromRow = PastOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
-
 data CollectiveOrderData = CollectiveOrderData {
   codId :: Int, 
   codCreated :: UTCTime, 
@@ -152,6 +125,35 @@ data CollectiveOrderData = CollectiveOrderData {
 
 instance FromRow CollectiveOrderData where
   fromRow = CollectiveOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+fromCollectiveOrderData :: [CollectiveOrderItemData] -> CollectiveOrderData -> CollectiveOrder
+fromCollectiveOrderData items (d@CollectiveOrderData { codAllUpToDate = True }) 
+  = CollectiveOrder (codId d) 
+                    (codCreated d) 
+                    (codCreatedBy d) 
+                    (codCreatedByName d) 
+                    False 
+                    False 
+                    (codComplete d) 
+                    (codTotalExcVat d) 
+                    (codTotalIncVat d) 
+                    True 
+                    Nothing 
+                    $ map fromCollectiveOrderItemData $ filter (\i -> oidOrderId i == codId d) items
+
+fromCollectiveOrderData items d
+  = CollectiveOrder (codId d)
+                    (codCreated d)
+                    (codCreatedBy d)
+                    (codCreatedByName d)
+                    False 
+                    False 
+                    (codComplete d)
+                    (codTotalExcVat d)
+                    (codTotalIncVat d)
+                    False 
+                    (Just $ OrderAdjustment (codOldTotalExcVat d) (codOldTotalIncVat d))
+                    $ map fromCollectiveOrderItemData $ filter (\i -> oidOrderId i == codId d) items
 
 data CollectiveOrderItemData = CollectiveOrderItemData {
   oidOrderId :: Int,
@@ -176,55 +178,23 @@ instance FromRow CollectiveOrderItemData where
   fromRow = CollectiveOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 fromCollectiveOrderItemData :: CollectiveOrderItemData -> OrderItem
-fromCollectiveOrderItemData d = OrderItem (oidProductId d)
-                                          (oidCode d)
-                                          (oidName d)
-                                          (oidVatRate d)
-                                          (oidPriceExcVat d)
-                                          (oidPriceIncVat d)
-                                          (oidQuantity d)
-                                          (oidItemTotalExcVat d)
-                                          (oidItemTotalIncVat d)
-                                          (oidBiodynamic d)
-                                          (oidFairTrade d)
-                                          (oidGlutenFree d)
-                                          (oidOrganic d)
-                                          (oidAddedSugar d)
-                                          (oidVegan d)
-                                          Nothing
-
--- fromCollectiveOrderItems :: (CollectiveOrderItemData -> Bool) -> [CollectiveOrderItemData] -> [OrderItem]
---fromCollectiveOrderItems = ((map fromCollectiveOrderItemData) .) . (\id -> filter $ (id ==) . oidOrderId)
--- fromCollectiveOrderItems fn = map fromCollectiveOrderItemData . filter fn
-
-fromCollectiveOrderData :: [CollectiveOrderItemData] -> CollectiveOrderData -> CollectiveOrder
-fromCollectiveOrderData items (d@CollectiveOrderData { codAllUpToDate = True }) =
-  CollectiveOrder (codId d) 
-                  (codCreated d) 
-                  (codCreatedBy d) 
-                  (codCreatedByName d) 
-                  False 
-                  False 
-                  (codComplete d) 
-                  (codTotalExcVat d) 
-                  (codTotalIncVat d) 
-                  True 
-                  Nothing 
-                  $ map fromCollectiveOrderItemData $ filter (\i -> oidOrderId i == codId d) items
-
-fromCollectiveOrderData items d =
-  CollectiveOrder (codId d)
-                  (codCreated d)
-                  (codCreatedBy d)
-                  (codCreatedByName d)
-                  False 
-                  False 
-                  (codComplete d)
-                  (codTotalExcVat d)
-                  (codTotalIncVat d)
-                  False 
-                  (Just $ OrderAdjustment (codOldTotalExcVat d) (codOldTotalIncVat d))
-                  $ map fromCollectiveOrderItemData $ filter (\i -> oidOrderId i == codId d) items
+fromCollectiveOrderItemData d 
+  = OrderItem (oidProductId d)
+              (oidCode d)
+              (oidName d)
+              (oidVatRate d)
+              (oidPriceExcVat d)
+              (oidPriceIncVat d)
+              (oidQuantity d)
+              (oidItemTotalExcVat d)
+              (oidItemTotalIncVat d)
+              (oidBiodynamic d)
+              (oidFairTrade d)
+              (oidGlutenFree d)
+              (oidOrganic d)
+              (oidAddedSugar d)
+              (oidVegan d)
+              Nothing
 
 data HouseholdOrderData = HouseholdOrderData {
   hodOrderId :: Int, 
@@ -260,6 +230,109 @@ data PastCollectiveOrderData = PastCollectiveOrderData {
 
 instance FromRow PastCollectiveOrderData where
   fromRow = PastCollectiveOrderData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field 
+
+fromPastCollectiveOrderData :: [PastOrderItemData] -> PastCollectiveOrderData -> PastCollectiveOrder
+fromPastCollectiveOrderData items (d@PastCollectiveOrderData { pcodOldTotalExcVat = Just oldTotalExcVat
+                                                             , pcodOldTotalIncVat = Just oldTotalIncVat })
+  = PastCollectiveOrder (pcodOrderId d)
+                        (pcodOrderCreated d)
+                        (pcodOrderCreatedBy d)
+                        (pcodOrderCreatedByName d)
+                        (not $ pcodCancelled d)
+                        (pcodCancelled d)
+                        (pcodCancelled d)
+                        (not $ pcodCancelled d)
+                        (pcodReconciled d)
+                        (pcodTotalExcVat d)
+                        (pcodTotalIncVat d)
+                        True 
+                        (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) 
+                        $ map fromPastOrderItemData $ filter (\i -> poidOrderId i == pcodOrderId d) items
+
+fromPastCollectiveOrderData items d 
+  = PastCollectiveOrder (pcodOrderId d)
+                        (pcodOrderCreated d)
+                        (pcodOrderCreatedBy d)
+                        (pcodOrderCreatedByName d)
+                        (not $ pcodCancelled d)
+                        (pcodCancelled d)
+                        (pcodCancelled d)
+                        (not $ pcodCancelled d)
+                        (pcodReconciled d)
+                        (pcodTotalExcVat d)
+                        (pcodTotalIncVat d)
+                        True 
+                        Nothing
+                        $ map fromPastOrderItemData $ filter (\i -> poidOrderId i == pcodOrderId d) items
+
+data PastOrderItemData = PastOrderItemData {
+  poidOrderId :: Int,
+  poidProductId :: Int,
+  poidCode :: String,
+  poidName :: String,
+  poidPriceExcVat :: Int,
+  poidPriceIncVat :: Int,
+  poidVatRate :: VatRate,
+  poidQuantity :: Int,
+  poidItemTotalExcVat :: Int,
+  poidItemTotalIncVat :: Int,
+  poidBiodynamic :: Bool,
+  poidFairTrade :: Bool,
+  poidGlutenFree :: Bool,
+  poidOrganic :: Bool,
+  poidAddedSugar :: Bool,
+  poidVegan :: Bool,
+  poidOldProductPriceExcVat :: Maybe Int,
+  poidOldProductPriceIncVat :: Maybe Int,
+  poidOldQuantity :: Maybe Int,
+  poidOldItemTotalExcVat :: Maybe Int,
+  poidOldItemTotalIncVat :: Maybe Int
+}
+
+instance FromRow PastOrderItemData where
+  fromRow = PastOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+fromPastOrderItemData :: PastOrderItemData -> OrderItem
+fromPastOrderItemData (d@PastOrderItemData { poidOldProductPriceExcVat = Just oldProductPriceExcVat
+                                           , poidOldProductPriceIncVat = Just oldProductPriceIncVat
+                                           , poidOldQuantity = Just oldQuantity
+                                           , poidOldItemTotalExcVat = Just oldItemTotalExcVat
+                                           , poidOldItemTotalIncVat = Just oldItemTotalIncVat
+                                           })
+  = OrderItem (poidProductId d)
+              (poidCode d)
+              (poidName d)
+              (poidVatRate d)
+              (poidPriceExcVat d)
+              (poidPriceIncVat d)
+              (poidQuantity d)
+              (poidItemTotalExcVat d)
+              (poidItemTotalIncVat d)
+              (poidBiodynamic d)
+              (poidFairTrade d)
+              (poidGlutenFree d)
+              (poidOrganic d)
+              (poidAddedSugar d)
+              (poidVegan d)
+              $ Just $ OrderItemAdjustment oldProductPriceExcVat oldProductPriceIncVat oldQuantity oldItemTotalExcVat oldItemTotalIncVat False
+
+fromPastOrderItemData d 
+  = OrderItem (poidProductId d)
+              (poidCode d)
+              (poidName d)
+              (poidVatRate d)
+              (poidPriceExcVat d)
+              (poidPriceIncVat d)
+              (poidQuantity d)
+              (poidItemTotalExcVat d)
+              (poidItemTotalIncVat d)
+              (poidBiodynamic d)
+              (poidFairTrade d)
+              (poidGlutenFree d)
+              (poidOrganic d)
+              (poidAddedSugar d)
+              (poidVegan d)
+              Nothing
 
 data PastHouseholdOrderData = PastHouseholdOrderData {
   phodOrderId :: Int, 

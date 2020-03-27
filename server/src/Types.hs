@@ -33,6 +33,7 @@ data CollectiveOrder = CollectiveOrder { coId :: Int
 instance ToJSON CollectiveOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
 
+
 data Household = Household { hId :: Int
                            , hName :: String
                            , hContactName :: Maybe String
@@ -174,12 +175,12 @@ data PastCollectiveOrder = PastCollectiveOrder { pcoId :: Int
 instance ToJSON PastCollectiveOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
 
-pastCollectiveOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
-pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items = 
-  PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
+-- pastCollectiveOrder :: Int -> UTCTime -> Maybe Int -> Maybe String -> Bool -> Bool -> Int -> Int -> Maybe Int -> Maybe Int -> [OrderItem] -> PastCollectiveOrder
+-- pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat (Just oldTotalExcVat) (Just oldTotalIncVat) items = 
+--   PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) items
 
-pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat _ _ items = 
-  PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True Nothing items
+-- pastCollectiveOrder id createdDate createdBy createdByName isAbandoned isReconciled totalExcVat totalIncVat _ _ items = 
+--   PastCollectiveOrder id createdDate createdBy createdByName (not isAbandoned) isAbandoned isAbandoned (not isAbandoned) isReconciled totalExcVat totalIncVat True Nothing items
 
 data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
                                              , phoOrderCreatedDate :: UTCTime
