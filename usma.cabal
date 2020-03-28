@@ -27,13 +27,15 @@ executable usma
                      , server/app/v2
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  other-modules:       Database
+  other-modules:       Api
+                     , AppApi
+                     , AppServer
+                     , Database
                      , DatabaseTypes
-                     , Api
                      , Config
                      , ProductCatalogueImport
-                     , ApiV2
-                     , ServerV2
+                     , AppApiV2
+                     , AppServerV2
                      , DomainV2
   build-depends:       base
                      , containers
