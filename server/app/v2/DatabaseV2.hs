@@ -82,10 +82,10 @@ getVatRateData conn groupId =
 getCollectiveOrderData :: Connection -> Int -> IO [CollectiveOrderData]
 getCollectiveOrderData conn groupId = 
   query conn [sql|
-    select o.id           as order_id
-         , o.created_date as order_created
-         , h.id           as order_created_by_household_id
-         , h.name         as order_created_by_household_name
+    select o.id      as order_id
+         , o.created as order_created
+         , h.id      as order_created_by_household_id
+         , h.name    as order_created_by_household_name
     from v2."order" o
     left join v2.household h on h.id = o.created_by_id
     where o.order_group_id = ?
