@@ -9,9 +9,9 @@
 module Api where
 
 import Data.Aeson
-import GHC.Generics
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
+import GHC.Generics
 import Servant
 import Servant.Multipart
 import qualified Data.ByteString.Lazy as L
@@ -19,36 +19,34 @@ import Network.HTTP.Media ((//))
 
 import Types
 
-data Jpeg
+fullApi :: Proxy FullApi
+fullApi = Proxy
 
-instance Accept Jpeg where
-  contentType _ = "image" // "jpeg"
+type FullApi =
+       "api" :> (    AppApiV2 
+                :<|> AppApi
+                )
+  :<|> "g" :> Capture "groupKey" Text :> Raw
+  :<|> "g" :> Raw
+  :<|> Raw
 
-instance MimeRender Jpeg (L.ByteString) where
-  mimeRender _ = Prelude.id
+appApiV2 :: Proxy AppApiV2
+appApiV2 = Proxy
 
-data Csv
+appApi :: Proxy AppApi
+appApi = Proxy
 
-instance Accept Csv where
-  contentType _ = "text" // "csv"
+type AppApi = 
+       "verify" :> VerifyApi
+  :<|> WithGroupApi
 
-instance MimeRender Csv (L.ByteString) where
-  mimeRender _ = Prelude.id
+type VerifyApi =
+  Capture "groupKey" Text :> Post '[JSON] Bool
 
-type AppAPI = 
-  "api" :> (
-         "verify" :> VerifyAPI
-    :<|> WithGroupAPI
-  )
-
-type VerifyAPI =
-       Capture "groupKey" Text :> Post '[JSON] Bool
-
-type WithGroupAPI =
-  Capture "groupKey" Text :> (
-            "query" :> QueryAPI
-       :<|> "command" :> CommandAPI
-  )
+type WithGroupApi =
+  Capture "groupKey" Text :> (    "query" :> QueryApi
+                             :<|> "command" :> CommandApi
+                             )
 
   data Data = Data { collectiveOrder :: (Maybe CollectiveOrder)
                    , pastCollectiveOrders :: [PastCollectiveOrder]
@@ -66,7 +64,7 @@ type WithGroupAPI =
                                                    } deriving (Eq, Show, Generic)
   instance ToJSON ProductCatalogueData
 
-type QueryAPI =
+type QueryApi =
        "data" :> Get '[JSON] Data
   :<|> "product-catalogue-data" :> Get '[JSON] ProductCatalogueData
   :<|> "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
@@ -85,7 +83,7 @@ type QueryAPI =
   :<|> "product-catalogue-brands" :> Get '[JSON] [String]
   :<|> "group-settings" :> Get '[JSON] GroupSettings
 
-type CommandAPI =
+type CommandApi =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
   :<|> "create-order" :> Post '[JSON] Int
   :<|> "place-order"  :> Capture "orderId" Int :> Post '[JSON] ()
@@ -106,14 +104,26 @@ type CommandAPI =
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
 
-type FullAPI =
-       AppAPI
-  :<|> "g" :> Capture "groupKey" Text :> Raw
-  :<|> "g" :> Raw
-  :<|> Raw
+type AppApiV2 = 
+  "v2" :> (    "verify" :> VerifyApi
+          :<|> WithGroupApiV2
+          )
 
-fullAPI :: Proxy FullAPI
-fullAPI = Proxy
+type WithGroupApiV2 =
+  Capture "groupKey" Text :> (    "query" :> QueryApiV2
+                             )
 
-appAPI :: Proxy AppAPI
-appAPI = Proxy
+type QueryApiV2 =
+       "collective-order" :> Get '[JSON] (Maybe Int)
+
+data Jpeg
+instance Accept Jpeg where
+  contentType _ = "image" // "jpeg"
+instance MimeRender Jpeg (L.ByteString) where
+  mimeRender _ = Prelude.id
+
+data Csv
+instance Accept Csv where
+  contentType _ = "text" // "csv"
+instance MimeRender Csv (L.ByteString) where
+  mimeRender _ = Prelude.id

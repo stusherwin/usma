@@ -34,9 +34,13 @@ import Control.Monad (mzero, when, void)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, writeFile, readFile)
 import qualified Data.ByteString.Lazy.Char8 as C (unpack)
-
 import Data.Csv as Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import Data.Vector as V (fromList)
+import Network.HTTP.Conduit
+import Text.HTML.TagSoup
+import Data.Text.Encoding
+import System.IO (hFlush, stdout)
+import Control.Exception (handle, SomeException(..))
 
 import Types
 import Api
@@ -44,82 +48,8 @@ import qualified Database as D
 import Config
 import ProductCatalogueImport
 
-import Network.HTTP.Conduit
-import Text.HTML.TagSoup
-import Data.Text.Encoding
-import System.IO (hFlush, stdout)
-import Control.Exception (handle, SomeException(..))
-
-
-data CsvItem = CsvItem { csvName :: String
-                       , csvCode :: String
-                       , csvPrice :: Int
-                       , csvQuantity :: Int
-                       , csvTotal :: Int
-                       , csvReference :: String
-                       }
-
-instance ToNamedRecord CsvItem where
-  toNamedRecord (CsvItem { csvName = name
-                         , csvCode = code
-                         , csvPrice = price
-                         , csvQuantity = qty
-                         , csvTotal = tot
-                         , csvReference = ref
-                         }) = namedRecord [ "Product" .= name
-                                          , "Code" .= code
-                                          , "Price" .= price'
-                                          , "Quantity" .= qty
-                                          , "Total" .= total' 
-                                          , "Reference" .= ref 
-                                          ]
-    where
-    price' = ((fromIntegral price) :: Double) / 100.0
-    total' = ((fromIntegral tot) :: Double) / 100.0
-
-data ProductData = ProductData { url :: String
-                               , title :: String
-                               , imageUrl :: String
-                               , size :: Int
-                               }
-
-fetchProductData :: String -> IO (Maybe ProductData)
-fetchProductData code = handle handleException $ do
-  html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
-  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ C.unpack html of
-    [] -> return Nothing
-    (tags:_) -> do
-      let a = tags !! 2
-      let img = tags !! 4
-      return $ Just $ ProductData { url = fromAttrib "href" a
-                                  , title = fromAttrib "title" a
-                                  , imageUrl = fromAttrib "src" img
-                                  , size = read $ fromAttrib "height" img
-                                  }
-  where
-  handleException :: HttpException -> IO (Maybe ProductData)
-  handleException _ = return Nothing
-
-fetchProductImage :: B.ByteString -> String -> IO (Maybe L.ByteString)
-fetchProductImage conn code = handle handleException $ do 
-  image <- D.getProductImage conn code
-  case image of
-    Just i -> return $ Just $ L.fromStrict i
-    _ -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          imageData <- simpleHttp (imageUrl r)
-          D.saveProductImage conn code $ L.toStrict imageData
-          return $ Just $ imageData
-        _ -> do
-          img <- L.readFile "client/static/img/404.jpg"
-          return $ Just $ img
-  where
-  handleException :: HttpException -> IO (Maybe L.ByteString)
-  handleException _ = do
-    img <- L.readFile "client/static/img/404.jpg"
-    return $ Just $ img
+import ApiV2
+import ServerV2
 
 main :: IO ()
 main = do
@@ -128,13 +58,16 @@ main = do
 
 app :: Config -> Application
 app config = logStdoutDev
-             $ serve fullAPI (server config)
+             $ serve fullApi (server config)
          
-server :: Config -> Server FullAPI
-server config = appServer config
-         :<|> serveFilesWithGroup
-         :<|> serveFiles
-         :<|> serveFiles
+server :: Config -> Server FullApi
+server config = 
+       (    appServerV2 config
+       :<|> appServer config
+       )
+  :<|> serveFilesWithGroup
+  :<|> serveFiles
+  :<|> serveFiles
   where
   serveFilesWithGroup :: Text -> Server Raw
   serveFilesWithGroup _ = serveFiles
@@ -150,39 +83,42 @@ staticOrDefault req respond = respond $
   "client/static/index.html"
   Nothing
 
-appServer :: Config -> Server AppAPI
-appServer config = verifyServer config
-              :<|> withGroupServer config
+appServer :: Config -> Server AppApi
+appServer config = 
+       verifyServer config
+  :<|> withGroupServer config
 
-verifyServer :: Config -> Server VerifyAPI
+verifyServer :: Config -> Server VerifyApi
 verifyServer config groupKey = do
   group <- liftIO $ findGroup (connectionString config) groupKey
   case group of
     Just _ -> return True
     _ -> return False
 
-withGroupServer :: Config -> Server WithGroupAPI
-withGroupServer config groupKey = queryServer config groupKey
-                           :<|> commandServer config groupKey
+withGroupServer :: Config -> Server WithGroupApi
+withGroupServer config groupKey = 
+       queryServer config groupKey
+  :<|> commandServer config groupKey
 
-queryServer :: Config -> Text -> Server QueryAPI
-queryServer config groupKey = allData groupKey
-                         :<|> productCatalogueData groupKey
-                         :<|> collectiveOrder groupKey
-                         :<|> pastCollectiveOrders groupKey
-                         :<|> householdOrders groupKey
-                         :<|> pastHouseholdOrders groupKey
-                         :<|> households groupKey
-                         :<|> householdPayments groupKey
-                         :<|> productCatalogue
-                         :<|> productImage
-                         :<|> collectiveOrderDownload groupKey
-                         :<|> householdOrdersDownload groupKey
-                         :<|> pastCollectiveOrderDownload groupKey
-                         :<|> pastHouseholdOrdersDownload groupKey
-                         :<|> productCatalogueCategories
-                         :<|> productCatalogueBrands
-                         :<|> groupSettings groupKey
+queryServer :: Config -> Text -> Server QueryApi
+queryServer config groupKey = 
+       allData groupKey
+  :<|> productCatalogueData groupKey
+  :<|> collectiveOrder groupKey
+  :<|> pastCollectiveOrders groupKey
+  :<|> householdOrders groupKey
+  :<|> pastHouseholdOrders groupKey
+  :<|> households groupKey
+  :<|> householdPayments groupKey
+  :<|> productCatalogue
+  :<|> productImage
+  :<|> collectiveOrderDownload groupKey
+  :<|> householdOrdersDownload groupKey
+  :<|> pastCollectiveOrderDownload groupKey
+  :<|> pastHouseholdOrdersDownload groupKey
+  :<|> productCatalogueCategories
+  :<|> productCatalogueBrands
+  :<|> groupSettings groupKey
   where
   conn = connectionString config
   
@@ -312,26 +248,27 @@ queryServer config groupKey = allData groupKey
   groupSettings :: Text -> Handler GroupSettings
   groupSettings groupKey = findGroupOr404 conn groupKey $ \groupId -> liftIO $ D.getGroupSettings conn groupId
 
-commandServer :: Config -> Text -> Server CommandAPI
-commandServer config groupKey = createOrderForHousehold groupKey
-                           :<|> createOrder groupKey
-                           :<|> placeOrder groupKey
-                           :<|> abandonOrder groupKey
-                           :<|> abandonHouseholdOrder groupKey
-                           :<|> completeHouseholdOrder groupKey
-                           :<|> reopenHouseholdOrder groupKey
-                           :<|> ensureHouseholdOrderItem groupKey
-                           :<|> ensureAllItemsFromPastHouseholdOrder groupKey
-                           :<|> removeHouseholdOrderItem groupKey
-                           :<|> createHousehold groupKey
-                           :<|> updateHousehold groupKey
-                           :<|> archiveHousehold groupKey
-                           :<|> createHouseholdPayment groupKey
-                           :<|> updateHouseholdPayment groupKey
-                           :<|> archiveHouseholdPayment groupKey
-                           :<|> uploadProductCatalogue
-                           :<|> acceptCatalogueUpdates groupKey
-                           :<|> reconcileOrderItem groupKey
+commandServer :: Config -> Text -> Server CommandApi
+commandServer config groupKey = 
+       createOrderForHousehold groupKey
+  :<|> createOrder groupKey
+  :<|> placeOrder groupKey
+  :<|> abandonOrder groupKey
+  :<|> abandonHouseholdOrder groupKey
+  :<|> completeHouseholdOrder groupKey
+  :<|> reopenHouseholdOrder groupKey
+  :<|> ensureHouseholdOrderItem groupKey
+  :<|> ensureAllItemsFromPastHouseholdOrder groupKey
+  :<|> removeHouseholdOrderItem groupKey
+  :<|> createHousehold groupKey
+  :<|> updateHousehold groupKey
+  :<|> archiveHousehold groupKey
+  :<|> createHouseholdPayment groupKey
+  :<|> updateHouseholdPayment groupKey
+  :<|> archiveHouseholdPayment groupKey
+  :<|> uploadProductCatalogue
+  :<|> acceptCatalogueUpdates groupKey
+  :<|> reconcileOrderItem groupKey
   where
   conn = connectionString config
   
@@ -435,3 +372,78 @@ findGroupOr404 conn groupKey handler = do
   case groupId of
     Just id -> handler id
     _ -> throwError err404
+    
+data CsvItem = CsvItem 
+  { csvName :: String
+  , csvCode :: String
+  , csvPrice :: Int
+  , csvQuantity :: Int
+  , csvTotal :: Int
+  , csvReference :: String
+  }
+
+instance ToNamedRecord CsvItem where
+  toNamedRecord (CsvItem 
+    { csvName = name
+    , csvCode = code
+    , csvPrice = price
+    , csvQuantity = qty
+    , csvTotal = tot
+    , csvReference = ref
+    }) 
+    = namedRecord 
+      [ "Product" .= name
+      , "Code" .= code
+      , "Price" .= price'
+      , "Quantity" .= qty
+      , "Total" .= total' 
+      , "Reference" .= ref 
+      ]
+    where
+    price' = ((fromIntegral price) :: Double) / 100.0
+    total' = ((fromIntegral tot) :: Double) / 100.0
+
+data ProductData = ProductData 
+  { url :: String
+  , title :: String
+  , imageUrl :: String
+  , size :: Int
+  }
+
+fetchProductData :: String -> IO (Maybe ProductData)
+fetchProductData code = handle handleException $ do
+  html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
+  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ C.unpack html of
+    [] -> return Nothing
+    (tags:_) -> do
+      let a = tags !! 2
+      let img = tags !! 4
+      return $ Just $ ProductData { url = fromAttrib "href" a
+                                  , title = fromAttrib "title" a
+                                  , imageUrl = fromAttrib "src" img
+                                  , size = read $ fromAttrib "height" img
+                                  }
+  where
+  handleException :: HttpException -> IO (Maybe ProductData)
+  handleException _ = return Nothing
+
+fetchProductImage :: B.ByteString -> String -> IO (Maybe L.ByteString)
+fetchProductImage conn code = handle handleException $ do 
+  image <- D.getProductImage conn code
+  case image of
+    Just i -> return $ Just $ L.fromStrict i
+    _ -> do
+      productData <- fetchProductData code
+      case productData of
+        Just r -> do
+          imageData <- simpleHttp (imageUrl r)
+          D.saveProductImage conn code $ L.toStrict imageData
+          return $ Just $ imageData
+        _ -> do
+          img <- L.readFile "client/static/img/404.jpg"
+          return $ Just $ img
+  where
+  handleException :: HttpException -> IO (Maybe L.ByteString)
+  handleException _ = do
+    img <- L.readFile "client/static/img/404.jpg"
+    return $ Just $ img
