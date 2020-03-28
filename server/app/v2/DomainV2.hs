@@ -1,98 +1,112 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module DomainV2 where
 
 import Data.Time.Clock (UTCTime)
+import Data.Semigroup (Semigroup(..))
 import Data.List (lookup)
+import Data.Foldable (foldl')
+import GHC.Generics
 
 {-- Order --}
 
 data Order = Order 
   { orderId :: OrderId
-  , created :: UTCTime
-  , createdBy :: Maybe HouseholdInfo
-  , isPlaced :: Bool
-  , isAbandoned :: Bool
-  , isComplete :: Bool
-  , total :: Money
-  , isAllHouseholdsUpToDate :: Bool
-  , adjustment :: Maybe OrderAdjustment
-  , items :: [OrderItem]
-  } deriving (Eq, Show)
+  , orderCreated :: UTCTime
+  , orderCreatedBy :: Maybe HouseholdInfo
+  , orderIsPlaced :: Bool
+  , orderIsAbandoned :: Bool
+  , orderIsComplete :: Bool
+  , orderTotal :: Value
+  , orderIsAllHouseholdsUpToDate :: Bool
+  , orderAdjustment :: Maybe OrderAdjustment
+  , orderItems :: [OrderItem]
+  } deriving (Eq, Show, Generic)
 
 data OrderAdjustment = OrderAdjustment 
-  { newTotal :: Money
-  } deriving (Eq, Show)
+  { orderAdjNewTotal :: Value
+  } deriving (Eq, Show, Generic)
 
 data OrderItem = OrderItem 
-  { product :: Product
-  , quantity :: Int
-  , total :: Money
-  , adjustment :: Maybe OrderItemAdjustment
-  } deriving (Eq, Show)
+  { itemProduct :: Product
+  , itemQuantity :: Int
+  , itemTotal :: Value
+  , itemAdjustment :: Maybe OrderItemAdjustment
+  } deriving (Eq, Show, Generic)
 
 data OrderItemAdjustment = OrderItemAdjustment 
-  { newVatRate :: VatRate
-  , newPrice :: Money
-  , newQuantity :: Int
-  , newTotal :: Money
-  , isDiscontinued :: Bool
-  } deriving (Eq, Show)
+  { itemAdjNewVatRate :: VatRate
+  , itemAdjNewPrice :: Value
+  , itemAdjNewQuantity :: Int
+  , itemAdjNewTotal :: Value
+  , itemAdjIsDiscontinued :: Bool
+  } deriving (Eq, Show, Generic)
 
 newtype OrderId = OrderId 
   { fromOrderId :: Int 
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
 
 {- Household -}
 
 data HouseholdInfo = HouseholdInfo 
   { householdId :: HouseholdId
-  , name :: String
-  } deriving (Eq, Show)
+  , householdName :: String
+  } deriving (Eq, Show, Generic)
 
 newtype HouseholdId = HouseholdId 
   { fromHouseholdId :: Int 
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
 
 {- Product -}
 
 data Product = Product 
   { productId :: ProductId
-  , code :: String
-  , name :: String
-  , vatRate :: VatRate
-  , price :: Money
-  , isBiodynamic :: Bool
-  , isFairTrade :: Bool
-  , isGlutenFree :: Bool
-  , isOrganic :: Bool
-  , isAddedSugar :: Bool
-  , isVegan :: Bool
-  } deriving (Eq, Show)
+  , productCode :: String
+  , productName :: String
+  , productVatRate :: VatRate
+  , productPrice :: Value
+  , productIsBiodynamic :: Bool
+  , productIsFairTrade :: Bool
+  , productIsGlutenFree :: Bool
+  , productIsOrganic :: Bool
+  , productIsAddedSugar :: Bool
+  , productIsVegan :: Bool
+  } deriving (Eq, Show, Generic)
 
 newtype ProductId = ProductId 
   { fromProductId :: Int 
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Generic)
 
-{- Money -}
+{- Value -}
 
-data Money = Money 
-  { valueExcVat :: Int 
-  , valueIncVat :: Int 
-  } deriving (Eq, Show)
+data Value = Value 
+  { excVat :: Int 
+  , incVat :: Int 
+  } deriving (Eq, Show, Generic)
 
-money :: VatRates -> VatRate -> Int -> Money
-money vatRates vatRate amount = 
+instance Semigroup Value where
+  Value a a' <> Value b b' = Value (a + b) (a' + b')
+
+instance Monoid Value where
+  mempty = zero
+  mappend = (<>)
+
+value :: VatRates -> VatRate -> Int -> Value
+value vatRates vatRate amount = 
   case lookup vatRate vatRates of
-    Just multiplier -> Money amount (round $ fromIntegral amount * multiplier)
-    _               -> Money amount amount
+    Just multiplier -> Value amount (round $ fromIntegral amount * multiplier)
+    _               -> Value amount amount
 
-zero :: Money
-zero = Money 0 0
+zero :: Value
+zero = Value 0 0
+
+sum :: [Value] -> Value
+sum = foldl' (<>) zero
 
 data VatRate = Zero 
              | Standard 
              | Reduced 
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
-type VatRates = [(VatRate, Double)]
+type VatRates = [(VatRate, Rational)]
