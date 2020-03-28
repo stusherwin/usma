@@ -8,60 +8,64 @@ import DomainV2
 import DatabaseV2
 import Data.Maybe (listToMaybe)
 import Config
+import Prelude hiding (sum)
 
 getCollectiveOrder :: Config -> Int -> IO (Maybe Order)
 getCollectiveOrder config groupId = do
   conn <- connectPostgreSQL $ connectionString config
-  (vatRates, orders, items) <- withTransaction conn $ do
+  (rVatRates, rOrders, rItems) <- withTransaction conn $ do
     v <- getVatRateData conn groupId
     o <- getCollectiveOrderData conn groupId
     i <- getCollectiveOrderItemData conn groupId
     return (v, o, i)
   close conn
-  return $ listToMaybe $ map (toOrder vatRates items) orders
+  return $ listToMaybe $ map (toOrder rVatRates rItems) rOrders
 
 toOrder :: VatRates -> [(Int, OrderItemData)] -> CollectiveOrderData -> Order
-toOrder vatRates items o = Order 
-  { orderId     = OrderId $ order_id o
-  , created     = created (o :: CollectiveOrderData)
-  , createdBy   = toHouseholdInfo o
-  , isPlaced    = False
-  , isAbandoned = False
-  , isComplete  = False -- todo
-  , total       = zero -- todo
-  , isAllHouseholdsUpToDate = True -- todo
-  , adjustment  = Nothing -- todo
-  , items       = map ((toItem vatRates) . snd) $ filter ((order_id o == ) . fst) items
+toOrder vatRates rItems o = Order 
+  { orderId          = OrderId $ order_id o
+  , orderCreated     = order_created o
+  , orderCreatedBy   = toHouseholdInfo o
+  , orderIsPlaced    = False
+  , orderIsAbandoned = False
+  , orderIsComplete  = False -- todo
+  , orderTotal       = sum $ map itemTotal items
+  , orderIsAllHouseholdsUpToDate = True -- todo
+  , orderAdjustment  = Nothing -- todo
+  , orderItems       = items
   }
+  where
+  items = map ((toItem vatRates) . snd) $ filter ((order_id o == ) . fst) rItems
+
 
 toItem :: VatRates -> OrderItemData -> OrderItem
 toItem vatRates i = OrderItem 
-  { product    = toProduct vatRates i
-  , quantity   = quantity (i :: OrderItemData)
-  , total      = vatMoney (vat_rate i) (price (i :: OrderItemData) * quantity (i :: OrderItemData))
-  , adjustment = Nothing -- todo
+  { itemProduct    = toProduct vatRates i
+  , itemQuantity   = item_quantity i
+  , itemTotal      = value' (product_vat_rate i) (product_price i * item_quantity i)
+  , itemAdjustment = Nothing -- todo
   }
-  where vatMoney = money vatRates
+  where value' = value vatRates
 
 toProduct :: VatRates -> OrderItemData -> Product
 toProduct vatRates i = Product 
-  { productId = ProductId $ product_id i
-  , code      = code (i :: OrderItemData)
-  , name      = name (i :: OrderItemData)
-  , vatRate   = vat_rate i
-  , price     = vatMoney (vat_rate i) (price (i :: OrderItemData))
-  , isBiodynamic = biodynamic i
-  , isFairTrade  = fair_trade i
-  , isGlutenFree = gluten_free i
-  , isOrganic    = organic i
-  , isAddedSugar = added_sugar i
-  , isVegan      = vegan i
+  { productId           = ProductId $ product_id i
+  , productCode         = product_code i
+  , productName         = product_name i
+  , productVatRate      = product_vat_rate i
+  , productPrice        = value' (product_vat_rate i) (product_price i)
+  , productIsBiodynamic = product_biodynamic i
+  , productIsFairTrade  = product_fair_trade i
+  , productIsGlutenFree = product_gluten_free i
+  , productIsOrganic    = product_organic i
+  , productIsAddedSugar = product_added_sugar i
+  , productIsVegan      = product_vegan i
   }
-  where vatMoney = money vatRates
+  where value' = value vatRates
 
 toHouseholdInfo :: CollectiveOrderData -> Maybe HouseholdInfo
-toHouseholdInfo (CollectiveOrderData { created_by_household_id = Just id
-                                     , created_by_household_name = Just name
+toHouseholdInfo (CollectiveOrderData { order_created_by_household_id = Just id
+                                     , order_created_by_household_name = Just name
                                      })
   = Just $ HouseholdInfo (HouseholdId id) name
 toHouseholdInfo _ = Nothing

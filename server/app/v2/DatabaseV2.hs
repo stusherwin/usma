@@ -46,9 +46,9 @@ instance FromField VatRate where
 
 data CollectiveOrderData = CollectiveOrderData 
   { order_id :: Int
-  , created :: UTCTime
-  , created_by_household_id :: Maybe Int
-  , created_by_household_name :: Maybe String
+  , order_created :: UTCTime
+  , order_created_by_household_id :: Maybe Int
+  , order_created_by_household_name :: Maybe String
   }
 
 instance FromRow CollectiveOrderData where
@@ -56,38 +56,38 @@ instance FromRow CollectiveOrderData where
 
 data OrderItemData = OrderItemData 
   { product_id :: Int
-  , code :: String
-  , name :: String
-  , vat_rate :: VatRate
-  , price :: Int
-  , biodynamic :: Bool
-  , fair_trade :: Bool
-  , gluten_free :: Bool
-  , organic :: Bool
-  , added_sugar :: Bool
-  , vegan :: Bool
-  , quantity :: Int
+  , product_code :: String
+  , product_name :: String
+  , product_vat_rate :: VatRate
+  , product_price :: Int
+  , product_biodynamic :: Bool
+  , product_fair_trade :: Bool
+  , product_gluten_free :: Bool
+  , product_organic :: Bool
+  , product_added_sugar :: Bool
+  , product_vegan :: Bool
+  , item_quantity :: Int
   }
 
 instance FromRow OrderItemData where
   fromRow = OrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
-getVatRateData :: Connection -> Int -> IO [(VatRate, Double)]
+getVatRateData :: Connection -> Int -> IO [(VatRate, Rational)]
 getVatRateData conn groupId = 
   query_ conn [sql|
     select code, multiplier
-    from vat_rate 
+    from v2.vat_rate 
   |]
 
 getCollectiveOrderData :: Connection -> Int -> IO [CollectiveOrderData]
 getCollectiveOrderData conn groupId = 
   query conn [sql|
-    select o.id   as order_id
-         , o.created
-         , h.id   as created_by_household_id
-         , h.name as created_by_household_name
-    from "order" o
-    left join household h on h.id = o.created_by_id
+    select o.id           as order_id
+         , o.created_date as order_created
+         , h.id           as order_created_by_household_id
+         , h.name         as order_created_by_household_name
+    from v2."order" o
+    left join v2.household h on h.id = o.created_by_id
     where o.order_group_id = ?
     order by o.id desc
   |] (Only groupId)
@@ -108,10 +108,10 @@ getCollectiveOrderItemData conn groupId = do
          , p.added_sugar
          , p.vegan
          , sum(hoi.quantity) as quantity
-    from household_order_item hoi
-    inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
-    inner join product p on p.id = hoi.product_id
-    inner join vat_rate v on p.vat_rate = v.code
+    from v2.household_order_item hoi
+    inner join v2.household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
+    inner join v2.product p on p.id = hoi.product_id
+    inner join v2.vat_rate v on p.vat_rate = v.code
     where ho.order_group_id = ? and not ho.cancelled
     group by hoi.order_id
            , p.id

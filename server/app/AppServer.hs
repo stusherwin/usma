@@ -39,28 +39,28 @@ appServer config groupKey =
 
 queryServer :: Config -> Text -> Server QueryApi
 queryServer config groupKey = 
-       allData groupKey
-  :<|> productCatalogueData groupKey
-  :<|> collectiveOrder groupKey
-  :<|> pastCollectiveOrders groupKey
-  :<|> householdOrders groupKey
-  :<|> pastHouseholdOrders groupKey
-  :<|> households groupKey
-  :<|> householdPayments groupKey
+       allData
+  :<|> productCatalogueData
+  :<|> collectiveOrder
+  :<|> pastCollectiveOrders
+  :<|> householdOrders
+  :<|> pastHouseholdOrders
+  :<|> households
+  :<|> householdPayments
   :<|> productCatalogue
   :<|> productImage
-  :<|> collectiveOrderDownload groupKey
-  :<|> householdOrdersDownload groupKey
-  :<|> pastCollectiveOrderDownload groupKey
-  :<|> pastHouseholdOrdersDownload groupKey
+  :<|> collectiveOrderDownload
+  :<|> householdOrdersDownload
+  :<|> pastCollectiveOrderDownload
+  :<|> pastHouseholdOrdersDownload
   :<|> productCatalogueCategories
   :<|> productCatalogueBrands
-  :<|> groupSettings groupKey
+  :<|> groupSettings
   where
   conn = connectionString config
   
-  allData :: Text -> Handler ApiData
-  allData groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+  allData :: Handler ApiData
+  allData = findGroupOr404 conn groupKey $ \groupId -> do
     collectiveOrder <- liftIO $ D.getCollectiveOrder conn groupId
     pastCollectiveOrders <- liftIO $ D.getPastCollectiveOrders conn groupId
     householdOrders <- liftIO $ D.getHouseholdOrders conn groupId
@@ -70,35 +70,35 @@ queryServer config groupKey =
     groupSettings <- liftIO $ D.getGroupSettings conn groupId
     return $ ApiData collectiveOrder pastCollectiveOrders householdOrders pastHouseholdOrders households householdPayments groupSettings
 
-  productCatalogueData :: Text -> Handler ProductCatalogueApiData
-  productCatalogueData groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+  productCatalogueData :: Handler ProductCatalogueApiData
+  productCatalogueData = findGroupOr404 conn groupKey $ \groupId -> do
     productCatalogue <- liftIO $ D.getProductCatalogue conn
     categories <- liftIO $ D.getProductCatalogueCategories conn
     brands <- liftIO $ D.getProductCatalogueBrands conn
     return $ ProductCatalogueApiData productCatalogue categories brands
 
-  collectiveOrder :: Text -> Handler (Maybe CollectiveOrder)
-  collectiveOrder groupKey = findGroupOr404 conn groupKey $ \groupId ->
+ collectiveOrder :: Handler (Maybe CollectiveOrder)
+ collectiveOrder = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getCollectiveOrder conn groupId
   
-  pastCollectiveOrders :: Text -> Handler [PastCollectiveOrder]
-  pastCollectiveOrders groupKey = findGroupOr404 conn groupKey $ \groupId ->
+  pastCollectiveOrders :: Handler [PastCollectiveOrder]
+  pastCollectiveOrders = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getPastCollectiveOrders conn groupId
   
-  householdOrders :: Text -> Handler [HouseholdOrder]
-  householdOrders groupKey = findGroupOr404 conn groupKey $ \groupId ->
+  householdOrders :: Handler [HouseholdOrder]
+  householdOrders = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getHouseholdOrders conn groupId
   
-  pastHouseholdOrders :: Text -> Handler [PastHouseholdOrder]
-  pastHouseholdOrders groupKey = findGroupOr404 conn groupKey $ \groupId ->
+  pastHouseholdOrders :: Handler [PastHouseholdOrder]
+  pastHouseholdOrders = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getPastHouseholdOrders conn groupId
 
-  households :: Text -> Handler [Household]
-  households groupKey = findGroupOr404 conn groupKey $ \groupId ->
+  households :: Handler [Household]
+  households = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getHouseholds conn groupId
 
-  householdPayments :: Text -> Handler [HouseholdPayment]
-  householdPayments groupKey = findGroupOr404 conn groupKey $ \groupId ->
+  householdPayments :: Handler [HouseholdPayment]
+  householdPayments = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getHouseholdPayments conn groupId
 
   productCatalogue :: Handler [ProductCatalogueEntry]
@@ -111,8 +111,8 @@ queryServer config groupKey =
       Just i -> return i
       _ -> throwError err404
 
-  collectiveOrderDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  collectiveOrderDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+  collectiveOrderDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  collectiveOrderDownload = findGroupOr404 conn groupKey $ \groupId -> do
     order <- liftIO $ D.getCollectiveOrder conn groupId
     let items = case order of
                   Nothing -> []
@@ -126,8 +126,8 @@ queryServer config groupKey =
                          , oiItemTotalExcVat = total
                          }) = CsvItem name code price qty total ""
 
-  householdOrdersDownload :: Text -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  householdOrdersDownload groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+  householdOrdersDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  householdOrdersDownload = findGroupOr404 conn groupKey $ \groupId -> do
     order <- liftIO $ D.getCollectiveOrder conn groupId
     case order of
       Nothing -> throwError err404
@@ -145,8 +145,8 @@ queryServer config groupKey =
                                         , oiItemTotalExcVat = total
                                         }) = CsvItem name code price qty total householdName
 
-  pastCollectiveOrderDownload :: Text -> Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  pastCollectiveOrderDownload groupKey orderId = findGroupOr404 conn groupKey $ \groupId -> do
+  pastCollectiveOrderDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  pastCollectiveOrderDownload orderId = findGroupOr404 conn groupKey $ \groupId -> do
     orders <- liftIO $ D.getPastCollectiveOrders conn groupId
     let order = find ((== orderId) . pcoId) orders
     let items = case order of
@@ -161,8 +161,8 @@ queryServer config groupKey =
                          , oiItemTotalExcVat = total
                          }) = CsvItem name code price qty total ""
 
-  pastHouseholdOrdersDownload :: Text -> Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  pastHouseholdOrdersDownload groupKey orderId = findGroupOr404 conn groupKey $ \groupId -> do
+  pastHouseholdOrdersDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  pastHouseholdOrdersDownload orderId = findGroupOr404 conn groupKey $ \groupId -> do
     householdOrders <- liftIO $ D.getPastHouseholdOrders conn groupId
     let items = (map toCsvItem) . concat . withHouseholdName . forOrder $ householdOrders
     return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
@@ -182,8 +182,8 @@ queryServer config groupKey =
   productCatalogueBrands :: Handler [String]
   productCatalogueBrands = liftIO $ D.getProductCatalogueBrands conn
 
-  groupSettings :: Text -> Handler GroupSettings
-  groupSettings groupKey = findGroupOr404 conn groupKey $ \groupId -> liftIO $ D.getGroupSettings conn groupId
+  groupSettings :: Handler GroupSettings
+  groupSettings = findGroupOr404 conn groupKey $ \groupId -> liftIO $ D.getGroupSettings conn groupId
 
 commandServer :: Config -> Text -> Server CommandApi
 commandServer config groupKey = 
@@ -309,7 +309,7 @@ findGroupOr404 conn groupKey handler = do
   case groupId of
     Just id -> handler id
     _ -> throwError err404
-    
+
 data CsvItem = CsvItem 
   { csvName :: String
   , csvCode :: String

@@ -10,9 +10,17 @@
 module AppApiV2 where
 
 import Data.Aeson
+import Data.Aeson.Types (Options(..))
+import Data.Char (toLower, isLower, toUpper)
 import Data.Time.Clock (UTCTime)
 import GHC.Generics
 import Servant
+import DomainV2 (VatRate)
+
+dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
+  dropFieldPrefix = (first toLower) . (dropWhile isLower)
+  first f (c:cs) = (f c):cs
+  first _ [] = []
 
 type AppApiV2 = 
   "v2" :> ( "query" :> QueryApiV2
@@ -22,56 +30,59 @@ type QueryApiV2 =
        "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
 
 data CollectiveOrder = CollectiveOrder 
-  { id :: Int
-  , orderCreatedDate :: UTCTime
-  , orderCreatedBy :: Maybe Int
-  , orderCreatedByName :: Maybe String
-  , orderIsPlaced :: Bool
-  , orderIsAbandoned :: Bool
-  , isComplete :: Bool
-  , totalExcVat :: Int
-  , totalIncVat :: Int
-  , allHouseholdsUpToDate :: Bool
-  , adjustment :: Maybe OrderAdjustment
-  , items :: [OrderItem]
+  { coId :: Int
+  , coOrderCreatedDate :: UTCTime
+  , coOrderCreatedBy :: Maybe Int
+  , coOrderCreatedByName :: Maybe String
+  , coOrderIsPlaced :: Bool
+  , coOrderIsAbandoned :: Bool
+  , coIsComplete :: Bool
+  , coTotalExcVat :: Int
+  , coTotalIncVat :: Int
+  , coAllHouseholdsUpToDate :: Bool
+  , coAdjustment :: Maybe OrderAdjustment
+  , coItems :: [OrderItem]
   } deriving (Eq, Show, Generic)
-instance ToJSON CollectiveOrder
+instance ToJSON CollectiveOrder where
+  toJSON = genericToJSON dropFieldPrefixOptions
 
 data OrderAdjustment = OrderAdjustment 
-  { oldTotalExcVat :: Int
-  , oldTotalIncVat :: Int 
+  { oaOldTotalExcVat :: Int
+  , oaOldTotalIncVat :: Int 
   } deriving (Eq, Show, Generic)
-instance ToJSON OrderAdjustment
+instance ToJSON OrderAdjustment where
+  toJSON = genericToJSON dropFieldPrefixOptions
 
 data OrderItem = OrderItem 
-  { productId :: Int
-  , productCode :: String
-  , productName :: String
-  , productVatRate :: VatRate
-  , productPriceExcVat :: Int
-  , productPriceIncVat :: Int
-  , itemQuantity :: Int
-  , itemTotalExcVat :: Int
-  , itemTotalIncVat :: Int
-  , biodynamic :: Bool
-  , fairTrade :: Bool
-  , glutenFree :: Bool
-  , organic :: Bool
-  , addedSugar :: Bool
-  , vegan :: Bool
-  , adjustment :: Maybe OrderItemAdjustment
+  { oiProductId :: Int
+  , oiProductCode :: String
+  , oiProductName :: String
+  , oiProductVatRate :: VatRate
+  , oiProductPriceExcVat :: Int
+  , oiProductPriceIncVat :: Int
+  , oiItemQuantity :: Int
+  , oiItemTotalExcVat :: Int
+  , oiItemTotalIncVat :: Int
+  , oiBiodynamic :: Bool
+  , oiFairTrade :: Bool
+  , oiGlutenFree :: Bool
+  , oiOrganic :: Bool
+  , oiAddedSugar :: Bool
+  , oiVegan :: Bool
+  , oiAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
-instance ToJSON OrderItem
+instance ToJSON OrderItem where
+  toJSON = genericToJSON dropFieldPrefixOptions
 
 data OrderItemAdjustment = OrderItemAdjustment 
-  { oldProductPriceExcVat :: Int
-  , oldProductPriceIncVat :: Int
-  , oldItemQuantity :: Int
-  , oldItemTotalExcVat :: Int
-  , oldItemTotalIncVat :: Int
-  , productDiscontinued :: Bool
+  { oiaOldProductPriceExcVat :: Int
+  , oiaOldProductPriceIncVat :: Int
+  , oiaOldItemQuantity :: Int
+  , oiaOldItemTotalExcVat :: Int
+  , oiaOldItemTotalIncVat :: Int
+  , oiaProductDiscontinued :: Bool
   } deriving (Eq, Show, Generic)
-instance ToJSON OrderItemAdjustment
+instance ToJSON OrderItemAdjustment where
+  toJSON = genericToJSON dropFieldPrefixOptions
 
-data VatRate = Zero | Standard | Reduced deriving (Eq, Show, Generic)
 instance ToJSON VatRate
