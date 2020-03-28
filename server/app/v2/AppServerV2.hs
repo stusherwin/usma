@@ -14,6 +14,7 @@ import Config
 
 import AppApiV2
 import DomainV2
+import RepositoryV2
 
 appServerV2 :: Config -> Text -> Server AppApiV2
 appServerV2 config groupKey =

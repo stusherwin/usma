@@ -37,6 +37,8 @@ executable usma
                      , AppApiV2
                      , AppServerV2
                      , DomainV2
+                     , RepositoryV2
+                     , DatabaseV2
   build-depends:       base
                      , containers
                      , cookie

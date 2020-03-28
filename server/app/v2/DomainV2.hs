@@ -3,6 +3,7 @@
 module DomainV2 where
 
 import Data.Time.Clock (UTCTime)
+import Data.List (lookup)
 
 {-- Order --}
 
@@ -79,8 +80,19 @@ data Money = Money
   { valueExcVat :: Int 
   , valueIncVat :: Int 
   } deriving (Eq, Show)
-  
+
+money :: VatRates -> VatRate -> Int -> Money
+money vatRates vatRate amount = 
+  case lookup vatRate vatRates of
+    Just multiplier -> Money amount (round $ fromIntegral amount * multiplier)
+    _               -> Money amount amount
+
+zero :: Money
+zero = Money 0 0
+
 data VatRate = Zero 
              | Standard 
              | Reduced 
   deriving (Eq, Show)
+
+type VatRates = [(VatRate, Double)]
