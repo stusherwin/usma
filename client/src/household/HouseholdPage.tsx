@@ -57,7 +57,7 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
                              {this.props.household.name}
                            </h2>
                            {this.props.groupSettings.enablePayments && 
-                             <Balance className="py-1 px-1 -mr-1 bg-household-lighter shadow-bloom ml-auto" amount={-this.props.household.balance} />
+                             <Balance className="py-1 px-1 -mr-1 ml-auto" amount={-this.props.household.balance} />
                            }
                          </div>
                          <div className="ml-20 text-base"><strong>Contact:</strong> {this.props.household.contactName || 'none'}</div>

@@ -168,7 +168,7 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                    </div>
                    {this.props.groupSettings.enablePayments &&
                      <div className="flex flex-col items-end">
-                       <BalanceSmall className="text-right py-1 px-1 -mr-1 bg-household-lightest shadow-bloom" amount={-h.balance} />
+                       <BalanceSmall className="text-right py-1 px-1 -mr-1" amount={-h.balance} />
                        <button className="mt-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
                      </div>
                    }
