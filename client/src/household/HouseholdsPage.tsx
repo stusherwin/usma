@@ -97,7 +97,7 @@ export class HouseholdsPage extends React.Component<HouseholdsPageProps, Househo
                    </div>
                    {this.props.groupSettings.enablePayments &&
                      <div className="flex flex-col items-end">
-                       <BalanceSmall className="text-right" amount={-h.balance} />
+                       <BalanceSmall className="text-right py-1 px-1 -mr-1 bg-household-lightest shadow-bloom" amount={-h.balance} />
                      </div>
                    }
                  </div>

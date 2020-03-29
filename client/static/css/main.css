@@ -189,6 +189,10 @@ button[disabled], button[disabled]:hover {
   box-shadow: rgba(0, 0, 0, 0.1) 0px -2px -2px 0px inset;
 }
 
+.shadow-bloom {
+  box-shadow: 0 0px 10px 4px rgba(255, 255, 255, .6);
+}
+
 .desaturate {
   filter: saturate(0);
 }
