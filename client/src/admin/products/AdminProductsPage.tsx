@@ -13,7 +13,7 @@ export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
                                         , categories: string[]
                                         , brands: string[]
                                         , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                        , reload: () => Promise<void>
+                                        , reload: (reloadProoductCatalogue?: boolean) => Promise<void>
                                         }
 
 export interface AdminProductsPageState { uploading: boolean
@@ -63,7 +63,7 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
     formData.append('files', this.state.uploadedFile, this.state.uploadedFile.name)
 
     this.props.request(ServerApi.command.uploadProductCatalogue(formData))
-      .then(this.props.reload)
+      .then(() => this.props.reload(true))
       .then(_ => {
         this.setState({ uploading: false
                       , uploadedFile: undefined

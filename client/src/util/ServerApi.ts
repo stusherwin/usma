@@ -2,12 +2,14 @@ import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCa
 import { Util } from './Util'
 
 export interface Data { collectiveOrders: CollectiveOrder[]
-                      , productCatalogue: ProductCatalogueEntry[]
-                      , categories: string[]
-                      , brands: string[]
                       , households: Household[]
                       , groupSettings: GroupSettings
-}
+                      }
+
+export interface CatalogueData { productCatalogue: ProductCatalogueEntry[]
+                               , categories: string[]
+                               , brands: string[]
+                               }
 
 function getCollectiveOrder(): Promise<CollectiveOrder | null> {
   return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
@@ -61,6 +63,20 @@ function getGroupSettings(): Promise<GroupSettings> {
 }
 
 const query = {
+  getCatalogueData(): Promise<CatalogueData> {
+    return Promise.all([ getProductCatalogue()
+                       , getProductCatalogueCategories()
+                       , getProductCatalogueBrands()
+                       ])
+      .then(([productCatalogue, categories, brands]) => {
+        return {
+          productCatalogue,
+          categories,
+          brands,
+        }                               
+      })
+  },
+
   getData(): Promise<Data> {
     return Promise.all([ getCollectiveOrder()
                        , getPastCollectiveOrders()
@@ -68,12 +84,9 @@ const query = {
                        , getPastHouseholdOrders()
                        , getHouseholds()
                        , getHouseholdPayments()
-                       , getProductCatalogue()
-                       , getProductCatalogueCategories()
-                       , getProductCatalogueBrands()
                        , getGroupSettings()
                        ])
-      .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, productCatalogue, categories, brands, groupSettings]) => {
+      .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, groupSettings]) => {
         if(collectiveOrder) {
           collectiveOrder.householdOrders = householdOrders.filter(ho => ho.orderId == collectiveOrder.id)
         }
@@ -98,11 +111,8 @@ const query = {
         return {
           collectiveOrders,
           households,
-          productCatalogue,
-          categories,
-          brands,
           groupSettings
-        }                               
+        }                       
       })
   }
 }

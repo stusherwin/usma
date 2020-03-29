@@ -89,7 +89,7 @@ export class Main extends React.Component<MainProps, MainState> {
       .then(groupValid => {
         this.setState({ groupValid, initialised: !groupValid })
         if(groupValid) {
-          this.reload().then(() => 
+          this.reload(true).then(() => 
             this.setState({ initialised: true
                           })
           )
@@ -102,16 +102,21 @@ export class Main extends React.Component<MainProps, MainState> {
     Router.updatePath(urlInfo.path)
   }
 
-  reload = () =>
-    this.request(ServerApi.query.getData())
-        .then(data => this.setState({ collectiveOrders: data.collectiveOrders
-                                    , households: data.households
-                                    , productCatalogue: data.productCatalogue
-                                    , categories: data.categories
-                                    , brands: data.brands
-                                    , groupSettings: data.groupSettings
-                                    })
-    )
+  reload = (reloadProoductCatalogue?: boolean) =>
+    reloadProoductCatalogue 
+    ? this.request(Promise.all([ServerApi.query.getData(), ServerApi.query.getCatalogueData()]))
+          .then(([data, catalogueData]) => this.setState({ collectiveOrders: data.collectiveOrders
+                                                         , households: data.households
+                                                         , productCatalogue: catalogueData.productCatalogue
+                                                         , categories: catalogueData.categories
+                                                         , brands: catalogueData.brands
+                                                         , groupSettings: data.groupSettings
+                                                         }))
+    : this.request(ServerApi.query.getData())
+          .then(data => this.setState({ collectiveOrders: data.collectiveOrders
+                                      , households: data.households
+                                      , groupSettings: data.groupSettings
+                                      }))
 
   request = <T extends {}>(p: Promise<T>) => {
     this.setState({ loading: true })
