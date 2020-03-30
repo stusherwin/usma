@@ -40,57 +40,6 @@ function getProductCatalogueData(): Promise<CatalogueData> {
   return Http.get<CatalogueData>(groupUrl('/query/product-catalogue-data'))
 }
 
-function getCollectiveOrder(): Promise<CollectiveOrder | null> {
-  return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
-    .then(res => { 
-      if(res) {
-        res.orderCreatedDate = new Date(res.orderCreatedDate)
-      }
-      return res;
-    })
-}
-
-function getPastCollectiveOrders(): Promise<CollectiveOrder[]> {
-  return Http.get<CollectiveOrder[]>(groupUrl('/query/past-collective-orders'))
-    .then(res => { res.forEach(o => o.orderCreatedDate = new Date(o.orderCreatedDate)); return res })
-}
-
-function getHouseholdOrders(): Promise<HouseholdOrder[]> {
-  return Http.get<HouseholdOrder[]>(groupUrl('/query/household-orders'))
-    .then(res => { res.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); }); return res })
-}
-
-function getPastHouseholdOrders(): Promise<HouseholdOrder[]> {
-  return Http.get<HouseholdOrder[]>(groupUrl('/query/past-household-orders'))
-    .then(res => { res.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate)); return res })
-}
-
-function getHouseholds(): Promise<Household[]> {
-  return Http.get<Household[]>(groupUrl('/query/households'))
-    .then(res => { res.forEach(h => { }); return res })
-}
-
-function getHouseholdPayments(): Promise<HouseholdPayment[]> {
-  return Http.get<HouseholdPayment[]>(groupUrl('/query/household-payments'))
-    .then(res => { res.forEach(hp => { hp.date = new Date(hp.date);}); return res })
-}
-
-function getProductCatalogue(): Promise<ProductCatalogueEntry[]> {
-  return Http.get<ProductCatalogueEntry[]>(groupUrl('/query/product-catalogue'))
-}
-
-function getProductCatalogueCategories(): Promise<string[]> {
-  return Http.get<string[]>(groupUrl('/query/product-catalogue-categories'))
-}
-
-function getProductCatalogueBrands(): Promise<string[]> {
-  return Http.get<string[]>(groupUrl('/query/product-catalogue-brands'))
-}
-
-function getGroupSettings(): Promise<GroupSettings> {
-  return Http.get<GroupSettings>(groupUrl('/query/group-settings'))
-}
-
 const query = {
   getCatalogueData(): Promise<CatalogueData> {
     return getProductCatalogueData()
