@@ -541,13 +541,13 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           household_total_payments as (
             select h.id, coalesce(sum(hp.amount), 0) as total
             from household h
-            left join household_payment hp on hp.household_id = h.id
+            left join household_payment hp on hp.household_id = h.id and hp.archived = false
             group by h.id
           )
       select h.id, h.name, h.contact_name, h.contact_email, h.contact_phone, hto.total as total_orders, htp.total as total_payments, htp.total - hto.total as balance
       from household h
       inner join household_total_orders hto on hto.id = h.id
-      inner join household_total_payments htp on htp.id = h.id
+      left join household_total_payments htp on htp.id = h.id
       where h.archived = false and h.order_group_id = ?
       order by h.name asc
     |] (Only groupId)
