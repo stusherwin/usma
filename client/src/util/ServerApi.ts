@@ -6,10 +6,39 @@ export interface Data { collectiveOrders: CollectiveOrder[]
                       , groupSettings: GroupSettings
                       }
 
+export interface ApiData { collectiveOrder: CollectiveOrder | null
+                         , pastCollectiveOrders: CollectiveOrder[]
+                         , householdOrders: HouseholdOrder[]
+                         , pastHouseholdOrders: HouseholdOrder[]
+                         , households: Household[]
+                         , householdPayments: HouseholdPayment[]
+                         , groupSettings: GroupSettings
+                         }
+
 export interface CatalogueData { productCatalogue: ProductCatalogueEntry[]
                                , categories: string[]
                                , brands: string[]
                                }
+function getData(): Promise<ApiData> {
+  return Http.get<ApiData>(groupUrl('/query/data'))
+    .then(res => { 
+      if(res) {
+        if(res.collectiveOrder) {
+          res.collectiveOrder.orderCreatedDate = new Date(res.collectiveOrder.orderCreatedDate)
+        }
+        res.pastCollectiveOrders.forEach(o => o.orderCreatedDate = new Date(o.orderCreatedDate))
+        res.householdOrders.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); })
+        res.pastHouseholdOrders.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate))
+        res.households.forEach(h => { })
+        res.householdPayments.forEach(hp => { hp.date = new Date(hp.date);})
+      }
+      return res;
+    })
+}
+
+function getProductCatalogueData(): Promise<CatalogueData> {
+  return Http.get<CatalogueData>(groupUrl('/query/product-catalogue-data'))
+}
 
 function getCollectiveOrder(): Promise<CollectiveOrder | null> {
   return Http.get<CollectiveOrder | null>(groupUrl('/query/collective-order'))
@@ -64,29 +93,12 @@ function getGroupSettings(): Promise<GroupSettings> {
 
 const query = {
   getCatalogueData(): Promise<CatalogueData> {
-    return Promise.all([ getProductCatalogue()
-                       , getProductCatalogueCategories()
-                       , getProductCatalogueBrands()
-                       ])
-      .then(([productCatalogue, categories, brands]) => {
-        return {
-          productCatalogue,
-          categories,
-          brands,
-        }                               
-      })
+    return getProductCatalogueData()
   },
 
   getData(): Promise<Data> {
-    return Promise.all([ getCollectiveOrder()
-                       , getPastCollectiveOrders()
-                       , getHouseholdOrders()
-                       , getPastHouseholdOrders()
-                       , getHouseholds()
-                       , getHouseholdPayments()
-                       , getGroupSettings()
-                       ])
-      .then(([collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, groupSettings]) => {
+    return getData()
+      .then(({collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, groupSettings}) => {
         if(collectiveOrder) {
           collectiveOrder.householdOrders = householdOrders.filter(ho => ho.orderId == collectiveOrder.id)
         }

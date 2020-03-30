@@ -102,8 +102,8 @@ export class Main extends React.Component<MainProps, MainState> {
     Router.updatePath(urlInfo.path)
   }
 
-  reload = (reloadProoductCatalogue?: boolean) =>
-    reloadProoductCatalogue 
+  reload = (reloadProoductCatalogue: boolean = false) => {
+    return reloadProoductCatalogue === true
     ? this.request(Promise.all([ServerApi.query.getData(), ServerApi.query.getCatalogueData()]))
           .then(([data, catalogueData]) => this.setState({ collectiveOrders: data.collectiveOrders
                                                          , households: data.households
@@ -117,6 +117,7 @@ export class Main extends React.Component<MainProps, MainState> {
                                       , households: data.households
                                       , groupSettings: data.groupSettings
                                       }))
+  }
 
   request = <T extends {}>(p: Promise<T>) => {
     this.setState({ loading: true })

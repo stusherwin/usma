@@ -56,8 +56,26 @@ module Api where
          :<|> "command" :> CommandAPI
     )
 
+  data Data = Data { collectiveOrder :: (Maybe CollectiveOrder)
+                   , pastCollectiveOrders :: [PastCollectiveOrder]
+                   , householdOrders :: [HouseholdOrder]
+                   , pastHouseholdOrders :: [PastHouseholdOrder]
+                   , households :: [Household]
+                   , householdPayments :: [HouseholdPayment]
+                   , groupSettings ::  GroupSettings
+                   } deriving (Eq, Show, Generic)
+  instance ToJSON Data
+
+  data ProductCatalogueData = ProductCatalogueData { productCatalogue :: [ProductCatalogueEntry]
+                                                   , categories :: [String]
+                                                   , brands :: [String]
+                                                   } deriving (Eq, Show, Generic)
+  instance ToJSON ProductCatalogueData
+
   type QueryAPI =
-         "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
+         "data" :> Get '[JSON] Data
+    :<|> "product-catalogue-data" :> Get '[JSON] ProductCatalogueData
+    :<|> "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
     :<|> "past-collective-orders" :> Get '[JSON] [PastCollectiveOrder]
     :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
     :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]

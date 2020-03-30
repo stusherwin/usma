@@ -174,7 +174,9 @@ module Main where
                              :<|> commandServer config groupKey
 
   queryServer :: Config -> Text -> Server QueryAPI
-  queryServer config groupKey = collectiveOrder groupKey
+  queryServer config groupKey = allData groupKey
+                           :<|> productCatalogueData groupKey
+                           :<|> collectiveOrder groupKey
                            :<|> pastCollectiveOrders groupKey
                            :<|> householdOrders groupKey
                            :<|> pastHouseholdOrders groupKey
@@ -192,6 +194,24 @@ module Main where
     where
     conn = connectionString config
     
+    allData :: Text -> Handler Data
+    allData groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+      collectiveOrder <- liftIO $ D.getCollectiveOrder conn groupId
+      pastCollectiveOrders <- liftIO $ D.getPastCollectiveOrders conn groupId
+      householdOrders <- liftIO $ D.getHouseholdOrders conn groupId
+      pastHouseholdOrders <- liftIO $ D.getPastHouseholdOrders conn groupId
+      households <- liftIO $ D.getHouseholds conn groupId
+      householdPayments <- liftIO $ D.getHouseholdPayments conn groupId
+      groupSettings <- liftIO $ D.getGroupSettings conn groupId
+      return $ Data collectiveOrder pastCollectiveOrders householdOrders pastHouseholdOrders households householdPayments groupSettings
+
+    productCatalogueData :: Text -> Handler ProductCatalogueData
+    productCatalogueData groupKey = findGroupOr404 conn groupKey $ \groupId -> do
+      productCatalogue <- liftIO $ D.getProductCatalogue conn
+      categories <- liftIO $ D.getProductCatalogueCategories conn
+      brands <- liftIO $ D.getProductCatalogueBrands conn
+      return $ ProductCatalogueData productCatalogue categories brands
+
     collectiveOrder :: Text -> Handler (Maybe CollectiveOrder)
     collectiveOrder groupKey = findGroupOr404 conn groupKey $ \groupId ->
       liftIO $ D.getCollectiveOrder conn groupId
