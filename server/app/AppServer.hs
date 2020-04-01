@@ -77,8 +77,8 @@ queryServer config groupKey =
     brands <- liftIO $ D.getProductCatalogueBrands conn
     return $ ProductCatalogueApiData productCatalogue categories brands
 
- collectiveOrder :: Handler (Maybe CollectiveOrder)
- collectiveOrder = findGroupOr404 conn groupKey $ \groupId ->
+  collectiveOrder :: Handler (Maybe CollectiveOrder)
+  collectiveOrder = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.getCollectiveOrder conn groupId
   
   pastCollectiveOrders :: Handler [PastCollectiveOrder]

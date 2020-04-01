@@ -86,7 +86,7 @@ data Value = Value
   } deriving (Eq, Show, Generic)
 
 instance Semigroup Value where
-  Value a a' <> Value b b' = Value (a + b) (a' + b')
+  Value exc1 inc1 <> Value exc2 inc2 = Value (exc1 + exc2) (inc1 + inc2)
 
 instance Monoid Value where
   mempty = zero
@@ -95,7 +95,7 @@ instance Monoid Value where
 value :: VatRates -> VatRate -> Int -> Value
 value vatRates vatRate amount = 
   case lookup vatRate vatRates of
-    Just multiplier -> Value amount (round $ fromIntegral amount * multiplier)
+    Just multiplier -> Value amount $ round $ fromIntegral amount * multiplier
     _               -> Value amount amount
 
 zero :: Value
