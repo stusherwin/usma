@@ -39,22 +39,22 @@ getOrder :: Config -> OrderGroupId -> IO (Maybe Order)
 getOrder config groupId = do
   let g = fromOrderGroupId groupId
   conn <- connectPostgreSQL $ connectionString config
-  (rVatRates, rOrders, rItems, rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
+  (rVatRates, rOrders, {- rItems, -} rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
     v <- getVatRateRows conn g
     o <- getOrderRows conn g
-    i <- getOrderItemRows conn g
+    -- i <- getOrderItemRows conn g
     ho <- getHouseholdOrderRows conn g
     hoi <- getHouseholdOrderItemRows conn g
-    return (v, o, i, ho, hoi)
+    return (v, o, {- i, -} ho, hoi)
   close conn
-  return $ listToMaybe $ transform rVatRates rOrders rItems rHouseholdOrders rHouseholdOrderItems
+  return $ listToMaybe $ transform rVatRates rOrders {- rItems -} rHouseholdOrders rHouseholdOrderItems
   where
-  transform rVatRates rOrders rItems rHouseholdOrders rHouseholdOrderItems = map order rOrders
+  transform rVatRates rOrders {- rItems -} rHouseholdOrders rHouseholdOrderItems = map order rOrders
     where
     order o = DomainV2.order orderInfo
                              (orderRow_is_placed o)
                              (orderRow_is_abandoned o) 
-                             orderItems
+                            --  orderItems
                              householdOrders
       where
       orderId = orderRow_id o
@@ -66,7 +66,7 @@ getOrder config groupId = do
       createdBy (Just id) (Just name) = Just $ HouseholdInfo (HouseholdId id) name
       createdBy _ _                   = Nothing
 
-      orderItems = map (orderItem . snd) . filter ((orderId == ) . fst) $ rItems      
+      -- orderItems = map (orderItem . snd) . filter ((orderId == ) . fst . fst) $ rHouseholdOrderItems      
       orderItem i = OrderItem product
                          (orderItemRow_quantity i)
                          (atProductVatRate $ orderItemRow_price i * orderItemRow_quantity i)
