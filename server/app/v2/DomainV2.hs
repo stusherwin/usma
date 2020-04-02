@@ -10,6 +10,12 @@ import Data.Foldable (foldl')
 import GHC.Generics
 import Prelude hiding (sum)
 
+{-- OrderGroup --}
+
+newtype OrderGroupId = OrderGroupId 
+  { fromOrderGroupId :: Int 
+  } deriving (Eq, Show, Generic)
+
 {-- Order --}
 
 data OrderStatus = OrderOpen

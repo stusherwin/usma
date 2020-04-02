@@ -30,13 +30,25 @@ import Data.Maybe (listToMaybe)
 import Config
 import Prelude hiding (sum)
 
-getOrder :: Config -> Int -> IO (Maybe Order)
+getOrderGroupId :: Config -> String -> IO (Maybe OrderGroupId)
+getOrderGroupId config groupKey = do
+  conn <- connectPostgreSQL $ connectionString config
+  result <- query conn [sql|
+    select id
+    from order_group
+    where key = ?
+  |] (Only groupKey)
+  close conn
+  return $ fmap OrderGroupId $ listToMaybe $ fmap fromOnly $ (result :: [Only Int])
+
+getOrder :: Config -> OrderGroupId -> IO (Maybe Order)
 getOrder config groupId = do
+  let g = fromOrderGroupId groupId
   conn <- connectPostgreSQL $ connectionString config
   (rVatRates, rOrders, rItems) <- withTransaction conn $ do
-    v <- getVatRateRows conn groupId
-    o <- getOrderRows conn groupId
-    i <- getOrderItemRows conn groupId
+    v <- getVatRateRows conn g
+    o <- getOrderRows conn g
+    i <- getOrderItemRows conn g
     return (v, o, i)
   close conn
   return $ listToMaybe $ transform rVatRates rOrders rItems
