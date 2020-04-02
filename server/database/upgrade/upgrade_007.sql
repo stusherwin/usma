@@ -3,6 +3,7 @@ do $$
 begin
   perform upgrade_to_version(7);
 
+  drop schema if exists v2 cascade;
   create schema v2;
 
   CREATE TABLE v2.vat_rate (
@@ -19,14 +20,14 @@ begin
     name text NOT NULL,
     price integer NOT NULL,
     vat_rate character(1) NOT NULL,
-    discontinued boolean NOT NULL,
+    is_discontinued boolean NOT NULL,
     updated timestamp with time zone NOT NULL,
-    biodynamic boolean DEFAULT false NOT NULL,
-    fair_trade boolean DEFAULT false NOT NULL,
-    gluten_free boolean DEFAULT false NOT NULL,
-    organic boolean DEFAULT false NOT NULL,
-    added_sugar boolean DEFAULT false NOT NULL,
-    vegan boolean DEFAULT false NOT NULL
+    is_biodynamic boolean DEFAULT false NOT NULL,
+    is_fair_trade boolean DEFAULT false NOT NULL,
+    is_gluten_free boolean DEFAULT false NOT NULL,
+    is_organic boolean DEFAULT false NOT NULL,
+    is_added_sugar boolean DEFAULT false NOT NULL,
+    is_vegan boolean DEFAULT false NOT NULL
   );
   CREATE SEQUENCE v2.product_id_seq
     START WITH 1
@@ -87,7 +88,9 @@ begin
     order_group_id integer NOT NULL,
     id integer     NOT NULL,
     created        timestamp with time zone NOT NULL,
-    created_by_id  integer
+    created_by_id  integer,
+    is_placed      boolean NOT NULL,
+    is_abandoned   boolean NOT NULL
   );
   CREATE SEQUENCE v2.order_id_seq
     START WITH 1
@@ -108,8 +111,8 @@ begin
     order_id integer NOT NULL,
     household_id integer NOT NULL,
     updated timestamp with time zone NOT NULL,
-    complete boolean NOT NULL,
-    cancelled boolean NOT NULL
+    is_complete boolean NOT NULL,
+    is_abandoned boolean NOT NULL
   );
   ALTER TABLE ONLY v2.household_order
     ADD CONSTRAINT v2_household_order_pkey PRIMARY KEY (order_id, household_id);
