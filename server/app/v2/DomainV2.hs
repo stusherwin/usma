@@ -3,9 +3,11 @@
 
 module DomainV2 where
 
+import Data.Function (on)
 import Data.Time.Clock (UTCTime)
 import Data.Semigroup (Semigroup(..))
-import Data.List (lookup)
+import Data.List (lookup, groupBy)
+import qualified Data.List.NonEmpty as NE (fromList)
 import Data.Foldable (foldl')
 import GHC.Generics
 import Prelude hiding (sum)
@@ -39,11 +41,7 @@ data OrderInfo = OrderInfo
 data Order = Order 
   { _orderInfo :: OrderInfo
   , _orderStatus :: OrderStatus
-  -- , orderIsPlaced :: Bool
-  -- , orderIsAbandoned :: Bool
-  -- , orderIsComplete :: Bool
   , _orderTotal :: Value
-  -- , orderIsAllHouseholdsUpToDate :: Bool
   , _orderAdjustment :: Maybe OrderAdjustment
   , _orderItems :: [OrderItem]
   , _householdOrders :: [HouseholdOrder]
@@ -61,59 +59,50 @@ data OrderItem = OrderItem
   } deriving (Eq, Show, Generic)
 
 instance Semigroup OrderItem where
-  (OrderItem { _itemProduct = p1
-             , _itemQuantity = q1
-             , _itemTotal = t1
-             , _itemAdjustment = a1 
-             }) 
-  <> 
-  (OrderItem { _itemProduct = p2
-             , _itemQuantity = q2
-             , _itemTotal = t2
-             , _itemAdjustment = a2 })
-    = OrderItem p1 (q1 + q2) (t1 <> t2) $ case (a1, a2) of
-                                             (Just a1, Just a2) -> a1 <> a2
-                                             (Just a1, _)       -> a1
-                                             (_, Just a2)       -> a2
-                                             _                  -> Nothing
+  i1 <> i2 = OrderItem (_itemProduct i1)
+                       (_itemQuantity   i1 +  _itemQuantity   i2)
+                       (_itemTotal      i1 <> _itemTotal      i2)
+                       (_itemAdjustment i1 <> _itemAdjustment i2)
 
 sumItems :: [OrderItem] -> OrderItem
-sumItems = sconcat (<>)
+sumItems = sconcat . NE.fromList
 
 data OrderItemAdjustment = OrderItemAdjustment 
-  { --_itemAdjNewVatRate :: VatRate
-    --, 
-    _itemAdjNewPrice :: Value
+  { _itemAdjNewVatRate :: VatRate
+  , _itemAdjNewPrice :: Value
   , _itemAdjNewQuantity :: Int
   , _itemAdjNewTotal :: Value
   , _itemAdjIsDiscontinued :: Bool
+  , _itemAdjDate :: UTCTime
   } deriving (Eq, Show, Generic)
 
 instance Semigroup OrderItemAdjustment where
-  (OrderItemAdjustment { _itemAdjNewPrice = p1
-                       , _itemAdjNewQuantity = q1
-                       , _itemAdjNewTotal = t1
-                       , _itemAdjIsDiscontinued = d1
-                       })
-  <>
-  (OrderItemAdjustment { _itemAdjNewPrice = p2
-                       , _itemAdjNewQuantity = q2
-                       , _itemAdjNewTotal = t2
-                       , _itemAdjIsDiscontinued = d2
-                       })
-  = OrderItemAdjustment (p1 <> p2) (q1 + q2) (t1 <> t2) (d1 || d2)
+  a1 <> a2 | (_itemAdjDate a1) > (_itemAdjDate a2) = merge a1 a2
+           | otherwise                             = merge a2 a1
+    where
+    merge :: OrderItemAdjustment -> OrderItemAdjustment -> OrderItemAdjustment
+    merge later earlier = let discontinued  = _itemAdjIsDiscontinued later || _itemAdjIsDiscontinued earlier
+                              totalQuantity = if discontinued then 0 else _itemAdjNewQuantity later + _itemAdjNewQuantity earlier
+                              latestPrice   = _itemAdjNewPrice later
+                              latestMultiplier = (fromIntegral . _incVat $ latestPrice) / (fromIntegral . _excVat $ latestPrice)
+                              total = value latestMultiplier $ (_excVat latestPrice) * totalQuantity
+                          in  OrderItemAdjustment (_itemAdjNewVatRate later)
+                                                  latestPrice
+                                                  totalQuantity
+                                                  total
+                                                  discontinued
+                                                  (_itemAdjDate later)
 
-
-order :: OrderInfo -> Bool -> Bool -> {- [OrderItem] -> -} [HouseholdOrder] -> Order
-order info isPlaced isAbandoned {- items -} householdOrders =
+order :: OrderInfo -> Bool -> Bool -> [HouseholdOrder] -> Order
+order info isPlaced isAbandoned householdOrders =
   Order info 
         (orderStatus isPlaced isAbandoned householdOrders)
-        total
-        (adjustment items householdOrders)
-        items
+        (total householdOrders)
+        (adjustment householdOrders)
+        (items householdOrders)
         householdOrders
-  where total = sum . map _householdOrderTotal $ householdOrders
-        items = map foldl' sum $ groupBy ((==) on (_productId . _itemProduct)) $ concatMap _householdOrderItems householdOrders
+  where total = sum . map _householdOrderTotal
+        items = map sumItems . groupBy ((==) `on` (_productId . _itemProduct)) . concatMap _householdOrderItems
         adjustment = undefined
 
 orderStatus :: Bool -> Bool -> [HouseholdOrder] -> OrderStatus
@@ -184,7 +173,7 @@ data ProductAttributes = ProductAttributes
 data Value = Value 
   { _excVat :: Int 
   , _incVat :: Int 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 instance Semigroup Value where
   Value exc1 inc1 <> Value exc2 inc2 = Value (exc1 + exc2) (inc1 + inc2)
@@ -211,5 +200,8 @@ type VatRates = [(VatRate, Rational)]
 atVatRate :: VatRates -> VatRate -> Int -> Value
 atVatRate vatRates vatRate amount = 
   case lookup vatRate vatRates of
-    Just multiplier -> Value amount $ round $ fromIntegral amount * multiplier
+    Just multiplier -> value multiplier amount
     _               -> Value amount amount
+
+value :: Rational -> Int -> Value
+value multiplier amount = Value amount $ round $ fromIntegral amount * multiplier
