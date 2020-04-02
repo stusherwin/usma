@@ -32,18 +32,10 @@ queryServerV2 config groupKey =
       , coOrderCreatedDate      = _orderCreated . _orderInfo $ o
       , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
       , coOrderCreatedByName    = fmap _householdName . _orderCreatedBy . _orderInfo $ o
-      , coOrderIsPlaced         = case _orderStatus o of
-                                    OrderPlaced -> True
-                                    _           -> False
-      , coOrderIsAbandoned      = case _orderStatus o of
-                                    OrderAbandoned -> True
-                                    _              -> False
-      , coIsComplete            = case _orderStatus o of
-                                    OrderComplete -> True
-                                    _              -> False
-      , coAllHouseholdsUpToDate = case _orderStatus o of
-                                    OrderAwaitingHouseholdsUpdateConfirm -> False
-                                    _                                    -> True
+      , coOrderIsPlaced         = orderIsPlaced o
+      , coOrderIsAbandoned      = orderIsAbandoned o
+      , coIsComplete            = orderIsComplete o
+      , coAllHouseholdsUpToDate = orderIsAllHouseholdsUpToDate o
       , coTotalExcVat           = _excVat . _orderTotal $ o
       , coTotalIncVat           = _incVat . _orderTotal $ o
       , coAdjustment            = undefined

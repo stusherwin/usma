@@ -51,8 +51,8 @@ getOrder config groupId = do
   transform rVatRates rOrders rHouseholdOrders rHouseholdOrderItems = map order rOrders
     where
     order o = DomainV2.order orderInfo
-                             (orderRow_is_placed o)
                              (orderRow_is_abandoned o) 
+                             (orderRow_is_placed o)
                              householdOrders
       where
       orderId = orderRow_id o
@@ -89,6 +89,10 @@ getOrder config groupId = do
       householdOrders = map (householdOrder . snd) . filter ((orderId ==) . fst) $ rHouseholdOrders      
       householdOrder ho = DomainV2.householdOrder orderInfo
                                                   householdInfo
+                                                  (householdOrderRow_is_abandoned ho)
+                                                  (householdOrderRow_is_placed ho)
+                                                  (householdOrderRow_is_complete ho)
+                                                  (householdOrderRow_updated ho)
                                                   adjustment
                                                   householdOrderItems
         where
@@ -109,8 +113,8 @@ data OrderRow = OrderRow
   , orderRow_created :: UTCTime
   , orderRow_created_by_household_id :: Maybe Int
   , orderRow_created_by_household_name :: Maybe String
-  , orderRow_is_placed :: Bool
   , orderRow_is_abandoned :: Bool
+  , orderRow_is_placed :: Bool
   }
 
 instance FromRow OrderRow where
@@ -123,8 +127,8 @@ getOrderRows conn groupId =
          , o.created
          , h.id as created_by_household_id
          , h.name as created_by_household_name
-         , o.is_placed
          , o.is_abandoned
+         , o.is_placed
     from v2."order" o
     left join v2.household h 
       on h.id = o.created_by_id
@@ -135,12 +139,14 @@ getOrderRows conn groupId =
 data HouseholdOrderRow = HouseholdOrderRow 
   { householdOrderRow_household_id :: Int
   , householdOrderRow_household_name :: String
-  , householdOrderRow_is_complete :: Bool
   , householdOrderRow_is_abandoned :: Bool
+  , householdOrderRow_is_placed :: Bool
+  , householdOrderRow_is_complete :: Bool
+  , householdOrderRow_updated :: UTCTime
   }
 
 instance FromRow HouseholdOrderRow where
-  fromRow = HouseholdOrderRow <$> field <*> field <*> field <*> field
+  fromRow = HouseholdOrderRow <$> field <*> field <*> field <*> field <*> field <*> field
 
 getHouseholdOrderRows :: Connection -> Int -> IO [(Int, HouseholdOrderRow)]
 getHouseholdOrderRows conn groupId = do
@@ -149,8 +155,10 @@ getHouseholdOrderRows conn groupId = do
 
          , h.id as household_id
          , h.name as household_name
+         , ho.is_abandoned
+         , o.is_placed
          , ho.is_complete
-         , ho.is_cancelled
+         , ho.updated
     from v2.household_order ho
     inner join v2."order" o 
       on o.id = ho.order_id
