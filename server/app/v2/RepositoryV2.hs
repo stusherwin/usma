@@ -4,31 +4,25 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module RepositoryV2 where
+module RepositoryV2 where 
 
-import Control.Monad (mzero, when, void, forM_)
+import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.ToField
-import Database.PostgreSQL.Simple.ToRow
-import Database.PostgreSQL.Simple.FromField (FromField(..))
-import Database.PostgreSQL.Simple.FromRow
-import Database.PostgreSQL.Simple.Time (Unbounded(..))
-import Database.PostgreSQL.Simple.SqlQQ
 import Data.ByteString (ByteString)
-import Data.Maybe (listToMaybe, fromJust, fromMaybe)
-import Data.Map.Lazy (fromListWith, assocs)
-import qualified Data.Text as T
-import Data.Text.Encoding (encodeUtf8)
-import qualified Data.IntMap.Strict as IM (IntMap(..), fromList, elems, lookup, insert, size)
-import Data.Time.Calendar (Day, showGregorian)
-import Data.Time.Clock (UTCTime)
-
-import DomainV2
-import DatabaseV2
 import Data.Maybe (listToMaybe)
-import Config
+import qualified Data.Text as T (pack)
+import Data.Text.Encoding (encodeUtf8)
+import Data.Time.Clock (UTCTime)
+import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgreSQL, close, withTransaction, query, query_)
+import Database.PostgreSQL.Simple.FromField (FromField(..))
+import Database.PostgreSQL.Simple.FromRow (FromRow(..), field)
+import Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
+import Database.PostgreSQL.Simple.ToRow (ToRow(..))
+import Database.PostgreSQL.Simple.SqlQQ
 import Prelude hiding (sum)
+
+import Config (Config(..))
+import DomainV2
 
 getOrderGroupId :: Config -> String -> IO (Maybe OrderGroupId)
 getOrderGroupId config groupKey = do
@@ -58,39 +52,38 @@ getOrder config groupId = do
     order o = DomainV2.order (orderInfo o)
                              (orderRow_is_placed o)
                              (orderRow_is_abandoned o) 
-                             items
+                             (items o)
                              undefined
-      where
-      
-      items = map (item . snd) $ filter ((orderRow_id o == ) . fst) rItems
+    
+    items o = map (item . snd) . filter ((orderRow_id o == ) . fst) $ rItems
 
-      orderInfo o = OrderInfo (OrderId . orderRow_id $ o) 
-                              (orderRow_created o) 
-                              $ householdInfo (orderRow_created_by_household_id o) (orderRow_created_by_household_name o)
-      
-      householdInfo (Just id) (Just name) = Just $ HouseholdInfo (HouseholdId id) name
-      householdInfo _ _                   = Nothing
-            
-      item i = OrderItem (product i)
-                         (orderItemRow_quantity i)
-                         (atProductVatRate i $ orderItemRow_price i * orderItemRow_quantity i)
-                         undefined
-      
-      product i = Product (ProductId . orderItemRow_product_id $ i)
-                          (orderItemRow_code i)
-                          (orderItemRow_name i)
-                          (orderItemRow_vat_rate i)
-                          (atProductVatRate i $ orderItemRow_price i)
-                          (attributes i)
-      
-      attributes i = ProductAttributes (orderItemRow_biodynamic i)
-                                       (orderItemRow_fair_trade i)
-                                       (orderItemRow_gluten_free i)
-                                       (orderItemRow_organic i)
-                                       (orderItemRow_added_sugar i)
-                                       (orderItemRow_vegan i)
+    orderInfo o = OrderInfo (OrderId . orderRow_id $ o) 
+                            (orderRow_created o) 
+                            $ householdInfo (orderRow_created_by_household_id o) (orderRow_created_by_household_name o)
+    
+    householdInfo (Just id) (Just name) = Just $ HouseholdInfo (HouseholdId id) name
+    householdInfo _ _                   = Nothing
+          
+    item i = OrderItem (product i)
+                       (orderItemRow_quantity i)
+                       (atProductVatRate i $ orderItemRow_price i * orderItemRow_quantity i)
+                       undefined
+    
+    product i = Product (ProductId . orderItemRow_product_id $ i)
+                        (orderItemRow_code i)
+                        (orderItemRow_name i)
+                        (orderItemRow_vat_rate i)
+                        (atProductVatRate i $ orderItemRow_price i)
+                        (attributes i)
+    
+    attributes i = ProductAttributes (orderItemRow_biodynamic i)
+                                     (orderItemRow_fair_trade i)
+                                     (orderItemRow_gluten_free i)
+                                     (orderItemRow_organic i)
+                                     (orderItemRow_added_sugar i)
+                                     (orderItemRow_vegan i)
 
-      atProductVatRate i = atVatRate rVatRates (orderItemRow_vat_rate i)
+    atProductVatRate i = atVatRate rVatRates (orderItemRow_vat_rate i)
 
 getVatRateRows :: Connection -> Int -> IO VatRates
 getVatRateRows conn groupId = 
