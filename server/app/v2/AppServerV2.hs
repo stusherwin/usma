@@ -31,18 +31,26 @@ queryServerV2 config groupKey =
 
   collectiveOrder :: Text -> Handler (Maybe CollectiveOrder)
   collectiveOrder groupKey = findGroupOr404 conn groupKey $ \groupId -> do
-    order <- liftIO $ getCollectiveOrder config groupId
+    order <- liftIO $ getOrder config groupId
     return $ order <&> \o -> CollectiveOrder
-      { coId                    = fromOrderId . orderId $ o
-      , coOrderCreatedDate      = orderCreated o
-      , coOrderCreatedBy        = fmap fromHouseholdId . fmap householdId . orderCreatedBy $ o
-      , coOrderCreatedByName    = fmap householdName . orderCreatedBy $ o
-      , coOrderIsPlaced         = orderIsPlaced o
-      , coOrderIsAbandoned      = orderIsAbandoned o
-      , coIsComplete            = orderIsComplete o
+      { coId                    = fromOrderId . orderId . orderInfo $ o
+      , coOrderCreatedDate      = orderCreated . orderInfo $ o
+      , coOrderCreatedBy        = fmap fromHouseholdId . fmap householdId . orderCreatedBy . orderInfo $ o
+      , coOrderCreatedByName    = fmap householdName . orderCreatedBy . orderInfo $ o
+      , coOrderIsPlaced         = case orderStatus o of
+                                    OrderPlaced -> True
+                                    _           -> False
+      , coOrderIsAbandoned      = case orderStatus o of
+                                    OrderAbandoned -> True
+                                    _              -> False
+      , coIsComplete            = case orderStatus o of
+                                    OrderComplete -> True
+                                    _              -> False
+      , coAllHouseholdsUpToDate = case orderStatus o of
+                                    OrderAwaitingHouseholdsUpdateConfirm -> False
+                                    _                                    -> True
       , coTotalExcVat           = excVat . orderTotal $ o
       , coTotalIncVat           = incVat . orderTotal $ o
-      , coAllHouseholdsUpToDate = orderIsAllHouseholdsUpToDate o
       , coAdjustment = Nothing -- todo
       , coItems = orderItems o <&> \i -> AppApiV2.OrderItem
         { oiProductId          = fromProductId . productId . itemProduct $ i 
@@ -54,12 +62,12 @@ queryServerV2 config groupKey =
         , oiItemQuantity       = itemQuantity i
         , oiItemTotalExcVat    = excVat . itemTotal $ i
         , oiItemTotalIncVat    = incVat . itemTotal $ i
-        , oiBiodynamic         = productIsBiodynamic . itemProduct $ i
-        , oiFairTrade          = productIsFairTrade . itemProduct $ i
-        , oiGlutenFree         = productIsGlutenFree . itemProduct $ i
-        , oiOrganic            = productIsOrganic . itemProduct $ i
-        , oiAddedSugar         = productIsAddedSugar . itemProduct $ i
-        , oiVegan              = productIsVegan . itemProduct $ i
+        , oiBiodynamic         = productAttrIsBiodynamic . productAttributes . itemProduct $ i
+        , oiFairTrade          = productAttrIsFairTrade . productAttributes . itemProduct $ i
+        , oiGlutenFree         = productAttrIsGlutenFree . productAttributes . itemProduct $ i
+        , oiOrganic            = productAttrIsOrganic . productAttributes . itemProduct $ i
+        , oiAddedSugar         = productAttrIsAddedSugar . productAttributes . itemProduct $ i
+        , oiVegan              = productAttrIsVegan . productAttributes . itemProduct $ i
         , oiAdjustment         = Nothing -- todo
         }
       }
