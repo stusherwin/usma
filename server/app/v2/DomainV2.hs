@@ -7,6 +7,7 @@ import Data.Function (on)
 import Data.Time.Clock (UTCTime)
 import Data.Semigroup (Semigroup(..))
 import Data.List (lookup, groupBy)
+import Data.Maybe (isJust)
 import qualified Data.List.NonEmpty as NE (fromList)
 import Data.Foldable (foldl')
 import GHC.Generics
@@ -18,15 +19,18 @@ newtype OrderGroupId = OrderGroupId
   { fromOrderGroupId :: Int 
   } deriving (Eq, Show, Generic)
 
-{-- Order --}
+{- Household -}
 
-data OrderStatus = OrderOpen
-                 | OrderComplete
-                 | OrderAwaitingHouseholdsUpdateConfirm
-                 | OrderPlaced
-                 | OrderReconciled
-                 | OrderAbandoned
-  deriving (Eq, Show, Generic)
+newtype HouseholdId = HouseholdId 
+  { fromHouseholdId :: Int 
+  } deriving (Eq, Show, Generic)
+
+data HouseholdInfo = HouseholdInfo 
+  { _householdId :: HouseholdId
+  , _householdName :: String
+  } deriving (Eq, Show, Generic)
+
+{-- Order --}
 
 newtype OrderId = OrderId 
   { fromOrderId :: Int 
@@ -47,9 +51,58 @@ data Order = Order
   , _householdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
+order :: OrderInfo -> Bool -> Bool -> [HouseholdOrder] -> Order
+order info isAbandoned isPlaced householdOrders =
+  Order info 
+        (orderStatus isAbandoned isPlaced householdOrders)
+        (total householdOrders)
+        (adjustment householdOrders)
+        (items householdOrders)
+        householdOrders
+  where total = sum . map _householdOrderTotal
+        items = map (sconcat . NE.fromList) 
+              . groupBy ((==) `on` (_productId . _itemProduct))
+              . concatMap _householdOrderItems
+        adjustment = undefined
+
+data OrderStatus = OrderAbandoned
+                 | OrderPlaced     OrderReconcileStatus
+                 | OrderComplete   ProductCatalogueUpdateStatus
+                 | OrderOpen       ProductCatalogueUpdateStatus
+  deriving (Eq, Show, Generic)
+
+data ProductCatalogueUpdateStatus = NoUpdate
+                                  | AwaitingConfirm
+  deriving (Eq, Show, Generic)
+
+data OrderReconcileStatus = NotReconciled
+                          | Reconciled
+  deriving (Eq, Show, Generic)
+
+orderStatus :: Bool -> Bool -> [HouseholdOrder] -> OrderStatus
+orderStatus True _ _ = OrderAbandoned
+orderStatus _ True hos = OrderPlaced (if all isHouseholdOrderReconciled hos then Reconciled else NotReconciled)
+orderStatus _ _ hos = let updateStatus = if any isHouseholdOrderAwaitingConfirm hos then AwaitingConfirm else NoUpdate
+                      in  if all isHouseholdOrderComplete hos then OrderComplete updateStatus else OrderOpen updateStatus
+
+orderIsAbandoned (Order { _orderStatus = OrderAbandoned }) = True
+orderIsAbandoned _ = False
+
+orderIsPlaced (Order { _orderStatus = OrderPlaced _ }) = True
+orderIsPlaced _ = False
+
+orderIsComplete (Order { _orderStatus = OrderComplete _ }) = True
+orderIsComplete _ = False
+
+orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderComplete NoUpdate }) = True
+orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderOpen     NoUpdate }) = True
+orderIsAllHouseholdsUpToDate _ = False
+
 data OrderAdjustment = OrderAdjustment 
   { _orderAdjNewTotal :: Value
   } deriving (Eq, Show, Generic)
+
+{- OrderItem -}
 
 data OrderItem = OrderItem 
   { _itemProduct :: Product
@@ -64,9 +117,6 @@ instance Semigroup OrderItem where
                        (_itemTotal      i1 <> _itemTotal      i2)
                        (_itemAdjustment i1 <> _itemAdjustment i2)
 
-sumItems :: [OrderItem] -> OrderItem
-sumItems = sconcat . NE.fromList
-
 data OrderItemAdjustment = OrderItemAdjustment 
   { _itemAdjNewVatRate :: VatRate
   , _itemAdjNewPrice :: Value
@@ -77,49 +127,23 @@ data OrderItemAdjustment = OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
 instance Semigroup OrderItemAdjustment where
-  a1 <> a2 | (_itemAdjDate a1) > (_itemAdjDate a2) = merge a1 a2
-           | otherwise                             = merge a2 a1
-    where
-    merge :: OrderItemAdjustment -> OrderItemAdjustment -> OrderItemAdjustment
-    merge later earlier = let discontinued  = _itemAdjIsDiscontinued later || _itemAdjIsDiscontinued earlier
-                              totalQuantity = if discontinued then 0 else _itemAdjNewQuantity later + _itemAdjNewQuantity earlier
-                              latestPrice   = _itemAdjNewPrice later
-                              latestMultiplier = (fromIntegral . _incVat $ latestPrice) / (fromIntegral . _excVat $ latestPrice)
-                              total = value latestMultiplier $ (_excVat latestPrice) * totalQuantity
-                          in  OrderItemAdjustment (_itemAdjNewVatRate later)
-                                                  latestPrice
-                                                  totalQuantity
-                                                  total
-                                                  discontinued
-                                                  (_itemAdjDate later)
-
-order :: OrderInfo -> Bool -> Bool -> [HouseholdOrder] -> Order
-order info isPlaced isAbandoned householdOrders =
-  Order info 
-        (orderStatus isPlaced isAbandoned householdOrders)
-        (total householdOrders)
-        (adjustment householdOrders)
-        (items householdOrders)
-        householdOrders
-  where total = sum . map _householdOrderTotal
-        items = map sumItems . groupBy ((==) `on` (_productId . _itemProduct)) . concatMap _householdOrderItems
-        adjustment = undefined
-
-orderStatus :: Bool -> Bool -> [HouseholdOrder] -> OrderStatus
-orderStatus True _ _  = OrderPlaced
-orderStatus _ True _  = OrderAbandoned
-orderStatus _ _ householdOrders = undefined 
-
-{- Household -}
-
-newtype HouseholdId = HouseholdId 
-  { fromHouseholdId :: Int 
-  } deriving (Eq, Show, Generic)
-
-data HouseholdInfo = HouseholdInfo 
-  { _householdId :: HouseholdId
-  , _householdName :: String
-  } deriving (Eq, Show, Generic)
+  a1 <> a2 = OrderItemAdjustment latestVatRate
+                                 latestPrice
+                                 totalQuantity
+                                 total
+                                 discontinued
+                                 latestDate
+    where 
+    discontinued     = _itemAdjIsDiscontinued a1 || _itemAdjIsDiscontinued a2
+    totalQuantity    = if discontinued then 0 
+                                       else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
+    later            = if (_itemAdjDate a1) > (_itemAdjDate a2) then a1 
+                                                                else a2
+    latestPrice      = _itemAdjNewPrice later
+    latestVatRate    = _itemAdjNewVatRate later
+    latestDate       = _itemAdjDate later
+    latestMultiplier = (fromIntegral . _incVat $ latestPrice) / (fromIntegral . _excVat $ latestPrice)
+    total            = value latestMultiplier $ (_excVat latestPrice) * totalQuantity
 
 {- HouseholdOrder -}
 
@@ -133,15 +157,33 @@ data HouseholdOrder = HouseholdOrder
   , _householdOrderAdjustment :: Maybe OrderAdjustment
   } deriving (Eq, Show, Generic)
 
-data HouseholdOrderStatus = HouseholdOrderOpen
-                          | HouseholdOrderComplete
-                          | HouseholdOrderAwaitingUpdateConfirm
-                          | HouseholdOrderReconciled
-                          | HouseholdOrderAbandoned
+householdOrder :: OrderInfo -> HouseholdInfo -> Bool -> Bool -> Bool -> UTCTime -> OrderAdjustment -> [OrderItem] -> HouseholdOrder
+householdOrder = undefined
+
+data HouseholdOrderStatus = HouseholdOrderAbandoned
+                          | HouseholdOrderPlaced   OrderReconcileStatus
+                          | HouseholdOrderComplete ProductCatalogueUpdateStatus
+                          | HouseholdOrderOpen     ProductCatalogueUpdateStatus
   deriving (Eq, Show, Generic)
 
-householdOrder :: OrderInfo -> HouseholdInfo -> OrderAdjustment -> [OrderItem] -> HouseholdOrder
-householdOrder = undefined
+householdOrderStatus :: Bool -> Bool -> Bool -> UTCTime -> [OrderItem] -> HouseholdOrderStatus
+householdOrderStatus True _    _    _       _  = HouseholdOrderAbandoned
+householdOrderStatus _    True _    _       is = HouseholdOrderPlaced   $ if all (isJust . _itemAdjustment) is then Reconciled else NotReconciled
+householdOrderStatus _    _    True updated is = HouseholdOrderComplete $ if any ((> updated) . _productUpdated . _itemProduct) is then AwaitingConfirm else NoUpdate
+householdOrderStatus _    _    _    updated is = HouseholdOrderOpen     $ if any ((> updated) . _productUpdated . _itemProduct) is then AwaitingConfirm else NoUpdate
+
+isHouseholdOrderReconciled :: HouseholdOrder -> Bool
+isHouseholdOrderReconciled (HouseholdOrder { _householdOrderStatus = HouseholdOrderPlaced Reconciled }) = True
+isHouseholdOrderReconciled _ = False
+
+isHouseholdOrderAwaitingConfirm :: HouseholdOrder -> Bool
+isHouseholdOrderAwaitingConfirm (HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete AwaitingConfirm }) = True
+isHouseholdOrderAwaitingConfirm (HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen     AwaitingConfirm }) = True
+isHouseholdOrderAwaitingConfirm _ = False
+
+isHouseholdOrderComplete :: HouseholdOrder -> Bool
+isHouseholdOrderComplete (HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete _ }) = True
+isHouseholdOrderComplete _ = False
 
 {- Product -}
 
