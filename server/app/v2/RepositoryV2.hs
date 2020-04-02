@@ -65,9 +65,9 @@ getOrder config groupId = do
       createdBy _ _                   = Nothing
 
       orderItem i = OrderItem product
-                         (orderItemRow_quantity i)
-                         (atProductVatRate $ orderItemRow_price i * orderItemRow_quantity i)
-                         adjustment
+                              (orderItemRow_quantity i)
+                              (atProductVatRate $ orderItemRow_price i * orderItemRow_quantity i)
+                              adjustment
         where
         product = Product (ProductId . orderItemRow_product_id $ i)
                           (orderItemRow_code i)
@@ -86,7 +86,9 @@ getOrder config groupId = do
         atProductVatRate = atVatRate rVatRates $ orderItemRow_vat_rate i
         adjustment = undefined
 
-      householdOrders = map (householdOrder . snd) . filter ((orderId ==) . fst) $ rHouseholdOrders      
+      householdOrders = map (householdOrder . snd) 
+                      . filter ((orderId ==) . fst) 
+                      $ rHouseholdOrders      
       householdOrder ho = DomainV2.householdOrder orderInfo
                                                   householdInfo
                                                   (householdOrderRow_is_abandoned ho)
@@ -99,7 +101,9 @@ getOrder config groupId = do
         householdId = householdOrderRow_household_id $ ho
         householdInfo = HouseholdInfo (HouseholdId householdId) (householdOrderRow_household_name ho)
         adjustment = undefined
-        householdOrderItems = map (orderItem . snd) . filter ((\(oId, hId) -> oId == orderId && hId == householdId) . fst) $ rHouseholdOrderItems
+        householdOrderItems = map (orderItem . snd) 
+                            . filter ((\(oId, hId) -> oId == orderId && hId == householdId) . fst) 
+                            $ rHouseholdOrderItems
           
 getVatRateRows :: Connection -> Int -> IO VatRates
 getVatRateRows conn groupId = 
