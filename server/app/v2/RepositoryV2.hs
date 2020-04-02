@@ -39,22 +39,20 @@ getOrder :: Config -> OrderGroupId -> IO (Maybe Order)
 getOrder config groupId = do
   let g = fromOrderGroupId groupId
   conn <- connectPostgreSQL $ connectionString config
-  (rVatRates, rOrders, {- rItems, -} rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
+  (rVatRates, rOrders, rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
     v <- getVatRateRows conn g
     o <- getOrderRows conn g
-    -- i <- getOrderItemRows conn g
     ho <- getHouseholdOrderRows conn g
     hoi <- getHouseholdOrderItemRows conn g
-    return (v, o, {- i, -} ho, hoi)
+    return (v, o, ho, hoi)
   close conn
-  return $ listToMaybe $ transform rVatRates rOrders {- rItems -} rHouseholdOrders rHouseholdOrderItems
+  return $ listToMaybe $ transform rVatRates rOrders rHouseholdOrders rHouseholdOrderItems
   where
-  transform rVatRates rOrders {- rItems -} rHouseholdOrders rHouseholdOrderItems = map order rOrders
+  transform rVatRates rOrders rHouseholdOrders rHouseholdOrderItems = map order rOrders
     where
     order o = DomainV2.order orderInfo
                              (orderRow_is_placed o)
                              (orderRow_is_abandoned o) 
-                            --  orderItems
                              householdOrders
       where
       orderId = orderRow_id o
@@ -66,7 +64,6 @@ getOrder config groupId = do
       createdBy (Just id) (Just name) = Just $ HouseholdInfo (HouseholdId id) name
       createdBy _ _                   = Nothing
 
-      -- orderItems = map (orderItem . snd) . filter ((orderId == ) . fst . fst) $ rHouseholdOrderItems      
       orderItem i = OrderItem product
                          (orderItemRow_quantity i)
                          (atProductVatRate $ orderItemRow_price i * orderItemRow_quantity i)
@@ -135,64 +132,6 @@ getOrderRows conn groupId =
     order by o.id desc
   |] (Only groupId)
 
-data OrderItemRow = OrderItemRow 
-  { orderItemRow_product_id :: Int
-  , orderItemRow_code :: String
-  , orderItemRow_name :: String
-  , orderItemRow_vat_rate :: VatRate
-  , orderItemRow_price :: Int
-  , orderItemRow_biodynamic :: Bool
-  , orderItemRow_fair_trade :: Bool
-  , orderItemRow_gluten_free :: Bool
-  , orderItemRow_organic :: Bool
-  , orderItemRow_added_sugar :: Bool
-  , orderItemRow_vegan :: Bool
-  , orderItemRow_updated :: UTCTime
-  , orderItemRow_quantity :: Int
-  }
-
-instance FromRow OrderItemRow where
-  fromRow = OrderItemRow <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
-
-getOrderItemRows :: Connection -> Int -> IO [(Int, OrderItemRow)]
-getOrderItemRows conn groupId = do
-  rows <- query conn [sql|
-    select hoi.order_id
-         , p.id as product_id
-         , p.code
-         , p.name
-         , p.vat_rate
-         , p.price
-         , p.biodynamic
-         , p.fair_trade
-         , p.gluten_free
-         , p.organic
-         , p.added_sugar
-         , p.vegan
-         , p.updated
-         , sum(hoi.quantity) as quantity
-    from v2.household_order_item hoi
-    inner join v2.household_order ho 
-      on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
-    inner join v2.product p 
-      on p.id = hoi.product_id
-    where ho.order_group_id = ? and not ho.cancelled
-    group by hoi.order_id
-           , p.id
-           , p.code
-           , p.name
-           , p.vat_rate
-           , p.price
-           , p.biodynamic
-           , p.fair_trade
-           , p.gluten_free
-           , p.organic
-           , p.added_sugar
-           , p.vegan
-    order by p.code asc
-  |] (Only groupId)
-  return $ map (\((Only orderId) :. itemRow) -> (orderId, itemRow)) rows
-
 data HouseholdOrderRow = HouseholdOrderRow 
   { householdOrderRow_household_id :: Int
   , householdOrderRow_household_name :: String
@@ -225,6 +164,25 @@ getHouseholdOrderRows conn groupId = do
     order by o.id desc, h.name asc
   |] (Only groupId)
   return $ map (\((Only orderId) :. orderRow) -> (orderId, orderRow)) rows
+
+data OrderItemRow = OrderItemRow 
+  { orderItemRow_product_id :: Int
+  , orderItemRow_code :: String
+  , orderItemRow_name :: String
+  , orderItemRow_vat_rate :: VatRate
+  , orderItemRow_price :: Int
+  , orderItemRow_biodynamic :: Bool
+  , orderItemRow_fair_trade :: Bool
+  , orderItemRow_gluten_free :: Bool
+  , orderItemRow_organic :: Bool
+  , orderItemRow_added_sugar :: Bool
+  , orderItemRow_vegan :: Bool
+  , orderItemRow_updated :: UTCTime
+  , orderItemRow_quantity :: Int
+  }
+
+instance FromRow OrderItemRow where
+  fromRow = OrderItemRow <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 getHouseholdOrderItemRows :: Connection -> Int -> IO [((Int, Int), OrderItemRow)]
 getHouseholdOrderItemRows conn groupId = do
