@@ -8,7 +8,6 @@ import Data.Text (Text)
 import Data.Text as T (unpack)
 import qualified Data.ByteString as B (ByteString)
 
-import qualified Types as TypesV1
 import Config
 
 import AppApiV2
@@ -29,41 +28,41 @@ queryServerV2 config groupKey =
   collectiveOrder groupKey = findGroupOr404 config groupKey $ \groupId -> do
     order <- liftIO $ getOrder config groupId
     return $ order <&> \o -> CollectiveOrder
-      { coId                    = fromOrderId . orderId . orderInfo $ o
-      , coOrderCreatedDate      = orderCreated . orderInfo $ o
-      , coOrderCreatedBy        = fmap fromHouseholdId . fmap householdId . orderCreatedBy . orderInfo $ o
-      , coOrderCreatedByName    = fmap householdName . orderCreatedBy . orderInfo $ o
-      , coOrderIsPlaced         = case orderStatus o of
+      { coId                    = fromOrderId . _orderId . _orderInfo $ o
+      , coOrderCreatedDate      = _orderCreated . _orderInfo $ o
+      , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
+      , coOrderCreatedByName    = fmap _householdName . _orderCreatedBy . _orderInfo $ o
+      , coOrderIsPlaced         = case _orderStatus o of
                                     OrderPlaced -> True
                                     _           -> False
-      , coOrderIsAbandoned      = case orderStatus o of
+      , coOrderIsAbandoned      = case _orderStatus o of
                                     OrderAbandoned -> True
                                     _              -> False
-      , coIsComplete            = case orderStatus o of
+      , coIsComplete            = case _orderStatus o of
                                     OrderComplete -> True
                                     _              -> False
-      , coAllHouseholdsUpToDate = case orderStatus o of
+      , coAllHouseholdsUpToDate = case _orderStatus o of
                                     OrderAwaitingHouseholdsUpdateConfirm -> False
                                     _                                    -> True
-      , coTotalExcVat           = excVat . orderTotal $ o
-      , coTotalIncVat           = incVat . orderTotal $ o
+      , coTotalExcVat           = _excVat . _orderTotal $ o
+      , coTotalIncVat           = _incVat . _orderTotal $ o
       , coAdjustment            = undefined
-      , coItems = orderItems o <&> \i -> AppApiV2.OrderItem
-        { oiProductId          = fromProductId . productId . itemProduct $ i 
-        , oiProductCode        = productCode    . itemProduct $ i
-        , oiProductName        = productName    . itemProduct $ i
-        , oiProductVatRate     = productVatRate . itemProduct $ i
-        , oiProductPriceExcVat = excVat . productPrice . itemProduct $ i
-        , oiProductPriceIncVat = incVat . productPrice . itemProduct $ i
-        , oiItemQuantity       = itemQuantity i
-        , oiItemTotalExcVat    = excVat . itemTotal $ i
-        , oiItemTotalIncVat    = incVat . itemTotal $ i
-        , oiBiodynamic         = productAttrIsBiodynamic . productAttributes . itemProduct $ i
-        , oiFairTrade          = productAttrIsFairTrade  . productAttributes . itemProduct $ i
-        , oiGlutenFree         = productAttrIsGlutenFree . productAttributes . itemProduct $ i
-        , oiOrganic            = productAttrIsOrganic    . productAttributes . itemProduct $ i
-        , oiAddedSugar         = productAttrIsAddedSugar . productAttributes . itemProduct $ i
-        , oiVegan              = productAttrIsVegan      . productAttributes . itemProduct $ i
+      , coItems = _orderItems o <&> \i -> AppApiV2.OrderItem
+        { oiProductId          = fromProductId . _productId . _itemProduct $ i 
+        , oiProductCode        = _productCode    . _itemProduct $ i
+        , oiProductName        = _productName    . _itemProduct $ i
+        , oiProductVatRate     = _productVatRate . _itemProduct $ i
+        , oiProductPriceExcVat = _excVat . _productPrice . _itemProduct $ i
+        , oiProductPriceIncVat = _incVat . _productPrice . _itemProduct $ i
+        , oiItemQuantity       = _itemQuantity i
+        , oiItemTotalExcVat    = _excVat . _itemTotal $ i
+        , oiItemTotalIncVat    = _incVat . _itemTotal $ i
+        , oiBiodynamic         = _productAttrIsBiodynamic . _productAttributes . _itemProduct $ i
+        , oiFairTrade          = _productAttrIsFairTrade  . _productAttributes . _itemProduct $ i
+        , oiGlutenFree         = _productAttrIsGlutenFree . _productAttributes . _itemProduct $ i
+        , oiOrganic            = _productAttrIsOrganic    . _productAttributes . _itemProduct $ i
+        , oiAddedSugar         = _productAttrIsAddedSugar . _productAttributes . _itemProduct $ i
+        , oiVegan              = _productAttrIsVegan      . _productAttributes . _itemProduct $ i
         , oiAdjustment         = undefined
         }
       }

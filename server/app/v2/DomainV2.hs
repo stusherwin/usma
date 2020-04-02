@@ -31,78 +31,80 @@ newtype OrderId = OrderId
   } deriving (Eq, Show, Generic)
 
 data OrderInfo = OrderInfo
-  { orderId :: OrderId
-  , orderCreated :: UTCTime
-  , orderCreatedBy :: Maybe HouseholdInfo
+  { _orderId :: OrderId
+  , _orderCreated :: UTCTime
+  , _orderCreatedBy :: Maybe HouseholdInfo
   } deriving (Eq, Show, Generic)
 
 data Order = Order 
-  { orderInfo :: OrderInfo
-  , orderStatus :: OrderStatus
+  { _orderInfo :: OrderInfo
+  , _orderStatus :: OrderStatus
   -- , orderIsPlaced :: Bool
   -- , orderIsAbandoned :: Bool
   -- , orderIsComplete :: Bool
-  , orderTotal :: Value
+  , _orderTotal :: Value
   -- , orderIsAllHouseholdsUpToDate :: Bool
-  , orderAdjustment :: Maybe OrderAdjustment
-  , orderItems :: [OrderItem]
-  , householdOrders :: [HouseholdOrder]
+  , _orderAdjustment :: Maybe OrderAdjustment
+  , _orderItems :: [OrderItem]
+  , _householdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
 data OrderAdjustment = OrderAdjustment 
-  { orderAdjNewTotal :: Value
+  { _orderAdjNewTotal :: Value
   } deriving (Eq, Show, Generic)
 
 data OrderItem = OrderItem 
-  { itemProduct :: Product
-  , itemQuantity :: Int
-  , itemTotal :: Value
-  , itemAdjustment :: Maybe OrderItemAdjustment
+  { _itemProduct :: Product
+  , _itemQuantity :: Int
+  , _itemTotal :: Value
+  , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
 data OrderItemAdjustment = OrderItemAdjustment 
-  { itemAdjNewVatRate :: VatRate
-  , itemAdjNewPrice :: Value
-  , itemAdjNewQuantity :: Int
-  , itemAdjNewTotal :: Value
-  , itemAdjIsDiscontinued :: Bool
+  { _itemAdjNewVatRate :: VatRate
+  , _itemAdjNewPrice :: Value
+  , _itemAdjNewQuantity :: Int
+  , _itemAdjNewTotal :: Value
+  , _itemAdjIsDiscontinued :: Bool
   } deriving (Eq, Show, Generic)
 
 order :: OrderInfo -> Bool -> Bool -> [OrderItem] -> [HouseholdOrder] -> Order
 order info isPlaced isAbandoned items householdOrders =
   Order info 
-        (status isPlaced isAbandoned householdOrders)
-        (total items)
+        (orderStatus isPlaced isAbandoned householdOrders)
+        total
         (adjustment items householdOrders)
         items
         householdOrders
-  where status True _ _  = OrderPlaced
-        status _ True _  = OrderAbandoned
-        status _ _ items = undefined 
-        total = (sum . map itemTotal)
+  where total = sum . map _itemTotal $ items
         adjustment = undefined
 
-{- Household -}
+orderStatus :: Bool -> Bool -> [HouseholdOrder] -> OrderStatus
+orderStatus True _ _  = OrderPlaced
+orderStatus _ True _  = OrderAbandoned
+orderStatus _ _ householdOrders = undefined 
 
-data HouseholdInfo = HouseholdInfo 
-  { householdId :: HouseholdId
-  , householdName :: String
-  } deriving (Eq, Show, Generic)
+{- Household -}
 
 newtype HouseholdId = HouseholdId 
   { fromHouseholdId :: Int 
   } deriving (Eq, Show, Generic)
 
+data HouseholdInfo = HouseholdInfo 
+  { _householdId :: HouseholdId
+  , _householdName :: String
+  } deriving (Eq, Show, Generic)
+
 {- HouseholdOrder -}
 
 data HouseholdOrder = HouseholdOrder 
-  { householdOrderOrderInfo :: OrderInfo
-  , householdOrderHouseholdInfo :: HouseholdInfo
-  , householdOrderStatus :: HouseholdOrderStatus
-  , householdOrderUpdated :: UTCTime
-  , householdOrderItems :: [OrderItem]
-  , householdOrderTotal :: Value
-  , householdOrderAdjustment :: Maybe OrderAdjustment
+  { _householdOrderOrderInfo :: OrderInfo
+  , _householdOrderHouseholdInfo :: HouseholdInfo
+  , _householdOrderStatus :: HouseholdOrderStatus
+  , _householdOrderUpdated :: UTCTime
+  , _householdOrderItems :: [OrderItem]
+  , _householdOrderTotal :: Value
+  , _householdOrderAdjustment :: Maybe OrderAdjustment
   } deriving (Eq, Show, Generic)
 
 data HouseholdOrderStatus = HouseholdOrderOpen
@@ -112,6 +114,9 @@ data HouseholdOrderStatus = HouseholdOrderOpen
                           | HouseholdOrderAbandoned
   deriving (Eq, Show, Generic)
 
+householdOrder :: OrderInfo -> HouseholdInfo -> OrderAdjustment -> [OrderItem] -> HouseholdOrder
+householdOrder = undefined
+
 {- Product -}
 
 newtype ProductId = ProductId 
@@ -119,28 +124,29 @@ newtype ProductId = ProductId
   } deriving (Eq, Show, Generic)
 
 data Product = Product 
-  { productId :: ProductId
-  , productCode :: String
-  , productName :: String
-  , productVatRate :: VatRate
-  , productPrice :: Value
-  , productAttributes :: ProductAttributes
+  { _productId :: ProductId
+  , _productCode :: String
+  , _productName :: String
+  , _productVatRate :: VatRate
+  , _productPrice :: Value
+  , _productUpdated :: UTCTime
+  , _productAttributes :: ProductAttributes
   } deriving (Eq, Show, Generic)
 
 data ProductAttributes = ProductAttributes
-  { productAttrIsBiodynamic :: Bool
-  , productAttrIsFairTrade  :: Bool
-  , productAttrIsGlutenFree :: Bool
-  , productAttrIsOrganic    :: Bool
-  , productAttrIsAddedSugar :: Bool
-  , productAttrIsVegan      :: Bool
+  { _productAttrIsBiodynamic :: Bool
+  , _productAttrIsFairTrade  :: Bool
+  , _productAttrIsGlutenFree :: Bool
+  , _productAttrIsOrganic    :: Bool
+  , _productAttrIsAddedSugar :: Bool
+  , _productAttrIsVegan      :: Bool
   } deriving (Eq, Show, Generic)
 
 {- Value -}
 
 data Value = Value 
-  { excVat :: Int 
-  , incVat :: Int 
+  { _excVat :: Int 
+  , _incVat :: Int 
   } deriving (Eq, Show, Generic)
 
 instance Semigroup Value where
