@@ -7,7 +7,7 @@ import Data.Function (on)
 import Data.Time.Clock (UTCTime)
 import Data.Semigroup (Semigroup(..))
 import Data.List (lookup, groupBy)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, maybe)
 import qualified Data.List.NonEmpty as NE (fromList)
 import Data.Foldable (foldl')
 import GHC.Generics
@@ -55,15 +55,18 @@ order :: OrderInfo -> Bool -> Bool -> [HouseholdOrder] -> Order
 order info isAbandoned isPlaced householdOrders =
   Order info 
         (orderStatus isAbandoned isPlaced householdOrders)
-        (total householdOrders)
-        (adjustment householdOrders)
-        (items householdOrders)
+        total
+        adjustment
+        items
         householdOrders
-  where total = sum . map _householdOrderTotal
+  where total = sum . map _householdOrderTotal $ householdOrders
         items = map (sconcat . NE.fromList) 
               . groupBy ((==) `on` (_productId . _itemProduct))
               . concatMap _householdOrderItems
-        adjustment = undefined
+              $ householdOrders
+        adjTotal = foldl' (<>) zero $ map householdOrderTotal householdOrders
+        householdOrderTotal ho = maybe (_householdOrderTotal ho) _orderAdjNewTotal (_householdOrderAdjustment ho)
+        adjustment = if adjTotal /= total then Just $ OrderAdjustment $ adjTotal else Nothing
 
 data OrderStatus = OrderAbandoned
                  | OrderPlaced     OrderReconcileStatus
@@ -157,8 +160,20 @@ data HouseholdOrder = HouseholdOrder
   , _householdOrderAdjustment :: Maybe OrderAdjustment
   } deriving (Eq, Show, Generic)
 
-householdOrder :: OrderInfo -> HouseholdInfo -> Bool -> Bool -> Bool -> UTCTime -> OrderAdjustment -> [OrderItem] -> HouseholdOrder
-householdOrder = undefined
+householdOrder :: OrderInfo -> HouseholdInfo -> Bool -> Bool -> Bool -> UTCTime -> [OrderItem] -> HouseholdOrder
+householdOrder orderInfo householdInfo isAbandoned isPlaced isComplete updated items 
+  = HouseholdOrder orderInfo
+                   householdInfo
+                   (householdOrderStatus isAbandoned isPlaced isComplete updated items)
+                   updated
+                   items
+                   total
+                   adjustment
+  where
+  total = sum . map _itemTotal $ items
+  adjTotal = foldl' (<>) zero $ map itemTotal items
+  itemTotal i = maybe (_itemTotal i) _itemAdjNewTotal (_itemAdjustment i)
+  adjustment = if adjTotal /= total then Just $ OrderAdjustment $ adjTotal else Nothing
 
 data HouseholdOrderStatus = HouseholdOrderAbandoned
                           | HouseholdOrderPlaced   OrderReconcileStatus
