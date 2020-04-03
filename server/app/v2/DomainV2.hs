@@ -11,7 +11,7 @@ import Data.Maybe (isJust, maybe)
 import qualified Data.List.NonEmpty as NE (fromList)
 import Data.Foldable (foldl')
 import GHC.Generics
-import Prelude hiding (sum)
+import Prelude hiding (product)
 
 {-- OrderGroup --}
 
@@ -45,7 +45,7 @@ data OrderInfo = OrderInfo
 data Order = Order 
   { _orderInfo :: OrderInfo
   , _orderStatus :: OrderStatus
-  , _orderTotal :: Value
+  , _orderTotal :: Money
   , _orderAdjustment :: Maybe OrderAdjustment
   , _orderItems :: [OrderItem]
   , _householdOrders :: [HouseholdOrder]
@@ -64,14 +64,14 @@ order info isAbandoned isPlaced householdOrders =
               . groupBy ((==) `on` (_productId . _itemProduct))
               . concatMap _householdOrderItems
               $ householdOrders
-        adjTotal = foldl' (<>) zero $ map householdOrderTotal householdOrders
+        adjTotal = sum $ map householdOrderTotal householdOrders
         householdOrderTotal ho = maybe (_householdOrderTotal ho) _orderAdjNewTotal (_householdOrderAdjustment ho)
         adjustment = if adjTotal /= total then Just $ OrderAdjustment $ adjTotal else Nothing
 
 data OrderStatus = OrderAbandoned
-                 | OrderPlaced     OrderReconcileStatus
-                 | OrderComplete   ProductCatalogueUpdateStatus
-                 | OrderOpen       ProductCatalogueUpdateStatus
+                 | OrderComplete  ProductCatalogueUpdateStatus
+                 | OrderPlaced    OrderReconcileStatus
+                 | OrderOpen      ProductCatalogueUpdateStatus
   deriving (Eq, Show, Generic)
 
 data ProductCatalogueUpdateStatus = NoUpdate
@@ -102,7 +102,7 @@ orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderOpen     NoUpdate }) =
 orderIsAllHouseholdsUpToDate _ = False
 
 data OrderAdjustment = OrderAdjustment 
-  { _orderAdjNewTotal :: Value
+  { _orderAdjNewTotal :: Money
   } deriving (Eq, Show, Generic)
 
 {- OrderItem -}
@@ -110,24 +110,31 @@ data OrderAdjustment = OrderAdjustment
 data OrderItem = OrderItem 
   { _itemProduct :: Product
   , _itemQuantity :: Int
-  , _itemTotal :: Value
+  , _itemTotal :: Money
   , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
+
+orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
+orderItem product quantity adjustment = OrderItem product quantity (_productPrice product * fromIntegral quantity) adjustment
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct i1)
                        (_itemQuantity   i1 +  _itemQuantity   i2)
-                       (_itemTotal      i1 <> _itemTotal      i2)
+                       (_itemTotal      i1 +  _itemTotal      i2)
                        (_itemAdjustment i1 <> _itemAdjustment i2)
 
 data OrderItemAdjustment = OrderItemAdjustment 
   { _itemAdjNewVatRate :: VatRate
-  , _itemAdjNewPrice :: Value
+  , _itemAdjNewPrice :: Money
   , _itemAdjNewQuantity :: Int
-  , _itemAdjNewTotal :: Value
+  , _itemAdjNewTotal :: Money
   , _itemAdjIsDiscontinued :: Bool
   , _itemAdjDate :: UTCTime
   } deriving (Eq, Show, Generic)
+
+orderItemAdjustment :: VatRate -> Money -> Int -> Bool -> UTCTime -> OrderItemAdjustment
+orderItemAdjustment newVatRate newPrice newQuantity isDiscontinued date
+  = OrderItemAdjustment newVatRate newPrice newQuantity (newPrice * fromIntegral newQuantity) isDiscontinued date
 
 instance Semigroup OrderItemAdjustment where
   a1 <> a2 = OrderItemAdjustment latestVatRate
@@ -145,8 +152,7 @@ instance Semigroup OrderItemAdjustment where
     latestPrice      = _itemAdjNewPrice later
     latestVatRate    = _itemAdjNewVatRate later
     latestDate       = _itemAdjDate later
-    latestMultiplier = (fromIntegral . _incVat $ latestPrice) / (fromIntegral . _excVat $ latestPrice)
-    total            = value latestMultiplier $ (_excVat latestPrice) * totalQuantity
+    total            = atNewVatRate latestVatRate $ latestPrice * fromIntegral totalQuantity
 
 {- HouseholdOrder -}
 
@@ -156,7 +162,7 @@ data HouseholdOrder = HouseholdOrder
   , _householdOrderStatus :: HouseholdOrderStatus
   , _householdOrderUpdated :: UTCTime
   , _householdOrderItems :: [OrderItem]
-  , _householdOrderTotal :: Value
+  , _householdOrderTotal :: Money
   , _householdOrderAdjustment :: Maybe OrderAdjustment
   } deriving (Eq, Show, Generic)
 
@@ -171,7 +177,7 @@ householdOrder orderInfo householdInfo isAbandoned isPlaced isComplete updated i
                    adjustment
   where
   total = sum . map _itemTotal $ items
-  adjTotal = foldl' (<>) zero $ map itemTotal items
+  adjTotal = sum $ map itemTotal items
   itemTotal i = maybe (_itemTotal i) _itemAdjNewTotal (_itemAdjustment i)
   adjustment = if adjTotal /= total then Just $ OrderAdjustment $ adjTotal else Nothing
 
@@ -211,7 +217,7 @@ data Product = Product
   , _productCode :: String
   , _productName :: String
   , _productVatRate :: VatRate
-  , _productPrice :: Value
+  , _productPrice :: Money
   , _productUpdated :: UTCTime
   , _productAttributes :: ProductAttributes
   } deriving (Eq, Show, Generic)
@@ -225,40 +231,41 @@ data ProductAttributes = ProductAttributes
   , _productAttrIsVegan      :: Bool
   } deriving (Eq, Show, Generic)
 
-{- Value -}
+{- Money -}
 
-data Value = Value 
+data Money = Money 
   { _excVat :: Int 
   , _incVat :: Int 
   } deriving (Eq, Ord, Show, Generic)
 
-instance Semigroup Value where
-  Value exc1 inc1 <> Value exc2 inc2 = Value (exc1 + exc2) (inc1 + inc2)
+zero :: Money
+zero = fromIntegral 0
 
-instance Monoid Value where
-  mempty = zero
-  mappend = (<>)
-
-zero :: Value
-zero = Value 0 0
-
-sum :: [Value] -> Value
-sum = foldl' (<>) zero
+instance Num Money where
+  Money exc1 inc1 + Money exc2 inc2 = Money (exc1 + exc2) (inc1 + inc2)
+  Money exc1 inc1 - Money exc2 inc2 = Money (exc1 - exc2) (inc1 - inc2)
+  Money exc1 inc1 * Money exc2 inc2 = Money (exc1 * exc2) (inc1 * inc2)
+  abs (Money exc inc) = Money (abs exc) (abs inc)
+  signum (Money exc inc) = Money (signum exc) (signum inc)
+  fromInteger i = Money (fromInteger i) (fromInteger i)
 
 {- VatRate -}
 
-data VatRate = Zero 
-             | Standard 
-             | Reduced 
+data VatRateType = Zero 
+                 | Standard 
+                 | Reduced 
   deriving (Eq, Show, Generic)
 
-type VatRates = [(VatRate, Rational)]
+data VatRate = VatRate
+  { _type :: VatRateType
+  , _multiplier :: Rational
+  } deriving (Eq, Show, Generic)
 
-atVatRate :: VatRates -> VatRate -> Int -> Value
-atVatRate vatRates vatRate amount = 
-  case lookup vatRate vatRates of
-    Just multiplier -> value multiplier amount
-    _               -> Value amount amount
+zeroRate :: VatRate
+zeroRate = VatRate Zero 1
 
-value :: Rational -> Int -> Value
-value multiplier amount = Value amount $ round $ fromIntegral amount * multiplier
+atVatRate :: VatRate -> Int -> Money
+atVatRate vatRate amountExcVat = Money amountExcVat $ round $ fromIntegral amountExcVat * (_multiplier vatRate)
+
+atNewVatRate :: VatRate -> Money -> Money
+atNewVatRate vatRate = atVatRate vatRate . _excVat

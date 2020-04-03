@@ -15,7 +15,7 @@ import Data.Char (toLower, isLower, toUpper)
 import Data.Time.Clock (UTCTime)
 import GHC.Generics
 import Servant
-import DomainV2 (VatRate)
+import DomainV2 (VatRateType)
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
@@ -57,7 +57,7 @@ data OrderItem = OrderItem
   { oiProductId :: Int
   , oiProductCode :: String
   , oiProductName :: String
-  , oiProductVatRate :: VatRate
+  , oiProductVatRate :: VatRateType
   , oiProductPriceExcVat :: Int
   , oiProductPriceIncVat :: Int
   , oiItemQuantity :: Int
@@ -85,4 +85,4 @@ data OrderItemAdjustment = OrderItemAdjustment
 instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
 
-instance ToJSON VatRate
+instance ToJSON VatRateType
