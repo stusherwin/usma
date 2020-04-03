@@ -95,12 +95,10 @@ getOrder config groupId = do
                                                   (householdOrderRow_is_placed ho)
                                                   (householdOrderRow_is_complete ho)
                                                   (householdOrderRow_updated ho)
-                                                  adjustment
                                                   householdOrderItems
         where
         householdId = householdOrderRow_household_id $ ho
         householdInfo = HouseholdInfo (HouseholdId householdId) (householdOrderRow_household_name ho)
-        adjustment = undefined
         householdOrderItems = map (orderItem . snd) 
                             . filter ((\(oId, hId) -> oId == orderId && hId == householdId) . fst) 
                             $ rHouseholdOrderItems
