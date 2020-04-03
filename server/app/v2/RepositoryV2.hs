@@ -64,16 +64,16 @@ getOrder config groupId = do
       createdBy (Just id) (Just name) = Just $ HouseholdInfo (HouseholdId id) name
       createdBy _ _                   = Nothing
 
-      orderItem i = OrderItem product
-                              (orderItemRow_quantity i)
-                              (atProductVatRate $ orderItemRow_price i * orderItemRow_quantity i)
-                              adjustment
+      orderItem (i, a) = OrderItem product
+                                   (orderItemRow_quantity i)
+                                   (atVatRate rVatRates (orderItemRow_vat_rate i) $ orderItemRow_price i * orderItemRow_quantity i)
+                                   (adjustment a)
         where
         product = Product (ProductId . orderItemRow_product_id $ i)
                           (orderItemRow_code i)
                           (orderItemRow_name i)
                           (orderItemRow_vat_rate i)
-                          (atProductVatRate $ orderItemRow_price i)
+                          (atVatRate rVatRates (orderItemRow_vat_rate i) $ orderItemRow_price i)
                           (orderItemRow_updated i)
                           attributes
         attributes = ProductAttributes (orderItemRow_biodynamic i)
@@ -84,7 +84,19 @@ getOrder config groupId = do
                                        (orderItemRow_vegan i)
       
         atProductVatRate = atVatRate rVatRates $ orderItemRow_vat_rate i
-        adjustment = undefined
+        adjustment (OrderItemAdjustmentRow { orderItemAdjRow_new_vat_rate = Just new_vat_rate
+                                           , orderItemAdjRow_new_price = Just new_price
+                                           , orderItemAdjRow_new_quantity = Just new_quantity
+                                           , orderItemAdjRow_is_discontinued = Just is_discontinued
+                                           , orderItemAdjRow_date = Just date
+                                           })
+          = Just $ OrderItemAdjustment new_vat_rate
+                                       (atVatRate rVatRates new_vat_rate $ new_price)
+                                       new_quantity
+                                       (atVatRate rVatRates new_vat_rate $ new_price * new_quantity)
+                                       is_discontinued
+                                       date
+        adjustment _ = Nothing
 
       householdOrders = map (householdOrder . snd) 
                       . filter ((orderId ==) . fst) 
@@ -194,7 +206,18 @@ data OrderItemRow = OrderItemRow
 instance FromRow OrderItemRow where
   fromRow = OrderItemRow <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
-getHouseholdOrderItemRows :: Connection -> Int -> IO [((Int, Int), OrderItemRow)]
+data OrderItemAdjustmentRow = OrderItemAdjustmentRow 
+  { orderItemAdjRow_new_vat_rate :: Maybe VatRate
+  , orderItemAdjRow_new_price :: Maybe Int
+  , orderItemAdjRow_new_quantity :: Maybe Int
+  , orderItemAdjRow_is_discontinued :: Maybe Bool
+  , orderItemAdjRow_date :: Maybe UTCTime
+  }
+
+instance FromRow OrderItemAdjustmentRow where
+  fromRow = OrderItemAdjustmentRow <$> field <*> field <*> field <*> field <*> field
+
+getHouseholdOrderItemRows :: Connection -> Int -> IO [((Int, Int), (OrderItemRow, OrderItemAdjustmentRow))]
 getHouseholdOrderItemRows conn groupId = do
   rows <- query conn [sql|
     select hoi.order_id
@@ -213,15 +236,25 @@ getHouseholdOrderItemRows conn groupId = do
          , p.vegan
          , p.updated
          , hoi.quantity
+
+         , adj.new_vat_rate
+         , adj.new_price
+        --  , adj.new_product_price_inc_vat
+         , adj.new_quantity
+        --  , adj.new_item_total_exc_vat
+        --  , adj.new_item_total_inc_vat
+         , adj.date
     from v2.household_order_item hoi
     inner join v2.household_order ho 
       on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
     inner join v2.product p 
       on p.id = hoi.product_id
+    let join v2.order_item_adjustment adj
+      on adj.order_id = hoi.order_id and adj.household_id = hoi.household_id and adj.product_id = hoi.product_id
     where ho.order_group_id = ?
     order by hoi.ix
   |] (Only groupId)
-  return $ map (\((orderId, householdId) :. itemRow) -> ((orderId, householdId), itemRow)) rows
+  return $ map (\((orderId, householdId) :. itemRow :. itemAdjRow) -> ((orderId, householdId), (itemRow, itemAdjRow))) rows
 
 instance ToField VatRate where
   toField Zero = toDatabaseChar 'Z'
