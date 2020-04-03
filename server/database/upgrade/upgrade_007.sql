@@ -164,7 +164,8 @@ begin
     new_product_price_inc_vat integer NOT NULL,
     new_quantity integer NOT NULL,
     new_item_total_exc_vat integer NOT NULL,
-    new_item_total_inc_vat integer NOT NULL
+    new_item_total_inc_vat integer NOT NULL,
+    date timestamp with time zone NOT NULL,
   );
   ALTER TABLE ONLY v2.order_item_adjustment
     ADD CONSTRAINT v2_order_item_adjustment_pkey PRIMARY KEY (order_id, household_id, product_id);
