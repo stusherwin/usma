@@ -9,7 +9,8 @@ module RepositoryV2 where
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
 import Data.ByteString (ByteString)
-import Data.Maybe (listToMaybe)
+import Data.List (find)
+import Data.Maybe (listToMaybe, fromMaybe)
 import qualified Data.Text as T (pack)
 import Data.Text.Encoding (encodeUtf8)
 import Data.Time.Clock (UTCTime)
@@ -64,16 +65,15 @@ getOrder config groupId = do
       createdBy (Just id) (Just name) = Just $ HouseholdInfo (HouseholdId id) name
       createdBy _ _                   = Nothing
 
-      orderItem (i, a) = OrderItem product
-                                   (orderItemRow_quantity i)
-                                   (atVatRate rVatRates (orderItemRow_vat_rate i) $ orderItemRow_price i * orderItemRow_quantity i)
-                                   (adjustment a)
+      orderItem (i, a) = DomainV2.orderItem product
+                                            (orderItemRow_quantity i)
+                                            (adjustment a)
         where
         product = Product (ProductId . orderItemRow_product_id $ i)
                           (orderItemRow_code i)
                           (orderItemRow_name i)
-                          (orderItemRow_vat_rate i)
-                          (atVatRate rVatRates (orderItemRow_vat_rate i) $ orderItemRow_price i)
+                          (findVatRate $ orderItemRow_vat_rate i)
+                          (atVatRate (findVatRate $ orderItemRow_vat_rate i) $ orderItemRow_price i)
                           (orderItemRow_updated i)
                           attributes
         attributes = ProductAttributes (orderItemRow_biodynamic i)
@@ -83,17 +83,15 @@ getOrder config groupId = do
                                        (orderItemRow_added_sugar i)
                                        (orderItemRow_vegan i)
       
-        atProductVatRate = atVatRate rVatRates $ orderItemRow_vat_rate i
         adjustment (OrderItemAdjustmentRow { orderItemAdjRow_new_vat_rate = Just new_vat_rate
                                            , orderItemAdjRow_new_price = Just new_price
                                            , orderItemAdjRow_new_quantity = Just new_quantity
                                            , orderItemAdjRow_is_discontinued = Just is_discontinued
                                            , orderItemAdjRow_date = Just date
                                            })
-          = Just $ OrderItemAdjustment new_vat_rate
-                                       (atVatRate rVatRates new_vat_rate $ new_price)
+          = Just $ orderItemAdjustment (findVatRate new_vat_rate)
+                                       (atVatRate (findVatRate new_vat_rate) new_price)
                                        new_quantity
-                                       (atVatRate rVatRates new_vat_rate $ new_price * new_quantity)
                                        is_discontinued
                                        date
         adjustment _ = Nothing
@@ -114,8 +112,9 @@ getOrder config groupId = do
         householdOrderItems = map (orderItem . snd) 
                             . filter ((\(oId, hId) -> oId == orderId && hId == householdId) . fst) 
                             $ rHouseholdOrderItems
+      findVatRate vatRateType = fromMaybe zeroRate $ find ((== vatRateType) . _type) rVatRates
           
-getVatRateRows :: Connection -> Int -> IO VatRates
+getVatRateRows :: Connection -> Int -> IO [VatRate]
 getVatRateRows conn groupId = 
   query_ conn [sql|
     select code, multiplier
@@ -191,7 +190,7 @@ data OrderItemRow = OrderItemRow
   { orderItemRow_product_id :: Int
   , orderItemRow_code :: String
   , orderItemRow_name :: String
-  , orderItemRow_vat_rate :: VatRate
+  , orderItemRow_vat_rate :: VatRateType
   , orderItemRow_price :: Int
   , orderItemRow_biodynamic :: Bool
   , orderItemRow_fair_trade :: Bool
@@ -207,7 +206,7 @@ instance FromRow OrderItemRow where
   fromRow = OrderItemRow <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 data OrderItemAdjustmentRow = OrderItemAdjustmentRow 
-  { orderItemAdjRow_new_vat_rate :: Maybe VatRate
+  { orderItemAdjRow_new_vat_rate :: Maybe VatRateType
   , orderItemAdjRow_new_price :: Maybe Int
   , orderItemAdjRow_new_quantity :: Maybe Int
   , orderItemAdjRow_is_discontinued :: Maybe Bool
@@ -256,12 +255,15 @@ getHouseholdOrderItemRows conn groupId = do
   |] (Only groupId)
   return $ map (\((orderId, householdId) :. itemRow :. itemAdjRow) -> ((orderId, householdId), (itemRow, itemAdjRow))) rows
 
-instance ToField VatRate where
+instance FromRow VatRate where
+  fromRow = VatRate <$> field <*> field
+
+instance ToField VatRateType where
   toField Zero = toDatabaseChar 'Z'
   toField Standard = toDatabaseChar 'S'
   toField Reduced = toDatabaseChar 'R'
 
-instance FromField VatRate where
+instance FromField VatRateType where
   fromField f char = do
     c <- fromField f char
     case c of
