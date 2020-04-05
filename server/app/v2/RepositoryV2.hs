@@ -83,12 +83,11 @@ getOrder config groupId = do
                                        (orderItemRow_added_sugar i)
                                        (orderItemRow_vegan i)
       
-        adjustment (OrderItemAdjustmentRow { orderItemAdjRow_new_vat_rate = Just new_vat_rate
-                                           , orderItemAdjRow_new_price = Just new_price
-                                           , orderItemAdjRow_new_quantity = Just new_quantity
-                                           , orderItemAdjRow_is_discontinued = Just is_discontinued
-                                           , orderItemAdjRow_date = Just date
-                                           })
+        adjustment (OrderItemAdjustmentRow (Just new_vat_rate)
+                                           (Just new_price)
+                                           (Just new_quantity)
+                                           (Just is_discontinued)
+                                           (Just date))
           = Just $ orderItemAdjustment (findVatRate new_vat_rate)
                                        (atVatRate (findVatRate new_vat_rate) new_price)
                                        new_quantity
@@ -238,10 +237,7 @@ getHouseholdOrderItemRows conn groupId = do
 
          , adj.new_vat_rate
          , adj.new_price
-        --  , adj.new_product_price_inc_vat
          , adj.new_quantity
-        --  , adj.new_item_total_exc_vat
-        --  , adj.new_item_total_inc_vat
          , adj.date
     from v2.household_order_item hoi
     inner join v2.household_order ho 
