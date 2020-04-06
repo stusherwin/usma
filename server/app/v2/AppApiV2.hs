@@ -17,17 +17,13 @@ import GHC.Generics
 import Servant
 import DomainV2 (VatRateType)
 
-dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
-  dropFieldPrefix = (first toLower) . (dropWhile isLower)
-  first f (c:cs) = (f c):cs
-  first _ [] = []
-
 type AppApiV2 = 
   "v2" :> ( "query" :> QueryApiV2
           )
 
 type QueryApiV2 =
        "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
+  :<|> "past-collective-orders" :> Get '[JSON] [CollectiveOrder]
 
 data CollectiveOrder = CollectiveOrder 
   { coId :: Int
@@ -86,3 +82,8 @@ instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
 
 instance ToJSON VatRateType
+
+dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
+  dropFieldPrefix = (first toLower) . (dropWhile isLower)
+  first f (c:cs) = (f c):cs
+  first _ [] = []
