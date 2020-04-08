@@ -11,7 +11,7 @@ import Control.Applicative ((<|>))
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
 import Data.ByteString (ByteString)
-import Data.List (find)
+import Data.List (find, foldl')
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Monoid ((<>))
 import qualified Data.Text as T (pack)
@@ -45,8 +45,8 @@ getHouseholds config groupId = do
   (rVatRates, rHouseholds, rHouseholdOrders, rHouseholdOrderItems, rPayments) <- withTransaction conn $ do
     v <- selectVatRates conn
     h <- selectHouseholdRows groupId conn
-    ho <- selectHouseholdOrderRows groupId Nothing conn
-    hoi <- selectHouseholdOrderItemRows groupId Nothing conn
+    ho <- selectHouseholdOrderRows groupId [] conn
+    hoi <- selectHouseholdOrderItemRows groupId [] conn
     p <- selectPayments groupId conn
     return (v, h, ho, hoi, p)
   close conn
@@ -57,9 +57,9 @@ getOrder config groupId = do
   conn <- connectPostgreSQL $ connectionString config
   (rVatRates, rOrders, rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
     v <- selectVatRates conn
-    o <- selectOrderRows groupId (Just OrderIsCurrent) conn
-    ho <- selectHouseholdOrderRows groupId (Just OrderIsCurrent) conn
-    hoi <- selectHouseholdOrderItemRows groupId (Just OrderIsCurrent) conn
+    o <- selectOrderRows groupId [OrderIsCurrent] conn
+    ho <- selectHouseholdOrderRows groupId [OrderIsCurrent] conn
+    hoi <- selectHouseholdOrderItemRows groupId [OrderIsCurrent] conn
     return (v, o, ho, hoi)
   close conn
   return $ listToMaybe $ map (toOrder rVatRates rHouseholdOrders rHouseholdOrderItems) rOrders
@@ -69,9 +69,9 @@ getPastOrders config groupId = do
   conn <- connectPostgreSQL $ connectionString config
   (rVatRates, rOrders, rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
     v <- selectVatRates conn
-    o <- selectOrderRows groupId (Just OrderIsPast) conn
-    ho <- selectHouseholdOrderRows groupId (Just OrderIsPast) conn
-    hoi <- selectHouseholdOrderItemRows groupId (Just OrderIsPast) conn
+    o <- selectOrderRows groupId [OrderIsPast] conn
+    ho <- selectHouseholdOrderRows groupId [OrderIsPast] conn
+    hoi <- selectHouseholdOrderItemRows groupId [OrderIsPast] conn
     return (v, o, ho, hoi)
   close conn
   return $ map (toOrder rVatRates rHouseholdOrders rHouseholdOrderItems) rOrders
@@ -85,7 +85,6 @@ toHousehold rVatRates rHouseholdOrders rHouseholdOrderItems rPayments (household
             householdOrders
             rPayments
   where
-  -- householdInfo = HouseholdInfo (householdRow_id h) (householdRow_name h)
   householdOrders = map (toHouseholdOrder rVatRates rHouseholdOrderItems)
                   . filter (\(_ :. hi :. _) -> _householdId hi == _householdId householdInfo)
                   $ rHouseholdOrders      
@@ -111,13 +110,12 @@ toHouseholdOrder rVatRates rHouseholdOrderItems (orderInfo :. householdInfo :. h
                  (householdOrderRow_updated ho)
                  householdOrderItems
   where
-  -- householdInfo = HouseholdInfo (householdOrderRow_household_id ho) (householdOrderRow_household_name ho)
-  householdOrderItems = map (\(_ :. i :. a) -> toOrderItem rVatRates i a) 
-                      . filter (\((orderId, householdId) :. _ :. _) -> orderId == _orderId orderInfo && householdId == _householdId householdInfo)
+  householdOrderItems = map (toOrderItem rVatRates) 
+                      . filter (\((oId, hId) :. _ :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)
                       $ rHouseholdOrderItems
 
-toOrderItem :: [VatRate] -> OrderItemRow -> OrderItemAdjustmentRow -> OrderItem
-toOrderItem rVatRates i a = 
+toOrderItem :: [VatRate] -> ((OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow) -> OrderItem
+toOrderItem rVatRates (_ :. i :. a) = 
   orderItem product
             (orderItemRow_quantity i)
             (adjustment a)
@@ -135,7 +133,6 @@ toOrderItem rVatRates i a =
                                  (orderItemRow_organic i)
                                  (orderItemRow_added_sugar i)
                                  (orderItemRow_vegan i)
-
   adjustment (OrderItemAdjustmentRow (Just new_vat_rate)
                                      (Just new_price)
                                      (Just new_quantity)
@@ -182,17 +179,13 @@ selectHouseholdRows groupId conn =
   |]) (Only $ fromOrderGroupId groupId)
 
 data HouseholdRow = HouseholdRow
-  { 
-  --   householdRow_id :: HouseholdId
-  -- , householdRow_name :: String
-  -- , 
-    householdRow_contact_name :: Maybe String
+  { householdRow_contact_name :: Maybe String
   , householdRow_contact_email :: Maybe String
   , householdRow_contact_phone :: Maybe String
   }
 
 instance FromRow HouseholdRow where
-  fromRow = HouseholdRow <$> field <*> field <*> field -- <*> field <*> field
+  fromRow = HouseholdRow <$> field <*> field <*> field
 
 selectPayments :: OrderGroupId -> Connection -> IO [Payment]
 selectPayments groupId conn = 
@@ -209,7 +202,7 @@ selectPayments groupId conn =
 instance FromRow Payment where
   fromRow = Payment <$> field <*> field <*> field <*> field
 
-selectOrderRows :: OrderGroupId -> Maybe OrderWhereCondition -> Connection -> IO [OrderInfo :. OrderStatusRow]
+selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. OrderStatusRow]
 selectOrderRows groupId whereCondition conn = 
   query conn ([sql|
     select o.id
@@ -222,29 +215,22 @@ selectOrderRows groupId whereCondition conn =
     left join v2.household cb
       on cb.id = o.created_by_id 
     where o.order_group_id = ?
-  |] <> case whereCondition of 
-       Just OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
-       Just OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |]
-       _ -> mempty
+  |] <> mapWhere whereCondition (\w -> case w of 
+          OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
+          OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
     order by o.id desc
   |]) (Only $ fromOrderGroupId groupId)
 
 data OrderStatusRow = OrderStatusRow
-  { 
-    -- orderRow_id :: OrderId
-  -- , orderRow_created :: UTCTime
-  -- , orderRow_created_by_household_id :: Maybe HouseholdId
-  -- , orderRow_created_by_household_name :: Maybe String
-  --,
-    orderRow_is_abandoned :: Bool
+  { orderRow_is_abandoned :: Bool
   , orderRow_is_placed :: Bool
   }
 
 instance FromRow OrderStatusRow where
-  fromRow = OrderStatusRow <$> field <*> field -- <*> field <*> field <*> field <*> field
+  fromRow = OrderStatusRow <$> field <*> field
 
-selectHouseholdOrderRows :: OrderGroupId -> Maybe OrderWhereCondition -> Connection -> IO [OrderInfo :. HouseholdInfo :. HouseholdOrderRow]
+selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. HouseholdInfo :. HouseholdOrderRow]
 selectHouseholdOrderRows groupId whereCondition conn = 
   query conn ([sql|
   select o.id as order_id 
@@ -269,27 +255,22 @@ selectHouseholdOrderRows groupId whereCondition conn =
   left join product p 
     on p.id = hoi.product_id
   where o.order_group_id = ?
-  |] <> case whereCondition of 
-       Just OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
-       Just OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |]
-       _ -> mempty
+  |] <> mapWhere whereCondition (\w -> case w of 
+          OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
+          OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
   order by o.id desc, h.name asc
 |]) (Only $ fromOrderGroupId groupId)
 
 data HouseholdOrderRow = HouseholdOrderRow 
-  { 
-  --   householdOrderRow_household_id :: HouseholdId
-  -- , householdOrderRow_household_name :: String
-  -- ,
-    householdOrderRow_is_abandoned :: Bool
+  { householdOrderRow_is_abandoned :: Bool
   , householdOrderRow_is_placed :: Bool
   , householdOrderRow_is_complete :: Bool
   , householdOrderRow_updated :: UTCTime
   }
 
 instance FromRow HouseholdOrderRow where
-  fromRow = HouseholdOrderRow <$> field <*> field <*> field <*> field -- <*> field <*> field
+  fromRow = HouseholdOrderRow <$> field <*> field <*> field <*> field
 
 instance FromRow OrderInfo where
   fromRow = do
@@ -305,7 +286,7 @@ instance FromRow OrderInfo where
 instance FromRow HouseholdInfo where
   fromRow = HouseholdInfo <$> field <*> field
 
-selectHouseholdOrderItemRows :: OrderGroupId -> Maybe OrderWhereCondition -> Connection -> IO [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow]
+selectHouseholdOrderItemRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow]
 selectHouseholdOrderItemRows groupId whereCondition conn = 
   query conn ([sql|
     select hoi.order_id
@@ -337,10 +318,9 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
     let join v2.order_item_adjustment adj
       on adj.order_id = hoi.order_id and adj.household_id = hoi.household_id and adj.product_id = hoi.product_id
     where o.order_group_id = ? 
-  |] <> case whereCondition of 
-       Just OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
-       Just OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |]
-       _ -> mempty
+  |] <> mapWhere whereCondition (\w -> case w of 
+          OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
+          OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
     order by hoi.ix
   |]) (Only $ fromOrderGroupId groupId)
@@ -375,8 +355,11 @@ data OrderItemAdjustmentRow = OrderItemAdjustmentRow
 instance FromRow OrderItemAdjustmentRow where
   fromRow = OrderItemAdjustmentRow <$> field <*> field <*> field <*> field <*> field
 
-data OrderWhereCondition = OrderIsCurrent
-                         | OrderIsPast
+data WhereCondition = OrderIsCurrent
+                    | OrderIsPast
+
+mapWhere :: [WhereCondition] -> (WhereCondition -> Query) -> Query
+mapWhere whereCondition = foldl' (<>) mempty . (flip map) whereCondition
 
 toDatabaseChar :: Char -> Action
 toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
