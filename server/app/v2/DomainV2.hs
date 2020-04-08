@@ -30,6 +30,37 @@ data HouseholdInfo = HouseholdInfo
   , _householdName :: String
   } deriving (Eq, Show, Generic)
 
+data Household = Household 
+  { _householdInfo :: HouseholdInfo
+  , _householdContactName :: Maybe String
+  , _householdContactEmail :: Maybe String
+  , _householdContactPhone :: Maybe String
+  , _householdTotalOrders :: Int
+  , _householdTotalPayments :: Int
+  , _householdBalance :: Int
+  }
+
+household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [HouseholdOrder] -> [Payment] -> Household
+household householdInfo contactName contactEmail contactPhone householdOrders payments =
+  Household householdInfo contactName contactEmail contactPhone totalOrders totalPayments balance
+  where
+  totalOrders = _incVat $ sum . map _householdOrderTotal $ householdOrders
+  totalPayments = sum . map _paymentAmount $ payments
+  balance = totalPayments - totalOrders
+
+{- Payment -}
+
+newtype PaymentId = PaymentId 
+  { fromPaymentId :: Int 
+  } deriving (Eq, Show, Generic)
+
+data Payment = Payment 
+  { _paymentId :: PaymentId
+  , _paymentHouseholdId :: HouseholdId
+  , _paymentDate :: UTCTime
+  , _paymentAmount :: Int
+  } deriving (Eq, Show, Generic)
+
 {-- Order --}
 
 newtype OrderId = OrderId 
@@ -113,55 +144,6 @@ data OrderAdjustment = OrderAdjustment
   { _orderAdjNewTotal :: Money
   } deriving (Eq, Show, Generic)
 
-{- OrderItem -}
-
-data OrderItem = OrderItem 
-  { _itemProduct :: Product
-  , _itemQuantity :: Int
-  , _itemTotal :: Money
-  , _itemAdjustment :: Maybe OrderItemAdjustment
-  } deriving (Eq, Show, Generic)
-
-orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
-orderItem product quantity adjustment = OrderItem product quantity (_productPrice product * fromIntegral quantity) adjustment
-
-instance Semigroup OrderItem where
-  i1 <> i2 = OrderItem (_itemProduct    i1)
-                       (_itemQuantity   i1 +  _itemQuantity   i2)
-                       (_itemTotal      i1 +  _itemTotal      i2)
-                       (_itemAdjustment i1 <> _itemAdjustment i2)
-
-data OrderItemAdjustment = OrderItemAdjustment 
-  { _itemAdjNewVatRate :: VatRate
-  , _itemAdjNewPrice :: Money
-  , _itemAdjNewQuantity :: Int
-  , _itemAdjNewTotal :: Money
-  , _itemAdjIsDiscontinued :: Bool
-  , _itemAdjDate :: UTCTime
-  } deriving (Eq, Show, Generic)
-
-orderItemAdjustment :: VatRate -> Money -> Int -> Bool -> UTCTime -> OrderItemAdjustment
-orderItemAdjustment newVatRate newPrice newQuantity isDiscontinued date
-  = OrderItemAdjustment newVatRate newPrice newQuantity (newPrice * fromIntegral newQuantity) isDiscontinued date
-
-instance Semigroup OrderItemAdjustment where
-  a1 <> a2 = OrderItemAdjustment latestVatRate
-                                 latestPrice
-                                 totalQuantity
-                                 total
-                                 discontinued
-                                 latestDate
-    where 
-    discontinued     = _itemAdjIsDiscontinued a1 || _itemAdjIsDiscontinued a2
-    totalQuantity    = if discontinued
-                         then 0 
-                         else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
-    latest           = maximumBy (comparing _itemAdjDate) [a1, a2]
-    latestPrice      = _itemAdjNewPrice latest
-    latestVatRate    = _itemAdjNewVatRate latest
-    latestDate       = _itemAdjDate latest
-    total            = atNewVatRate latestVatRate $ latestPrice * fromIntegral totalQuantity
-
 {- HouseholdOrder -}
 
 data HouseholdOrder = HouseholdOrder 
@@ -221,6 +203,55 @@ isHouseholdOrderAwaitingConfirm _ = False
 isHouseholdOrderComplete :: HouseholdOrder -> Bool
 isHouseholdOrderComplete (HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete _ }) = True
 isHouseholdOrderComplete _ = False
+
+{- OrderItem -}
+
+data OrderItem = OrderItem 
+  { _itemProduct :: Product
+  , _itemQuantity :: Int
+  , _itemTotal :: Money
+  , _itemAdjustment :: Maybe OrderItemAdjustment
+  } deriving (Eq, Show, Generic)
+
+orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
+orderItem product quantity adjustment = OrderItem product quantity (_productPrice product * fromIntegral quantity) adjustment
+
+instance Semigroup OrderItem where
+  i1 <> i2 = OrderItem (_itemProduct    i1)
+                       (_itemQuantity   i1 +  _itemQuantity   i2)
+                       (_itemTotal      i1 +  _itemTotal      i2)
+                       (_itemAdjustment i1 <> _itemAdjustment i2)
+
+data OrderItemAdjustment = OrderItemAdjustment 
+  { _itemAdjNewVatRate :: VatRate
+  , _itemAdjNewPrice :: Money
+  , _itemAdjNewQuantity :: Int
+  , _itemAdjNewTotal :: Money
+  , _itemAdjIsDiscontinued :: Bool
+  , _itemAdjDate :: UTCTime
+  } deriving (Eq, Show, Generic)
+
+orderItemAdjustment :: VatRate -> Money -> Int -> Bool -> UTCTime -> OrderItemAdjustment
+orderItemAdjustment newVatRate newPrice newQuantity isDiscontinued date
+  = OrderItemAdjustment newVatRate newPrice newQuantity (newPrice * fromIntegral newQuantity) isDiscontinued date
+
+instance Semigroup OrderItemAdjustment where
+  a1 <> a2 = OrderItemAdjustment latestVatRate
+                                 latestPrice
+                                 totalQuantity
+                                 total
+                                 discontinued
+                                 latestDate
+    where 
+    discontinued     = _itemAdjIsDiscontinued a1 || _itemAdjIsDiscontinued a2
+    totalQuantity    = if discontinued
+                         then 0 
+                         else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
+    latest           = maximumBy (comparing _itemAdjDate) [a1, a2]
+    latestPrice      = _itemAdjNewPrice latest
+    latestVatRate    = _itemAdjNewVatRate latest
+    latestDate       = _itemAdjDate latest
+    total            = atNewVatRate latestVatRate $ latestPrice * fromIntegral totalQuantity
 
 {- Product -}
 
