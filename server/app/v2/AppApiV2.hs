@@ -22,8 +22,23 @@ type AppApiV2 =
           )
 
 type QueryApiV2 =
-       "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
-  :<|> "past-collective-orders" :> Get '[JSON] [CollectiveOrder]
+       "households" :> Get '[JSON] [Household]
+  :<|> "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
+  :<|>"past-collective-orders" :> Get '[JSON] [CollectiveOrder]
+
+data Household = Household 
+  { hId :: Int
+  , hName :: String
+  , hContactName :: Maybe String
+  , hContactEmail :: Maybe String
+  , hContactPhone :: Maybe String
+  , hTotalOrders :: Int
+  , hTotalPayments :: Int
+  , hBalance :: Int
+  } deriving (Eq, Show, Generic)
+
+instance ToJSON Household where
+  toJSON = genericToJSON dropFieldPrefixOptions
 
 data CollectiveOrder = CollectiveOrder 
   { coId :: Int
