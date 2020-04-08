@@ -44,7 +44,9 @@ household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [H
 household householdInfo contactName contactEmail contactPhone householdOrders payments =
   Household householdInfo contactName contactEmail contactPhone totalOrders totalPayments balance
   where
-  totalOrders = _incVat $ sum . map _householdOrderTotal $ filter (not . isHouseholdOrderAbandoned) householdOrders
+  totalOrders = _incVat $ sum . map (\ho -> case ho of 
+    (HouseholdOrder { _householdOrderAdjustment = Just adj }) -> adj
+    _ -> _householdOrderTotal ho) $ filter (not . isHouseholdOrderAbandoned) householdOrders
   totalPayments = sum . map _paymentAmount $ payments
   balance = totalPayments - totalOrders
 
