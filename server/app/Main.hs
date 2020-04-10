@@ -51,6 +51,7 @@ module Main where
   import ProductCatalogueEntry
   import OrderItem
   import GroupSettings
+  import ReconcileHouseholdOrderFile
 
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
@@ -340,6 +341,7 @@ module Main where
                              :<|> uploadProductCatalogue
                              :<|> acceptCatalogueUpdates groupKey
                              :<|> reconcileOrderItem groupKey
+                             :<|> uploadReconcileHouseholdOrder groupKey
     where
     conn = connectionString config
     
@@ -431,6 +433,19 @@ module Main where
     reconcileOrderItem :: Text -> Int -> Int -> ReconcileOrderItemDetails -> Handler ()
     reconcileOrderItem groupKey orderId productId details = findGroupOr404 conn groupKey $ \groupId -> do
       liftIO $ D.reconcileOrderItem conn groupId orderId productId details
+      
+    uploadReconcileHouseholdOrder :: Text -> MultipartData -> Handler ()
+    uploadReconcileHouseholdOrder groupKey multipartData = findGroupOr404 conn groupKey $ \groupId -> do
+      when (length (files multipartData) /= 1) $
+        throwError err400
+      let file = (files multipartData) !! 0
+      liftIO $ createDirectoryIfMissing True "server/data/uploads/"
+      date <- liftIO $ getCurrentTime
+      let day = utctDay date
+      let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
+      liftIO $copyFile (fdFilePath file) destFilePath
+      liftIO $ reconcileHouseholdOrderFile conn date destFilePath
+
 
   findGroup :: B.ByteString -> Text -> IO (Maybe Int)
   findGroup conn groupKey = do

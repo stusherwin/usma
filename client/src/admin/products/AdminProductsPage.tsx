@@ -10,15 +10,15 @@ import { FilteredProducts } from 'product/FilteredProducts'
 import { ProductFilters } from 'product/ProductFilters'
 
 export interface AdminProductsPageProps { products: ProductCatalogueEntry[]
-                                        , categories: string[]
-                                        , brands: string[]
-                                        , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                        , reload: (reloadProoductCatalogue?: boolean) => Promise<void>
+                                          categories: string[]
+                                          brands: string[]
+                                          request: <T extends {}>(p: Promise<T>) => Promise<T>
+                                          reload: (reloadProoductCatalogue?: boolean) => Promise<void>
                                         }
 
 export interface AdminProductsPageState { uploading: boolean
-                                        , uploadedFile: File | undefined
-                                        , filteredProducts: FilteredProducts
+                                          uploadedFile: File | undefined
+                                          filteredProducts: FilteredProducts
                                         }
 
 export class AdminProductsPage extends React.Component<AdminProductsPageProps, AdminProductsPageState> {

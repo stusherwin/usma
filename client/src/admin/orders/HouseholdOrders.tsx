@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
+import { ServerApi } from 'util/ServerApi'
 import { CollectiveOrder } from 'util/Types'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
@@ -16,15 +17,50 @@ export interface HouseholdOrdersProps { order: CollectiveOrder
                                         reload: () => Promise<void>
                                       }
 
-export interface HouseholdOrdersState { collapsibleState: CollapsibleState }
+export interface HouseholdOrdersState { uploading: boolean
+                                        uploadedFile: File | undefined
+                                        collapsibleState: CollapsibleState 
+                                      }
 
 export class HouseholdOrders extends React.Component<HouseholdOrdersProps, HouseholdOrdersState> {
   constructor(props: HouseholdOrdersProps) {
     super(props)
 
-    this.state = { 
-      collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState}))
-    }
+    this.state = { uploading: false
+                 , uploadedFile: undefined
+                 , collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState}))
+                 }
+  }
+
+  startUpload = () => {
+    this.setState({ uploading: true
+                  , uploadedFile: undefined
+                  })
+  }
+
+  confirmUpload = () => {
+    if(!this.state.uploadedFile) return
+
+    var formData = new FormData()
+    formData.append('files', this.state.uploadedFile, this.state.uploadedFile.name)
+
+    this.props.request(ServerApi.command.uploadReconcileHouseholdOrder(formData))
+      .then(() => this.props.reload())
+      .then(_ => {
+        this.setState({ uploading: false
+                      , uploadedFile: undefined
+                      })
+      })
+  }
+
+  cancelUpload = () => {
+    this.setState({ uploading: false
+                  , uploadedFile: undefined
+                  })
+  }
+
+  fileChanged = (file: File | undefined) => {
+    this.setState({uploadedFile: file})
   }
 
   render() {
@@ -57,12 +93,41 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                  </h4>
                                </div>
                              </div>
+                           }
+                           expandedHeader={
+                             order.orderIsPlaced?
+                               <div className="p-2 bg-household-lighter -mt-4 flex flex-wrap justify-start content-start items-start">
+                                 <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.startUpload()}} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Upload order file to reconcile</button>
+                               </div>
+                             : <div></div>
                            }>
-                <div className="shadow-inner-top bg-white border-t border-household-light">
-                  <HouseholdOrderItems householdOrder={ho}
-                                       readOnly={true}
-                                       {...this.props} />
-                </div>
+                {!this.state.uploading &&
+                  <div className="shadow-inner-top bg-white border-t border-household-light">
+                    <HouseholdOrderItems householdOrder={ho}
+                                         readOnly={true}
+                                         {...this.props} />
+                  </div>
+                }
+                {this.state.uploading && 
+                  <div className="bg-household-lightest px-2 py-4 shadow-inner-top">
+                    <h3 className="mb-4">Upload file to reconcile order items</h3>
+                    <div className="field mb-4">
+                      <div className="flex justify-between items-baseline">
+                        <label className="flex-no-grow flex-no-shrink mr-2"
+                               htmlFor="upload">Choose file: </label>
+                        <input type="file"
+                               name="file"
+                               id="upload"
+                               className="flex-grow flex-no-shrink"
+                               onChange={e => this.fileChanged((e.target.files || [])[0])} />
+                      </div>
+                    </div>
+                    <div className="flex justify-end">  
+                      <button className="ml-2" onClick={this.confirmUpload} disabled={!this.state.uploadedFile}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Upload</button>
+                      <button className="ml-2" onClick={this.cancelUpload}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
+                    </div>
+                  </div>
+                }
               </Collapsible>
             </div>
           )}

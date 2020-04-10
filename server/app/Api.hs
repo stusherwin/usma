@@ -111,6 +111,7 @@ module Api where
     :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
     :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
+    :<|> "upload-reconcile-household-order" :> MultipartForm MultipartData :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

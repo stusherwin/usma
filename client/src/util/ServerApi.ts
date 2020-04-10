@@ -164,7 +164,11 @@ const command = {
       { roidProductPriceExcVat: productPriceExcVat
       , roidHouseholdQuantities: householdQuantities.map(h => ({ hqdHouseholdId: h.householdId, hqdItemQuantity: h.itemQuantity }))
       })
-  }
+  },
+
+  uploadReconcileHouseholdOrder(data: FormData): Promise<{}> {
+    return Http.postFormData(groupUrl(`/command/upload-reconcile-household-order/`), data)
+  },
 }
 
 const groupUrl = (url: string) => {
