@@ -101,13 +101,6 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                                </div>
                              : <div></div>
                            }>
-                {!this.state.uploadingHouseholdId &&
-                  <div className="shadow-inner-top bg-white border-t border-household-light">
-                    <HouseholdOrderItems householdOrder={ho}
-                                         readOnly={true}
-                                         {...this.props} />
-                  </div>
-                }
                 {this.state.uploadingHouseholdId == ho.householdId && 
                   <div className="bg-household-lightest px-2 py-4 shadow-inner-top">
                     <h3 className="mb-4">Upload file to reconcile order items</h3>
@@ -128,6 +121,11 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                     </div>
                   </div>
                 }
+                <div className={classNames("bg-white border-t border-household-light", {"shadow-inner-top": this.state.uploadingHouseholdId != ho.householdId})}>
+                  <HouseholdOrderItems householdOrder={ho}
+                                       readOnly={true}
+                                       {...this.props} />
+                </div>
               </Collapsible>
             </div>
           )}

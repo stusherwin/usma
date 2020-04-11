@@ -18,7 +18,6 @@ module ReconcileHouseholdOrderFile where
 
   reconcileHouseholdOrderFile :: ByteString -> Int -> Int -> Int -> String -> IO ()
   reconcileHouseholdOrderFile connectionString groupId orderId householdId filePath = do
-    putStrLn filePath
     reconcileDetails <- readReconcileOrderDetails filePath
     reconcileHouseholdOrderItems connectionString groupId orderId householdId reconcileDetails
   

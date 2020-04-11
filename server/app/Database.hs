@@ -1050,13 +1050,18 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
             , item_total_exc_vat
             , item_total_inc_vat
           from past_household_order_item
-          where order_id = ? and household_id = ? and product_code = ? and order_group_id = ?
+          where order_group_id = ? and order_id = ? and household_id = ? and product_code = ?
           ON CONFLICT (order_id, household_id, product_id) DO NOTHING;
-        |] (orderId, householdId, code, groupId)
+        |] (groupId, orderId, householdId, code)
 
         execute conn [sql|
           with new_values as (
-            select ? as price, ? as quantity, ? as order_id, ? as household_id, ? :: text as product_code, ? as order_group_id 
+            select ? as order_group_id 
+                 , ? as order_id
+                 , ? as household_id
+                 , ? :: text as product_code
+                 , ? as price
+                 , ? as quantity
           )
           update past_household_order_item phoi
           set product_price_exc_vat = nv.price
@@ -1065,11 +1070,63 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
             , item_total_exc_vat = nv.price * nv.quantity
             , item_total_inc_vat = cast(round(nv.price * v.multiplier) as int) * nv.quantity
           from past_household_order_item phoi2
-          inner join new_values nv on phoi2.order_id = nv.order_id and phoi2.household_id = nv.household_id and phoi2.product_code = nv.product_code and phoi2.order_group_id = nv.order_group_id
+          inner join new_values nv on phoi2.order_group_id = nv.order_group_id
+                                   and phoi2.order_id      = nv.order_id 
+                                   and phoi2.household_id  = nv.household_id 
+                                   and phoi2.product_code  = nv.product_code
           inner join product p on p.id = phoi2.product_id
           inner join vat_rate v on v.code = p.vat_rate
-          where phoi.order_id = phoi2.order_id and phoi.household_id = phoi2.household_id and phoi.product_id = phoi2.product_id and phoi.order_group_id = phoi2.order_group_id
-        |] (price, quantity, orderId, householdId, code, groupId)
+          where phoi.order_group_id = phoi2.order_group_id 
+            and phoi.order_id       = phoi2.order_id 
+            and phoi.household_id   = phoi2.household_id 
+            and phoi.product_id     = phoi2.product_id
+        |] (groupId, orderId, householdId, code, price, quantity)
+
+      let codes = map rhoidProductCode details
+      missingProductIds <- query conn [sql|
+        select product_id
+        from past_household_order_item
+        where order_group_id = ? and order_id = ? and household_id = ? and product_code not in ? 
+      |] (groupId, orderId, householdId, In codes)
+
+      forM_ (map fromOnly (missingProductIds :: [(Only Int)])) $ \productId -> do
+        execute conn [sql|
+          insert into order_item_adjustment (
+              order_id
+            , household_id
+            , product_id
+            , order_group_id
+            , old_product_price_exc_vat
+            , old_product_price_inc_vat
+            , old_quantity
+            , old_item_total_exc_vat
+            , old_item_total_inc_vat
+          )
+          select
+              order_id
+            , household_id
+            , product_id
+            , order_group_id
+            , product_price_exc_vat
+            , product_price_inc_vat
+            , quantity
+            , item_total_exc_vat
+            , item_total_inc_vat
+          from past_household_order_item
+          where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
+          ON CONFLICT (order_id, household_id, product_id) DO NOTHING;
+        |] (groupId, orderId, householdId, productId)
+
+        execute conn [sql|
+          update past_household_order_item phoi
+          set quantity           = 0
+            , item_total_exc_vat = 0
+            , item_total_inc_vat = 0
+          where phoi.order_group_id = ? 
+            and phoi.order_id       = ? 
+            and phoi.household_id   = ? 
+            and phoi.product_id     = ?
+        |] (groupId, orderId, householdId, productId)
     close conn
 
   getGroupSettings :: ByteString -> Int -> IO GroupSettings
