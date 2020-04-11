@@ -17,7 +17,7 @@ export interface HouseholdOrdersProps { order: CollectiveOrder
                                         reload: () => Promise<void>
                                       }
 
-export interface HouseholdOrdersState { uploading: boolean
+export interface HouseholdOrdersState { uploadingHouseholdId: number | undefined
                                         uploadedFile: File | undefined
                                         collapsibleState: CollapsibleState 
                                       }
@@ -26,35 +26,35 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
   constructor(props: HouseholdOrdersProps) {
     super(props)
 
-    this.state = { uploading: false
+    this.state = { uploadingHouseholdId: undefined
                  , uploadedFile: undefined
                  , collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState}))
                  }
   }
 
-  startUpload = () => {
-    this.setState({ uploading: true
+  startUpload = (householdId: number) => {
+    this.setState({ uploadingHouseholdId: householdId
                   , uploadedFile: undefined
                   })
   }
 
   confirmUpload = () => {
-    if(!this.state.uploadedFile) return
+    if(!this.state.uploadedFile || !this.state.uploadingHouseholdId) return
 
     var formData = new FormData()
     formData.append('files', this.state.uploadedFile, this.state.uploadedFile.name)
 
-    this.props.request(ServerApi.command.uploadReconcileHouseholdOrder(formData))
+    this.props.request(ServerApi.command.uploadReconcileHouseholdOrder(this.props.order.id, this.state.uploadingHouseholdId, formData))
       .then(() => this.props.reload())
       .then(_ => {
-        this.setState({ uploading: false
+        this.setState({ uploadingHouseholdId: undefined
                       , uploadedFile: undefined
                       })
       })
   }
 
   cancelUpload = () => {
-    this.setState({ uploading: false
+    this.setState({ uploadingHouseholdId: undefined
                   , uploadedFile: undefined
                   })
   }
@@ -97,18 +97,18 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                            expandedHeader={
                              order.orderIsPlaced?
                                <div className="p-2 bg-household-lighter -mt-4 flex flex-wrap justify-start content-start items-start">
-                                 <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.startUpload()}} disabled={this.state.uploading}><Icon type="upload" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Upload order file to reconcile</button>
+                                 <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); this.startUpload(ho.householdId)}} disabled={!!this.state.uploadingHouseholdId}><Icon type="upload" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Upload order file to reconcile</button>
                                </div>
                              : <div></div>
                            }>
-                {!this.state.uploading &&
+                {!this.state.uploadingHouseholdId &&
                   <div className="shadow-inner-top bg-white border-t border-household-light">
                     <HouseholdOrderItems householdOrder={ho}
                                          readOnly={true}
                                          {...this.props} />
                   </div>
                 }
-                {this.state.uploading && 
+                {this.state.uploadingHouseholdId == ho.householdId && 
                   <div className="bg-household-lightest px-2 py-4 shadow-inner-top">
                     <h3 className="mb-4">Upload file to reconcile order items</h3>
                     <div className="field mb-4">

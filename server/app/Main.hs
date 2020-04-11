@@ -422,7 +422,7 @@ module Main where
       date <- liftIO $ getCurrentTime
       let day = utctDay date
       let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
-      liftIO $copyFile (fdFilePath file) destFilePath
+      liftIO $ copyFile (fdFilePath file) destFilePath
       liftIO $ importProductCatalogue conn date destFilePath
 
     acceptCatalogueUpdates :: Text -> Int -> Int -> Handler ()
@@ -434,8 +434,8 @@ module Main where
     reconcileOrderItem groupKey orderId productId details = findGroupOr404 conn groupKey $ \groupId -> do
       liftIO $ D.reconcileOrderItem conn groupId orderId productId details
       
-    uploadReconcileHouseholdOrder :: Text -> MultipartData -> Handler ()
-    uploadReconcileHouseholdOrder groupKey multipartData = findGroupOr404 conn groupKey $ \groupId -> do
+    uploadReconcileHouseholdOrder :: Text -> Int -> Int -> MultipartData -> Handler ()
+    uploadReconcileHouseholdOrder groupKey orderId householdId multipartData = findGroupOr404 conn groupKey $ \groupId -> do
       when (length (files multipartData) /= 1) $
         throwError err400
       let file = (files multipartData) !! 0
@@ -443,8 +443,8 @@ module Main where
       date <- liftIO $ getCurrentTime
       let day = utctDay date
       let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
-      liftIO $copyFile (fdFilePath file) destFilePath
-      liftIO $ reconcileHouseholdOrderFile conn date destFilePath
+      liftIO $ copyFile (fdFilePath file) destFilePath
+      liftIO $ reconcileHouseholdOrderFile conn groupId orderId householdId destFilePath
 
 
   findGroup :: B.ByteString -> Text -> IO (Maybe Int)

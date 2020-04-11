@@ -166,8 +166,8 @@ const command = {
       })
   },
 
-  uploadReconcileHouseholdOrder(data: FormData): Promise<{}> {
-    return Http.postFormData(groupUrl(`/command/upload-reconcile-household-order/`), data)
+  uploadReconcileHouseholdOrder(orderId: number, householdId: number, data: FormData): Promise<{}> {
+    return Http.postFormData(groupUrl(`/command/upload-reconcile-household-order/${orderId}/${householdId}`), data)
   },
 }
 

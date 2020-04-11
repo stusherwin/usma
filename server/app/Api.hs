@@ -96,7 +96,7 @@ module Api where
     :<|> "create-order" :> Post '[JSON] Int
     :<|> "place-order"  :> Capture "orderId" Int :> Post '[JSON] ()
     :<|> "abandon-order"  :> Capture "orderId" Int :> Post '[JSON] ()
-    :<|> "abandon-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+    :<|> "abandon-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "complete-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reopen-household-order"   :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "ensure-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> ReqBody '[JSON] HouseholdOrderItemDetails :> Post '[JSON] ()
@@ -111,7 +111,7 @@ module Api where
     :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
     :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
-    :<|> "upload-reconcile-household-order" :> MultipartForm MultipartData :> Post '[JSON] ()
+    :<|> "upload-reconcile-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> MultipartForm MultipartData :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI
