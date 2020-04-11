@@ -21,7 +21,6 @@ module ReconcileHouseholdOrderFile where
     putStrLn filePath
     reconcileDetails <- readReconcileOrderDetails filePath
     reconcileHouseholdOrderItems connectionString groupId orderId householdId reconcileDetails
-    putStrLn "Done."
   
   readReconcileOrderDetails :: String -> IO [ReconcileHouseholdOrderItemDetails]
   readReconcileOrderDetails filePath = do
@@ -33,11 +32,10 @@ module ReconcileHouseholdOrderFile where
     rows     = map (extractColData . columns) . drop 1 . partitions (~== ("<tr>" :: String))
     columns  = map innerText . partitions (~== ("<td>" :: String))
     extractColData cols = (cols `atMay` 1, cols `atMay` 5, cols `atMay` 4)
-    parseColData (c, p, q) = (parseCode c, p >>= parsePrice, q >>= parseQty)
-    parseCode Nothing   = Nothing
-    parseCode (Just []) = Nothing
-    parseCode (Just str) | (all isSpace) str = Nothing
-                         | otherwise         = Just str
+    parseColData (c, p, q) = (c >>= parseCode, p >>= parsePrice, q >>= parseQty)
+    parseCode [] = Nothing
+    parseCode str | (all isSpace) str = Nothing
+                  | otherwise         = Just str
     parsePrice :: String -> Maybe Int
     parsePrice p = do
       pounds <- (readMaybe p) :: Maybe Double
