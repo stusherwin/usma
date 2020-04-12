@@ -37,6 +37,8 @@ module Main where
 
   import Data.Csv as Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
   import Data.Vector as V (fromList)
+  import Data.UUID (UUID, toString)
+  import Data.UUID.V1 (nextUUID)
 
   import Api
   import qualified Database as D
@@ -52,7 +54,8 @@ module Main where
   import OrderItem
   import GroupSettings
   import ReconcileHouseholdOrderFile
-
+  import UploadedOrderFile
+  
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
   import Data.Text.Encoding
@@ -341,7 +344,8 @@ module Main where
                              :<|> uploadProductCatalogue
                              :<|> acceptCatalogueUpdates groupKey
                              :<|> reconcileOrderItem groupKey
-                             :<|> uploadReconcileHouseholdOrder groupKey
+                             :<|> uploadOrderFile
+                             :<|> reconcileHouseholdOrderFromFile groupKey
     where
     conn = connectionString config
     
@@ -433,17 +437,24 @@ module Main where
     reconcileOrderItem :: Text -> Int -> Int -> ReconcileOrderItemDetails -> Handler ()
     reconcileOrderItem groupKey orderId productId details = findGroupOr404 conn groupKey $ \groupId -> do
       liftIO $ D.reconcileOrderItem conn groupId orderId productId details
-      
-    uploadReconcileHouseholdOrder :: Text -> Int -> Int -> MultipartData -> Handler ()
-    uploadReconcileHouseholdOrder groupKey orderId householdId multipartData = findGroupOr404 conn groupKey $ \groupId -> do
+
+    uploadOrderFile :: MultipartData -> Handler (Maybe UploadedOrderFile)
+    uploadOrderFile multipartData = do
       when (length (files multipartData) /= 1) $
         throwError err400
       let file = (files multipartData) !! 0
       liftIO $ createDirectoryIfMissing True "server/data/uploads/"
-      date <- liftIO $ getCurrentTime
-      let day = utctDay date
-      let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
-      liftIO $ copyFile (fdFilePath file) destFilePath
+      uuid <- liftIO nextUUID
+      case uuid of
+        Just id -> do
+          let destFilePath = "server/data/uploads/" ++ (toString id)
+          liftIO $ copyFile (fdFilePath file) destFilePath
+          liftIO $ getHouseholdOrderFileDetails destFilePath (toString id)
+        _ -> return Nothing
+            
+    reconcileHouseholdOrderFromFile :: Text -> Int -> Int -> String -> Handler ()
+    reconcileHouseholdOrderFromFile groupKey orderId householdId fileId = findGroupOr404 conn groupKey $ \groupId -> do
+      let destFilePath = "server/data/uploads/" ++ fileId
       liftIO $ reconcileHouseholdOrderFile conn groupId orderId householdId destFilePath
 
 

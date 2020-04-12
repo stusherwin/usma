@@ -22,6 +22,7 @@ module Api where
   import OrderItem
   import ProductCatalogueEntry
   import GroupSettings
+  import UploadedOrderFile
   import qualified Data.ByteString.Lazy as L
   import Network.HTTP.Media ((//))
 
@@ -111,7 +112,8 @@ module Api where
     :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
     :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
-    :<|> "upload-reconcile-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> MultipartForm MultipartData :> Post '[JSON] ()
+    :<|> "upload-order-file" :> MultipartForm MultipartData :> Post '[JSON] (Maybe UploadedOrderFile)
+    :<|> "reconcile-household-order-from-file" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "uuid" String :> Post '[JSON] ()
 
   type FullAPI =
          AppAPI

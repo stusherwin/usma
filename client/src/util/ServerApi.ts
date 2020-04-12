@@ -1,4 +1,4 @@
-import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry, GroupSettings } from './Types'
+import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry, GroupSettings, UploadedOrderFile } from './Types'
 import { Util } from './Util'
 
 export interface Data { collectiveOrders: CollectiveOrder[]
@@ -166,8 +166,12 @@ const command = {
       })
   },
 
-  uploadReconcileHouseholdOrder(orderId: number, householdId: number, data: FormData): Promise<{}> {
-    return Http.postFormData(groupUrl(`/command/upload-reconcile-household-order/${orderId}/${householdId}`), data)
+  uploadOrderFile(data: FormData): Promise<UploadedOrderFile> {
+    return Http.postFormData(groupUrl(`/command/upload-order-file`), data)
+  },
+
+  reconcileHouseholdOrderFromFile(orderId: number, householdId: number, uuid: String): Promise<{}> {
+    return Http.post(groupUrl(`/command/reconcile-household-order-from-file/${orderId}/${householdId}/${uuid}`), {})
   },
 }
 

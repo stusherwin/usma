@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as classNames from 'classnames'
 
 import { ServerApi } from 'util/ServerApi'
-import { CollectiveOrder } from 'util/Types'
+import { CollectiveOrder, UploadedOrderFile } from 'util/Types'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
@@ -19,6 +19,7 @@ export interface HouseholdOrdersProps { order: CollectiveOrder
 
 export interface HouseholdOrdersState { uploadingHouseholdId: number | undefined
                                         uploadedFile: File | undefined
+                                        uploadedFileData: UploadedOrderFile | undefined
                                         collapsibleState: CollapsibleState 
                                       }
 
@@ -28,6 +29,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
 
     this.state = { uploadingHouseholdId: undefined
                  , uploadedFile: undefined
+                 , uploadedFileData: undefined
                  , collapsibleState: new CollapsibleState(null, collapsibleState => this.setState({collapsibleState}))
                  }
   }
@@ -35,6 +37,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
   startUpload = (householdId: number) => {
     this.setState({ uploadingHouseholdId: householdId
                   , uploadedFile: undefined
+                  , uploadedFileData: undefined
                   })
   }
 
@@ -44,11 +47,22 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
     var formData = new FormData()
     formData.append('files', this.state.uploadedFile, this.state.uploadedFile.name)
 
-    this.props.request(ServerApi.command.uploadReconcileHouseholdOrder(this.props.order.id, this.state.uploadingHouseholdId, formData))
+    this.props.request(ServerApi.command.uploadOrderFile(formData))
+      .then(uploadedFileData => 
+        this.setState({ uploadedFileData: uploadedFileData
+                      })
+      )
+  }
+
+  reconcileOrder = () => {
+    if(!this.state.uploadedFile || !this.state.uploadingHouseholdId || !this.state.uploadedFileData) return
+
+    this.props.request(ServerApi.command.reconcileHouseholdOrderFromFile(this.props.order.id, this.state.uploadingHouseholdId, this.state.uploadedFileData.fileId))
       .then(() => this.props.reload())
       .then(_ => {
         this.setState({ uploadingHouseholdId: undefined
                       , uploadedFile: undefined
+                      , uploadedFileData: undefined
                       })
       })
   }
@@ -56,6 +70,7 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
   cancelUpload = () => {
     this.setState({ uploadingHouseholdId: undefined
                   , uploadedFile: undefined
+                  , uploadedFileData: undefined
                   })
   }
 
@@ -103,20 +118,60 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                            }>
                 {this.state.uploadingHouseholdId == ho.householdId && 
                   <div className="bg-household-lightest px-2 py-4 shadow-inner-top">
-                    <h3 className="mb-4">Upload file to reconcile order items</h3>
-                    <div className="field mb-4">
-                      <div className="flex justify-between items-baseline">
-                        <label className="flex-no-grow flex-no-shrink mr-2"
-                               htmlFor="upload">Choose file: </label>
-                        <input type="file"
-                               name="file"
-                               id="upload"
-                               className="flex-grow flex-no-shrink"
-                               onChange={e => this.fileChanged((e.target.files || [])[0])} />
+                    {this.state.uploadedFileData === null &&
+                      <div className="p-2 bg-red-lighter -mx-2 mb-4 -mt-4 shadow-inner-top flex">
+                        <Icon type="error" className="flex-no-shrink w-4 h-4 mr-2 fill-current nudge-d-1" />
+                        <span>Could not read the order file: either the wrong file was uploaded or the file layout has changed.</span>
                       </div>
-                    </div>
-                    <div className="flex justify-end">  
-                      <button className="ml-2" onClick={this.confirmUpload} disabled={!this.state.uploadedFile}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Upload</button>
+                    }
+                    <h3 className="mb-4">Upload file to reconcile order items</h3>
+                    {!this.state.uploadedFileData &&
+                      <div className="field mb-4">
+                        <div className="flex justify-between items-baseline">
+                          <label className="flex-no-grow flex-no-shrink mr-2"
+                                 htmlFor="upload">Choose file: </label>
+                          <input type="file"
+                                 name="file"
+                                 id="upload"
+                                 className="flex-grow flex-no-shrink"
+                                 onChange={e => this.fileChanged((e.target.files || [])[0])} />
+                        </div>
+                      </div>
+                    }
+                    {!!this.state.uploadedFileData &&
+                      <div className="bg-white -mx-2 p-2 pt-4 mb-4">
+                        <div>Order reference:<br/>{this.state.uploadedFileData.orderDescription}</div>
+                        <table className="mt-3 mb-1">
+                          {this.state.uploadedFileData.rows.map(r =>
+                            <tr>
+                              <td className="align-baseline pr-2 pb-1 pt-1">{r.code}: {r.productDescription} ({r.productSize})</td>
+                              <td className="align-baseline pr-2 pb-1 pt-1 whitespace-no-wrap text-right"><Money amount={r.price} /></td>
+                              <td className="align-baseline pr-2 pb-1 pt-1 whitespace-no-wrap">x {r.quantity}</td>
+                              <td className="align-baseline pb-1 pt-1 whitespace-no-wrap text-right"><Money amount={r.total} /></td>
+                            </tr> 
+                          )}
+                          <tr>
+                            <td className="align-baseline pr-2 pb-1 pt-1 whitespace-no-wrap text-right" colSpan={3}>Goods Total:</td>
+                            <td className="align-baseline pb-1 pt-1 whitespace-no-wrap text-right"><Money amount={this.state.uploadedFileData.totalExcVat} /></td>
+                          </tr>
+                          <tr>
+                            <td className="align-baseline pr-2 pb-1 pt-1 whitespace-no-wrap text-right" colSpan={3}>Vat:</td>
+                            <td className="align-baseline pb-1 pt-1 whitespace-no-wrap text-right"><Money amount={this.state.uploadedFileData.totalIncVat - this.state.uploadedFileData.totalExcVat} /></td>
+                          </tr>
+                          <tr>
+                            <td className="align-baseline pr-2 pb-1 pt-1 whitespace-no-wrap text-right" colSpan={3}>Net Due:</td>
+                            <td className="align-baseline pb-1 pt-1 whitespace-no-wrap text-right"><Money amount={this.state.uploadedFileData.totalIncVat} /></td>
+                          </tr>
+                        </table>
+                      </div>
+                    }
+                    <div className="flex justify-end">
+                      {!this.state.uploadedFileData &&
+                        <button className="ml-2" onClick={this.confirmUpload} disabled={!this.state.uploadedFile}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Upload</button>
+                      }
+                      {!!this.state.uploadedFileData &&
+                        <button className="ml-2" onClick={this.reconcileOrder} disabled={!this.state.uploadedFile}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Reconcile order</button>
+                      }
                       <button className="ml-2" onClick={this.cancelUpload}><Icon type="cancel" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Cancel</button>
                     </div>
                   </div>

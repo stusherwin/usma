@@ -25,7 +25,7 @@ export const OrderFooter = ({order}: OrderFooterProps) => {
               {order.adjustment == null || order.adjustment.oldTotalIncVat - order.adjustment.oldTotalExcVat == order.totalIncVat - order.totalExcVat?
                 <Money className={classNames({"line-through text-black": order.isAbandoned})} amount={order.totalIncVat - order.totalExcVat} />
               : <span className="inline-flex flex-col">
-                  <Money className="line-through text-black mr-2" amount={order.adjustment.oldTotalIncVat - order.adjustment.oldTotalExcVat} />
+                  <Money className="line-through text-black" amount={order.adjustment.oldTotalIncVat - order.adjustment.oldTotalExcVat} />
                   <Money className="text-red font-bold" amount={order.totalIncVat - order.totalExcVat} />
                 </span>
               }

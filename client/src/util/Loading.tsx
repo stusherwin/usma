@@ -23,12 +23,8 @@ export class Loading extends React.Component<LoadingProps, LoadingState> {
   componentDidUpdate(prevProps: LoadingProps) {
     if(!prevProps.loading && this.props.loading) {
       this.setState({ loading: true })
-    }
-  }
-
-  transitionEnded = () => {
-    if(!this.props.loading) {
-      this.setState({ loading: false })
+    } else if(prevProps.loading && !this.props.loading) {
+      setTimeout(() => this.setState({ loading: false }), 250)
     }
   }
 
@@ -40,7 +36,7 @@ export class Loading extends React.Component<LoadingProps, LoadingState> {
           background: 'rgba(0,0,0,0.3)',
           opacity: this.props.loading? 1 : 0,
           transition: 'opacity 0.25s ease'
-        }} onTransitionEnd={this.transitionEnded}>
+        }}>
         <Icon type="loading" className={classNames("w-16 h-16 -mt-4 fill-current", {"rotating": this.loading()})} />
       </div>
     )

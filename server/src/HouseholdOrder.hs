@@ -46,4 +46,4 @@ module HouseholdOrder where
                                                                                , rhoidQuantity :: Int
                                                                                } deriving (Eq, Show, Generic)
   instance ToJSON ReconcileHouseholdOrderItemDetails
-  instance FromJSON ReconcileHouseholdOrderItemDetails
+  instance FromJSON ReconcileHouseholdOrderItemDetails  

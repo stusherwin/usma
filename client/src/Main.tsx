@@ -121,9 +121,9 @@ export class Main extends React.Component<MainProps, MainState> {
 
   request = <T extends {}>(p: Promise<T>) => {
     this.setState({ loading: true })
-    
-    p.then(_ => this.setState({ loading: false }))
-     .then()
+    console.log('setting loading to true');
+
+    p.then(_ => { console.log('setting loading to false'); this.setState({ loading: false })})
      .catch(err => {
        const apiError = err as ApiError
        console.log(err)

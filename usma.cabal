@@ -26,6 +26,7 @@ library
                      , ProductCatalogueData
                      , ProductCatalogueEntry
                      , GroupSettings
+                     , UploadedOrderFile
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , time
@@ -64,6 +65,7 @@ executable usma
                      , text
                      , transformers
                      , usma
+                     , uuid
                      , vector
                      , wai
                      , wai-cors

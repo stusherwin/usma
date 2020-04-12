@@ -102,3 +102,20 @@ export interface HouseholdPayment {
 export interface GroupSettings {
   enablePayments: boolean
 }
+
+export interface UploadedOrderFile { 
+  fileId: string 
+  orderDescription: string
+  totalExcVat: number
+  totalIncVat: number
+  rows: UploadedOrderFileRow[]
+}
+
+export interface UploadedOrderFileRow {
+  code: string 
+  productDescription: string
+  productSize: string
+  price: number
+  quantity: number
+  total: number
+}
