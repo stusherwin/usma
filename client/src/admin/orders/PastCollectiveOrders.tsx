@@ -16,10 +16,14 @@ import { OrderTotal } from 'order/OrderTotal'
 import { PastHouseholdOrders } from './PastHouseholdOrders';
 import { CollectiveOrderButtons } from './CollectiveOrderButtons'
 import { ReconcileOrder } from './ReconcileOrder'
+import { ReconcileOrderFileUpload } from './ReconcileOrderFileUpload'
 
 export interface PastCollectiveOrdersProps { pastOrders: CollectiveOrder[]
                                              collapsibleKey: string
                                              collapsibleState: CollapsibleState
+                                             uploadingOrderId: number | undefined
+                                             startUpload: (orderId: number) => void
+                                             cancelUpload: () => void
                                              request: <T extends {}>(p: Promise<T>) => Promise<T>
                                              reload: () => Promise<void>
                                            }
@@ -106,10 +110,11 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                        </div>
                      </div>
                    }
-                   expandedHeader={!this.state.reconcilingOrder[o.id] && 
+                   expandedHeader={!this.state.reconcilingOrder[o.id] && this.props.uploadingOrderId != o.id && 
                      <div className="p-2 -mt-4 bg-order-dark-sepia">
                        <CollectiveOrderButtons order={o}
-                                               reconcileOrder={this.startReconcilingOrder(o)} />
+                                               reconcileOrder={this.startReconcilingOrder(o)}
+                                               uploadOrderFile={() => this.props.startUpload(o.id)} />
                        <div className="mt-5">
                          <OrderTabs tab={this.state.tabs[i]} 
                                     setTab={this.setTab(i)} 
@@ -124,21 +129,27 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                                     past={true}
                                     endReconcilingOrder={this.endReconcilingOrder(o)}
                                     endReconcilingItem={this.endReconcilingItem(o)} />
+                  : this.props.uploadingOrderId == o.id?
+                    <ReconcileOrderFileUpload collectiveOrder={o}
+                                              bgColor="bg-household-lightest-sepia"
+                                              cancelUpload={this.props.cancelUpload}
+                                              request={this.props.request}
+                                              reload={this.props.reload} />
                   : (this.state.tabs[i] || 'households') == 'households'?
-                    <div className="shadow-inner-top border-t bg-household-lightest-sepia">
+                    <div className={classNames("border-t bg-household-lightest-sepia", {"shadow-inner-top": this.props.uploadingOrderId != o.id})}>
                       <div className="flex justify-end mt-4 mr-2 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-household-orders-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <PastHouseholdOrders pastOrder={o} />
                     </div>
                   : this.state.tabs[i] == 'product-list'?
-                    <div className="shadow-inner-top border-t bg-white-sepia">
+                    <div className={classNames("border-t bg-white-sepia", {"shadow-inner-top": this.props.uploadingOrderId != o.id})}>
                       <div className="flex justify-end mr-2 mt-4 mb-4">
                         <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url(`query/past-collective-order-download/${o.id}`)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                       </div>
                       <OrderItems order={o} />
                     </div>
-                  : <div className="shadow-inner-top border-t bg-white-sepia">
+                  : <div className={classNames("border-t bg-white-sepia", {"shadow-inner-top": this.props.uploadingOrderId != o.id})}>
                       <ProductCodes order={o} />
                     </div>
                   }
