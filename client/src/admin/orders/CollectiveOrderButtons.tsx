@@ -9,9 +9,10 @@ interface CollectiveOrderButtonsProps {
   abandonOrder?: () => void
   placeOrder?: () => void
   reconcileOrder?: () => void
+  uploadOrderFile?: () => void
 }
 
-export const CollectiveOrderButtons = ({order, newOrder, abandonOrder, placeOrder, reconcileOrder}: CollectiveOrderButtonsProps) => {
+export const CollectiveOrderButtons = ({order, newOrder, abandonOrder, placeOrder, reconcileOrder, uploadOrderFile}: CollectiveOrderButtonsProps) => {
   const newOrderPossible = !order || order.orderIsPlaced || order.orderIsAbandoned
   const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
   const orderMinimumReached = !!order && order.totalIncVat >= 25000
@@ -19,6 +20,7 @@ export const CollectiveOrderButtons = ({order, newOrder, abandonOrder, placeOrde
 
   const abandonOrderPossible = !!order && !order.orderIsPlaced && !order.orderIsAbandoned && !!order.householdOrders.length
   const reconcileOrderPossible = !!order && order.orderIsPlaced
+  const uploadOrderFilePossible = !!order && order.orderIsPlaced
 
   return (
     <div className="flex flex-wrap justify-start content-start items-start">
@@ -33,6 +35,9 @@ export const CollectiveOrderButtons = ({order, newOrder, abandonOrder, placeOrde
       }
       {newOrderPossible && newOrder &&
         <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); newOrder(); }}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />Start a new order</button>
+      }
+      {uploadOrderFilePossible && uploadOrderFile &&
+        <button className="flex-no-grow flex-no-shrink mr-2 mt-2" onClick={e => {e.preventDefault(); e.stopPropagation(); uploadOrderFile(); }}><Icon type="upload" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Upload order file to reconcile</button>
       }
   </div>
   )
