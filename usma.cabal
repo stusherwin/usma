@@ -42,6 +42,7 @@ executable usma
                      , Config
                      , ProductCatalogueImport
                      , ReconcileHouseholdOrderFile
+                     , ProductImage
   build-depends:       aeson
                      , base
                      , bytestring
@@ -49,6 +50,7 @@ executable usma
                      , containers
                      , cookie
                      , directory
+                     , filepath
                      , http-api-data
                      , http-conduit
                      , http-media

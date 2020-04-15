@@ -15,6 +15,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , getGroup
                 , reconcileOrderItem, reconcileHouseholdOrderItems
                 , getGroupSettings
+                , getUploadedOrderFile, saveUploadedOrderFile, deleteUploadedOrderFile
                 ) where
   import Control.Monad (mzero, when, void, forM_)
   import Control.Monad.IO.Class (liftIO)
@@ -962,6 +963,36 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
       values (?, ?)
       ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
     |] (code, Binary image)
+    close conn
+
+  getUploadedOrderFile :: ByteString -> String -> IO (Maybe ByteString)
+  getUploadedOrderFile connectionString fileId = do
+    conn <- connectPostgreSQL connectionString
+    results <- query conn [sql|
+      select contents
+      from order_file_upload
+      where id = ?
+    |] (Only fileId)
+    close conn
+    return $ listToMaybe $ fmap fromOnly $ (results :: [Only ByteString])
+
+  saveUploadedOrderFile :: ByteString -> String -> ByteString -> IO ()
+  saveUploadedOrderFile connectionString fileId fileContents = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      insert into order_file_upload (id, contents)
+      values (?, ?)
+      ON CONFLICT (id) DO UPDATE SET contents = EXCLUDED.contents;
+    |] (fileId, Binary fileContents)
+    close conn
+
+  deleteUploadedOrderFile :: ByteString -> String -> IO ()
+  deleteUploadedOrderFile connectionString fileId = do
+    conn <- connectPostgreSQL connectionString
+    execute conn [sql|
+      delete from order_file_upload
+      where id = ?
+    |] (Only fileId)
     close conn
 
   reconcileOrderItem :: ByteString -> Int -> Int -> Int -> ReconcileOrderItemDetails -> IO ()

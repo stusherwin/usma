@@ -30,10 +30,11 @@ module Main where
   import Web.HttpApiData (parseUrlPiece, toUrlPiece)
   import Data.Time.Calendar (Day)
   import System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
+  import System.FilePath.Posix (takeExtension)
   import Control.Monad (mzero, when, void)
-  import qualified Data.ByteString as B (ByteString)
+  import qualified Data.ByteString as B (ByteString, pack)
   import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, writeFile, readFile)
-  import qualified Data.ByteString.Lazy.Char8 as C (unpack)
+  import qualified Data.ByteString.Char8 as C (pack, unpack)
 
   import Data.Csv as Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
   import Data.Vector as V (fromList)
@@ -55,13 +56,13 @@ module Main where
   import GroupSettings
   import ReconcileHouseholdOrderFile
   import UploadedOrderFile
+  import ProductImage
   
   import Network.HTTP.Conduit
   import Text.HTML.TagSoup
   import Data.Text.Encoding
   import System.IO (hFlush, stdout)
   import Control.Exception (handle, SomeException(..))
-
 
   data CsvItem = CsvItem { csvName :: String
                          , csvCode :: String
@@ -88,50 +89,6 @@ module Main where
       where
       price' = ((fromIntegral price) :: Double) / 100.0
       total' = ((fromIntegral tot) :: Double) / 100.0
-
-  data ProductData = ProductData { url :: String
-                                 , title :: String
-                                 , imageUrl :: String
-                                 , size :: Int
-                                 }
-
-  fetchProductData :: String -> IO (Maybe ProductData)
-  fetchProductData code = handle handleException $ do
-    html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
-    case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ C.unpack html of
-      [] -> return Nothing
-      (tags:_) -> do
-        let a = tags !! 2
-        let img = tags !! 4
-        return $ Just $ ProductData { url = fromAttrib "href" a
-                                    , title = fromAttrib "title" a
-                                    , imageUrl = fromAttrib "src" img
-                                    , size = read $ fromAttrib "height" img
-                                    }
-    where
-    handleException :: HttpException -> IO (Maybe ProductData)
-    handleException _ = return Nothing
-
-  fetchProductImage :: B.ByteString -> String -> IO (Maybe L.ByteString)
-  fetchProductImage conn code = handle handleException $ do 
-    image <- D.getProductImage conn code
-    case image of
-      Just i -> return $ Just $ L.fromStrict i
-      _ -> do
-        productData <- fetchProductData code
-        case productData of
-          Just r -> do
-            imageData <- simpleHttp (imageUrl r)
-            D.saveProductImage conn code $ L.toStrict imageData
-            return $ Just $ imageData
-          _ -> do
-            img <- L.readFile "client/static/img/404.jpg"
-            return $ Just $ img
-    where
-    handleException :: HttpException -> IO (Maybe L.ByteString)
-    handleException _ = do
-      img <- L.readFile "client/static/img/404.jpg"
-      return $ Just $ img
   
   main :: IO ()
   main = do
@@ -438,25 +395,29 @@ module Main where
     reconcileOrderItem groupKey orderId productId details = findGroupOr404 conn groupKey $ \groupId -> do
       liftIO $ D.reconcileOrderItem conn groupId orderId productId details
 
-    uploadOrderFile :: MultipartData -> Handler (Maybe UploadedOrderFile)
+    uploadOrderFile :: MultipartData -> Handler (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
     uploadOrderFile multipartData = do
       when (length (files multipartData) /= 1) $
         throwError err400
       let file = (files multipartData) !! 0
-      liftIO $ createDirectoryIfMissing True "server/data/uploads/"
       uuid <- liftIO nextUUID
       case uuid of
         Just id -> do
-          let destFilePath = "server/data/uploads/" ++ (toString id)
-          liftIO $ copyFile (fdFilePath file) destFilePath
-          liftIO $ getHouseholdOrderFileDetails destFilePath (toString id)
-        _ -> return Nothing
+          let fileId = toString id
+          fileContents <- liftIO $ readFile $ fdFilePath file
+          liftIO $ D.saveUploadedOrderFile conn fileId $ C.pack fileContents
+          let uploadedFile = getHouseholdOrderFileDetails fileId fileContents
+          return $ addHeader "no-cache" uploadedFile
+        _ -> return $ addHeader "no-cache" Nothing
             
     reconcileHouseholdOrderFromFile :: Text -> Int -> Int -> String -> Handler ()
     reconcileHouseholdOrderFromFile groupKey orderId householdId fileId = findGroupOr404 conn groupKey $ \groupId -> do
-      let destFilePath = "server/data/uploads/" ++ fileId
-      liftIO $ reconcileHouseholdOrderFile conn groupId orderId householdId destFilePath
-
+      fileContents <- liftIO $ D.getUploadedOrderFile conn fileId
+      case fileContents of
+        Just contents -> do
+          liftIO $ reconcileHouseholdOrderFile conn groupId orderId householdId $ C.unpack contents
+          liftIO $ D.deleteUploadedOrderFile conn fileId
+        _ -> return ()
 
   findGroup :: B.ByteString -> Text -> IO (Maybe Int)
   findGroup conn groupKey = do

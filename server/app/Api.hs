@@ -112,7 +112,7 @@ module Api where
     :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
     :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
     :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
-    :<|> "upload-order-file" :> MultipartForm MultipartData :> Post '[JSON] (Maybe UploadedOrderFile)
+    :<|> "upload-order-file" :> MultipartForm MultipartData :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
     :<|> "reconcile-household-order-from-file" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "uuid" String :> Post '[JSON] ()
 
   type FullAPI =

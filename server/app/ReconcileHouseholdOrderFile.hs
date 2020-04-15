@@ -13,41 +13,36 @@ module ReconcileHouseholdOrderFile where
   import Safe (atMay)
   import Text.HTML.TagSoup
   import Text.Read (readMaybe)
-  import Debug.Trace (trace)
 
   import UploadedOrderFile
   import HouseholdOrder
   import Database
 
-  getHouseholdOrderFileDetails :: String -> String -> IO (Maybe UploadedOrderFile)
-  getHouseholdOrderFileDetails filePath fileId = do
-    html <- readFile filePath
+  getHouseholdOrderFileDetails :: String -> String -> Maybe UploadedOrderFile
+  getHouseholdOrderFileDetails fileId html =
     let tags = parseTags html
-    let rows = map toRow $ parseOrderRows tags
-    let description = parseOrderDescription tags
-    let totals = parseOrderTotal tags
-    case (rows, totals) of
-      (r:_, Just (totalExcVat, totalIncVat)) -> return $ Just $ UploadedOrderFile fileId
-                                                                                  description
-                                                                                  totalExcVat
-                                                                                  totalIncVat
-                                                                                  rows
-      _ -> return Nothing
-    where
-    toRow (c, d, s, q, p, t) = UploadedOrderFileRow c d s p q t
+        rows = map toRow $ parseOrderRows tags
+        description = parseOrderDescription tags
+        totals = parseOrderTotal tags
+        toRow (c, d, s, q, p, t) = UploadedOrderFileRow c d s p q t
+    in case (rows, totals) of
+      (r:_, Just (totalExcVat, totalIncVat)) -> Just $ UploadedOrderFile fileId
+                                                                         description
+                                                                         totalExcVat
+                                                                         totalIncVat
+                                                                         rows
+      _ -> Nothing
   
   reconcileHouseholdOrderFile :: ByteString -> Int -> Int -> Int -> String -> IO ()
-  reconcileHouseholdOrderFile connectionString groupId orderId householdId filePath = do
-    reconcileDetails <- readReconcileOrderDetails filePath
+  reconcileHouseholdOrderFile connectionString groupId orderId householdId html = do
+    let reconcileDetails = readReconcileOrderDetails html
     reconcileHouseholdOrderItems connectionString groupId orderId householdId reconcileDetails
   
-  readReconcileOrderDetails :: String -> IO [ReconcileHouseholdOrderItemDetails]
-  readReconcileOrderDetails filePath = do
-    html <- readFile filePath
+  readReconcileOrderDetails :: String -> [ReconcileHouseholdOrderItemDetails]
+  readReconcileOrderDetails html =
     let tags = parseTags html
-    return $ map toDetails $ parseOrderRows tags 
-    where
-    toDetails (c, _, _, q, p, _) = ReconcileHouseholdOrderItemDetails c p q
+        toDetails (c, _, _, q, p, _) = ReconcileHouseholdOrderItemDetails c p q
+    in map toDetails $ parseOrderRows tags 
 
   parseOrderDescription :: [Tag String] -> String
   parseOrderDescription = extractOrderRef . intercalate " " . map innerText . tr . table
@@ -62,7 +57,6 @@ module ReconcileHouseholdOrderFile where
     table = concat . take 1 . drop 5 . partitions (~== ("<table>" :: String))
     tds   = concat . drop 2 . partitions (~== ("<td>" :: String))
     extractTotals x = (\t -> (t `atMay` 0, t `atMay` 2)) . filter (not . all isSpace) . map fromTagText . filter isTagText $ x
-    parseTotals x | trace ("parseTotals " ++ show x) False = undefined
     parseTotals (exc, inc) = (exc >>= parsePrice, inc >>= parsePrice)
     justIfAll (Just exc, Just inc) = Just (exc, inc)
     justIfAll _ = Nothing
