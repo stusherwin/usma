@@ -17,6 +17,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , getGroupSettings
                 , getUploadedOrderFile, saveUploadedOrderFile, deleteUploadedOrderFile
                 ) where
+  import Control.Exception (handle, SomeException)
   import Control.Monad (mzero, when, void, forM_)
   import Control.Monad.IO.Class (liftIO)
   import Database.PostgreSQL.Simple
@@ -45,6 +46,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
   import OrderItem
   import Product (VatRate(..))
   import GroupSettings
+  import Servant
   
   toDatabaseChar :: Char -> Action
   toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]

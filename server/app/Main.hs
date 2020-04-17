@@ -6,7 +6,9 @@
 {-# LANGUAGE TupleSections #-}
 
 module Main where
-  
+  import GHC.IO.Encoding (getLocaleEncoding, setLocaleEncoding, utf8)
+  import System.IO (hSetEncoding)
+  import Control.Monad.Except (ExceptT(..))  
   import Control.Monad.IO.Class (liftIO)
   import Network.Wai.Handler.Warp (run)
   import Network.Wai (responseFile)
@@ -35,6 +37,7 @@ module Main where
   import qualified Data.ByteString as B (ByteString, pack)
   import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, writeFile, readFile)
   import qualified Data.ByteString.Char8 as C (pack, unpack)
+  import qualified Data.ByteString.Lazy.Char8 as LC (pack, unpack)
 
   import Data.Csv as Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
   import Data.Vector as V (fromList)
@@ -93,6 +96,7 @@ module Main where
   main :: IO ()
   main = do
     config <- getConfig
+    setLocaleEncoding utf8
     run (Config.port config) $ app config
 
   app :: Config -> Application
@@ -400,16 +404,25 @@ module Main where
       when (length (files multipartData) /= 1) $
         throwError err400
       let file = (files multipartData) !! 0
+      orderFileDetails <- liftIO $ uploadOrderFile' file
+      return $ addHeader "no-cache" orderFileDetails
+
+    uploadOrderFile' :: FileData -> IO (Maybe UploadedOrderFile)
+    uploadOrderFile' file = do
+      liftIO $ createDirectoryIfMissing True "server/data/uploads/"
+      date <- getCurrentTime
+      let day = utctDay date
+      let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
+      copyFile (fdFilePath file) destFilePath
+      fileContents <- readFile destFilePath
       uuid <- liftIO nextUUID
       case uuid of
         Just id -> do
           let fileId = toString id
-          fileContents <- liftIO $ readFile $ fdFilePath file
-          liftIO $ D.saveUploadedOrderFile conn fileId $ C.pack fileContents
-          let uploadedFile = getHouseholdOrderFileDetails fileId fileContents
-          return $ addHeader "no-cache" uploadedFile
-        _ -> return $ addHeader "no-cache" Nothing
-            
+          D.saveUploadedOrderFile conn fileId $ C.pack fileContents
+          return $ getHouseholdOrderFileDetails fileId fileContents
+        _ -> return Nothing
+
     reconcileHouseholdOrderFromFile :: Text -> Int -> Int -> String -> Handler ()
     reconcileHouseholdOrderFromFile groupKey orderId householdId fileId = findGroupOr404 conn groupKey $ \groupId -> do
       fileContents <- liftIO $ D.getUploadedOrderFile conn fileId

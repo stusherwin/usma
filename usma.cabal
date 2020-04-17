@@ -55,6 +55,7 @@ executable usma
                      , http-conduit
                      , http-media
                      , http-types
+                     , mtl
                      , postgresql-simple
                      , safe
                      , servant
