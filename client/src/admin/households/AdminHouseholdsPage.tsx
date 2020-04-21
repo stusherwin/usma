@@ -166,12 +166,12 @@ export class AdminHouseholdsPage extends React.Component<AdminHouseholdsPageProp
                      </h3>
                      <div className="mt-4 text-base inline-block"><strong>Contact:</strong> {h.contactName || 'none'}</div>
                    </div>
-                   {this.props.groupSettings.enablePayments &&
-                     <div className="flex flex-col items-end">
+                   <div className="flex flex-col items-end">
+                     {this.props.groupSettings.enablePayments &&    
                        <BalanceSmall className="text-right py-1 px-1 -mr-1" amount={-h.balance} />
-                       <button className="mt-2" onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
-                     </div>
-                   }
+                     }
+                     <button className={classNames({"mt-2": this.props.groupSettings.enablePayments})} onClick={_ => this.delete(h)} disabled={!!this.state.editing}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
+                   </div>
                  </div>
                </RouterLink>
               )) }
