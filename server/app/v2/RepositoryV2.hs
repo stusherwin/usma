@@ -42,128 +42,38 @@ getOrderGroupId config groupKey = do
 getHouseholds :: Config -> OrderGroupId -> IO [Household]
 getHouseholds config groupId = do
   conn <- connectPostgreSQL $ connectionString config
-  (rVatRates, rHouseholds, rHouseholdOrders, rHouseholdOrderItems, rPayments) <- withTransaction conn $ do
-    v <- selectVatRates conn
-    h <- selectHouseholdRows groupId conn
-    ho <- selectHouseholdOrderRows groupId [] conn
-    hoi <- selectHouseholdOrderItemRows groupId [] conn
-    p <- selectPayments groupId conn
-    return (v, h, ho, hoi, p)
+  (rHouseholds, rHouseholdOrders, rOrderItems, rPayments) <- withTransaction conn $ do
+    rHouseholds <- selectHouseholdRows groupId conn
+    rHouseholdOrders <- selectHouseholdOrderRows groupId [] conn
+    rOrderItems <- selectHouseholdOrderItemRows groupId [] conn
+    rPayments <- selectPayments groupId conn
+    return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   close conn
-  return $ map (toHousehold rVatRates rHouseholdOrders rHouseholdOrderItems rPayments) rHouseholds
+  return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
 getOrder :: Config -> OrderGroupId -> IO (Maybe Order)
 getOrder config groupId = do
   conn <- connectPostgreSQL $ connectionString config
-  (rVatRates, rOrders, rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
-    v <- selectVatRates conn
-    o <- selectOrderRows groupId [OrderIsCurrent] conn
-    ho <- selectHouseholdOrderRows groupId [OrderIsCurrent] conn
-    hoi <- selectHouseholdOrderItemRows groupId [OrderIsCurrent] conn
-    return (v, o, ho, hoi)
+  (rOrders, rHouseholdOrders, rOrderItems) <- withTransaction conn $ do
+    rOrders <- selectOrderRows groupId [OrderIsCurrent] conn
+    rHouseholdOrders <- selectHouseholdOrderRows groupId [OrderIsCurrent] conn
+    rOrderItems <- selectHouseholdOrderItemRows groupId [OrderIsCurrent] conn
+    return (rOrders, rHouseholdOrders, rOrderItems)
   close conn
-  return $ listToMaybe $ map (toOrder rVatRates rHouseholdOrders rHouseholdOrderItems) rOrders
+  return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
     
 getPastOrders :: Config -> OrderGroupId -> IO [Order]
 getPastOrders config groupId = do
   conn <- connectPostgreSQL $ connectionString config
-  (rVatRates, rOrders, rHouseholdOrders, rHouseholdOrderItems) <- withTransaction conn $ do
-    v <- selectVatRates conn
-    o <- selectOrderRows groupId [OrderIsPast] conn
-    ho <- selectHouseholdOrderRows groupId [OrderIsPast] conn
-    hoi <- selectHouseholdOrderItemRows groupId [OrderIsPast] conn
-    return (v, o, ho, hoi)
+  (rOrders, rHouseholdOrders, rOrderItems) <- withTransaction conn $ do
+    rOrders <- selectOrderRows groupId [OrderIsPast] conn
+    rHouseholdOrders <- selectHouseholdOrderRows groupId [OrderIsPast] conn
+    rOrderItems <- selectHouseholdOrderItemRows groupId [OrderIsPast] conn
+    return (rOrders, rHouseholdOrders, rOrderItems)
   close conn
-  return $ map (toOrder rVatRates rHouseholdOrders rHouseholdOrderItems) rOrders
+  return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
-toHousehold :: [VatRate] -> [OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> [Payment] -> (HouseholdInfo :. HouseholdRow) -> Household
-toHousehold rVatRates rHouseholdOrders rHouseholdOrderItems rPayments (householdInfo :. h) = 
-  household householdInfo
-            (householdRow_contact_name h)
-            (householdRow_contact_email h)
-            (householdRow_contact_phone h)
-            householdOrders
-            rPayments
-  where
-  householdOrders = map (toHouseholdOrder rVatRates rHouseholdOrderItems)
-                  . filter (\(_ :. hi :. _) -> _householdId hi == _householdId householdInfo)
-                  $ rHouseholdOrders      
-
-toOrder :: [VatRate] -> [OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> (OrderInfo :. OrderStatusFlags) -> Order
-toOrder rVatRates rHouseholdOrders rHouseholdOrderItems (orderInfo :. orderStatusFlags) = 
-  order orderInfo
-        orderStatusFlags
-        householdOrders
-  where
-  householdOrders = map (toHouseholdOrder rVatRates rHouseholdOrderItems)
-                  . filter (\(oi :. _ :. _) -> _orderId oi == _orderId orderInfo)
-                  $ rHouseholdOrders
-
-toHouseholdOrder :: [VatRate] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> (OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags) -> HouseholdOrder
-toHouseholdOrder rVatRates rHouseholdOrderItems (orderInfo :. householdInfo :. householdOrderStatusFlags) = 
-  householdOrder orderInfo
-                 householdInfo
-                 householdOrderStatusFlags
-                 householdOrderItems
-  where
-  householdOrderItems = map (toOrderItem rVatRates) 
-                      . filter (\((oId, hId) :. _ :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)
-                      $ rHouseholdOrderItems
-
-toOrderItem :: [VatRate] -> ((OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow) -> OrderItem
-toOrderItem rVatRates (_ :. i :. a) = 
-  orderItem product
-            (orderItemRow_quantity i)
-            (adjustment a)
-  where
-  product = Product (orderItemRow_product_id i)
-                    productInfo
-                    flags
-  productInfo = ProductInfo (orderItemRow_code i)
-                            (orderItemRow_name i)
-                            -- (findVatRate $ orderItemRow_vat_rate i)
-                            -- (orderItemRow_vat_rate i)
-                            (orderItemRow_price i)
-                            (orderItemRow_updated i)
-  flags = ProductFlags (orderItemRow_biodynamic i)
-                       (orderItemRow_fair_trade i)
-                       (orderItemRow_gluten_free i)
-                       (orderItemRow_organic i)
-                       (orderItemRow_added_sugar i)
-                       (orderItemRow_vegan i)
-  adjustment (OrderItemAdjustmentRow (Just new_vat_rate)
-                                     (Just new_price)
-                                     (Just new_quantity)
-                                     (Just is_discontinued)
-                                     (Just date))
-    = Just $ orderItemAdjustment (findVatRate new_vat_rate)
-                                 (_priceAmount (atVatRate (findVatRate new_vat_rate) new_price))
-                                 new_quantity
-                                 is_discontinued
-                                 date
-  adjustment _ = Nothing
-  findVatRate vatRateType = fromMaybe zeroRate $ find ((== vatRateType) . _vatRateType) rVatRates
-
-selectVatRates conn = query_ conn [sql| select code, multiplier from v2.vat_rate |]
-
-instance FromRow VatRate where
-  fromRow = VatRate <$> field <*> field
-
-instance ToField VatRateType where
-  toField Zero = toDatabaseChar 'Z'
-  toField Standard = toDatabaseChar 'S'
-  toField Reduced = toDatabaseChar 'R'
-
-instance FromField VatRateType where
-  fromField f char = do
-    c <- fromField f char
-    case c of
-      Just 'Z' -> return Zero
-      Just 'S' -> return Standard
-      Just 'R' -> return Reduced
-      _ -> mzero
-
-selectHouseholdRows :: OrderGroupId -> Connection -> IO [HouseholdInfo :. HouseholdRow]
+selectHouseholdRows :: OrderGroupId -> Connection -> IO [HouseholdRow]
 selectHouseholdRows groupId conn = 
   query conn ([sql|
     select h.id
@@ -175,15 +85,6 @@ selectHouseholdRows groupId conn =
     where h.archived = false and h.order_group_id = ?
     order by h.name asc
   |]) (Only $ fromOrderGroupId groupId)
-
-data HouseholdRow = HouseholdRow
-  { householdRow_contact_name :: Maybe String
-  , householdRow_contact_email :: Maybe String
-  , householdRow_contact_phone :: Maybe String
-  }
-
-instance FromRow HouseholdRow where
-  fromRow = HouseholdRow <$> field <*> field <*> field
 
 selectPayments :: OrderGroupId -> Connection -> IO [Payment]
 selectPayments groupId conn = 
@@ -197,10 +98,7 @@ selectPayments groupId conn =
     order by p.id asc
   |] (Only $ fromOrderGroupId groupId)
 
-instance FromRow Payment where
-  fromRow = Payment <$> field <*> field <*> field <*> field
-
-selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. OrderStatusFlags]
+selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderRow]
 selectOrderRows groupId whereCondition conn = 
   query conn ([sql|
     select o.id
@@ -220,10 +118,7 @@ selectOrderRows groupId whereCondition conn =
     order by o.id desc
   |]) (Only $ fromOrderGroupId groupId)
 
-instance FromRow OrderStatusFlags where
-  fromRow = OrderStatusFlags <$> field <*> field
-
-selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags]
+selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [HouseholdOrderRow]
 selectHouseholdOrderRows groupId whereCondition conn = 
   query conn ([sql|
   select o.id as order_id 
@@ -255,24 +150,7 @@ selectHouseholdOrderRows groupId whereCondition conn =
   order by o.id desc, h.name asc
 |]) (Only $ fromOrderGroupId groupId)
 
-instance FromRow HouseholdOrderStatusFlags where
-  fromRow = HouseholdOrderStatusFlags <$> field <*> field <*> field <*> field
-
-instance FromRow OrderInfo where
-  fromRow = do
-    orderId  <- field
-    created  <- field
-    createdById <- field
-    createdByName  <- field
-    return $ OrderInfo orderId created (createdBy createdById createdByName)
-    where
-    createdBy (Just id) (Just name) = Just $ HouseholdInfo id name
-    createdBy _ _                   = Nothing
-
-instance FromRow HouseholdInfo where
-  fromRow = HouseholdInfo <$> field <*> field
-
-selectHouseholdOrderItemRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow]
+selectHouseholdOrderItemRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [(OrderId, HouseholdId) :. OrderItemRow]
 selectHouseholdOrderItemRows groupId whereCondition conn = 
   query conn ([sql|
     select hoi.order_id
@@ -295,6 +173,7 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
          , adjv.multiplier
          , adj.new_price
          , adj.new_quantity
+         , p.discontinued
          , adj.date
     from v2.household_order_item hoi
     inner join v2.household_order ho 
@@ -317,23 +196,122 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
     order by hoi.ix
   |]) (Only $ fromOrderGroupId groupId)
 
+toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
+toHousehold rHouseholdOrders rOrderItems rPayments h = 
+  household householdInfo
+            (householdRow_contact_name h)
+            (householdRow_contact_email h)
+            (householdRow_contact_phone h)
+            householdOrders
+            rPayments
+  where
+  householdInfo = householdRow_householdInfo h
+  householdOrders = map (toHouseholdOrder rOrderItems)
+                  . filter (( == _householdId householdInfo) . _householdId . householdOrderRow_householdInfo)
+                  $ rHouseholdOrders      
+
+toOrder :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> OrderRow -> Order
+toOrder rHouseholdOrders rOrderItems o = 
+  order orderInfo
+        (orderRow_statusFlags o)
+        householdOrders
+  where
+  orderInfo = orderRow_orderInfo o
+  householdOrders = map (toHouseholdOrder rOrderItems)
+                  . filter ((== _orderId orderInfo) . _orderId . householdOrderRow_orderInfo)
+                  $ rHouseholdOrders
+
+toHouseholdOrder :: [(OrderId, HouseholdId) :. OrderItemRow] -> HouseholdOrderRow -> HouseholdOrder
+toHouseholdOrder rOrderItems ho = 
+  householdOrder orderInfo
+                 householdInfo
+                 (householdOrderRow_statusFlags ho)
+                 orderItems
+  where
+  orderInfo = householdOrderRow_orderInfo ho
+  householdInfo = householdOrderRow_householdInfo ho
+  orderItems = map toOrderItem 
+             . filter (\((oId, hId) :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)
+             $ rOrderItems
+
+toOrderItem :: ((OrderId, HouseholdId) :. OrderItemRow) -> OrderItem
+toOrderItem (_ :. i) = orderItem (orderItemRow_product i)
+                                 (orderItemRow_quantity i)
+                                 (orderItemRow_adjustment i)
+
+data HouseholdRow = HouseholdRow
+  { householdRow_householdInfo :: HouseholdInfo
+  , householdRow_contact_name :: Maybe String
+  , householdRow_contact_email :: Maybe String
+  , householdRow_contact_phone :: Maybe String
+  }
+
+instance FromRow HouseholdRow where
+  fromRow = HouseholdRow <$> householdInfoField <*> field <*> field <*> field
+
+householdInfoField :: RowParser HouseholdInfo
+householdInfoField = HouseholdInfo <$> field <*> field
+
+instance FromField HouseholdId where
+  fromField f char = HouseholdId <$> fromField f char
+
+data OrderRow = OrderRow
+  { orderRow_orderInfo :: OrderInfo
+  , orderRow_statusFlags :: OrderStatusFlags
+  }
+
+instance FromRow OrderRow where
+  fromRow = OrderRow <$> orderInfoField <*> orderStatusFlagsField
+
+orderInfoField :: RowParser OrderInfo
+orderInfoField = do
+    orderId  <- field
+    created  <- field
+    createdById <- field
+    createdByName  <- field
+    return $ OrderInfo orderId created (createdBy createdById createdByName)
+    where
+    createdBy (Just id) (Just name) = Just $ HouseholdInfo id name
+    createdBy _ _                   = Nothing
+
+instance FromField OrderId where
+  fromField f char = OrderId <$> fromField f char
+
+orderStatusFlagsField :: RowParser OrderStatusFlags
+orderStatusFlagsField = OrderStatusFlags <$> field <*> field
+
+data HouseholdOrderRow = HouseholdOrderRow
+  { householdOrderRow_orderInfo :: OrderInfo
+  , householdOrderRow_householdInfo :: HouseholdInfo
+  , householdOrderRow_statusFlags :: HouseholdOrderStatusFlags
+  }
+
+instance FromRow HouseholdOrderRow where
+  fromRow = HouseholdOrderRow <$> orderInfoField <*> householdInfoField <*> householdOrderStatusFlagsField
+
+householdOrderStatusFlagsField :: RowParser HouseholdOrderStatusFlags
+householdOrderStatusFlagsField = HouseholdOrderStatusFlags <$> field <*> field <*> field <*> field
+
 data OrderItemRow = OrderItemRow 
-  { orderItemRow_product_id :: ProductId
-  , orderItemRow_code :: String
-  , orderItemRow_name :: String
-  , orderItemRow_price :: Price
-  , orderItemRow_updated :: UTCTime
-  , orderItemRow_biodynamic :: Bool
-  , orderItemRow_fair_trade :: Bool
-  , orderItemRow_gluten_free :: Bool
-  , orderItemRow_organic :: Bool
-  , orderItemRow_added_sugar :: Bool
-  , orderItemRow_vegan :: Bool
+  { orderItemRow_product :: Product
   , orderItemRow_quantity :: Int
+  , orderItemRow_adjustment :: Maybe OrderItemAdjustment
   }
 
 instance FromRow OrderItemRow where
-  fromRow = OrderItemRow <$> field <*> field <*> field <*> priceField <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = OrderItemRow <$> productField <*> field <*> maybeOrderItemAdjustmentField
+
+productField :: RowParser Product
+productField = Product <$> productInfoField <*> productFlagsField
+
+productInfoField :: RowParser ProductInfo
+productInfoField = ProductInfo <$> field <*> field <*> field <*> priceField <*> field
+
+instance FromField ProductId where
+  fromField f char = ProductId <$> fromField f char
+
+productFlagsField :: RowParser ProductFlags
+productFlagsField = ProductFlags <$> field <*> field <*> field <*> field <*> field <*> field
 
 priceField :: RowParser Price
 priceField = atVatRate <$> vatRateField <*> field
@@ -341,16 +319,51 @@ priceField = atVatRate <$> vatRateField <*> field
 vatRateField :: RowParser VatRate
 vatRateField = VatRate <$> field <*> field
 
-data OrderItemAdjustmentRow = OrderItemAdjustmentRow 
-  { orderItemAdjRow_new_vat_rate :: Maybe VatRateType
-  , orderItemAdjRow_new_price :: Maybe Int
-  , orderItemAdjRow_new_quantity :: Maybe Int
-  , orderItemAdjRow_is_discontinued :: Maybe Bool
-  , orderItemAdjRow_date :: Maybe UTCTime
-  }
+maybeOrderItemAdjustmentField :: RowParser (Maybe OrderItemAdjustment)
+maybeOrderItemAdjustmentField = do
+  newPrice <- maybePriceField
+  newQuantity <- field
+  isDiscontinued <- field
+  date <- field
+  case (newPrice, newQuantity, isDiscontinued, date) of
+    (Just p, Just q, Just disc, Just date) -> return $ Just $ orderItemAdjustment p q disc date
+    _ -> return Nothing
 
-instance FromRow OrderItemAdjustmentRow where
-  fromRow = OrderItemAdjustmentRow <$> field <*> field <*> field <*> field <*> field
+maybePriceField :: RowParser (Maybe Price)
+maybePriceField = do
+  vatRate <- maybeVatRateField
+  amount <- field
+  case (vatRate, amount) of
+    (Just vr, Just a) -> return $ Just $ atVatRate vr a
+    _ -> return Nothing
+
+maybeVatRateField :: RowParser (Maybe VatRate)
+maybeVatRateField = do
+  vatRateType <- field
+  vatRateMultiplier <- field
+  case (vatRateType, vatRateMultiplier) of
+    (Just t, Just m) -> return $ Just $ VatRate t m
+    _ -> return Nothing
+
+instance FromRow Payment where
+  fromRow = Payment <$> field <*> field <*> field <*> field
+
+instance FromField PaymentId where
+  fromField f char = PaymentId <$> fromField f char
+
+instance FromField VatRateType where
+  fromField f char = do
+    c <- fromField f char
+    case c of
+      Just 'Z' -> return Zero
+      Just 'S' -> return Standard
+      Just 'R' -> return Reduced
+      _ -> mzero
+
+instance ToField VatRateType where
+  toField Zero = toDatabaseChar 'Z'
+  toField Standard = toDatabaseChar 'S'
+  toField Reduced = toDatabaseChar 'R'
 
 data WhereCondition = OrderIsCurrent
                     | OrderIsPast
@@ -360,15 +373,3 @@ mapWhere whereCondition = foldl' (<>) mempty . (flip map) whereCondition
 
 toDatabaseChar :: Char -> Action
 toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
-
-instance FromField HouseholdId where
-  fromField f char = HouseholdId <$> fromField f char
-
-instance FromField ProductId where
-  fromField f char = ProductId <$> fromField f char
-
-instance FromField OrderId where
-  fromField f char = OrderId <$> fromField f char
-
-instance FromField PaymentId where
-  fromField f char = PaymentId <$> fromField f char

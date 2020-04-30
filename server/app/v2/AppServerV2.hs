@@ -42,7 +42,7 @@ queryServerV2 config groupKey =
 apiHousehold :: DomainV2.Household -> Api.Household 
 apiHousehold h = Api.Household
   { hId            = fromHouseholdId . _householdId . _householdInfo $ h
-  , hName          = _householdName . _householdInfo $ h
+  , hName          = _householdName                 . _householdInfo $ h
   , hContactName   = _householdContactName h
   , hContactEmail  = _householdContactEmail h
   , hContactPhone  = _householdContactPhone h
@@ -53,10 +53,10 @@ apiHousehold h = Api.Household
 
 apiOrder :: Order -> Api.CollectiveOrder
 apiOrder o = Api.CollectiveOrder
-  { coId                    = fromOrderId . _orderId . _orderInfo $ o
-  , coOrderCreatedDate      = _orderCreated . _orderInfo $ o
+  { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
+  , coOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
   , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
-  , coOrderCreatedByName    = fmap _householdName . _orderCreatedBy . _orderInfo $ o
+  , coOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
   , coOrderIsPlaced         = orderIsPlaced o
   , coOrderIsAbandoned      = orderIsAbandoned o
   , coIsComplete            = orderIsComplete o
@@ -69,9 +69,9 @@ apiOrder o = Api.CollectiveOrder
 
 apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem i = Api.OrderItem
-  { oiProductId          = fromProductId . _productId . _itemProduct $ i 
-  , oiProductCode        = _productCode            . _productInfo . _itemProduct $ i
-  , oiProductName        = _productName            . _productInfo . _itemProduct $ i
+  { oiProductId          = fromProductId . _productId                   . _productInfo . _itemProduct $ i 
+  , oiProductCode        = _productCode                                 . _productInfo . _itemProduct $ i
+  , oiProductName        = _productName                                 . _productInfo . _itemProduct $ i
   , oiProductVatRate     = _vatRateType . _priceVatRate . _productPrice . _productInfo . _itemProduct $ i
   , oiProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
   , oiProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i

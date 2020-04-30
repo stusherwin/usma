@@ -108,7 +108,7 @@ order info statusFlags householdOrders =
         items
         householdOrders
   where items = map (sconcat . NE.fromList) 
-              . groupBy ((==) `on` (_productId . _itemProduct))
+              . groupBy ((==) `on` (_productId . _productInfo . _itemProduct))
               . concatMap _householdOrderItems
               $ householdOrders
         adjustment = if total == adjTotal
@@ -226,21 +226,19 @@ instance Semigroup OrderItem where
                        (_itemAdjustment i1 <> _itemAdjustment i2)
 
 data OrderItemAdjustment = OrderItemAdjustment 
-  { _itemAdjNewVatRate :: VatRate
-  , _itemAdjNewPrice :: Money
+  { _itemAdjNewPrice :: Price
   , _itemAdjNewQuantity :: Int
   , _itemAdjNewTotal :: Money
   , _itemAdjIsDiscontinued :: Bool
   , _itemAdjDate :: UTCTime
   } deriving (Eq, Show, Generic)
 
-orderItemAdjustment :: VatRate -> Money -> Int -> Bool -> UTCTime -> OrderItemAdjustment
-orderItemAdjustment newVatRate newPrice newQuantity isDiscontinued date
-  = OrderItemAdjustment newVatRate newPrice newQuantity (newPrice * fromIntegral newQuantity) isDiscontinued date
+orderItemAdjustment :: Price -> Int -> Bool -> UTCTime -> OrderItemAdjustment
+orderItemAdjustment newPrice newQuantity isDiscontinued date
+  = OrderItemAdjustment newPrice newQuantity (atQuantity newQuantity newPrice) isDiscontinued date
 
 instance Semigroup OrderItemAdjustment where
-  a1 <> a2 = OrderItemAdjustment latestVatRate
-                                 latestPrice
+  a1 <> a2 = OrderItemAdjustment latestPrice
                                  totalQuantity
                                  total
                                  discontinued
@@ -252,9 +250,8 @@ instance Semigroup OrderItemAdjustment where
                          else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
     latest           = maximumBy (comparing _itemAdjDate) [a1, a2]
     latestPrice      = _itemAdjNewPrice latest
-    latestVatRate    = _itemAdjNewVatRate latest
     latestDate       = _itemAdjDate latest
-    total            = atNewVatRate latestVatRate $ latestPrice * fromIntegral totalQuantity
+    total            = atQuantity totalQuantity latestPrice
 
 {- Product -}
 
@@ -263,15 +260,15 @@ newtype ProductId = ProductId
   } deriving (Eq, Show, Generic)
 
 data ProductInfo = ProductInfo
-  { _productCode :: String
+  { _productId :: ProductId
+  , _productCode :: String
   , _productName :: String
   , _productPrice :: Price
   , _productUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
 data Product = Product 
-  { _productId :: ProductId
-  , _productInfo :: ProductInfo
+  { _productInfo :: ProductInfo
   , _productFlags :: ProductFlags
   } deriving (Eq, Show, Generic)
 
@@ -294,6 +291,9 @@ data Price = Price
 atVatRate :: VatRate -> Int -> Price
 atVatRate vatRate amountExcVat = Price vatRate $
   Money amountExcVat $ round $ fromIntegral amountExcVat * (_vatRateMultiplier  vatRate)
+
+atQuantity :: Int -> Price -> Money
+atQuantity quantity price = (_priceAmount price * fromIntegral quantity)
 
 {- Money -}
 
@@ -324,9 +324,6 @@ data VatRate = VatRate
 
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
-
-atNewVatRate :: VatRate -> Money -> Money
-atNewVatRate vatRate = _priceAmount . atVatRate vatRate . _moneyExcVat
 
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
