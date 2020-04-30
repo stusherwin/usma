@@ -76,7 +76,7 @@ getPastOrders config groupId = do
   close conn
   return $ map (toOrder rVatRates rHouseholdOrders rHouseholdOrderItems) rOrders
 
-toHousehold :: [VatRate] -> [OrderInfo :. HouseholdInfo :. HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> [Payment] -> (HouseholdInfo :. HouseholdRow) -> Household
+toHousehold :: [VatRate] -> [OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> [Payment] -> (HouseholdInfo :. HouseholdRow) -> Household
 toHousehold rVatRates rHouseholdOrders rHouseholdOrderItems rPayments (householdInfo :. h) = 
   household householdInfo
             (householdRow_contact_name h)
@@ -89,25 +89,21 @@ toHousehold rVatRates rHouseholdOrders rHouseholdOrderItems rPayments (household
                   . filter (\(_ :. hi :. _) -> _householdId hi == _householdId householdInfo)
                   $ rHouseholdOrders      
 
-toOrder :: [VatRate] -> [OrderInfo :. HouseholdInfo :. HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> (OrderInfo :. OrderStatusRow) -> Order
-toOrder rVatRates rHouseholdOrders rHouseholdOrderItems (orderInfo :. s) = 
+toOrder :: [VatRate] -> [OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> (OrderInfo :. OrderStatusFlags) -> Order
+toOrder rVatRates rHouseholdOrders rHouseholdOrderItems (orderInfo :. orderStatusFlags) = 
   order orderInfo
-        (orderRow_is_abandoned s) 
-        (orderRow_is_placed s)
+        orderStatusFlags
         householdOrders
   where
   householdOrders = map (toHouseholdOrder rVatRates rHouseholdOrderItems)
                   . filter (\(oi :. _ :. _) -> _orderId oi == _orderId orderInfo)
                   $ rHouseholdOrders
 
-toHouseholdOrder :: [VatRate] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> (OrderInfo :. HouseholdInfo :. HouseholdOrderRow) -> HouseholdOrder
-toHouseholdOrder rVatRates rHouseholdOrderItems (orderInfo :. householdInfo :. ho) = 
+toHouseholdOrder :: [VatRate] -> [(OrderId, HouseholdId) :. OrderItemRow :. OrderItemAdjustmentRow] -> (OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags) -> HouseholdOrder
+toHouseholdOrder rVatRates rHouseholdOrderItems (orderInfo :. householdInfo :. householdOrderStatusFlags) = 
   householdOrder orderInfo
                  householdInfo
-                 (householdOrderRow_is_abandoned ho)
-                 (householdOrderRow_is_placed ho)
-                 (householdOrderRow_is_complete ho)
-                 (householdOrderRow_updated ho)
+                 householdOrderStatusFlags
                  householdOrderItems
   where
   householdOrderItems = map (toOrderItem rVatRates) 
@@ -121,18 +117,19 @@ toOrderItem rVatRates (_ :. i :. a) =
             (adjustment a)
   where
   product = Product (orderItemRow_product_id i)
-                    (orderItemRow_code i)
-                    (orderItemRow_name i)
-                    (findVatRate $ orderItemRow_vat_rate i)
-                    (atVatRate (findVatRate $ orderItemRow_vat_rate i) $ orderItemRow_price i)
-                    (orderItemRow_updated i)
-                    attributes
-  attributes = ProductAttributes (orderItemRow_biodynamic i)
-                                 (orderItemRow_fair_trade i)
-                                 (orderItemRow_gluten_free i)
-                                 (orderItemRow_organic i)
-                                 (orderItemRow_added_sugar i)
-                                 (orderItemRow_vegan i)
+                    productInfo
+                    flags
+  productInfo = ProductInfo (orderItemRow_code i)
+                            (orderItemRow_name i)
+                            (findVatRate $ orderItemRow_vat_rate i)
+                            (atVatRate (findVatRate $ orderItemRow_vat_rate i) $ orderItemRow_price i)
+                            (orderItemRow_updated i)
+  flags = ProductFlags (orderItemRow_biodynamic i)
+                       (orderItemRow_fair_trade i)
+                       (orderItemRow_gluten_free i)
+                       (orderItemRow_organic i)
+                       (orderItemRow_added_sugar i)
+                       (orderItemRow_vegan i)
   adjustment (OrderItemAdjustmentRow (Just new_vat_rate)
                                      (Just new_price)
                                      (Just new_quantity)
@@ -202,7 +199,7 @@ selectPayments groupId conn =
 instance FromRow Payment where
   fromRow = Payment <$> field <*> field <*> field <*> field
 
-selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. OrderStatusRow]
+selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. OrderStatusFlags]
 selectOrderRows groupId whereCondition conn = 
   query conn ([sql|
     select o.id
@@ -222,15 +219,10 @@ selectOrderRows groupId whereCondition conn =
     order by o.id desc
   |]) (Only $ fromOrderGroupId groupId)
 
-data OrderStatusRow = OrderStatusRow
-  { orderRow_is_abandoned :: Bool
-  , orderRow_is_placed :: Bool
-  }
+instance FromRow OrderStatusFlags where
+  fromRow = OrderStatusFlags <$> field <*> field
 
-instance FromRow OrderStatusRow where
-  fromRow = OrderStatusRow <$> field <*> field
-
-selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. HouseholdInfo :. HouseholdOrderRow]
+selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderInfo :. HouseholdInfo :. HouseholdOrderStatusFlags]
 selectHouseholdOrderRows groupId whereCondition conn = 
   query conn ([sql|
   select o.id as order_id 
@@ -262,15 +254,8 @@ selectHouseholdOrderRows groupId whereCondition conn =
   order by o.id desc, h.name asc
 |]) (Only $ fromOrderGroupId groupId)
 
-data HouseholdOrderRow = HouseholdOrderRow 
-  { householdOrderRow_is_abandoned :: Bool
-  , householdOrderRow_is_placed :: Bool
-  , householdOrderRow_is_complete :: Bool
-  , householdOrderRow_updated :: UTCTime
-  }
-
-instance FromRow HouseholdOrderRow where
-  fromRow = HouseholdOrderRow <$> field <*> field <*> field <*> field
+instance FromRow HouseholdOrderStatusFlags where
+  fromRow = HouseholdOrderStatusFlags <$> field <*> field <*> field <*> field
 
 instance FromRow OrderInfo where
   fromRow = do
@@ -296,13 +281,13 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
          , p.name
          , p.vat_rate
          , p.price
+         , p.updated
          , p.biodynamic
          , p.fair_trade
          , p.gluten_free
          , p.organic
          , p.added_sugar
          , p.vegan
-         , p.updated
          , hoi.quantity
          , adj.new_vat_rate
          , adj.new_price
@@ -331,13 +316,13 @@ data OrderItemRow = OrderItemRow
   , orderItemRow_name :: String
   , orderItemRow_vat_rate :: VatRateType
   , orderItemRow_price :: Int
+  , orderItemRow_updated :: UTCTime
   , orderItemRow_biodynamic :: Bool
   , orderItemRow_fair_trade :: Bool
   , orderItemRow_gluten_free :: Bool
   , orderItemRow_organic :: Bool
   , orderItemRow_added_sugar :: Bool
   , orderItemRow_vegan :: Bool
-  , orderItemRow_updated :: UTCTime
   , orderItemRow_quantity :: Int
   }
 

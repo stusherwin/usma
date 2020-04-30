@@ -82,10 +82,27 @@ data Order = Order
   , _householdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
-order :: OrderInfo -> Bool -> Bool -> [HouseholdOrder] -> Order
-order info isAbandoned isPlaced householdOrders =
+data OrderStatusFlags = OrderStatusFlags
+  { _orderIsAbandoned :: Bool
+  , _orderIsPlaced :: Bool
+  } deriving (Eq, Show, Generic)
+
+data OrderStatus = OrderAbandoned
+                 | OrderComplete  (Maybe ProductCatalogueUpdateStatus)
+                 | OrderPlaced    (Maybe OrderReconcileStatus)
+                 | OrderOpen      (Maybe ProductCatalogueUpdateStatus)
+                   deriving (Eq, Show, Generic)
+
+data ProductCatalogueUpdateStatus = AwaitingConfirm
+                                    deriving (Eq, Show, Generic)
+
+data OrderReconcileStatus = Reconciled
+                            deriving (Eq, Show, Generic)
+
+order :: OrderInfo -> OrderStatusFlags -> [HouseholdOrder] -> Order
+order info statusFlags householdOrders =
   Order info 
-        (orderStatus isAbandoned isPlaced householdOrders)
+        (status statusFlags householdOrders)
         total
         adjustment
         items
@@ -100,32 +117,14 @@ order info isAbandoned isPlaced householdOrders =
         total    = sum . map _householdOrderTotal $ householdOrders
         adjTotal = sum . map adjHouseholdOrderTotal $ householdOrders
         adjHouseholdOrderTotal ho = fromMaybe (_householdOrderTotal ho) $ fmap _orderAdjNewTotal $ _householdOrderAdjustment ho
-
-data OrderStatus = OrderAbandoned
-                 | OrderComplete  ProductCatalogueUpdateStatus
-                 | OrderPlaced    OrderReconcileStatus
-                 | OrderOpen      ProductCatalogueUpdateStatus
-  deriving (Eq, Show, Generic)
-
-data ProductCatalogueUpdateStatus = NoUpdate
-                                  | AwaitingConfirm
-  deriving (Eq, Show, Generic)
-
-data OrderReconcileStatus = NotReconciled
-                          | Reconciled
-  deriving (Eq, Show, Generic)
-
-orderStatus :: Bool -> Bool -> [HouseholdOrder] -> OrderStatus
-orderStatus True _    _ = OrderAbandoned
-orderStatus _    True hos = OrderPlaced $ if all isHouseholdOrderReconciled hos 
-                                            then Reconciled 
-                                            else NotReconciled
-orderStatus _    _    hos = let updateStatus = if any isHouseholdOrderAwaitingConfirm hos 
-                                                  then AwaitingConfirm 
-                                                  else NoUpdate
-                            in  if all isHouseholdOrderComplete hos 
-                                  then OrderComplete updateStatus 
-                                  else OrderOpen updateStatus
+        status (OrderStatusFlags { _orderIsAbandoned = True }) _   = OrderAbandoned
+        status (OrderStatusFlags { _orderIsPlaced    = True }) hos = OrderPlaced (reconcileStatus hos)
+        status _ hos = (completeStatus hos) (updateStatus hos)
+        reconcileStatus = justWhen Reconciled      . all isHouseholdOrderReconciled
+        updateStatus    = justWhen AwaitingConfirm . any isHouseholdOrderAwaitingConfirm
+        completeStatus hos = if all isHouseholdOrderComplete hos 
+                               then OrderComplete
+                               else OrderOpen
 
 orderIsAbandoned (Order { _orderStatus = OrderAbandoned }) = True
 orderIsAbandoned _ = False
@@ -136,8 +135,8 @@ orderIsPlaced _ = False
 orderIsComplete (Order { _orderStatus = OrderComplete _ }) = True
 orderIsComplete _ = False
 
-orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderComplete NoUpdate }) = True
-orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderOpen     NoUpdate }) = True
+orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderComplete Nothing }) = True
+orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderOpen     Nothing }) = True
 orderIsAllHouseholdsUpToDate _ = False
 
 data OrderAdjustment = OrderAdjustment 
@@ -150,18 +149,29 @@ data HouseholdOrder = HouseholdOrder
   { _householdOrderOrderInfo :: OrderInfo
   , _householdOrderHouseholdInfo :: HouseholdInfo
   , _householdOrderStatus :: HouseholdOrderStatus
-  , _householdOrderUpdated :: UTCTime
   , _householdOrderItems :: [OrderItem]
   , _householdOrderTotal :: Money
   , _householdOrderAdjustment :: Maybe OrderAdjustment
   } deriving (Eq, Show, Generic)
 
-householdOrder :: OrderInfo -> HouseholdInfo -> Bool -> Bool -> Bool -> UTCTime -> [OrderItem] -> HouseholdOrder
-householdOrder orderInfo householdInfo isAbandoned isPlaced isComplete updated items 
+data HouseholdOrderStatusFlags = HouseholdOrderStatusFlags
+  { _householdOrderIsAbandoned :: Bool
+  , _householdOrderIsPlaced :: Bool
+  , _householdOrderIsComplete :: Bool
+  , _householdOrderUpdated :: UTCTime
+  } deriving (Eq, Show, Generic)
+
+data HouseholdOrderStatus = HouseholdOrderAbandoned
+                          | HouseholdOrderPlaced   (Maybe OrderReconcileStatus)
+                          | HouseholdOrderComplete (Maybe ProductCatalogueUpdateStatus)
+                          | HouseholdOrderOpen     (Maybe ProductCatalogueUpdateStatus)
+                            deriving (Eq, Show, Generic)
+
+householdOrder :: OrderInfo -> HouseholdInfo -> HouseholdOrderStatusFlags -> [OrderItem] -> HouseholdOrder
+householdOrder orderInfo householdInfo statusFlags items 
   = HouseholdOrder orderInfo
                    householdInfo
-                   (householdOrderStatus isAbandoned isPlaced isComplete updated items)
-                   updated
+                   (status statusFlags items)
                    items
                    total
                    adjustment
@@ -172,32 +182,21 @@ householdOrder orderInfo householdInfo isAbandoned isPlaced isComplete updated i
   total    = sum . map _itemTotal $ items
   adjTotal = sum . map adjItemTotal $ items
   adjItemTotal i = fromMaybe (_itemTotal i) $ fmap _itemAdjNewTotal $ _itemAdjustment i
-
-data HouseholdOrderStatus = HouseholdOrderAbandoned
-                          | HouseholdOrderPlaced   OrderReconcileStatus
-                          | HouseholdOrderComplete ProductCatalogueUpdateStatus
-                          | HouseholdOrderOpen     ProductCatalogueUpdateStatus
-  deriving (Eq, Show, Generic)
-
-householdOrderStatus :: Bool -> Bool -> Bool -> UTCTime -> [OrderItem] -> HouseholdOrderStatus
-householdOrderStatus True _    _    _       _  = HouseholdOrderAbandoned
-householdOrderStatus _    True _    _       is = HouseholdOrderPlaced   $ if all (isJust . _itemAdjustment) is 
-                                                                             then Reconciled
-                                                                             else NotReconciled
-householdOrderStatus _    _    True updated is = HouseholdOrderComplete $ if any ((> updated) . _productUpdated . _itemProduct) is 
-                                                                             then AwaitingConfirm 
-                                                                             else NoUpdate
-householdOrderStatus _    _    _    updated is = HouseholdOrderOpen     $ if any ((> updated) . _productUpdated . _itemProduct) is 
-                                                                             then AwaitingConfirm 
-                                                                             else NoUpdate
+  status (HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True }) _  = HouseholdOrderAbandoned
+  status (HouseholdOrderStatusFlags { _householdOrderIsPlaced    = True }) is = HouseholdOrderPlaced   $ reconcileStatus is
+  status (HouseholdOrderStatusFlags { _householdOrderIsComplete  = True
+                                    , _householdOrderUpdated = updated })  is = HouseholdOrderComplete $ updateStatus updated is
+  status (HouseholdOrderStatusFlags { _householdOrderUpdated = updated })  is = HouseholdOrderOpen     $ updateStatus updated is 
+  reconcileStatus      = justWhen Reconciled      . all (isJust . _itemAdjustment)
+  updateStatus updated = justWhen AwaitingConfirm . any ((> updated) . _productUpdated . _productInfo . _itemProduct)
 
 isHouseholdOrderReconciled :: HouseholdOrder -> Bool
-isHouseholdOrderReconciled (HouseholdOrder { _householdOrderStatus = HouseholdOrderPlaced Reconciled }) = True
+isHouseholdOrderReconciled (HouseholdOrder { _householdOrderStatus = HouseholdOrderPlaced (Just Reconciled) }) = True
 isHouseholdOrderReconciled _ = False
 
 isHouseholdOrderAwaitingConfirm :: HouseholdOrder -> Bool
-isHouseholdOrderAwaitingConfirm (HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete AwaitingConfirm }) = True
-isHouseholdOrderAwaitingConfirm (HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen     AwaitingConfirm }) = True
+isHouseholdOrderAwaitingConfirm (HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete (Just AwaitingConfirm) }) = True
+isHouseholdOrderAwaitingConfirm (HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen     (Just AwaitingConfirm) }) = True
 isHouseholdOrderAwaitingConfirm _ = False
 
 isHouseholdOrderComplete :: HouseholdOrder -> Bool
@@ -210,7 +209,7 @@ isHouseholdOrderAbandoned _ = False
 
 {- OrderItem -}
 
-data OrderItem = OrderItem 
+data OrderItem = OrderItem  
   { _itemProduct :: Product
   , _itemQuantity :: Int
   , _itemTotal :: Money
@@ -218,7 +217,7 @@ data OrderItem = OrderItem
   } deriving (Eq, Show, Generic)
 
 orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
-orderItem product quantity adjustment = OrderItem product quantity (_productPrice product * fromIntegral quantity) adjustment
+orderItem product quantity adjustment = OrderItem product quantity (_productPrice (_productInfo product) * fromIntegral quantity) adjustment
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)
@@ -263,23 +262,27 @@ newtype ProductId = ProductId
   { fromProductId :: Int 
   } deriving (Eq, Show, Generic)
 
-data Product = Product 
-  { _productId :: ProductId
-  , _productCode :: String
+data ProductInfo = ProductInfo
+  { _productCode :: String
   , _productName :: String
   , _productVatRate :: VatRate
   , _productPrice :: Money
   , _productUpdated :: UTCTime
-  , _productAttributes :: ProductAttributes
   } deriving (Eq, Show, Generic)
 
-data ProductAttributes = ProductAttributes
-  { _productAttrIsBiodynamic :: Bool
-  , _productAttrIsFairTrade  :: Bool
-  , _productAttrIsGlutenFree :: Bool
-  , _productAttrIsOrganic    :: Bool
-  , _productAttrIsAddedSugar :: Bool
-  , _productAttrIsVegan      :: Bool
+data Product = Product 
+  { _productId :: ProductId
+  , _productInfo :: ProductInfo
+  , _productFlags :: ProductFlags
+  } deriving (Eq, Show, Generic)
+
+data ProductFlags = ProductFlags
+  { _productIsBiodynamic :: Bool
+  , _productIsFairTrade  :: Bool
+  , _productIsGlutenFree :: Bool
+  , _productIsOrganic    :: Bool
+  , _productIsAddedSugar :: Bool
+  , _productIsVegan      :: Bool
   } deriving (Eq, Show, Generic)
 
 {- Money -}
@@ -317,3 +320,6 @@ atVatRate vatRate amountExcVat = Money amountExcVat $ round $ fromIntegral amoun
 
 atNewVatRate :: VatRate -> Money -> Money
 atNewVatRate vatRate = atVatRate vatRate . _excVat
+
+justWhen :: a -> Bool -> Maybe a
+justWhen a condition = if condition then Just a else Nothing
