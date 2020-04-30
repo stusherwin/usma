@@ -44,7 +44,7 @@ household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [H
 household householdInfo contactName contactEmail contactPhone householdOrders payments =
   Household householdInfo contactName contactEmail contactPhone totalOrders totalPayments balance
   where
-  totalOrders = _incVat $ sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)) $ filter (not . isHouseholdOrderAbandoned) householdOrders
+  totalOrders = _moneyIncVat $ sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)) $ filter (not . isHouseholdOrderAbandoned) householdOrders
   totalPayments = sum . map _paymentAmount $ payments 
   balance = totalPayments - totalOrders
 
@@ -217,7 +217,7 @@ data OrderItem = OrderItem
   } deriving (Eq, Show, Generic)
 
 orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
-orderItem product quantity adjustment = OrderItem product quantity (_productPrice (_productInfo product) * fromIntegral quantity) adjustment
+orderItem product quantity adjustment = OrderItem product quantity ((_priceAmount . _productPrice . _productInfo $ product) * fromIntegral quantity) adjustment
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)
@@ -265,8 +265,7 @@ newtype ProductId = ProductId
 data ProductInfo = ProductInfo
   { _productCode :: String
   , _productName :: String
-  , _productVatRate :: VatRate
-  , _productPrice :: Money
+  , _productPrice :: Price
   , _productUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
@@ -285,11 +284,22 @@ data ProductFlags = ProductFlags
   , _productIsVegan      :: Bool
   } deriving (Eq, Show, Generic)
 
+{- Price -}
+
+data Price = Price
+  { _priceVatRate :: VatRate
+  , _priceAmount :: Money
+  } deriving (Eq, Show, Generic)
+
+atVatRate :: VatRate -> Int -> Price
+atVatRate vatRate amountExcVat = Price vatRate $
+  Money amountExcVat $ round $ fromIntegral amountExcVat * (_vatRateMultiplier  vatRate)
+
 {- Money -}
 
 data Money = Money 
-  { _excVat :: Int 
-  , _incVat :: Int 
+  { _moneyExcVat :: Int 
+  , _moneyIncVat :: Int 
   } deriving (Eq, Ord, Show, Generic)
 
 instance Num Money where
@@ -308,18 +318,15 @@ data VatRateType = Zero
   deriving (Eq, Show, Generic)
 
 data VatRate = VatRate
-  { _type :: VatRateType
-  , _multiplier :: Rational
+  { _vatRateType :: VatRateType
+  , _vatRateMultiplier :: Rational
   } deriving (Eq, Show, Generic)
 
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
 
-atVatRate :: VatRate -> Int -> Money
-atVatRate vatRate amountExcVat = Money amountExcVat $ round $ fromIntegral amountExcVat * (_multiplier vatRate)
-
 atNewVatRate :: VatRate -> Money -> Money
-atNewVatRate vatRate = atVatRate vatRate . _excVat
+atNewVatRate vatRate = _priceAmount . atVatRate vatRate . _moneyExcVat
 
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
