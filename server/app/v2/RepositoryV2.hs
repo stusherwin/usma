@@ -19,7 +19,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Data.Time.Clock (UTCTime)
 import Database.PostgreSQL.Simple (Connection, Only(..), Query, (:.)(..), connectPostgreSQL, close, withTransaction, query, query_)
 import Database.PostgreSQL.Simple.FromField (FromField(..))
-import Database.PostgreSQL.Simple.FromRow (FromRow(..), field)
+import Database.PostgreSQL.Simple.FromRow (FromRow(..), RowParser, field)
 import Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
 import Database.PostgreSQL.Simple.ToRow (ToRow(..))
 import Database.PostgreSQL.Simple.SqlQQ
@@ -121,8 +121,9 @@ toOrderItem rVatRates (_ :. i :. a) =
                     flags
   productInfo = ProductInfo (orderItemRow_code i)
                             (orderItemRow_name i)
-                            (findVatRate $ orderItemRow_vat_rate i)
-                            (atVatRate (findVatRate $ orderItemRow_vat_rate i) $ orderItemRow_price i)
+                            -- (findVatRate $ orderItemRow_vat_rate i)
+                            -- (orderItemRow_vat_rate i)
+                            (orderItemRow_price i)
                             (orderItemRow_updated i)
   flags = ProductFlags (orderItemRow_biodynamic i)
                        (orderItemRow_fair_trade i)
@@ -136,12 +137,12 @@ toOrderItem rVatRates (_ :. i :. a) =
                                      (Just is_discontinued)
                                      (Just date))
     = Just $ orderItemAdjustment (findVatRate new_vat_rate)
-                                 (atVatRate (findVatRate new_vat_rate) new_price)
+                                 (_priceAmount (atVatRate (findVatRate new_vat_rate) new_price))
                                  new_quantity
                                  is_discontinued
                                  date
   adjustment _ = Nothing
-  findVatRate vatRateType = fromMaybe zeroRate $ find ((== vatRateType) . _type) rVatRates
+  findVatRate vatRateType = fromMaybe zeroRate $ find ((== vatRateType) . _vatRateType) rVatRates
 
 selectVatRates conn = query_ conn [sql| select code, multiplier from v2.vat_rate |]
 
@@ -280,6 +281,7 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
          , p.code
          , p.name
          , p.vat_rate
+         , v.multiplier
          , p.price
          , p.updated
          , p.biodynamic
@@ -290,6 +292,7 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
          , p.vegan
          , hoi.quantity
          , adj.new_vat_rate
+         , adjv.multiplier
          , adj.new_price
          , adj.new_quantity
          , adj.date
@@ -300,8 +303,12 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
       on ho.order_id = o.id
     inner join v2.product p 
       on p.id = hoi.product_id
-    let join v2.order_item_adjustment adj
+    inner join v2.vat_rate v
+      on v.code = p.vat_rate
+    left join v2.order_item_adjustment adj
       on adj.order_id = hoi.order_id and adj.household_id = hoi.household_id and adj.product_id = hoi.product_id
+    left join v2.vat_rate adjv
+      on adjv.code = adj.new_vat_rate
     where o.order_group_id = ? 
   |] <> mapWhere whereCondition (\w -> case w of 
           OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
@@ -314,8 +321,7 @@ data OrderItemRow = OrderItemRow
   { orderItemRow_product_id :: ProductId
   , orderItemRow_code :: String
   , orderItemRow_name :: String
-  , orderItemRow_vat_rate :: VatRateType
-  , orderItemRow_price :: Int
+  , orderItemRow_price :: Price
   , orderItemRow_updated :: UTCTime
   , orderItemRow_biodynamic :: Bool
   , orderItemRow_fair_trade :: Bool
@@ -327,7 +333,13 @@ data OrderItemRow = OrderItemRow
   }
 
 instance FromRow OrderItemRow where
-  fromRow = OrderItemRow <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = OrderItemRow <$> field <*> field <*> field <*> priceField <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+priceField :: RowParser Price
+priceField = atVatRate <$> vatRateField <*> field
+
+vatRateField :: RowParser VatRate
+vatRateField = VatRate <$> field <*> field
 
 data OrderItemAdjustmentRow = OrderItemAdjustmentRow 
   { orderItemAdjRow_new_vat_rate :: Maybe VatRateType
