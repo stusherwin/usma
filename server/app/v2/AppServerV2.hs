@@ -61,11 +61,22 @@ apiOrder o = Api.CollectiveOrder
   , coOrderIsAbandoned      = orderIsAbandoned o
   , coIsComplete            = orderIsComplete o
   , coAllHouseholdsUpToDate = orderIsAllHouseholdsUpToDate o
-  , coTotalExcVat           = _moneyExcVat . _orderTotal $ o
-  , coTotalIncVat           = _moneyIncVat . _orderTotal $ o
-  , coAdjustment            = undefined
+  , coTotalExcVat           = _moneyExcVat $ case _orderAdjustment o of
+                                               Just a -> _orderAdjNewTotal a
+                                               _      -> _orderTotal $ o
+  , coTotalIncVat           = _moneyIncVat $ case _orderAdjustment o of
+                                               Just a -> _orderAdjNewTotal a
+                                               _      -> _orderTotal $ o
+  , coAdjustment            = apiOrderAdjustment o $ _orderAdjustment o
   , coItems = apiOrderItem <$> _orderItems o
   }
+
+apiOrderAdjustment :: DomainV2.Order -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
+apiOrderAdjustment o (Just _) = Just $ Api.OrderAdjustment
+  { oaOldTotalExcVat = _moneyExcVat . _orderTotal $ o
+  , oaOldTotalIncVat = _moneyIncVat . _orderTotal $ o
+  }
+apiOrderAdjustment _ _ = Nothing
 
 apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem i = Api.OrderItem
@@ -73,19 +84,40 @@ apiOrderItem i = Api.OrderItem
   , oiProductCode        = _productCode                                 . _productInfo . _itemProduct $ i
   , oiProductName        = _productName                                 . _productInfo . _itemProduct $ i
   , oiProductVatRate     = _vatRateType . _priceVatRate . _productPrice . _productInfo . _itemProduct $ i
-  , oiProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
-  , oiProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
-  , oiItemQuantity       = _itemQuantity i
-  , oiItemTotalExcVat    = _moneyExcVat . _itemTotal $ i
-  , oiItemTotalIncVat    = _moneyIncVat . _itemTotal $ i
+  , oiProductPriceExcVat = _moneyExcVat . _priceAmount $ case _itemAdjustment i of
+                                                           Just a -> _itemAdjNewPrice a
+                                                           _      -> _productPrice . _productInfo . _itemProduct $ i
+  , oiProductPriceIncVat = _moneyIncVat . _priceAmount $ case _itemAdjustment i of
+                                                           Just a -> _itemAdjNewPrice a
+                                                           _      -> _productPrice . _productInfo . _itemProduct $ i
+  , oiItemQuantity       = case _itemAdjustment i of
+                             Just a -> _itemAdjNewQuantity a
+                             _      -> _itemQuantity i
+  , oiItemTotalExcVat    = _moneyExcVat $ case _itemAdjustment i of
+                                            Just a -> _itemAdjNewTotal a
+                                            _      -> _itemTotal $ i
+  , oiItemTotalIncVat    = _moneyIncVat $ case _itemAdjustment i of
+                                            Just a -> _itemAdjNewTotal a
+                                            _      -> _itemTotal $ i
   , oiBiodynamic         = _productIsBiodynamic . _productFlags . _itemProduct $ i
   , oiFairTrade          = _productIsFairTrade  . _productFlags . _itemProduct $ i
   , oiGlutenFree         = _productIsGlutenFree . _productFlags . _itemProduct $ i
   , oiOrganic            = _productIsOrganic    . _productFlags . _itemProduct $ i
   , oiAddedSugar         = _productIsAddedSugar . _productFlags . _itemProduct $ i
   , oiVegan              = _productIsVegan      . _productFlags . _itemProduct $ i
-  , oiAdjustment         = undefined
+  , oiAdjustment         = apiOrderItemAdjustment i $ _itemAdjustment i
   }
+
+apiOrderItemAdjustment :: DomainV2.OrderItem -> Maybe DomainV2.OrderItemAdjustment -> Maybe Api.OrderItemAdjustment
+apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
+  { oiaOldProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
+  , oiaOldProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
+  , oiaOldItemQuantity       = _itemQuantity i
+  , oiaOldItemTotalExcVat    = _moneyExcVat . _itemTotal $ i
+  , oiaOldItemTotalIncVat    = _moneyIncVat . _itemTotal $ i
+  , oiaProductDiscontinued   = _itemAdjIsDiscontinued a
+  }
+apiOrderItemAdjustment _ _ = Nothing
 
 findGroupOr404 :: Config -> Text -> (OrderGroupId -> Handler a) -> Handler a
 findGroupOr404 conn groupKey handler = do

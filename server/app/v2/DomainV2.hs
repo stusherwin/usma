@@ -99,6 +99,10 @@ data ProductCatalogueUpdateStatus = AwaitingConfirm
 data OrderReconcileStatus = Reconciled
                             deriving (Eq, Show, Generic)
 
+data OrderAdjustment = OrderAdjustment 
+  { _orderAdjNewTotal :: Money
+  } deriving (Eq, Show, Generic)
+
 order :: OrderInfo -> OrderStatusFlags -> [HouseholdOrder] -> Order
 order info statusFlags householdOrders =
   Order info 
@@ -138,10 +142,6 @@ orderIsComplete _ = False
 orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderComplete Nothing }) = True
 orderIsAllHouseholdsUpToDate (Order { _orderStatus = OrderOpen     Nothing }) = True
 orderIsAllHouseholdsUpToDate _ = False
-
-data OrderAdjustment = OrderAdjustment 
-  { _orderAdjNewTotal :: Money
-  } deriving (Eq, Show, Generic)
 
 {- HouseholdOrder -}
 
