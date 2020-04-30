@@ -1,16 +1,14 @@
 module AppServerV2 (appServerV2) where
 
-import Servant
-import Servant.Multipart
-
-import Control.Monad.IO.Class (liftIO)
-import Data.Text (Text)
-import Data.Text as T (unpack)
+import           AppApiV2 as Api
+import           Config
+import           Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString as B (ByteString)
+import           Data.Text (Text)
+import           Data.Text as T (unpack)
+import           Servant
+import           Servant.Multipart
 
-import Config
-
-import AppApiV2 as Api
 import DomainV2
 import RepositoryV2
 
@@ -43,14 +41,14 @@ queryServerV2 config groupKey =
 
 apiHousehold :: DomainV2.Household -> Api.Household 
 apiHousehold h = Api.Household
-  { hId = fromHouseholdId . _householdId . _householdInfo $ h
-  , hName = _householdName . _householdInfo $ h
-  , hContactName = _householdContactName h
-  , hContactEmail = _householdContactEmail h
-  , hContactPhone = _householdContactPhone h
-  , hTotalOrders = _householdTotalOrders h
+  { hId            = fromHouseholdId . _householdId . _householdInfo $ h
+  , hName          = _householdName . _householdInfo $ h
+  , hContactName   = _householdContactName h
+  , hContactEmail  = _householdContactEmail h
+  , hContactPhone  = _householdContactPhone h
+  , hTotalOrders   = _householdTotalOrders h
   , hTotalPayments = _householdTotalPayments h
-  , hBalance = _householdBalance h
+  , hBalance       = _householdBalance h
   }
 
 apiOrder :: Order -> Api.CollectiveOrder
@@ -72,20 +70,20 @@ apiOrder o = Api.CollectiveOrder
 apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem i = Api.OrderItem
   { oiProductId          = fromProductId . _productId . _itemProduct $ i 
-  , oiProductCode        = _productCode    . _itemProduct $ i
-  , oiProductName        = _productName    . _itemProduct $ i
-  , oiProductVatRate     = _type . _productVatRate . _itemProduct $ i
-  , oiProductPriceExcVat = _excVat . _productPrice . _itemProduct $ i
-  , oiProductPriceIncVat = _incVat . _productPrice . _itemProduct $ i
+  , oiProductCode        = _productCode            . _productInfo . _itemProduct $ i
+  , oiProductName        = _productName            . _productInfo . _itemProduct $ i
+  , oiProductVatRate     = _type . _productVatRate . _productInfo . _itemProduct $ i
+  , oiProductPriceExcVat = _excVat . _productPrice . _productInfo . _itemProduct $ i
+  , oiProductPriceIncVat = _incVat . _productPrice . _productInfo . _itemProduct $ i
   , oiItemQuantity       = _itemQuantity i
   , oiItemTotalExcVat    = _excVat . _itemTotal $ i
   , oiItemTotalIncVat    = _incVat . _itemTotal $ i
-  , oiBiodynamic         = _productAttrIsBiodynamic . _productAttributes . _itemProduct $ i
-  , oiFairTrade          = _productAttrIsFairTrade  . _productAttributes . _itemProduct $ i
-  , oiGlutenFree         = _productAttrIsGlutenFree . _productAttributes . _itemProduct $ i
-  , oiOrganic            = _productAttrIsOrganic    . _productAttributes . _itemProduct $ i
-  , oiAddedSugar         = _productAttrIsAddedSugar . _productAttributes . _itemProduct $ i
-  , oiVegan              = _productAttrIsVegan      . _productAttributes . _itemProduct $ i
+  , oiBiodynamic         = _productIsBiodynamic . _productFlags . _itemProduct $ i
+  , oiFairTrade          = _productIsFairTrade  . _productFlags . _itemProduct $ i
+  , oiGlutenFree         = _productIsGlutenFree . _productFlags . _itemProduct $ i
+  , oiOrganic            = _productIsOrganic    . _productFlags . _itemProduct $ i
+  , oiAddedSugar         = _productIsAddedSugar . _productFlags . _itemProduct $ i
+  , oiVegan              = _productIsVegan      . _productFlags . _itemProduct $ i
   , oiAdjustment         = undefined
   }
 
