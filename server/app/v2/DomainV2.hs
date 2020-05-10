@@ -21,15 +21,6 @@ newtype OrderGroupId = OrderGroupId
 
 {- Household -}
 
-newtype HouseholdId = HouseholdId 
-  { fromHouseholdId :: Int 
-  } deriving (Eq, Show, Generic)
-
-data HouseholdInfo = HouseholdInfo 
-  { _householdId :: HouseholdId
-  , _householdName :: String
-  } deriving (Eq, Show, Generic)
-
 data Household = Household 
   { _householdInfo :: HouseholdInfo
   , _householdContactName :: Maybe String
@@ -39,6 +30,15 @@ data Household = Household
   , _householdTotalPayments :: Int
   , _householdBalance :: Int
   }
+
+newtype HouseholdId = HouseholdId 
+  { fromHouseholdId :: Int 
+  } deriving (Eq, Show, Generic)
+
+data HouseholdInfo = HouseholdInfo 
+  { _householdId :: HouseholdId
+  , _householdName :: String
+  } deriving (Eq, Show, Generic)
 
 household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [HouseholdOrder] -> [Payment] -> Household
 household householdInfo contactName contactEmail contactPhone householdOrders payments =
@@ -50,10 +50,6 @@ household householdInfo contactName contactEmail contactPhone householdOrders pa
 
 {- Payment -}
 
-newtype PaymentId = PaymentId 
-  { fromPaymentId :: Int 
-  } deriving (Eq, Show, Generic)
-
 data Payment = Payment 
   { _paymentId :: PaymentId
   , _paymentHouseholdId :: HouseholdId
@@ -61,7 +57,25 @@ data Payment = Payment
   , _paymentAmount :: Int
   } deriving (Eq, Show, Generic)
 
+newtype PaymentId = PaymentId 
+  { fromPaymentId :: Int 
+  } deriving (Eq, Show, Generic)
+
 {-- Order --}
+
+data OrderSpec = OrderSpec 
+  { _orderSpecCreated :: UTCTime
+  , _orderSpecCreatedByHouseholdId :: Maybe HouseholdId
+  }
+
+data Order = Order 
+  { _orderInfo :: OrderInfo
+  , _orderStatus :: OrderStatus
+  , _orderTotal :: Money
+  , _orderAdjustment :: Maybe OrderAdjustment
+  , _orderItems :: [OrderItem]
+  , _householdOrders :: [HouseholdOrder]
+  } deriving (Eq, Show, Generic)
 
 newtype OrderId = OrderId 
   { fromOrderId :: Int 
@@ -71,15 +85,6 @@ data OrderInfo = OrderInfo
   { _orderId :: OrderId
   , _orderCreated :: UTCTime
   , _orderCreatedBy :: Maybe HouseholdInfo
-  } deriving (Eq, Show, Generic)
-
-data Order = Order 
-  { _orderInfo :: OrderInfo
-  , _orderStatus :: OrderStatus
-  , _orderTotal :: Money
-  , _orderAdjustment :: Maybe OrderAdjustment
-  , _orderItems :: [OrderItem]
-  , _householdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
 data OrderStatusFlags = OrderStatusFlags
@@ -118,7 +123,7 @@ order info statusFlags householdOrders =
         adjustment = if total == adjTotal
                        then Nothing
                        else Just $ OrderAdjustment adjTotal 
-        total    = sum . map _householdOrderTotal $ householdOrders
+        total    = sum . map _householdOrderTotal   $ householdOrders
         adjTotal = sum . map adjHouseholdOrderTotal $ householdOrders
         adjHouseholdOrderTotal ho = fromMaybe (_householdOrderTotal ho) $ fmap _orderAdjNewTotal $ _householdOrderAdjustment ho
         status (OrderStatusFlags { _orderIsAbandoned = True }) _   = OrderAbandoned
@@ -306,9 +311,9 @@ instance Num Money where
   Money exc1 inc1 + Money exc2 inc2 = Money (exc1 + exc2) (inc1 + inc2)
   Money exc1 inc1 - Money exc2 inc2 = Money (exc1 - exc2) (inc1 - inc2)
   Money exc1 inc1 * Money exc2 inc2 = Money (exc1 * exc2) (inc1 * inc2)
-  abs (Money exc inc) = Money (abs exc) (abs inc)
+  abs    (Money exc inc) = Money (abs exc) (abs inc)
   signum (Money exc inc) = Money (signum exc) (signum inc)
-  fromInteger i = Money (fromInteger i) (fromInteger i)
+  fromInteger i          = Money (fromInteger i) (fromInteger i)
 
 {- VatRate -}
 

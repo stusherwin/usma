@@ -4,6 +4,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module RepositoryV2 where 
 
@@ -73,6 +74,15 @@ getPastOrders config groupId = do
   close conn
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
+createOrder :: Config -> OrderGroupId -> OrderSpec -> IO OrderId
+createOrder config groupId spec = do
+  conn <- connectPostgreSQL $ connectionString config
+  [Only id] <- query conn [sql|
+    insert into "order" (order_group_id, created_date, created_by_id) values (?, ?, ?) returning id
+  |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+  close conn
+  return id
+
 selectHouseholdRows :: OrderGroupId -> Connection -> IO [HouseholdRow]
 selectHouseholdRows groupId conn = 
   query conn ([sql|
@@ -84,7 +94,7 @@ selectHouseholdRows groupId conn =
     from household h
     where h.archived = false and h.order_group_id = ?
     order by h.name asc
-  |]) (Only $ fromOrderGroupId groupId)
+  |]) (Only groupId)
 
 selectPayments :: OrderGroupId -> Connection -> IO [Payment]
 selectPayments groupId conn = 
@@ -96,7 +106,7 @@ selectPayments groupId conn =
     from household_payment p
     where p.archived = false and p.order_group_id = ?
     order by p.id asc
-  |] (Only $ fromOrderGroupId groupId)
+  |] (Only groupId)
 
 selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderRow]
 selectOrderRows groupId whereCondition conn = 
@@ -116,7 +126,7 @@ selectOrderRows groupId whereCondition conn =
           OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
     order by o.id desc
-  |]) (Only $ fromOrderGroupId groupId)
+  |]) (Only groupId)
 
 selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [HouseholdOrderRow]
 selectHouseholdOrderRows groupId whereCondition conn = 
@@ -148,7 +158,7 @@ selectHouseholdOrderRows groupId whereCondition conn =
           OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
   order by o.id desc, h.name asc
-|]) (Only $ fromOrderGroupId groupId)
+|]) (Only groupId)
 
 selectHouseholdOrderItemRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [(OrderId, HouseholdId) :. OrderItemRow]
 selectHouseholdOrderItemRows groupId whereCondition conn = 
@@ -194,7 +204,7 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
           OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
     order by hoi.ix
-  |]) (Only $ fromOrderGroupId groupId)
+  |]) (Only groupId)
 
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 
@@ -239,6 +249,12 @@ toOrderItem (_ :. i) = orderItem (orderItemRow_product i)
                                  (orderItemRow_quantity i)
                                  (orderItemRow_adjustment i)
 
+instance FromField OrderGroupId where
+  fromField f char = OrderGroupId <$> fromField f char
+
+instance ToField OrderGroupId where
+  toField = toField . fromOrderGroupId
+
 data HouseholdRow = HouseholdRow
   { householdRow_householdInfo :: HouseholdInfo
   , householdRow_contact_name :: Maybe String
@@ -254,6 +270,9 @@ householdInfoField = HouseholdInfo <$> field <*> field
 
 instance FromField HouseholdId where
   fromField f char = HouseholdId <$> fromField f char
+
+instance ToField HouseholdId where
+  toField = toField . fromHouseholdId
 
 data OrderRow = OrderRow
   { orderRow_orderInfo :: OrderInfo
@@ -276,6 +295,9 @@ orderInfoField = do
 
 instance FromField OrderId where
   fromField f char = OrderId <$> fromField f char
+
+instance ToField OrderId where
+  toField = toField . fromOrderId
 
 orderStatusFlagsField :: RowParser OrderStatusFlags
 orderStatusFlagsField = OrderStatusFlags <$> field <*> field
@@ -309,6 +331,9 @@ productInfoField = ProductInfo <$> field <*> field <*> field <*> priceField <*> 
 
 instance FromField ProductId where
   fromField f char = ProductId <$> fromField f char
+
+instance ToField ProductId where
+  toField = toField . fromProductId
 
 productFlagsField :: RowParser ProductFlags
 productFlagsField = ProductFlags <$> field <*> field <*> field <*> field <*> field <*> field
@@ -350,6 +375,9 @@ instance FromRow Payment where
 
 instance FromField PaymentId where
   fromField f char = PaymentId <$> fromField f char
+
+instance ToField PaymentId where
+  toField = toField . fromPaymentId
 
 instance FromField VatRateType where
   fromField f char = do

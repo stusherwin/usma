@@ -18,13 +18,19 @@ import Servant
 import DomainV2 (VatRateType)
 
 type AppApiV2 = 
-  "v2" :> ( "query" :> QueryApiV2
+  "v2" :> (    "query" :> QueryApiV2
+          :<|> "command" :> CommandApiV2
           )
 
 type QueryApiV2 =
        "households" :> Get '[JSON] [Household]
   :<|> "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
-  :<|>"past-collective-orders" :> Get '[JSON] [CollectiveOrder]
+  :<|> "past-collective-orders" :> Get '[JSON] [CollectiveOrder]
+
+type CommandApiV2 =
+       "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
+  :<|> "create-order" :> Post '[JSON] Int
+  :<|> "ensure-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> ReqBody '[JSON] HouseholdOrderItemDetails :> Post '[JSON] ()
 
 data Household = Household 
   { hId :: Int
@@ -97,6 +103,11 @@ instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
 
 instance ToJSON VatRateType
+
+data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidetQuantity :: Maybe Int
+                                                           } deriving (Eq, Show, Generic)
+instance FromJSON HouseholdOrderItemDetails where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
