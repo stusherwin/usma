@@ -6,38 +6,78 @@ import           Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString as B (ByteString)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
+import           Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
 import           Servant
 import           Servant.Multipart
 
-import DomainV2
-import RepositoryV2
+import           DomainV2
+import           RepositoryV2 as R
 
 appServerV2 :: Config -> Text -> Server Api.AppApiV2
 appServerV2 config groupKey =
-  queryServerV2 config groupKey
+       queryServerV2 config groupKey
+  :<|> commandServerV2 config groupKey
   where
   conn = connectionString config
 
 queryServerV2 :: Config -> Text -> Server Api.QueryApiV2
 queryServerV2 config groupKey = 
-       households groupKey
-  :<|> collectiveOrder groupKey
-  :<|> pastCollectiveOrders groupKey
+       households
+  :<|> collectiveOrder
+  :<|> pastCollectiveOrders
   where
-  households :: Text -> Handler [Api.Household]
-  households groupKey = findGroupOr404 config groupKey $ \groupId -> do
+  households :: Handler [Api.Household]
+  households = withGroup $ \groupId -> do
     households <- liftIO $ getHouseholds config groupId
     return $ apiHousehold <$> households
 
-  collectiveOrder :: Text -> Handler (Maybe Api.CollectiveOrder)
-  collectiveOrder groupKey = findGroupOr404 config groupKey $ \groupId -> do
+  collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
+  collectiveOrder = withGroup $ \groupId -> do
     order <- liftIO $ getOrder config groupId
     return $ apiOrder <$> order
 
-  pastCollectiveOrders :: Text -> Handler [Api.CollectiveOrder]
-  pastCollectiveOrders groupKey = findGroupOr404 config groupKey $ \groupId -> do
+  pastCollectiveOrders :: Handler [Api.CollectiveOrder]
+  pastCollectiveOrders = withGroup $ \groupId -> do
     orders <- liftIO $ getPastOrders config groupId
     return $ apiOrder <$> orders
+
+  withGroup :: (OrderGroupId -> Handler a) -> Handler a
+  withGroup handler = do
+    groupId <- liftIO $ getOrderGroupId config (T.unpack groupKey)
+    case groupId of
+      Just id -> handler id
+      _ -> throwError err404
+
+commandServerV2 :: Config -> Text -> Server CommandApiV2
+commandServerV2 config groupKey = 
+       createOrderForHousehold
+  :<|> createOrder
+  :<|> ensureHouseholdOrderItem
+  where
+  createOrderForHousehold :: Int -> Handler Int
+  createOrderForHousehold householdId = withGroup $ \groupId -> do
+    date <- liftIO $ getCurrentTime
+    orderId <- liftIO $ R.createOrder config groupId $ OrderSpec date $ Just $ HouseholdId householdId
+    return $ fromOrderId orderId
+
+  createOrder :: Handler Int
+  createOrder = withGroup $ \groupId -> do
+    date <- liftIO $ getCurrentTime
+    orderId <- liftIO $ R.createOrder config groupId $ OrderSpec date Nothing
+    return $ fromOrderId orderId
+  
+  ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
+  ensureHouseholdOrderItem orderId householdId productCode details = withGroup $ \groupId -> do
+    date <- liftIO $ getCurrentTime
+    -- liftIO $ D.ensureHouseholdOrderItem conn groupId orderId householdId productCode date details
+    return ()
+
+  withGroup :: (OrderGroupId -> Handler a) -> Handler a
+  withGroup handler = do
+    groupId <- liftIO $ getOrderGroupId config (T.unpack groupKey)
+    case groupId of
+      Just id -> handler id
+      _ -> throwError err404
 
 apiHousehold :: DomainV2.Household -> Api.Household 
 apiHousehold h = Api.Household
@@ -118,10 +158,3 @@ apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
   , oiaProductDiscontinued   = _itemAdjIsDiscontinued a
   }
 apiOrderItemAdjustment _ _ = Nothing
-
-findGroupOr404 :: Config -> Text -> (OrderGroupId -> Handler a) -> Handler a
-findGroupOr404 conn groupKey handler = do
-  groupId <- liftIO $ getOrderGroupId conn (T.unpack groupKey)
-  case groupId of
-    Just id -> handler id
-    _ -> throwError err404
