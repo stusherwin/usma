@@ -2,6 +2,7 @@ module AppServerV2 (appServerV2) where
 
 import           Control.Exception (bracket)
 import           Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
@@ -28,19 +29,19 @@ queryServerV2 config =
   :<|> pastCollectiveOrders
   where
   households :: Handler [Api.Household]
-  households = connectRepository config $ \conn -> do
+  households = withRepository config $ \conn -> do
     households <- liftIO $ getHouseholds conn
-    return $ Just $ apiHousehold <$> households
+    return $ apiHousehold <$> households
 
   collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
-  collectiveOrder = connectRepository config $ \conn -> do
+  collectiveOrder = withRepository config $ \conn -> do
     order <- liftIO $ getOrder conn
-    return $ Just $ apiOrder <$> order
+    return $ apiOrder <$> order
 
   pastCollectiveOrders :: Handler [Api.CollectiveOrder]
-  pastCollectiveOrders = connectRepository config $ \conn -> do
+  pastCollectiveOrders = withRepository config $ \conn -> do
     orders <- liftIO $ getPastOrders conn
-    return $ Just $ apiOrder <$> orders
+    return $ apiOrder <$> orders
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
@@ -50,28 +51,25 @@ commandServerV2 config  =
   where
 
   createOrderForHousehold :: Int -> Handler Int
-  createOrderForHousehold householdId = connectRepository config $ \conn -> do
-    date <- getCurrentTime
-    orderId <- newOrder conn $ OrderSpec date $ Just $ HouseholdId householdId
-    return $ Just $ fromOrderId orderId
+  createOrderForHousehold householdId = withRepository config $ \conn -> do
+    date <- liftIO $ getCurrentTime
+    orderId <- liftIO $ newOrder conn $ OrderSpec date $ Just $ HouseholdId householdId
+    return $ fromOrderId orderId
 
   createOrder :: Handler Int
-  createOrder = connectRepository config $ \conn -> do
+  createOrder = withRepository config $ \conn -> do
     date <- liftIO $ getCurrentTime
     orderId <- liftIO $ newOrder conn $ OrderSpec date Nothing
-    return $ Just $ fromOrderId orderId
+    return $ fromOrderId orderId
 
   ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
-  ensureHouseholdOrderItem orderId householdId productCode details = connectRepository config $ \conn -> do
-    date <- liftIO $ getCurrentTime
+  ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \conn -> do
     order <- liftIO $ getHouseholdOrder conn (OrderId orderId) (HouseholdId householdId)
-    case order of
-      Just ho -> return $ Just ()
-      _ -> return Nothing
+    return ()
 
-connectRepository :: RepositoryConfig -> (RepositoryConnection -> IO (Maybe a)) -> Handler a
-connectRepository config handler = do
-  result <- liftIO $ connect config $ handler
+withRepository :: RepositoryConfig -> (RepositoryConnection -> MaybeT IO a) -> Handler a
+withRepository config handler = do
+  result <- liftIO $ runMaybeT $ connect config $ handler
   case result of
     Just id -> return id
     _ -> throwError err404
