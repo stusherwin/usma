@@ -29,6 +29,24 @@ import Prelude hiding (sum)
 import Config (Config(..))
 import DomainV2
 
+data RepositoryConfig = RepositoryConfig { config :: Config, groupKey :: String }
+data RepositoryConnection = RepositoryConnection { connection :: Connection, groupId :: OrderGroupId }
+
+-- TODO: convert to MaybeT IO ?
+connect :: RepositoryConfig -> (RepositoryConnection -> IO (Maybe a)) -> IO (Maybe a)
+connect conf action = do
+  conn <- connectPostgreSQL $ connectionString $ config $ conf
+  (maybeGroupId :: [Only Int]) <- query conn [sql|
+    select id
+    from order_group
+    where key = ?
+  |] (Only $ groupKey conf)
+  result <- case maybeGroupId of
+    [Only groupId] -> withTransaction conn $ action $ RepositoryConnection conn $ OrderGroupId groupId
+    _ -> return Nothing
+  close $ conn
+  return result
+
 getOrderGroupId :: Config -> String -> IO (Maybe OrderGroupId)
 getOrderGroupId config groupKey = do
   conn <- connectPostgreSQL $ connectionString config
@@ -40,52 +58,52 @@ getOrderGroupId config groupKey = do
   close conn
   return $ fmap OrderGroupId $ listToMaybe $ fmap fromOnly $ (result :: [Only Int])
 
-getHouseholds :: Config -> OrderGroupId -> IO [Household]
-getHouseholds config groupId = do
-  conn <- connectPostgreSQL $ connectionString config
-  (rHouseholds, rHouseholdOrders, rOrderItems, rPayments) <- withTransaction conn $ do
-    rHouseholds <- selectHouseholdRows groupId conn
-    rHouseholdOrders <- selectHouseholdOrderRows groupId [] conn
-    rOrderItems <- selectHouseholdOrderItemRows groupId [] conn
-    rPayments <- selectPayments groupId conn
+getHouseholds :: RepositoryConnection -> IO [Household]
+getHouseholds conn = do
+  (rHouseholds, rHouseholdOrders, rOrderItems, rPayments) <- do
+    rHouseholds <- selectHouseholdRows conn
+    rHouseholdOrders <- selectHouseholdOrderRows conn []
+    rOrderItems <- selectHouseholdOrderItemRows conn []
+    rPayments <- selectPayments conn
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
-  close conn
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
-getOrder :: Config -> OrderGroupId -> IO (Maybe Order)
-getOrder config groupId = do
-  conn <- connectPostgreSQL $ connectionString config
-  (rOrders, rHouseholdOrders, rOrderItems) <- withTransaction conn $ do
-    rOrders <- selectOrderRows groupId [OrderIsCurrent] conn
-    rHouseholdOrders <- selectHouseholdOrderRows groupId [OrderIsCurrent] conn
-    rOrderItems <- selectHouseholdOrderItemRows groupId [OrderIsCurrent] conn
+getOrder :: RepositoryConnection -> IO (Maybe Order)
+getOrder conn = do
+  (rOrders, rHouseholdOrders, rOrderItems) <- do
+    rOrders <- selectOrderRows conn [OrderIsCurrent]
+    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
+    rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsCurrent]
     return (rOrders, rHouseholdOrders, rOrderItems)
-  close conn
   return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
     
-getPastOrders :: Config -> OrderGroupId -> IO [Order]
-getPastOrders config groupId = do
-  conn <- connectPostgreSQL $ connectionString config
-  (rOrders, rHouseholdOrders, rOrderItems) <- withTransaction conn $ do
-    rOrders <- selectOrderRows groupId [OrderIsPast] conn
-    rHouseholdOrders <- selectHouseholdOrderRows groupId [OrderIsPast] conn
-    rOrderItems <- selectHouseholdOrderItemRows groupId [OrderIsPast] conn
+getPastOrders :: RepositoryConnection -> IO [Order]
+getPastOrders conn = do
+  (rOrders, rHouseholdOrders, rOrderItems) <- do
+    rOrders <- selectOrderRows conn [OrderIsPast]
+    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsPast]
+    rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsPast]
     return (rOrders, rHouseholdOrders, rOrderItems)
-  close conn
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
-createOrder :: Config -> OrderGroupId -> OrderSpec -> IO OrderId
-createOrder config groupId spec = do
-  conn <- connectPostgreSQL $ connectionString config
-  [Only id] <- query conn [sql|
+getHouseholdOrder :: RepositoryConnection -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
+getHouseholdOrder conn orderId householdId = do
+  (rHouseholdOrders, rOrderItems) <- do
+    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
+    rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsCurrent]
+    return (rHouseholdOrders, rOrderItems)
+  return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
+
+newOrder :: RepositoryConnection -> OrderSpec -> IO OrderId
+newOrder conn spec = do
+  [Only id] <- query (connection conn) [sql|
     insert into "order" (order_group_id, created_date, created_by_id) values (?, ?, ?) returning id
-  |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
-  close conn
+  |] (groupId conn, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
 
-selectHouseholdRows :: OrderGroupId -> Connection -> IO [HouseholdRow]
-selectHouseholdRows groupId conn = 
-  query conn ([sql|
+selectHouseholdRows :: RepositoryConnection -> IO [HouseholdRow]
+selectHouseholdRows conn = 
+  query (connection conn) ([sql|
     select h.id
          , h.name
          , h.contact_name
@@ -94,11 +112,11 @@ selectHouseholdRows groupId conn =
     from household h
     where h.archived = false and h.order_group_id = ?
     order by h.name asc
-  |]) (Only groupId)
+  |]) (Only $ groupId conn)
 
-selectPayments :: OrderGroupId -> Connection -> IO [Payment]
-selectPayments groupId conn = 
-  query conn [sql|
+selectPayments :: RepositoryConnection -> IO [Payment]
+selectPayments conn = 
+  query (connection conn) [sql|
     select p.id
          , p.household_id
          , p."date"
@@ -106,11 +124,11 @@ selectPayments groupId conn =
     from household_payment p
     where p.archived = false and p.order_group_id = ?
     order by p.id asc
-  |] (Only groupId)
+  |] (Only $ groupId conn)
 
-selectOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [OrderRow]
-selectOrderRows groupId whereCondition conn = 
-  query conn ([sql|
+selectOrderRows :: RepositoryConnection -> [WhereCondition] -> IO [OrderRow]
+selectOrderRows conn whereCondition = 
+  query (connection conn) ([sql|
     select o.id
          , o.created
          , cb.id as created_by_household_id
@@ -126,11 +144,11 @@ selectOrderRows groupId whereCondition conn =
           OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
     order by o.id desc
-  |]) (Only groupId)
+  |]) (Only $ groupId conn)
 
-selectHouseholdOrderRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [HouseholdOrderRow]
-selectHouseholdOrderRows groupId whereCondition conn = 
-  query conn ([sql|
+selectHouseholdOrderRows :: RepositoryConnection -> [WhereCondition] -> IO [HouseholdOrderRow]
+selectHouseholdOrderRows conn whereCondition = 
+  query (connection conn) ([sql|
   select o.id as order_id 
        , o.created
        , cb.id as created_by_household_id
@@ -158,11 +176,11 @@ selectHouseholdOrderRows groupId whereCondition conn =
           OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
   order by o.id desc, h.name asc
-|]) (Only groupId)
+|]) (Only $ groupId conn)
 
-selectHouseholdOrderItemRows :: OrderGroupId -> [WhereCondition] -> Connection -> IO [(OrderId, HouseholdId) :. OrderItemRow]
-selectHouseholdOrderItemRows groupId whereCondition conn = 
-  query conn ([sql|
+selectHouseholdOrderItemRows :: RepositoryConnection -> [WhereCondition] -> IO [(OrderId, HouseholdId) :. OrderItemRow]
+selectHouseholdOrderItemRows conn whereCondition = 
+  query (connection conn) ([sql|
     select hoi.order_id
          , hoi.household_id
          , p.id
@@ -204,7 +222,7 @@ selectHouseholdOrderItemRows groupId whereCondition conn =
           OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
      <> [sql|
     order by hoi.ix
-  |]) (Only groupId)
+  |]) (Only $ groupId conn)
 
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 
