@@ -11,6 +11,8 @@ module RepositoryV2 where
 import Control.Applicative ((<|>))
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import Control.Monad.Trans.Class (lift)
 import Data.ByteString (ByteString)
 import Data.List (find, foldl')
 import Data.Maybe (listToMaybe, fromMaybe)
@@ -32,19 +34,17 @@ import DomainV2
 data RepositoryConfig = RepositoryConfig { config :: Config, groupKey :: String }
 data RepositoryConnection = RepositoryConnection { connection :: Connection, groupId :: OrderGroupId }
 
--- TODO: convert to MaybeT IO ?
-connect :: RepositoryConfig -> (RepositoryConnection -> IO (Maybe a)) -> IO (Maybe a)
+connect :: RepositoryConfig -> (RepositoryConnection -> MaybeT IO a) -> MaybeT IO a
 connect conf action = do
-  conn <- connectPostgreSQL $ connectionString $ config $ conf
-  (maybeGroupId :: [Only Int]) <- query conn [sql|
+  conn <- liftIO $ connectPostgreSQL $ connectionString $ config $ conf
+  (maybeGroupId :: [Only Int]) <- liftIO $ query conn [sql|
     select id
     from order_group
     where key = ?
   |] (Only $ groupKey conf)
-  result <- case maybeGroupId of
-    [Only groupId] -> withTransaction conn $ action $ RepositoryConnection conn $ OrderGroupId groupId
-    _ -> return Nothing
-  close $ conn
+  connection <- MaybeT . return $ RepositoryConnection conn . OrderGroupId . fromOnly <$> listToMaybe maybeGroupId
+  result <- MaybeT $ liftIO $ withTransaction conn $ runMaybeT $ action connection
+  liftIO $ close conn
   return result
 
 getOrderGroupId :: Config -> String -> IO (Maybe OrderGroupId)
