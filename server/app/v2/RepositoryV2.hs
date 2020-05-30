@@ -57,6 +57,9 @@ getHouseholds conn = do
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
+createProduct :: Repository -> String -> IO (Maybe Product)
+createProduct conn code = return Nothing
+
 getOrder :: Repository -> IO (Maybe Order)
 getOrder conn = do
   (rOrders, rHouseholdOrders, rOrderItems) <- do
@@ -75,8 +78,8 @@ getPastOrders conn = do
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
-getHouseholdOrder :: Repository -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
-getHouseholdOrder conn orderId householdId = do
+createHouseholdOrder :: Repository -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
+createHouseholdOrder conn orderId householdId = do
   (rHouseholdOrders, rOrderItems) <- do
     rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
     rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsCurrent]
@@ -89,6 +92,10 @@ newOrder conn spec = do
     insert into "order" (order_group_id, created_date, created_by_id) values (?, ?, ?) returning id
   |] (groupId conn, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
+
+updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
+updateHouseholdOrder conn order = do
+  return ()
 
 selectHouseholdRows :: Repository -> IO [HouseholdRow]
 selectHouseholdRows conn = 
