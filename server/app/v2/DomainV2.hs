@@ -6,7 +6,7 @@ module DomainV2 where
 import Data.Function (on)
 import Data.Time.Clock (UTCTime)
 import Data.Semigroup (Semigroup(..))
-import Data.List (groupBy, maximumBy)
+import Data.List (groupBy, maximumBy, find)
 import Data.Maybe (isJust, maybe, fromMaybe)
 import Data.Ord (comparing)
 import qualified Data.List.NonEmpty as NE (fromList)
@@ -211,6 +211,9 @@ isHouseholdOrderComplete _ = False
 isHouseholdOrderAbandoned :: HouseholdOrder -> Bool
 isHouseholdOrderAbandoned (HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned }) = True
 isHouseholdOrderAbandoned _ = False
+
+findHouseholdOrderItem :: String -> HouseholdOrder -> Maybe OrderItem
+findHouseholdOrderItem code = find ((code ==) . _productCode . _productInfo . _itemProduct) . _householdOrderItems
 
 {- OrderItem -}
 
