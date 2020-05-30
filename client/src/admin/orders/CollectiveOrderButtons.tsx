@@ -14,7 +14,7 @@ interface CollectiveOrderButtonsProps {
 
 export const CollectiveOrderButtons = ({order, newOrder, abandonOrder, placeOrder, reconcileOrder, uploadOrderFile}: CollectiveOrderButtonsProps) => {
   const newOrderPossible = !order || order.orderIsPlaced || order.orderIsAbandoned
-  const allComplete = !!order && order.householdOrders.reduce((complete: boolean, ho: HouseholdOrder) => complete && !ho.isOpen, true)
+  const allComplete = !!order && order.isComplete;
   const orderMinimumReached = !!order && order.totalIncVat >= 25000
   const placeOrderPossible = !!order && !order.orderIsPlaced && !order.orderIsAbandoned && !!order.householdOrders.length && allComplete /*&& allPaid*/ && orderMinimumReached
 
