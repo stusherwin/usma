@@ -11,7 +11,7 @@ export function getMessages(order: CollectiveOrder | undefined): Message[] {
   if(!order || order.orderIsPlaced || order.orderIsAbandoned)
     return []
 
-  const allComplete = order.householdOrders.reduce((complete, ho) => complete && !ho.isOpen, true)
+  const allComplete = order.isComplete;
   const allHouseholdsUpToDate = order.allHouseholdsUpToDate;
   const orderMinimumReached = order.totalIncVat >= 25000
 

@@ -267,17 +267,19 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
     (rOrders, rItems) <- withTransaction conn $ do
       os <- query conn [sql|
         with orders as (
-          select o.id, o.created_date, h.id as created_by_id, h.name as created_by_name, 
-            coalesce(bool_and(ho.complete), false) as complete
+          select o.id, o.created_date, h.id as created_by_id, h.name as created_by_name
           from "order" o
           left join household h on h.id = o.created_by_id
           left join household_order ho on ho.order_id = o.id
+          left join household_order_item hoi on hoi.household_id = ho.household_id and hoi.order_id = ho.order_id
           where o.order_group_id = ?
           group by o.id, o.created_date, h.id, h.name
           order by o.id desc
         ),
         household_orders as (
-          select ho.order_id, ho.household_id, max(p.updated) <= ho.updated as up_to_date,
+          select ho.order_id, ho.household_id, ho.complete, 
+            count(hoi.product_id) as item_count,
+            max(p.updated) <= ho.updated as up_to_date,
             coalesce(sum(hoi.item_total_exc_vat), 0) as old_total_exc_vat, 
             coalesce(sum(hoi.item_total_inc_vat), 0) as old_total_inc_vat,
             coalesce(sum(case when p.discontinued then 0 
@@ -291,9 +293,10 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           inner join product p on p.id = hoi.product_id
           inner join vat_rate v on v.code = p.vat_rate
           where ho.cancelled = false and ho.order_group_id = ?
-          group by ho.order_id, ho.household_id
+          group by ho.order_id, ho.household_id, ho.complete
         )
-        select o.id, o.created_date, o.created_by_id, o.created_by_name, o.complete, 
+        select o.id, o.created_date, o.created_by_id, o.created_by_name, 
+          coalesce(bool_and(ho.complete or ho.item_count = 0), false) as complete,
           cast(coalesce(sum(ho.old_total_exc_vat), 0) as int) as old_total_exc_vat,
           cast(coalesce(sum(ho.old_total_inc_vat), 0) as int) as old_total_inc_vat,
           cast(coalesce(sum(ho.total_exc_vat), 0) as int) as total_exc_vat,
@@ -301,7 +304,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
           coalesce(bool_and(ho.up_to_date), true) as all_up_to_date
         from orders o
         left join household_orders ho on ho.order_id = o.id
-        group by o.id, o.created_date, o.created_by_id, o.created_by_name, o.complete
+        group by o.id, o.created_date, o.created_by_id, o.created_by_name
         order by o.id desc
       |] (groupId, groupId)
       is <- query conn [sql|
