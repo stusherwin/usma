@@ -1,8 +1,8 @@
 module AppServerV2 (appServerV2) where
 
-import           Control.Exception (bracket)
 import           Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import           Control.Monad.Trans.Class (lift)
+import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
@@ -17,10 +17,10 @@ import           RepositoryV2 as R
 
 appServerV2 :: Config -> Text -> Server Api.AppApiV2
 appServerV2 config groupKey =
-       queryServerV2 details
-  :<|> commandServerV2 details
+       queryServerV2 repoConfig
+  :<|> commandServerV2 repoConfig
   where
-  details = RepositoryConfig config (T.unpack groupKey)
+  repoConfig = RepositoryConfig (connectionString config) (T.unpack groupKey)
 
 queryServerV2 :: RepositoryConfig -> Server Api.QueryApiV2
 queryServerV2 config = 
@@ -29,18 +29,18 @@ queryServerV2 config =
   :<|> pastCollectiveOrders
   where
   households :: Handler [Api.Household]
-  households = withRepository config $ \conn -> do
-    households <- liftIO $ getHouseholds conn
+  households = withRepository config $ \repo -> do
+    households <- liftIO $ getHouseholds repo
     return $ apiHousehold <$> households
 
   collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
-  collectiveOrder = withRepository config $ \conn -> do
-    order <- liftIO $ getOrder conn
+  collectiveOrder = withRepository config $ \repo -> do
+    order <- liftIO $ getOrder repo
     return $ apiOrder <$> order
 
   pastCollectiveOrders :: Handler [Api.CollectiveOrder]
-  pastCollectiveOrders = withRepository config $ \conn -> do
-    orders <- liftIO $ getPastOrders conn
+  pastCollectiveOrders = withRepository config $ \repo -> do
+    orders <- liftIO $ getPastOrders repo
     return $ apiOrder <$> orders
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
@@ -51,27 +51,32 @@ commandServerV2 config  =
   where
 
   createOrderForHousehold :: Int -> Handler Int
-  createOrderForHousehold householdId = withRepository config $ \conn -> do
+  createOrderForHousehold householdId = withRepository config $ \repo -> do
     date <- liftIO $ getCurrentTime
-    orderId <- liftIO $ newOrder conn $ OrderSpec date $ Just $ HouseholdId householdId
+    orderId <- liftIO $ newOrder repo $ OrderSpec date $ Just $ HouseholdId householdId
     return $ fromOrderId orderId
 
   createOrder :: Handler Int
-  createOrder = withRepository config $ \conn -> do
-    date <- liftIO $ getCurrentTime
-    orderId <- liftIO $ newOrder conn $ OrderSpec date Nothing
+  createOrder = withRepository config $ \repo -> do
+    date <- liftIO getCurrentTime
+    orderId <- liftIO $ newOrder repo $ OrderSpec date Nothing
     return $ fromOrderId orderId
 
   ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
-  ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \conn -> do
-    order <- liftIO $ getHouseholdOrder conn (OrderId orderId) (HouseholdId householdId)
+  ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \repo -> do
+    order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
+    item <- case findHouseholdOrderItem productCode order of
+              Just i -> return i
+              _ -> do
+                product <- MaybeT $ getProduct repo productCode
+                return $ orderItem product (hoidetQuantity details) Nothing
     return ()
 
-withRepository :: RepositoryConfig -> (RepositoryConnection -> MaybeT IO a) -> Handler a
-withRepository config handler = do
-  result <- liftIO $ runMaybeT $ connect config $ handler
+withRepository :: RepositoryConfig -> (Repository -> MaybeT IO a) -> Handler a
+withRepository config query = do
+  result <- liftIO $ runMaybeT $ connect config $ query
   case result of
-    Just id -> return id
+    Just r -> return r
     _ -> throwError err404
 
 apiHousehold :: DomainV2.Household -> Api.Household 
