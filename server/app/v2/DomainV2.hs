@@ -6,7 +6,7 @@ module DomainV2 where
 import Data.Function (on)
 import Data.Time.Clock (UTCTime)
 import Data.Semigroup (Semigroup(..))
-import Data.List (groupBy, maximumBy, find)
+import Data.List (groupBy, maximumBy, find, delete)
 import Data.Maybe (isJust, maybe, fromMaybe)
 import Data.Ord (comparing)
 import qualified Data.List.NonEmpty as NE (fromList)
@@ -212,8 +212,19 @@ isHouseholdOrderAbandoned :: HouseholdOrder -> Bool
 isHouseholdOrderAbandoned (HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned }) = True
 isHouseholdOrderAbandoned _ = False
 
-findHouseholdOrderItem :: String -> HouseholdOrder -> Maybe OrderItem
-findHouseholdOrderItem code = find ((code ==) . _productCode . _productInfo . _itemProduct) . _householdOrderItems
+updateHouseholdOrderItem :: Product -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
+updateHouseholdOrderItem product maybeQuantity order = 
+    order { _householdOrderItems = items'
+          , _householdOrderTotal = sum . map _itemTotal $ items'
+          }
+  where
+    items = _householdOrderItems order
+    (item', itemsWithoutItem) = case find ((== productCode) . itemProductCode) items of
+      Just i -> (updateOrderItemQuantity (fromMaybe (_itemQuantity i) maybeQuantity) i, delete i items)
+      _      -> (orderItem product 1 Nothing, items)                       
+    items' = item':itemsWithoutItem
+    productCode = _productCode . _productInfo $ product
+    itemProductCode = _productCode . _productInfo . _itemProduct
 
 {- OrderItem -}
 
@@ -226,6 +237,11 @@ data OrderItem = OrderItem
 
 orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
 orderItem product quantity adjustment = OrderItem product quantity ((_priceAmount . _productPrice . _productInfo $ product) * fromIntegral quantity) adjustment
+
+updateOrderItemQuantity :: Int -> OrderItem -> OrderItem
+updateOrderItemQuantity quantity item = item { _itemQuantity = quantity
+                                             , _itemTotal = ((_priceAmount . _productPrice . _productInfo . _itemProduct $ item) * fromIntegral quantity)
+                                             }
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)

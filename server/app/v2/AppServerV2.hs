@@ -64,12 +64,10 @@ commandServerV2 config  =
 
   ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
   ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \repo -> do
-    order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
-    item <- case findHouseholdOrderItem productCode order of
-              Just i -> return i
-              _ -> do
-                product <- MaybeT $ getProduct repo productCode
-                return $ orderItem product (hoidetQuantity details) Nothing
+    order <- MaybeT $ createHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
+    product <- MaybeT $ createProduct repo productCode
+    let order' = updateHouseholdOrderItem product (hoidetQuantity details) order
+    liftIO $ updateHouseholdOrder repo order'
     return ()
 
 withRepository :: RepositoryConfig -> (Repository -> MaybeT IO a) -> Handler a
