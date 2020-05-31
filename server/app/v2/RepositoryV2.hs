@@ -9,7 +9,7 @@
 module RepositoryV2 where 
 
 import Control.Applicative ((<|>))
-import Control.Monad (mzero)
+import Control.Monad (mzero, forM_, void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Control.Monad.Trans.Class (lift)
@@ -20,7 +20,7 @@ import Data.Monoid ((<>))
 import qualified Data.Text as T (pack)
 import Data.Text.Encoding (encodeUtf8)
 import Data.Time.Clock (UTCTime)
-import Database.PostgreSQL.Simple (Connection, Only(..), Query, (:.)(..), connectPostgreSQL, close, withTransaction, query, query_)
+import Database.PostgreSQL.Simple (Connection, Only(..), Query, (:.)(..), connectPostgreSQL, close, withTransaction, query, query_, execute)
 import Database.PostgreSQL.Simple.FromField (FromField(..))
 import Database.PostgreSQL.Simple.FromRow (FromRow(..), RowParser, field)
 import Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
@@ -58,7 +58,29 @@ getHouseholds conn = do
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
 createProduct :: Repository -> String -> IO (Maybe Product)
-createProduct conn code = return Nothing
+createProduct conn code = do
+  execute (connection conn) [sql|
+    insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
+    select ce.code
+         , concat_ws(' ', nullif(btrim(ce.brand), '')
+                        , nullif(btrim(ce."description"), '')
+                        , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                        , nullif(btrim(ce."text"), ''))
+         , ce.price
+         , ce.vat_rate
+         , false
+         , ce.updated
+         , ce.biodynamic
+         , ce.fair_trade 
+         , ce.gluten_free 
+         , ce.organic
+         , ce.added_sugar
+         , ce.vegan                    
+    from catalogue_entry ce
+    where ce.code = ?
+    on conflict ("code") do nothing
+  |] (Only code)
+  listToMaybe <$> selectProductsByCode conn code
 
 getOrder :: Repository -> IO (Maybe Order)
 getOrder conn = do
@@ -78,8 +100,14 @@ getPastOrders conn = do
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
-createHouseholdOrder :: Repository -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
-createHouseholdOrder conn orderId householdId = do
+createHouseholdOrder :: Repository -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
+createHouseholdOrder conn orderId householdId date = do
+  execute (connection conn) [sql|
+    insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) 
+    values (?, ?, ?, ?, false, false)
+    on conflict (order_group_id, order_id, household_id) do nothing
+  |] (groupId conn, orderId, householdId, date)
+
   (rHouseholdOrders, rOrderItems) <- do
     rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
     rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsCurrent]
@@ -89,13 +117,31 @@ createHouseholdOrder conn orderId householdId = do
 newOrder :: Repository -> OrderSpec -> IO OrderId
 newOrder conn spec = do
   [Only id] <- query (connection conn) [sql|
-    insert into "order" (order_group_id, created_date, created_by_id) values (?, ?, ?) returning id
+    insert into "order" (order_group_id, created_date, created_by_id) 
+    values (?, ?, ?) 
+    returning id
   |] (groupId conn, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
 
 updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
 updateHouseholdOrder conn order = do
-  return ()
+  let orderId = _orderId . _householdOrderOrderInfo $ order
+  let householdId = _householdId . _householdOrderHouseholdInfo $ order
+  forM_ (_householdOrderItems order) $ \i -> do
+    let productId = fromProductId . _productId . _productInfo . _itemProduct $ i
+    let productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice . _productInfo . _itemProduct $ i
+    let productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice . _productInfo . _itemProduct $ i
+    let quantity = _itemQuantity i
+    let itemTotalExcVat = _moneyExcVat . _itemTotal $ i
+    let itemTotalIncVat = _moneyIncVat . _itemTotal $ i
+    void $ execute (connection conn) [sql|
+      insert into household_order_item as hoi (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
+      values (?, ?, ?, ?, ?, ?, ?, ? ,?)
+      on conflict (order_id, household_id, product_id) do update
+      set quantity = hoi.quantity
+        , item_total_exc_vat = hoi.item_total_exc_vat
+        , item_total_inc_vat = hoi.item_total_inc_vat
+    |] (groupId conn, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity, itemTotalExcVat, itemTotalIncVat)
 
 selectHouseholdRows :: Repository -> IO [HouseholdRow]
 selectHouseholdRows conn = 
@@ -220,6 +266,26 @@ selectHouseholdOrderItemRows repo whereCondition =
     order by hoi.ix
   |]) (Only $ groupId repo)
 
+selectProductsByCode :: Repository -> String -> IO [Product]
+selectProductsByCode repo code = 
+  query (connection repo) ([sql|
+    select p.id
+         , p.code
+         , p.name
+         , p.vat_rate
+         , v.multiplier
+         , p.price
+         , p.updated
+         , p.biodynamic
+         , p.fair_trade
+         , p.gluten_free
+         , p.organic
+         , p.added_sugar
+         , p.vegan
+    from v2.product p 
+    where p.code = ? 
+  |]) (Only code)
+
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 
   household householdInfo
@@ -336,6 +402,9 @@ data OrderItemRow = OrderItemRow
 
 instance FromRow OrderItemRow where
   fromRow = OrderItemRow <$> productField <*> field <*> maybeOrderItemAdjustmentField
+
+instance FromRow Product where
+  fromRow = Product <$> productInfoField <*> productFlagsField
 
 productField :: RowParser Product
 productField = Product <$> productInfoField <*> productFlagsField
