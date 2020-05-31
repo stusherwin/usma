@@ -219,12 +219,18 @@ updateHouseholdOrderItem product maybeQuantity order =
           }
   where
     items = _householdOrderItems order
-    (item', itemsWithoutItem) = case find ((== productCode) . itemProductCode) items of
-      Just i -> (updateOrderItemQuantity (fromMaybe (_itemQuantity i) maybeQuantity) i, delete i items)
-      _      -> (orderItem product 1 Nothing, items)                       
-    items' = item':itemsWithoutItem
+    items' = addOrUpdate ((== productCode) . itemProductCode) 
+                         (orderItem product 1 Nothing) 
+                         (updateOrderItemQuantity maybeQuantity) 
+                         items
     productCode = _productCode . _productInfo $ product
     itemProductCode = _productCode . _productInfo . _itemProduct
+
+addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
+addOrUpdate cond n update (x:xs)
+  | cond x = (update x):xs
+  | otherwise = x:(addOrUpdate cond n update xs)
+addOrUpdate _ n _ [] = [n]
 
 {- OrderItem -}
 
@@ -238,10 +244,13 @@ data OrderItem = OrderItem
 orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
 orderItem product quantity adjustment = OrderItem product quantity ((_priceAmount . _productPrice . _productInfo $ product) * fromIntegral quantity) adjustment
 
-updateOrderItemQuantity :: Int -> OrderItem -> OrderItem
-updateOrderItemQuantity quantity item = item { _itemQuantity = quantity
-                                             , _itemTotal = ((_priceAmount . _productPrice . _productInfo . _itemProduct $ item) * fromIntegral quantity)
-                                             }
+updateOrderItemQuantity :: Maybe Int -> OrderItem -> OrderItem
+updateOrderItemQuantity maybeQuantity item = 
+    item { _itemQuantity = quantity
+         , _itemTotal = ((_priceAmount . _productPrice . _productInfo . _itemProduct $ item) * fromIntegral quantity)
+         }
+  where
+    quantity = fromMaybe (_itemQuantity item) maybeQuantity
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)
