@@ -17,59 +17,66 @@ import           RepositoryV2 as R
 
 appServerV2 :: Config -> Text -> Server Api.AppApiV2
 appServerV2 config groupKey =
-       queryServerV2 repoConfig
-  :<|> commandServerV2 repoConfig
+         queryServerV2 repoConfig
+    :<|> commandServerV2 repoConfig
   where
-  repoConfig = RepositoryConfig (connectionString config) (T.unpack groupKey)
+    repoConfig = RepositoryConfig (connectionString config) (T.unpack groupKey)
 
 queryServerV2 :: RepositoryConfig -> Server Api.QueryApiV2
 queryServerV2 config = 
-       households
-  :<|> collectiveOrder
-  :<|> pastCollectiveOrders
+         households
+    :<|> collectiveOrder
+    :<|> pastCollectiveOrders
   where
-  households :: Handler [Api.Household]
-  households = withRepository config $ \repo -> do
-    households <- liftIO $ getHouseholds repo
-    return $ apiHousehold <$> households
+    households :: Handler [Api.Household]
+    households = withRepository config $ \repo -> do
+      households <- liftIO $ getHouseholds repo
+      return $ apiHousehold <$> households
 
-  collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
-  collectiveOrder = withRepository config $ \repo -> do
-    order <- liftIO $ getOrder repo
-    return $ apiOrder <$> order
+    collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
+    collectiveOrder = withRepository config $ \repo -> do
+      order <- liftIO $ getOrder repo
+      return $ apiOrder <$> order
 
-  pastCollectiveOrders :: Handler [Api.CollectiveOrder]
-  pastCollectiveOrders = withRepository config $ \repo -> do
-    orders <- liftIO $ getPastOrders repo
-    return $ apiOrder <$> orders
+    pastCollectiveOrders :: Handler [Api.CollectiveOrder]
+    pastCollectiveOrders = withRepository config $ \repo -> do
+      orders <- liftIO $ getPastOrders repo
+      return $ apiOrder <$> orders
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
-       createOrderForHousehold
-  :<|> createOrder
-  :<|> ensureHouseholdOrderItem
+         createOrderForHousehold
+    :<|> createOrder
+    :<|> ensureHouseholdOrderItem
+    :<|> abandonHouseholdOrder
   where
+    createOrderForHousehold :: Int -> Handler Int
+    createOrderForHousehold householdId = withRepository config $ \repo -> do
+      date <- liftIO $ getCurrentTime
+      orderId <- liftIO $ newOrder repo $ OrderSpec date $ Just $ HouseholdId householdId
+      return $ fromOrderId orderId
 
-  createOrderForHousehold :: Int -> Handler Int
-  createOrderForHousehold householdId = withRepository config $ \repo -> do
-    date <- liftIO $ getCurrentTime
-    orderId <- liftIO $ newOrder repo $ OrderSpec date $ Just $ HouseholdId householdId
-    return $ fromOrderId orderId
+    createOrder :: Handler Int
+    createOrder = withRepository config $ \repo -> do
+      date <- liftIO getCurrentTime
+      orderId <- liftIO $ newOrder repo $ OrderSpec date Nothing
+      return $ fromOrderId orderId
 
-  createOrder :: Handler Int
-  createOrder = withRepository config $ \repo -> do
-    date <- liftIO getCurrentTime
-    orderId <- liftIO $ newOrder repo $ OrderSpec date Nothing
-    return $ fromOrderId orderId
+    ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
+    ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \repo -> do
+      date <- liftIO getCurrentTime
+      order <- MaybeT $ createHouseholdOrder repo (OrderId orderId) (HouseholdId householdId) date
+      product <- MaybeT $ createProduct repo productCode
+      let order' = updateHouseholdOrderItem product (hoidetQuantity details) order
+      liftIO $ updateHouseholdOrder repo order'
+      return ()
 
-  ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
-  ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \repo -> do
-    date <- liftIO getCurrentTime
-    order <- MaybeT $ createHouseholdOrder repo (OrderId orderId) (HouseholdId householdId) date
-    product <- MaybeT $ createProduct repo productCode
-    let order' = updateHouseholdOrderItem product (hoidetQuantity details) order
-    liftIO $ updateHouseholdOrder repo order'
-    return ()
+    abandonHouseholdOrder :: Int -> Int -> Handler ()
+    abandonHouseholdOrder orderId householdId = withRepository config $ \repo -> do
+      order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
+      let order' = DomainV2.abandonHouseholdOrder order
+      liftIO $ updateHouseholdOrder repo order'
+      return ()
 
 withRepository :: RepositoryConfig -> (Repository -> MaybeT IO a) -> Handler a
 withRepository config query = do

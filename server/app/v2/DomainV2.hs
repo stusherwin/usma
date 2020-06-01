@@ -226,6 +226,9 @@ updateHouseholdOrderItem product maybeQuantity order =
     productCode = _productCode . _productInfo $ product
     itemProductCode = _productCode . _productInfo . _itemProduct
 
+abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
+abandonHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderAbandoned }
+
 addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
 addOrUpdate cond n update (x:xs)
   | cond x = (update x):xs
