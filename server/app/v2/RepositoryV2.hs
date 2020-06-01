@@ -48,18 +48,18 @@ connect config action = do
   return result
 
 getHouseholds :: Repository -> IO [Household]
-getHouseholds conn = do
+getHouseholds repo = do
   (rHouseholds, rHouseholdOrders, rOrderItems, rPayments) <- do
-    rHouseholds <- selectHouseholdRows conn
-    rHouseholdOrders <- selectHouseholdOrderRows conn []
-    rOrderItems <- selectHouseholdOrderItemRows conn []
-    rPayments <- selectPayments conn
+    rHouseholds <- selectHouseholdRows repo
+    rHouseholdOrders <- selectHouseholdOrderRows repo []
+    rOrderItems <- selectHouseholdOrderItemRows repo []
+    rPayments <- selectPayments repo
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
 createProduct :: Repository -> String -> IO (Maybe Product)
-createProduct conn code = do
-  execute (connection conn) [sql|
+createProduct repo code = do
+  execute (connection repo) [sql|
     insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
     select ce.code
          , concat_ws(' ', nullif(btrim(ce.brand), '')
@@ -80,72 +80,92 @@ createProduct conn code = do
     where ce.code = ?
     on conflict ("code") do nothing
   |] (Only code)
-  listToMaybe <$> selectProductsByCode conn code
+  listToMaybe <$> selectProductsByCode repo code
 
 getOrder :: Repository -> IO (Maybe Order)
-getOrder conn = do
+getOrder repo = do
   (rOrders, rHouseholdOrders, rOrderItems) <- do
-    rOrders <- selectOrderRows conn [OrderIsCurrent]
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
-    rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsCurrent]
+    rOrders <- selectOrderRows repo [OrderIsCurrent]
+    rHouseholdOrders <- selectHouseholdOrderRows repo [OrderIsCurrent]
+    rOrderItems <- selectHouseholdOrderItemRows repo [OrderIsCurrent]
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
     
 getPastOrders :: Repository -> IO [Order]
-getPastOrders conn = do
+getPastOrders repo = do
   (rOrders, rHouseholdOrders, rOrderItems) <- do
-    rOrders <- selectOrderRows conn [OrderIsPast]
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsPast]
-    rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsPast]
+    rOrders <- selectOrderRows repo [OrderIsPast]
+    rHouseholdOrders <- selectHouseholdOrderRows repo [OrderIsPast]
+    rOrderItems <- selectHouseholdOrderItemRows repo [OrderIsPast]
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
 createHouseholdOrder :: Repository -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
-createHouseholdOrder conn orderId householdId date = do
-  execute (connection conn) [sql|
+createHouseholdOrder repo orderId householdId date = do
+  execute (connection repo) [sql|
     insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) 
     values (?, ?, ?, ?, false, false)
     on conflict (order_group_id, order_id, household_id) do nothing
-  |] (groupId conn, orderId, householdId, date)
+  |] (groupId repo, orderId, householdId, date)
 
   (rHouseholdOrders, rOrderItems) <- do
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
-    rOrderItems <- selectHouseholdOrderItemRows conn [OrderIsCurrent]
+    rHouseholdOrders <- selectHouseholdOrderRows repo [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
+    rOrderItems <- selectHouseholdOrderItemRows repo [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
+    return (rHouseholdOrders, rOrderItems)
+  return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
+
+getHouseholdOrder :: Repository -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
+getHouseholdOrder repo orderId householdId = do
+  (rHouseholdOrders, rOrderItems) <- do
+    rHouseholdOrders <- selectHouseholdOrderRows repo [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
+    rOrderItems <- selectHouseholdOrderItemRows repo [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
     return (rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
 newOrder :: Repository -> OrderSpec -> IO OrderId
-newOrder conn spec = do
-  [Only id] <- query (connection conn) [sql|
+newOrder repo spec = do
+  [Only id] <- query (connection repo) [sql|
     insert into "order" (order_group_id, created_date, created_by_id) 
     values (?, ?, ?) 
     returning id
-  |] (groupId conn, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+  |] (groupId repo, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
 
 updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
-updateHouseholdOrder conn order = do
+updateHouseholdOrder repo order = do
   let orderId = _orderId . _householdOrderOrderInfo $ order
   let householdId = _householdId . _householdOrderHouseholdInfo $ order
+
   forM_ (_householdOrderItems order) $ \i -> do
-    let productId = fromProductId . _productId . _productInfo . _itemProduct $ i
-    let productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice . _productInfo . _itemProduct $ i
-    let productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice . _productInfo . _itemProduct $ i
+    let productInfo = _productInfo . _itemProduct $ i
+    let productId = fromProductId . _productId $ productInfo
+    let productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
+    let productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
     let quantity = _itemQuantity i
     let itemTotalExcVat = _moneyExcVat . _itemTotal $ i
     let itemTotalIncVat = _moneyIncVat . _itemTotal $ i
-    void $ execute (connection conn) [sql|
-      insert into household_order_item as hoi (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
+    void $ execute (connection repo) [sql|
+      insert into household_order_item as hoi 
+        ( order_group_id
+        , order_id
+        , household_id
+        , product_id
+        , product_price_exc_vat
+        , product_price_inc_vat
+        , quantity
+        , item_total_exc_vat
+        , item_total_inc_vat
+        )
       values (?, ?, ?, ?, ?, ?, ?, ? ,?)
-      on conflict (order_id, household_id, product_id) do update
+      on conflict (order_group_id, order_id, household_id, product_id) do update
       set quantity = hoi.quantity
         , item_total_exc_vat = hoi.item_total_exc_vat
         , item_total_inc_vat = hoi.item_total_inc_vat
-    |] (groupId conn, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity, itemTotalExcVat, itemTotalIncVat)
+    |] (groupId repo, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity, itemTotalExcVat, itemTotalIncVat)
 
 selectHouseholdRows :: Repository -> IO [HouseholdRow]
-selectHouseholdRows conn = 
-  query (connection conn) ([sql|
+selectHouseholdRows repo = 
+  query (connection repo) ([sql|
     select h.id
          , h.name
          , h.contact_name
@@ -154,11 +174,11 @@ selectHouseholdRows conn =
     from household h
     where h.archived = false and h.order_group_id = ?
     order by h.name asc
-  |]) (Only $ groupId conn)
+  |]) (Only $ groupId repo)
 
 selectPayments :: Repository -> IO [Payment]
-selectPayments conn = 
-  query (connection conn) [sql|
+selectPayments repo = 
+  query (connection repo) [sql|
     select p.id
          , p.household_id
          , p."date"
@@ -166,105 +186,114 @@ selectPayments conn =
     from household_payment p
     where p.archived = false and p.order_group_id = ?
     order by p.id asc
-  |] (Only $ groupId conn)
+  |] (Only $ groupId repo)
 
-selectOrderRows :: Repository -> [WhereCondition] -> IO [OrderRow]
-selectOrderRows conn whereCondition = 
-  query (connection conn) ([sql|
-    select o.id
-         , o.created
-         , cb.id as created_by_household_id
-         , cb.name as created_by_household_name
-         , o.is_abandoned
-         , o.is_placed
-    from v2."order" o
-    left join v2.household cb
-      on cb.id = o.created_by_id 
-    where o.order_group_id = ?
-  |] <> mapWhere whereCondition (\w -> case w of 
-          OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
-          OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
-     <> [sql|
-    order by o.id desc
-  |]) (Only $ groupId conn)
+selectOrderRows :: Repository -> WhereClause -> IO [OrderRow]
+selectOrderRows repo whereCondition = do
+    query (connection repo) ([sql|
+      select o.id
+           , o.created
+           , cb.id as created_by_household_id
+           , cb.name as created_by_household_name
+           , o.is_abandoned
+           , o.is_placed
+      from v2."order" o
+      left join v2.household cb
+        on cb.id = o.created_by_id 
+      where o.order_group_id = ?
+    |] <> whereSql <> [sql|
+      order by o.id desc
+    |]) (Only (groupId repo) :. whereParams)
+  where 
+    (whereSql, whereParams) = toWhereSql whereCondition $ \case
+      OrderIsCurrent     -> Just ([sql| o.is_abandoned = 'f' and o.is_placed = 'f' |], [])
+      OrderIsPast        -> Just ([sql| o.is_abandoned = 't' or o.is_placed = 't' |], [])
+      (ForOrder orderId) -> Just ([sql| o.id = ? |], [OrderIdParam orderId])
+      _ -> Nothing
 
-selectHouseholdOrderRows :: Repository -> [WhereCondition] -> IO [HouseholdOrderRow]
-selectHouseholdOrderRows conn whereCondition = 
-  query (connection conn) ([sql|
-  select o.id as order_id 
-       , o.created
-       , cb.id as created_by_household_id
-       , cb.name as created_by_household_name
-       , h.id as household_id
-       , h.name as household_name
-       , ho.is_abandoned
-       , o.is_placed
-       , ho.is_complete
-       , ho.updated
-  from v2.household_order ho
-  inner join v2."order" o 
-    on o.id = ho.order_id
-  left join v2.household cb
-    on cb.id = o.created_by_id 
-  inner join v2.household h 
-    on h.id = ho.household_id
-  left join household_order_item hoi 
-    on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
-  left join product p 
-    on p.id = hoi.product_id
-  where o.order_group_id = ?
-  |] <> mapWhere whereCondition (\w -> case w of 
-          OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
-          OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
-     <> [sql|
-  order by o.id desc, h.name asc
-|]) (Only $ groupId conn)
+selectHouseholdOrderRows :: Repository -> WhereClause -> IO [HouseholdOrderRow]
+selectHouseholdOrderRows repo whereCondition = 
+    query (connection repo) ([sql|
+      select o.id as order_id 
+           , o.created
+           , cb.id as created_by_household_id
+           , cb.name as created_by_household_name
+           , h.id as household_id
+           , h.name as household_name
+           , ho.is_abandoned
+           , o.is_placed
+           , ho.is_complete
+           , ho.updated
+      from v2.household_order ho
+      inner join v2."order" o 
+        on o.id = ho.order_id
+      left join v2.household cb
+        on cb.id = o.created_by_id 
+      inner join v2.household h 
+        on h.id = ho.household_id
+      left join household_order_item hoi 
+        on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
+      left join product p 
+        on p.id = hoi.product_id
+      where o.order_group_id = ?
+      |] <> whereSql <> [sql|
+      order by o.id desc, h.name asc
+    |]) (Only (groupId repo) :. whereParams)
+  where
+    (whereSql, whereParams) = toWhereSql whereCondition $ \case
+      OrderIsCurrent     -> Just ([sql| o.is_abandoned = 'f' and o.is_placed = 'f' |], [])
+      OrderIsPast        -> Just ([sql| o.is_abandoned = 't' or o.is_placed = 't' |], [])
+      (ForOrder orderId) -> Just ([sql| o.id = ? |], [OrderIdParam orderId])
+      (ForHousehold householdId) -> Just ([sql| h.id = ? |], [HouseholdIdParam householdId])
 
-selectHouseholdOrderItemRows :: Repository -> [WhereCondition] -> IO [(OrderId, HouseholdId) :. OrderItemRow]
+selectHouseholdOrderItemRows :: Repository -> WhereClause -> IO [(OrderId, HouseholdId) :. OrderItemRow]
 selectHouseholdOrderItemRows repo whereCondition = 
-  query (connection repo) ([sql|
-    select hoi.order_id
-         , hoi.household_id
-         , p.id
-         , p.code
-         , p.name
-         , p.vat_rate
-         , v.multiplier
-         , p.price
-         , p.updated
-         , p.biodynamic
-         , p.fair_trade
-         , p.gluten_free
-         , p.organic
-         , p.added_sugar
-         , p.vegan
-         , hoi.quantity
-         , adj.new_vat_rate
-         , adjv.multiplier
-         , adj.new_price
-         , adj.new_quantity
-         , p.discontinued
-         , adj.date
-    from v2.household_order_item hoi
-    inner join v2.household_order ho 
-      on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
-    inner join v2."order" o
-      on ho.order_id = o.id
-    inner join v2.product p 
-      on p.id = hoi.product_id
-    inner join v2.vat_rate v
-      on v.code = p.vat_rate
-    left join v2.order_item_adjustment adj
-      on adj.order_id = hoi.order_id and adj.household_id = hoi.household_id and adj.product_id = hoi.product_id
-    left join v2.vat_rate adjv
-      on adjv.code = adj.new_vat_rate
-    where o.order_group_id = ? 
-  |] <> mapWhere whereCondition (\w -> case w of 
-          OrderIsCurrent -> [sql| and (o.is_abandoned = 'f' and o.is_placed = 'f') |]
-          OrderIsPast    -> [sql| and (o.is_abandoned = 't' or o.is_placed = 't') |])
-     <> [sql|
-    order by hoi.ix
-  |]) (Only $ groupId repo)
+    query (connection repo) ([sql|
+      select hoi.order_id
+           , hoi.household_id
+           , p.id
+           , p.code
+           , p.name
+           , p.vat_rate
+           , v.multiplier
+           , p.price
+           , p.updated
+           , p.biodynamic
+           , p.fair_trade
+           , p.gluten_free
+           , p.organic
+           , p.added_sugar
+           , p.vegan
+           , hoi.quantity
+           , adj.new_vat_rate
+           , adjv.multiplier
+           , adj.new_price
+           , adj.new_quantity
+           , p.discontinued
+           , adj.date
+      from v2.household_order_item hoi
+      inner join v2.household_order ho 
+        on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
+      inner join v2."order" o
+        on ho.order_id = o.id
+      inner join v2.product p 
+        on p.id = hoi.product_id
+      inner join v2.vat_rate v
+        on v.code = p.vat_rate
+      left join v2.order_item_adjustment adj
+        on adj.order_id = hoi.order_id and adj.household_id = hoi.household_id and adj.product_id = hoi.product_id
+      left join v2.vat_rate adjv
+        on adjv.code = adj.new_vat_rate
+      where o.order_group_id = ? 
+    |] <> whereSql <> [sql|
+      order by hoi.ix
+    |]) (Only (groupId repo) :. whereParams)
+  where
+    (whereSql, whereParams) = toWhereSql whereCondition $ \case
+      OrderIsCurrent     -> Just ([sql| o.is_abandoned = 'f' and o.is_placed = 'f' |], [])
+      OrderIsPast        -> Just ([sql| o.is_abandoned = 't' or o.is_placed = 't' |], [])
+      (ForOrder orderId) -> Just ([sql| o.id = ? |], [OrderIdParam orderId])
+      (ForHousehold householdId) -> Just ([sql| ho.household_id = ? |], [HouseholdIdParam householdId])
 
 selectProductsByCode :: Repository -> String -> IO [Product]
 selectProductsByCode repo code = 
@@ -476,11 +505,25 @@ instance ToField VatRateType where
   toField Standard = toDatabaseChar 'S'
   toField Reduced = toDatabaseChar 'R'
 
+type WhereClause = [WhereCondition]
 data WhereCondition = OrderIsCurrent
                     | OrderIsPast
+                    | ForOrder OrderId
+                    | ForHousehold HouseholdId
 
-mapWhere :: [WhereCondition] -> (WhereCondition -> Query) -> Query
-mapWhere whereCondition = foldl' (<>) mempty . (flip map) whereCondition
+data WhereParam = OrderIdParam OrderId
+                | HouseholdIdParam HouseholdId
+
+instance ToField WhereParam where
+  toField (OrderIdParam a) = toField a
+  toField (HouseholdIdParam a) = toField a
+
+toWhereSql :: WhereClause -> (WhereCondition -> Maybe (Query, [WhereParam])) -> (Query, [WhereParam])
+toWhereSql whereClause fn = foldl' fn' ([sql| |], []) whereClause
+  where
+    fn' (q, p) w = case fn w of
+                     Just (q', p') -> (q <> " and (" <> q' <> ")", p <> p')
+                     _ -> (q, p)
 
 toDatabaseChar :: Char -> Action
 toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
