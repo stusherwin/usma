@@ -47,8 +47,11 @@ commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
          createOrderForHousehold
     :<|> createOrder
-    :<|> ensureHouseholdOrderItem
     :<|> abandonHouseholdOrder
+    :<|> completeHouseholdOrder
+    :<|> reopenHouseholdOrder
+    :<|> ensureHouseholdOrderItem
+    :<|> removeHouseholdOrderItem
   where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = withRepository config $ \repo -> do
@@ -62,6 +65,27 @@ commandServerV2 config  =
       orderId <- liftIO $ newOrder repo $ OrderSpec date Nothing
       return $ fromOrderId orderId
 
+    abandonHouseholdOrder :: Int -> Int -> Handler ()
+    abandonHouseholdOrder orderId householdId = withRepository config $ \repo -> do
+      order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
+      let order' = DomainV2.abandonHouseholdOrder order
+      liftIO $ updateHouseholdOrder repo order'
+      return ()
+
+    completeHouseholdOrder :: Int -> Int -> Handler ()
+    completeHouseholdOrder orderId householdId = withRepository config $ \repo -> do
+      order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
+      let order' = DomainV2.completeHouseholdOrder order
+      liftIO $ updateHouseholdOrder repo order'
+      return ()
+
+    reopenHouseholdOrder :: Int -> Int -> Handler ()
+    reopenHouseholdOrder orderId householdId = withRepository config $ \repo -> do
+      order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
+      let order' = DomainV2.reopenHouseholdOrder order
+      liftIO $ updateHouseholdOrder repo order'
+      return ()
+
     ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \repo -> do
       date <- liftIO getCurrentTime
@@ -71,10 +95,10 @@ commandServerV2 config  =
       liftIO $ updateHouseholdOrder repo order'
       return ()
 
-    abandonHouseholdOrder :: Int -> Int -> Handler ()
-    abandonHouseholdOrder orderId householdId = withRepository config $ \repo -> do
+    removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
+    removeHouseholdOrderItem orderId householdId productId = withRepository config $ \repo -> do
       order <- MaybeT $ getHouseholdOrder repo (OrderId orderId) (HouseholdId householdId)
-      let order' = DomainV2.abandonHouseholdOrder order
+      let order' = DomainV2.removeHouseholdOrderItem (ProductId productId) order
       liftIO $ updateHouseholdOrder repo order'
       return ()
 

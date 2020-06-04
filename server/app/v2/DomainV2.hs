@@ -166,10 +166,10 @@ data HouseholdOrderStatusFlags = HouseholdOrderStatusFlags
   , _householdOrderUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
-data HouseholdOrderStatus = HouseholdOrderAbandoned
-                          | HouseholdOrderPlaced   (Maybe OrderReconcileStatus)
-                          | HouseholdOrderComplete (Maybe ProductCatalogueUpdateStatus)
-                          | HouseholdOrderOpen     (Maybe ProductCatalogueUpdateStatus)
+data HouseholdOrderStatus = HouseholdOrderAbandoned (Maybe ProductCatalogueUpdateStatus)
+                          | HouseholdOrderPlaced    (Maybe OrderReconcileStatus)
+                          | HouseholdOrderComplete  (Maybe ProductCatalogueUpdateStatus)
+                          | HouseholdOrderOpen      (Maybe ProductCatalogueUpdateStatus)
                             deriving (Eq, Show, Generic)
 
 householdOrder :: OrderInfo -> HouseholdInfo -> HouseholdOrderStatusFlags -> [OrderItem] -> HouseholdOrder
@@ -187,11 +187,12 @@ householdOrder orderInfo householdInfo statusFlags items
   total    = sum . map _itemTotal $ items
   adjTotal = sum . map adjItemTotal $ items
   adjItemTotal i = fromMaybe (_itemTotal i) $ fmap _itemAdjNewTotal $ _itemAdjustment i
-  status (HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True }) _  = HouseholdOrderAbandoned
-  status (HouseholdOrderStatusFlags { _householdOrderIsPlaced    = True }) is = HouseholdOrderPlaced   $ reconcileStatus is
+  status (HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True
+                                    , _householdOrderUpdated = updated  }) is = HouseholdOrderAbandoned $ updateStatus updated is
+  status (HouseholdOrderStatusFlags { _householdOrderIsPlaced    = True }) is = HouseholdOrderPlaced    $ reconcileStatus is
   status (HouseholdOrderStatusFlags { _householdOrderIsComplete  = True
-                                    , _householdOrderUpdated = updated })  is = HouseholdOrderComplete $ updateStatus updated is
-  status (HouseholdOrderStatusFlags { _householdOrderUpdated = updated })  is = HouseholdOrderOpen     $ updateStatus updated is 
+                                    , _householdOrderUpdated = updated  }) is = HouseholdOrderComplete  $ updateStatus updated is
+  status (HouseholdOrderStatusFlags { _householdOrderUpdated = updated  }) is = HouseholdOrderOpen      $ updateStatus updated is 
   reconcileStatus      = justWhen Reconciled      . all (isJust . _itemAdjustment)
   updateStatus updated = justWhen AwaitingConfirm . any ((> updated) . _productUpdated . _productInfo . _itemProduct)
 
@@ -209,8 +210,23 @@ isHouseholdOrderComplete (HouseholdOrder { _householdOrderStatus = HouseholdOrde
 isHouseholdOrderComplete _ = False
 
 isHouseholdOrderAbandoned :: HouseholdOrder -> Bool
-isHouseholdOrderAbandoned (HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned }) = True
+isHouseholdOrderAbandoned (HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned _ }) = True
 isHouseholdOrderAbandoned _ = False
+
+-- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
+abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
+abandonHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete updateStatus }) = order { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }
+abandonHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen     updateStatus }) = order { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }
+abandonHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderAbandoned Nothing }
+
+completeHouseholdOrder :: HouseholdOrder -> HouseholdOrder
+completeHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen  updateStatus }) = order { _householdOrderStatus = HouseholdOrderComplete updateStatus }
+completeHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderComplete Nothing }
+
+reopenHouseholdOrder :: HouseholdOrder -> HouseholdOrder
+reopenHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete  updateStatus }) = order { _householdOrderStatus = HouseholdOrderOpen updateStatus }
+reopenHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }) = order { _householdOrderStatus = HouseholdOrderOpen updateStatus }
+reopenHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderOpen Nothing }
 
 updateHouseholdOrderItem :: Product -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
 updateHouseholdOrderItem product maybeQuantity order = 
@@ -226,8 +242,14 @@ updateHouseholdOrderItem product maybeQuantity order =
     productCode = _productCode . _productInfo $ product
     itemProductCode = _productCode . _productInfo . _itemProduct
 
-abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-abandonHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderAbandoned }
+removeHouseholdOrderItem :: ProductId -> HouseholdOrder -> HouseholdOrder
+removeHouseholdOrderItem productId order =
+    order { _householdOrderItems = items'
+          , _householdOrderTotal = sum . map _itemTotal $ items'
+          }
+  where
+    items = _householdOrderItems order
+    items' = filter ((/= productId) . _productId . _productInfo . _itemProduct) items
 
 addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
 addOrUpdate cond n update (x:xs)
