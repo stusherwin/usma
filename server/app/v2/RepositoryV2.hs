@@ -135,6 +135,15 @@ updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
 updateHouseholdOrder repo order = do
   let orderId = _orderId . _householdOrderOrderInfo $ order
   let householdId = _householdId . _householdOrderHouseholdInfo $ order
+  let abandoned = isHouseholdOrderAbandoned order
+  let complete = isHouseholdOrderComplete order
+
+  execute (connection repo) [sql|
+    update household_order 
+    set cancelled = ? 
+      , complete = ?
+    where order_group_id = ? and order_id = ? and household_id = ?
+  |] (abandoned, complete, groupId repo, orderId, householdId)
 
   forM_ (_householdOrderItems order) $ \i -> do
     let productInfo = _productInfo . _itemProduct $ i
