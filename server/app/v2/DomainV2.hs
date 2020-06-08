@@ -27,9 +27,8 @@ data Household = Household
   , _householdContactName :: Maybe String
   , _householdContactEmail :: Maybe String
   , _householdContactPhone :: Maybe String
-  -- , _householdTotalOrders :: Int
-  -- , _householdTotalPayments :: Int
-  -- , _householdBalance :: Int
+  , _householdOrders :: [HouseholdOrder]
+  , _householdPayments :: [Payment]
   }
 
 newtype HouseholdId = HouseholdId 
@@ -45,19 +44,17 @@ household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [H
 household = Household
 
 householdTotalOrders :: Household -> Int
-householdTotalOrders = 
-    _moneyIncVat
-  . (sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)))
-  .  filter (not . isHouseholdOrderAbandoned) 
-  . _householdOrders
+householdTotalOrders = _moneyIncVat
+                     . (sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)))
+                     .  filter (not . isHouseholdOrderAbandoned) 
+                     . _householdOrders
 
 householdTotalPayments :: Household -> Int
-householdTotalPayments = 
-    (sum . map _paymentAmount)
-  . _householdPayments 
+householdTotalPayments = (sum . map _paymentAmount)
+                       . _householdPayments 
 
 householdBalance :: Household -> Int
-householdBalance h = totalPayments h - totalOrders h
+householdBalance h = householdTotalPayments h - householdTotalOrders h
 
 {- Payment -}
 
@@ -82,9 +79,6 @@ data OrderSpec = OrderSpec
 data Order = Order 
   { _orderInfo :: OrderInfo
   , _orderStatus :: OrderStatus
-  , _orderTotal :: Money
-  , _orderAdjustment :: Maybe OrderAdjustment
-  , _orderItems :: [OrderItem]
   , _orderHouseholdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
@@ -123,21 +117,8 @@ order :: OrderInfo -> OrderStatusFlags -> [HouseholdOrder] -> Order
 order info statusFlags householdOrders =
   Order info 
         (status statusFlags householdOrders)
-        total
-        adjustment
-        items
         householdOrders
-  where items = map (sconcat . NE.fromList) 
-              . groupBy ((==) `on` (_productId . _productInfo . _itemProduct))
-              . concatMap _householdOrderItems
-              $ householdOrders
-        adjustment = if total == adjTotal
-                       then Nothing
-                       else Just $ OrderAdjustment adjTotal 
-        total    = sum . map _householdOrderTotal   $ householdOrders
-        adjTotal = sum . map adjHouseholdOrderTotal $ householdOrders
-        adjHouseholdOrderTotal ho = fromMaybe (_householdOrderTotal ho) $ fmap _orderAdjNewTotal $ _householdOrderAdjustment ho
-        status (OrderStatusFlags { _orderIsAbandoned = True }) _   = OrderAbandoned
+  where status (OrderStatusFlags { _orderIsAbandoned = True }) _   = OrderAbandoned
         status (OrderStatusFlags { _orderIsPlaced    = True }) hos = OrderPlaced (reconcileStatus hos)
         status _ hos = (completeStatus hos) (updateStatus hos)
         reconcileStatus = justWhen Reconciled      . all isHouseholdOrderReconciled
@@ -145,6 +126,25 @@ order info statusFlags householdOrders =
         completeStatus hos = if all isHouseholdOrderComplete hos 
                                then OrderComplete
                                else OrderOpen
+
+orderTotal :: Order -> Money
+orderTotal = sum . map _householdOrderTotal . _orderHouseholdOrders
+
+orderAdjustment :: Order -> Maybe OrderAdjustment
+orderAdjustment o = 
+    if orderTotal o == adjTotal
+      then Nothing
+      else Just $ OrderAdjustment adjTotal
+  where
+    adjTotal = sum . map adjHouseholdOrderTotal . _orderHouseholdOrders $ o
+    adjHouseholdOrderTotal ho = fromMaybe (_householdOrderTotal ho) $ fmap _orderAdjNewTotal $ _householdOrderAdjustment ho
+
+orderItems :: Order -> [OrderItem]
+orderItems = map (sconcat . NE.fromList) 
+           . groupBy ((==) `on` (_productId . _productInfo . _itemProduct))
+           . concatMap _householdOrderItems
+           . _orderHouseholdOrders
+
 
 orderIsAbandoned (Order { _orderStatus = OrderAbandoned }) = True
 orderIsAbandoned _ = False
