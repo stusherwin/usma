@@ -27,9 +27,9 @@ data Household = Household
   , _householdContactName :: Maybe String
   , _householdContactEmail :: Maybe String
   , _householdContactPhone :: Maybe String
-  , _householdTotalOrders :: Int
-  , _householdTotalPayments :: Int
-  , _householdBalance :: Int
+  -- , _householdTotalOrders :: Int
+  -- , _householdTotalPayments :: Int
+  -- , _householdBalance :: Int
   }
 
 newtype HouseholdId = HouseholdId 
@@ -42,12 +42,22 @@ data HouseholdInfo = HouseholdInfo
   } deriving (Eq, Show, Generic)
 
 household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [HouseholdOrder] -> [Payment] -> Household
-household householdInfo contactName contactEmail contactPhone householdOrders payments =
-  Household householdInfo contactName contactEmail contactPhone totalOrders totalPayments balance
-  where
-  totalOrders = _moneyIncVat $ sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)) $ filter (not . isHouseholdOrderAbandoned) householdOrders
-  totalPayments = sum . map _paymentAmount $ payments 
-  balance = totalPayments - totalOrders
+household = Household
+
+householdTotalOrders :: Household -> Int
+householdTotalOrders = 
+    _moneyIncVat
+  . (sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)))
+  .  filter (not . isHouseholdOrderAbandoned) 
+  . _householdOrders
+
+householdTotalPayments :: Household -> Int
+householdTotalPayments = 
+    (sum . map _paymentAmount)
+  . _householdPayments 
+
+householdBalance :: Household -> Int
+householdBalance h = totalPayments h - totalOrders h
 
 {- Payment -}
 
@@ -75,7 +85,7 @@ data Order = Order
   , _orderTotal :: Money
   , _orderAdjustment :: Maybe OrderAdjustment
   , _orderItems :: [OrderItem]
-  , _householdOrders :: [HouseholdOrder]
+  , _orderHouseholdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
 newtype OrderId = OrderId 
