@@ -141,9 +141,9 @@ apiHousehold h = Api.Household
   , hContactName   = _householdContactName h
   , hContactEmail  = _householdContactEmail h
   , hContactPhone  = _householdContactPhone h
-  , hTotalOrders   = _householdTotalOrders h
-  , hTotalPayments = _householdTotalPayments h
-  , hBalance       = _householdBalance h
+  , hTotalOrders   = householdTotalOrders h
+  , hTotalPayments = householdTotalPayments h
+  , hBalance       = householdBalance h
   }
 
 apiOrder :: Order -> Api.CollectiveOrder
@@ -156,20 +156,20 @@ apiOrder o = Api.CollectiveOrder
   , coOrderIsAbandoned      = orderIsAbandoned o
   , coIsComplete            = orderIsComplete o
   , coAllHouseholdsUpToDate = orderIsAllHouseholdsUpToDate o
-  , coTotalExcVat           = _moneyExcVat $ case _orderAdjustment o of
+  , coTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
                                                Just a -> _orderAdjNewTotal a
-                                               _      -> _orderTotal $ o
-  , coTotalIncVat           = _moneyIncVat $ case _orderAdjustment o of
+                                               _      -> orderTotal $ o
+  , coTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
                                                Just a -> _orderAdjNewTotal a
-                                               _      -> _orderTotal $ o
-  , coAdjustment            = apiOrderAdjustment o $ _orderAdjustment o
-  , coItems = apiOrderItem <$> _orderItems o
+                                               _      -> orderTotal $ o
+  , coAdjustment            = apiOrderAdjustment o $ orderAdjustment o
+  , coItems = apiOrderItem <$> orderItems o
   }
 
 apiOrderAdjustment :: DomainV2.Order -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment o (Just _) = Just $ Api.OrderAdjustment
-  { oaOldTotalExcVat = _moneyExcVat . _orderTotal $ o
-  , oaOldTotalIncVat = _moneyIncVat . _orderTotal $ o
+  { oaOldTotalExcVat = _moneyExcVat . orderTotal $ o
+  , oaOldTotalIncVat = _moneyIncVat . orderTotal $ o
   }
 apiOrderAdjustment _ _ = Nothing
 
