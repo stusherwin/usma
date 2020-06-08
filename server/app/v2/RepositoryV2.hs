@@ -163,8 +163,6 @@ newOrder repo spec = do
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
 
-
-
 updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
 updateHouseholdOrder repo order = do
   let conn = connection repo
