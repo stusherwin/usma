@@ -401,7 +401,7 @@ selectProducts conn whereParams =
 
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 
-  household householdInfo
+  Household householdInfo
             (householdRow_contact_name h)
             (householdRow_contact_email h)
             (householdRow_contact_phone h)
@@ -415,7 +415,7 @@ toHousehold rHouseholdOrders rOrderItems rPayments h =
 
 toOrder :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> OrderRow -> Order
 toOrder rHouseholdOrders rOrderItems o = 
-  order orderInfo
+  Order orderInfo
         (orderRow_statusFlags o)
         householdOrders
   where
@@ -426,7 +426,7 @@ toOrder rHouseholdOrders rOrderItems o =
 
 toHouseholdOrder :: [(OrderId, HouseholdId) :. OrderItemRow] -> HouseholdOrderRow -> HouseholdOrder
 toHouseholdOrder rOrderItems ho = 
-  householdOrder orderInfo
+  HouseholdOrder orderInfo
                  householdInfo
                  (householdOrderRow_statusFlags ho)
                  orderItems
@@ -438,7 +438,7 @@ toHouseholdOrder rOrderItems ho =
              $ rOrderItems
 
 toOrderItem :: ((OrderId, HouseholdId) :. OrderItemRow) -> OrderItem
-toOrderItem (_ :. i) = orderItem (orderItemRow_product i)
+toOrderItem (_ :. i) = OrderItem (orderItemRow_product i)
                                  (orderItemRow_quantity i)
                                  (orderItemRow_adjustment i)
 
@@ -547,7 +547,7 @@ maybeOrderItemAdjustmentField = do
   isDiscontinued <- field
   date <- field
   case (newPrice, newQuantity, isDiscontinued, date) of
-    (Just p, Just q, Just disc, Just date) -> return $ Just $ orderItemAdjustment p q disc date
+    (Just p, Just q, Just disc, Just date) -> return $ Just $ OrderItemAdjustment p q disc date
     _ -> return Nothing
 
 maybePriceField :: RowParser (Maybe Price)
