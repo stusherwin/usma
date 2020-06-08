@@ -45,7 +45,7 @@ household = Household
 
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat
-                     . (sum . map (\ho -> fromMaybe (_householdOrderTotal ho) (fmap _orderAdjNewTotal . _householdOrderAdjustment $ ho)))
+                     . (sum . map (\ho -> fromMaybe (householdOrderTotal ho) (fmap _orderAdjNewTotal . householdOrderAdjustment $ ho)))
                      .  filter (not . isHouseholdOrderAbandoned) 
                      . _householdOrders
 
@@ -115,20 +115,21 @@ data OrderAdjustment = OrderAdjustment
 
 order :: OrderInfo -> OrderStatusFlags -> [HouseholdOrder] -> Order
 order info statusFlags householdOrders =
-  Order info 
-        (status statusFlags householdOrders)
-        householdOrders
-  where status (OrderStatusFlags { _orderIsAbandoned = True }) _   = OrderAbandoned
-        status (OrderStatusFlags { _orderIsPlaced    = True }) hos = OrderPlaced (reconcileStatus hos)
-        status _ hos = (completeStatus hos) (updateStatus hos)
-        reconcileStatus = justWhen Reconciled      . all isHouseholdOrderReconciled
-        updateStatus    = justWhen AwaitingConfirm . any isHouseholdOrderAwaitingConfirm
-        completeStatus hos = if all isHouseholdOrderComplete hos 
-                               then OrderComplete
-                               else OrderOpen
+    Order info 
+          (status statusFlags householdOrders)
+          householdOrders
+  where 
+    status (OrderStatusFlags { _orderIsAbandoned = True }) _   = OrderAbandoned
+    status (OrderStatusFlags { _orderIsPlaced    = True }) hos = OrderPlaced (reconcileStatus hos)
+    status _ hos = (completeStatus hos) (updateStatus hos)
+    reconcileStatus = justWhen Reconciled      . all isHouseholdOrderReconciled
+    updateStatus    = justWhen AwaitingConfirm . any isHouseholdOrderAwaitingConfirm
+    completeStatus hos = if all isHouseholdOrderComplete hos 
+                           then OrderComplete
+                           else OrderOpen
 
 orderTotal :: Order -> Money
-orderTotal = sum . map _householdOrderTotal . _orderHouseholdOrders
+orderTotal = sum . map householdOrderTotal . _orderHouseholdOrders
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
@@ -137,14 +138,13 @@ orderAdjustment o =
       else Just $ OrderAdjustment adjTotal
   where
     adjTotal = sum . map adjHouseholdOrderTotal . _orderHouseholdOrders $ o
-    adjHouseholdOrderTotal ho = fromMaybe (_householdOrderTotal ho) $ fmap _orderAdjNewTotal $ _householdOrderAdjustment ho
+    adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
 
 orderItems :: Order -> [OrderItem]
 orderItems = map (sconcat . NE.fromList) 
            . groupBy ((==) `on` (_productId . _productInfo . _itemProduct))
            . concatMap _householdOrderItems
            . _orderHouseholdOrders
-
 
 orderIsAbandoned (Order { _orderStatus = OrderAbandoned }) = True
 orderIsAbandoned _ = False
@@ -166,8 +166,6 @@ data HouseholdOrder = HouseholdOrder
   , _householdOrderHouseholdInfo :: HouseholdInfo
   , _householdOrderStatus :: HouseholdOrderStatus
   , _householdOrderItems :: [OrderItem]
-  , _householdOrderTotal :: Money
-  , _householdOrderAdjustment :: Maybe OrderAdjustment
   } deriving (Eq, Show, Generic)
 
 data HouseholdOrderStatusFlags = HouseholdOrderStatusFlags
@@ -184,28 +182,32 @@ data HouseholdOrderStatus = HouseholdOrderAbandoned (Maybe ProductCatalogueUpdat
                             deriving (Eq, Show, Generic)
 
 householdOrder :: OrderInfo -> HouseholdInfo -> HouseholdOrderStatusFlags -> [OrderItem] -> HouseholdOrder
-householdOrder orderInfo householdInfo statusFlags items 
-  = HouseholdOrder orderInfo
+householdOrder orderInfo householdInfo statusFlags items = 
+    HouseholdOrder orderInfo
                    householdInfo
                    (status statusFlags items)
                    items
-                   total
-                   adjustment
   where
-  adjustment = if total == adjTotal 
-                 then Nothing 
-                 else Just $ OrderAdjustment adjTotal
-  total    = sum . map _itemTotal $ items
-  adjTotal = sum . map adjItemTotal $ items
-  adjItemTotal i = fromMaybe (_itemTotal i) $ fmap _itemAdjNewTotal $ _itemAdjustment i
-  status (HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True
-                                    , _householdOrderUpdated = updated  }) is = HouseholdOrderAbandoned $ updateStatus updated is
-  status (HouseholdOrderStatusFlags { _householdOrderIsPlaced    = True }) is = HouseholdOrderPlaced    $ reconcileStatus is
-  status (HouseholdOrderStatusFlags { _householdOrderIsComplete  = True
-                                    , _householdOrderUpdated = updated  }) is = HouseholdOrderComplete  $ updateStatus updated is
-  status (HouseholdOrderStatusFlags { _householdOrderUpdated = updated  }) is = HouseholdOrderOpen      $ updateStatus updated is 
-  reconcileStatus      = justWhen Reconciled      . all (isJust . _itemAdjustment)
-  updateStatus updated = justWhen AwaitingConfirm . any ((> updated) . _productUpdated . _productInfo . _itemProduct)
+    status (HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True
+                                      , _householdOrderUpdated = updated  }) is = HouseholdOrderAbandoned $ updateStatus updated is
+    status (HouseholdOrderStatusFlags { _householdOrderIsPlaced    = True }) is = HouseholdOrderPlaced    $ reconcileStatus is
+    status (HouseholdOrderStatusFlags { _householdOrderIsComplete  = True
+                                      , _householdOrderUpdated = updated  }) is = HouseholdOrderComplete  $ updateStatus updated is
+    status (HouseholdOrderStatusFlags { _householdOrderUpdated = updated  }) is = HouseholdOrderOpen      $ updateStatus updated is 
+    reconcileStatus      = justWhen Reconciled      . all (isJust . _itemAdjustment)
+    updateStatus updated = justWhen AwaitingConfirm . any ((> updated) . _productUpdated . _productInfo . _itemProduct)
+
+householdOrderTotal :: HouseholdOrder -> Money
+householdOrderTotal = sum . map _itemTotal . _householdOrderItems
+
+householdOrderAdjustment :: HouseholdOrder -> Maybe OrderAdjustment
+householdOrderAdjustment ho =
+    if householdOrderTotal ho == adjTotal 
+      then Nothing 
+      else Just $ OrderAdjustment adjTotal
+  where
+    adjTotal = sum . map adjItemTotal . _householdOrderItems $ ho
+    adjItemTotal i = fromMaybe (_itemTotal i) $ fmap _itemAdjNewTotal $ _itemAdjustment i
 
 isHouseholdOrderReconciled :: HouseholdOrder -> Bool
 isHouseholdOrderReconciled (HouseholdOrder { _householdOrderStatus = HouseholdOrderPlaced (Just Reconciled) }) = True
@@ -226,26 +228,23 @@ isHouseholdOrderAbandoned _ = False
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-abandonHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete updateStatus }) = order { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }
-abandonHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen     updateStatus }) = order { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }
-abandonHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderAbandoned Nothing }
+abandonHouseholdOrder o@(HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete updateStatus }) = o{ _householdOrderStatus = HouseholdOrderAbandoned updateStatus }
+abandonHouseholdOrder o@(HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen     updateStatus }) = o{ _householdOrderStatus = HouseholdOrderAbandoned updateStatus }
+abandonHouseholdOrder o = o{ _householdOrderStatus = HouseholdOrderAbandoned Nothing }
 
 completeHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-completeHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen  updateStatus }) = order { _householdOrderStatus = HouseholdOrderComplete updateStatus }
-completeHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderComplete Nothing }
+completeHouseholdOrder o@(HouseholdOrder { _householdOrderStatus = HouseholdOrderOpen  updateStatus }) = o{ _householdOrderStatus = HouseholdOrderComplete updateStatus }
+completeHouseholdOrder o = o{ _householdOrderStatus = HouseholdOrderComplete Nothing }
 
 reopenHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-reopenHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete  updateStatus }) = order { _householdOrderStatus = HouseholdOrderOpen updateStatus }
-reopenHouseholdOrder order@(HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }) = order { _householdOrderStatus = HouseholdOrderOpen updateStatus }
-reopenHouseholdOrder order = order { _householdOrderStatus = HouseholdOrderOpen Nothing }
+reopenHouseholdOrder o@(HouseholdOrder { _householdOrderStatus = HouseholdOrderComplete  updateStatus }) = o{ _householdOrderStatus = HouseholdOrderOpen updateStatus }
+reopenHouseholdOrder o@(HouseholdOrder { _householdOrderStatus = HouseholdOrderAbandoned updateStatus }) = o{ _householdOrderStatus = HouseholdOrderOpen updateStatus }
+reopenHouseholdOrder o = o{ _householdOrderStatus = HouseholdOrderOpen Nothing }
 
 updateHouseholdOrderItem :: Product -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
-updateHouseholdOrderItem product maybeQuantity order = 
-    order { _householdOrderItems = items'
-          , _householdOrderTotal = sum . map _itemTotal $ items'
-          }
+updateHouseholdOrderItem product maybeQuantity o = o{ _householdOrderItems = items' }
   where
-    items = _householdOrderItems order
+    items = _householdOrderItems o
     items' = addOrUpdate ((== productCode) . itemProductCode) 
                          (orderItem product 1 Nothing) 
                          (updateOrderItemQuantity maybeQuantity) 
@@ -254,12 +253,9 @@ updateHouseholdOrderItem product maybeQuantity order =
     itemProductCode = _productCode . _productInfo . _itemProduct
 
 removeHouseholdOrderItem :: ProductId -> HouseholdOrder -> HouseholdOrder
-removeHouseholdOrderItem productId order =
-    order { _householdOrderItems = items'
-          , _householdOrderTotal = sum . map _itemTotal $ items'
-          }
+removeHouseholdOrderItem productId o = o{ _householdOrderItems = items' }
   where
-    items = _householdOrderItems order
+    items = _householdOrderItems o
     items' = filter ((/= productId) . _productId . _productInfo . _itemProduct) items
 
 addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
