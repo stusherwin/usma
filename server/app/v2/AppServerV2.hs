@@ -7,8 +7,11 @@ import qualified Data.ByteString as B (ByteString)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
 import           Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
+import           Data.Time.Format (formatTime, defaultTimeLocale)
+import           Safe (headMay)
 import           Servant
-import           Servant.Multipart
+import           Servant.Multipart (MultipartData(..), FileData(..))
+import           System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
 
 import           AppApiV2 as Api
 import           Config
@@ -52,6 +55,7 @@ commandServerV2 config  =
     :<|> reopenHouseholdOrder
     :<|> ensureHouseholdOrderItem
     :<|> removeHouseholdOrderItem
+    :<|> uploadProductCatalogue
   where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = withRepository config $ \repo -> do
@@ -101,6 +105,25 @@ commandServerV2 config  =
       let order' = DomainV2.removeHouseholdOrderItem (ProductId productId) order
       liftIO $ updateHouseholdOrder repo order'
       return ()
+
+    uploadProductCatalogue :: MultipartData -> Handler ()
+    uploadProductCatalogue multipartData = withRepository config $ \repo -> do
+      date <- liftIO getCurrentTime
+      filePath <- uploadSingleFile multipartData
+      file <- liftIO $ readFile filePath
+      let catalogue = parseProductCatalogue date filePath
+      products <- liftIO $ updateProductCatalogue repo date catalogue
+      
+      return ()
+
+uploadSingleFile :: MultipartData -> MaybeT IO FilePath
+uploadSingleFile multipartData = do
+  file <- MaybeT $ return $ headMay $ files multipartData
+  liftIO $ createDirectoryIfMissing True "server/data/uploads/"
+  day <- liftIO $ utctDay <$> getCurrentTime
+  let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
+  liftIO $ copyFile (fdFilePath file) destFilePath
+  return destFilePath
 
 withRepository :: RepositoryConfig -> (Repository -> MaybeT IO a) -> Handler a
 withRepository config query = do

@@ -7,11 +7,12 @@ import Data.Function (on)
 import Data.Time.Clock (UTCTime)
 import Data.Semigroup (Semigroup(..))
 import Data.List (groupBy, maximumBy, find, delete)
-import Data.Maybe (isJust, maybe, fromMaybe)
+import Data.Maybe (isJust, maybe, fromMaybe, catMaybes)
 import Data.Ord (comparing)
 import qualified Data.List.NonEmpty as NE (fromList)
 import GHC.Generics
 import Prelude hiding (product)
+import Text.Read (readMaybe)
 
 {-- OrderGroup --}
 
@@ -379,6 +380,54 @@ data VatRate = VatRate
   { _vatRateType :: VatRateType
   , _vatRateMultiplier :: Rational
   } deriving (Eq, Show, Generic)
+
+{- ProductCatalogueEntry -}
+
+data ProductCatalogueEntry = ProductCatalogueEntry
+  { _catalogueEntryCode :: String
+  , _catalogueEntryCategory :: String
+  , _catalogueEntryBrand :: String
+  , _catalogueEntryDescription :: String
+  , _catalogueEntryText :: String
+  , _catalogueEntrySize :: String
+  , _catalogueEntryPrice :: Int
+  , _catalogueEntryVatRateType :: VatRateType
+  , _catalogueEntryRrp :: Maybe Int
+  , _catalogueEntryBiodynamic :: Bool
+  , _catalogueEntryFairTrade :: Bool
+  , _catalogueEntryGlutenFree :: Bool
+  , _catalogueEntryOrganic :: Bool
+  , _catalogueEntryAddedSugar :: Bool
+  , _catalogueEntryVegan :: Bool
+  , _catalogueEntryUpdated :: UTCTime
+  } deriving (Eq, Show, Generic)
+
+type ProductCatalogue = [ProductCatalogueEntry]
+
+parseProductCatalogue :: UTCTime -> String -> ProductCatalogue
+parseProductCatalogue date file =
+  catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
+  parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
+    let price' = fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
+        vat' = case vat of
+                 "1" -> Standard
+                 "5" -> Reduced
+                 _ -> Zero
+        rrp' =  round . (* 100) <$> (readMaybe price :: Maybe Float)
+        b' = b == "B"
+        f' = f == "F"
+        g' = g == "G"
+        o' = o == "O"
+        s' = s == "S"
+        v' = v == "V"
+    in  Just $ ProductCatalogueEntry code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' date
+  parse _ _ = Nothing
+
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn ch list = f list [[]] where
+  f [] ws = map reverse $ reverse ws
+  f (x:xs) ws | x == ch = f xs ([]:ws)
+  f (x:xs) (w:ws) = f xs ((x:w):ws)
 
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
