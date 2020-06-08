@@ -429,8 +429,8 @@ splitOn ch list = f list [[]] where
   f (x:xs) ws | x == ch = f xs ([]:ws)
   f (x:xs) (w:ws) = f xs ((x:w):ws)
 
-applyCatalogueUpdate :: [Product] -> [Order] -> [Order]
-applyCatalogueUpdate products orders = orders
+applyCatalogueUpdate :: [Product] -> Order -> Order
+applyCatalogueUpdate products order = order
 
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
