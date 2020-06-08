@@ -98,7 +98,19 @@ getOrder repo = do
     rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsCurrent, ForOrderGroup groupId]
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
-    
+
+getOrdersForAllGroups :: Repository -> IO [Order]
+getOrdersForAllGroups repo = do
+  let conn = connection repo
+  let groupId = orderGroupId repo
+
+  (rOrders, rHouseholdOrders, rOrderItems) <- do
+    rOrders <- selectOrderRows conn [OrderIsCurrent]
+    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
+    rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsCurrent]
+    return (rOrders, rHouseholdOrders, rOrderItems)
+  return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
+
 getPastOrders :: Repository -> IO [Order]
 getPastOrders repo = do
   let conn = connection repo
@@ -150,6 +162,8 @@ newOrder repo spec = do
     returning id
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
+
+
 
 updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
 updateHouseholdOrder repo order = do
@@ -226,6 +240,9 @@ updateProductCatalogue repo date entries = do
     where p.id = product.id
   |] (Only date)
   selectProducts conn []
+
+updateOrders :: Repository -> [Order] -> IO ()
+updateOrders = return ()
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
 selectHouseholdRows conn whereParams = 

@@ -404,8 +404,8 @@ data ProductCatalogueEntry = ProductCatalogueEntry
 
 type ProductCatalogue = [ProductCatalogueEntry]
 
-parseProductCatalogue :: UTCTime -> String -> ProductCatalogue
-parseProductCatalogue date file =
+parseCatalogue :: UTCTime -> String -> ProductCatalogue
+parseCatalogue date file =
   catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
   parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
     let price' = fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
@@ -428,6 +428,9 @@ splitOn ch list = f list [[]] where
   f [] ws = map reverse $ reverse ws
   f (x:xs) ws | x == ch = f xs ([]:ws)
   f (x:xs) (w:ws) = f xs ((x:w):ws)
+
+applyCatalogueUpdate :: [Product] -> [Order] -> [Order]
+applyCatalogueUpdate products orders = orders
 
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1

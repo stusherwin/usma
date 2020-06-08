@@ -111,9 +111,11 @@ commandServerV2 config  =
       date <- liftIO getCurrentTime
       filePath <- uploadSingleFile multipartData
       file <- liftIO $ readFile filePath
-      let catalogue = parseProductCatalogue date filePath
+      let catalogue = parseCatalogue date filePath
       products <- liftIO $ updateProductCatalogue repo date catalogue
-      
+      orders <- liftIO $ getOrdersForAllGroups repo
+      let orders' = map applyCatalogueUpdate products orders
+      liftIO $ updateOrders repo orders'
       return ()
 
 uploadSingleFile :: MultipartData -> MaybeT IO FilePath
