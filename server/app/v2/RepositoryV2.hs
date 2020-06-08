@@ -172,8 +172,8 @@ updateHouseholdOrder repo order = do
   
   let orderId = _orderId . _householdOrderOrderInfo $ order
   let householdId = _householdId . _householdOrderHouseholdInfo $ order
-  let abandoned = isHouseholdOrderAbandoned order
-  let complete = isHouseholdOrderComplete order
+  let abandoned = householdOrderIsAbandoned order
+  let complete = householdOrderIsComplete order
 
   execute conn [sql|
     update household_order 

@@ -155,7 +155,7 @@ apiOrder o = Api.CollectiveOrder
   , coOrderIsPlaced         = orderIsPlaced o
   , coOrderIsAbandoned      = orderIsAbandoned o
   , coIsComplete            = orderIsComplete o
-  , coAllHouseholdsUpToDate = orderIsAllHouseholdsUpToDate o
+  , coAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
   , coTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
                                                Just a -> _orderAdjNewTotal a
                                                _      -> orderTotal $ o
@@ -189,10 +189,10 @@ apiOrderItem i = Api.OrderItem
                              Just a -> _itemAdjNewQuantity a
                              _      -> _itemQuantity i
   , oiItemTotalExcVat    = _moneyExcVat $ case _itemAdjustment i of
-                                            Just a -> _itemAdjNewTotal a
+                                            Just a -> itemAdjNewTotal a
                                             _      -> itemTotal $ i
   , oiItemTotalIncVat    = _moneyIncVat $ case _itemAdjustment i of
-                                            Just a -> _itemAdjNewTotal a
+                                            Just a -> itemAdjNewTotal a
                                             _      -> itemTotal $ i
   , oiBiodynamic         = _productIsBiodynamic . _productFlags . _itemProduct $ i
   , oiFairTrade          = _productIsFairTrade  . _productFlags . _itemProduct $ i
