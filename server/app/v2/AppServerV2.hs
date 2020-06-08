@@ -190,10 +190,10 @@ apiOrderItem i = Api.OrderItem
                              _      -> _itemQuantity i
   , oiItemTotalExcVat    = _moneyExcVat $ case _itemAdjustment i of
                                             Just a -> _itemAdjNewTotal a
-                                            _      -> _itemTotal $ i
+                                            _      -> itemTotal $ i
   , oiItemTotalIncVat    = _moneyIncVat $ case _itemAdjustment i of
                                             Just a -> _itemAdjNewTotal a
-                                            _      -> _itemTotal $ i
+                                            _      -> itemTotal $ i
   , oiBiodynamic         = _productIsBiodynamic . _productFlags . _itemProduct $ i
   , oiFairTrade          = _productIsFairTrade  . _productFlags . _itemProduct $ i
   , oiGlutenFree         = _productIsGlutenFree . _productFlags . _itemProduct $ i
@@ -208,8 +208,8 @@ apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
   { oiaOldProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
   , oiaOldProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
   , oiaOldItemQuantity       = _itemQuantity i
-  , oiaOldItemTotalExcVat    = _moneyExcVat . _itemTotal $ i
-  , oiaOldItemTotalIncVat    = _moneyIncVat . _itemTotal $ i
+  , oiaOldItemTotalExcVat    = _moneyExcVat . itemTotal $ i
+  , oiaOldItemTotalIncVat    = _moneyIncVat . itemTotal $ i
   , oiaProductDiscontinued   = _itemAdjIsDiscontinued a
   }
 apiOrderItemAdjustment _ _ = Nothing

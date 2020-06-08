@@ -198,7 +198,7 @@ householdOrder orderInfo householdInfo statusFlags items =
     updateStatus updated = justWhen AwaitingConfirm . any ((> updated) . _productUpdated . _productInfo . _itemProduct)
 
 householdOrderTotal :: HouseholdOrder -> Money
-householdOrderTotal = sum . map _itemTotal . _householdOrderItems
+householdOrderTotal = sum . map itemTotal . _householdOrderItems
 
 householdOrderAdjustment :: HouseholdOrder -> Maybe OrderAdjustment
 householdOrderAdjustment ho =
@@ -207,7 +207,7 @@ householdOrderAdjustment ho =
       else Just $ OrderAdjustment adjTotal
   where
     adjTotal = sum . map adjItemTotal . _householdOrderItems $ ho
-    adjItemTotal i = fromMaybe (_itemTotal i) $ fmap _itemAdjNewTotal $ _itemAdjustment i
+    adjItemTotal i = fromMaybe (itemTotal i) $ fmap _itemAdjNewTotal $ _itemAdjustment i
 
 isHouseholdOrderReconciled :: HouseholdOrder -> Bool
 isHouseholdOrderReconciled (HouseholdOrder { _householdOrderStatus = HouseholdOrderPlaced (Just Reconciled) }) = True
@@ -269,25 +269,24 @@ addOrUpdate _ n _ [] = [n]
 data OrderItem = OrderItem  
   { _itemProduct :: Product
   , _itemQuantity :: Int
-  , _itemTotal :: Money
   , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
 orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
-orderItem product quantity adjustment = OrderItem product quantity ((_priceAmount . _productPrice . _productInfo $ product) * fromIntegral quantity) adjustment
+orderItem product quantity adjustment = OrderItem product quantity adjustment
+
+itemTotal :: OrderItem -> Money
+itemTotal item = price * fromIntegral quantity
+  where
+    price = _priceAmount . _productPrice . _productInfo . _itemProduct $ item
+    quantity = _itemQuantity item
 
 updateOrderItemQuantity :: Maybe Int -> OrderItem -> OrderItem
-updateOrderItemQuantity maybeQuantity item = 
-    item { _itemQuantity = quantity
-         , _itemTotal = ((_priceAmount . _productPrice . _productInfo . _itemProduct $ item) * fromIntegral quantity)
-         }
-  where
-    quantity = fromMaybe (_itemQuantity item) maybeQuantity
+updateOrderItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)
                        (_itemQuantity   i1 +  _itemQuantity   i2)
-                       (_itemTotal      i1 +  _itemTotal      i2)
                        (_itemAdjustment i1 <> _itemAdjustment i2)
 
 data OrderItemAdjustment = OrderItemAdjustment 

@@ -132,8 +132,6 @@ begin
     product_price_exc_vat integer NOT NULL,
     product_price_inc_vat integer NOT NULL,
     quantity integer NOT NULL,
-    item_total_exc_vat integer NOT NULL,
-    item_total_inc_vat integer NOT NULL,
     ix integer NOT NULL
   );
   CREATE SEQUENCE v2.household_order_item_ix_seq

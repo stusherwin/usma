@@ -188,8 +188,6 @@ updateHouseholdOrder repo order = do
     let productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
     let productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
     let quantity = _itemQuantity i
-    let itemTotalExcVat = _moneyExcVat . _itemTotal $ i
-    let itemTotalIncVat = _moneyIncVat . _itemTotal $ i
     void $ execute conn [sql|
       insert into household_order_item as hoi 
         ( order_group_id
@@ -199,15 +197,11 @@ updateHouseholdOrder repo order = do
         , product_price_exc_vat
         , product_price_inc_vat
         , quantity
-        , item_total_exc_vat
-        , item_total_inc_vat
         )
-      values (?, ?, ?, ?, ?, ?, ?, ? ,?)
+      values (?, ?, ?, ?, ?, ?, ?)
       on conflict (order_group_id, order_id, household_id, product_id) do update
       set quantity = hoi.quantity
-        , item_total_exc_vat = hoi.item_total_exc_vat
-        , item_total_inc_vat = hoi.item_total_inc_vat
-    |] (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity, itemTotalExcVat, itemTotalIncVat)
+    |] (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity)
 
 updateProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
 updateProductCatalogue repo date entries = do
