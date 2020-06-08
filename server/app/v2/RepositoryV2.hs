@@ -109,7 +109,7 @@ getOrdersForAllGroups repo = do
     rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
     rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsCurrent]
     return (rOrders, rHouseholdOrders, rOrderItems)
-  return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
+  return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
 getPastOrders :: Repository -> IO [Order]
 getPastOrders repo = do
@@ -242,7 +242,7 @@ updateProductCatalogue repo date entries = do
   selectProducts conn []
 
 updateOrders :: Repository -> [Order] -> IO ()
-updateOrders = return ()
+updateOrders repo orders = return ()
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
 selectHouseholdRows conn whereParams = 

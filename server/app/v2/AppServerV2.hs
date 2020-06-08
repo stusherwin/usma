@@ -114,7 +114,7 @@ commandServerV2 config  =
       let catalogue = parseCatalogue date filePath
       products <- liftIO $ updateProductCatalogue repo date catalogue
       orders <- liftIO $ getOrdersForAllGroups repo
-      let orders' = map applyCatalogueUpdate products orders
+      let orders' = map (applyCatalogueUpdate products) orders
       liftIO $ updateOrders repo orders'
       return ()
 
