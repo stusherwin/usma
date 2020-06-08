@@ -596,7 +596,7 @@ instance ToField VatRateType where
   toField Reduced = toDatabaseChar 'R'
 
 instance ToRow ProductCatalogueEntry where
-  toRow e = map (\fn -> toField . fn $ e) [ _catalogueEntryCode
+  toRow e = map (($ e) . (toField .)) [ _catalogueEntryCode
                                           , _catalogueEntryCategory
                                           , _catalogueEntryBrand
                                           , _catalogueEntryDescription
