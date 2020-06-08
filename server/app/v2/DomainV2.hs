@@ -40,9 +40,6 @@ data HouseholdInfo = HouseholdInfo
   , _householdName :: String
   } deriving (Eq, Show, Generic)
 
-household :: HouseholdInfo -> Maybe String -> Maybe String -> Maybe String -> [HouseholdOrder] -> [Payment] -> Household
-household = Household
-
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat
                      . (sum . map (\ho -> fromMaybe (householdOrderTotal ho) (fmap _orderAdjNewTotal . householdOrderAdjustment $ ho)))
@@ -108,9 +105,6 @@ data OrderAdjustment = OrderAdjustment
   { _orderAdjNewTotal :: Money
   } deriving (Eq, Show, Generic)
 
-order :: OrderInfo -> OrderStatusFlags -> [HouseholdOrder] -> Order
-order = Order
-
 orderTotal :: Order -> Money
 orderTotal = sum . map householdOrderTotal . _orderHouseholdOrders
 
@@ -174,9 +168,6 @@ data HouseholdOrderStatus = HouseholdOrderOpen
                           | HouseholdOrderReconciled
                           | HouseholdOrderComplete
                             deriving (Eq, Show, Generic)
-
-householdOrder :: OrderInfo -> HouseholdInfo -> HouseholdOrderStatusFlags -> [OrderItem] -> HouseholdOrder
-householdOrder = HouseholdOrder
 
 householdOrderTotal :: HouseholdOrder -> Money
 householdOrderTotal = sum . map itemTotal . _householdOrderItems
@@ -243,7 +234,7 @@ updateHouseholdOrderItem product maybeQuantity o = o{ _householdOrderItems = ite
   where
     items = _householdOrderItems o
     items' = addOrUpdate ((== productCode) . itemProductCode) 
-                         (orderItem product 1 Nothing) 
+                         (OrderItem product 1 Nothing) 
                          (updateOrderItemQuantity maybeQuantity) 
                          items
     productCode = _productCode . _productInfo $ product
@@ -269,9 +260,6 @@ data OrderItem = OrderItem
   , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
-orderItem :: Product -> Int -> Maybe OrderItemAdjustment -> OrderItem
-orderItem product quantity adjustment = OrderItem product quantity adjustment
-
 itemTotal :: OrderItem -> Money
 itemTotal item = price * fromIntegral quantity
   where
@@ -292,9 +280,6 @@ data OrderItemAdjustment = OrderItemAdjustment
   , _itemAdjIsDiscontinued :: Bool
   , _itemAdjDate :: UTCTime
   } deriving (Eq, Show, Generic)
-
-orderItemAdjustment :: Price -> Int -> Bool -> UTCTime -> OrderItemAdjustment
-orderItemAdjustment = OrderItemAdjustment
 
 instance Semigroup OrderItemAdjustment where
   a1 <> a2 = OrderItemAdjustment latestPrice
