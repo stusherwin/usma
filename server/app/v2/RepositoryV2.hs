@@ -596,23 +596,23 @@ instance ToField VatRateType where
   toField Reduced = toDatabaseChar 'R'
 
 instance ToRow ProductCatalogueEntry where
-  toRow e = [ toField $ _catalogueEntryCode e
-            , toField $ _catalogueEntryCategory e
-            , toField $ _catalogueEntryBrand e
-            , toField $ _catalogueEntryDescription e
-            , toField $ _catalogueEntryText e
-            , toField $ _catalogueEntrySize e
-            , toField $ _catalogueEntryPrice e
-            , toField $ _catalogueEntryVatRateType e
-            , toField $ _catalogueEntryRrp e
-            , toField $ _catalogueEntryBiodynamic e
-            , toField $ _catalogueEntryFairTrade e
-            , toField $ _catalogueEntryGlutenFree e
-            , toField $ _catalogueEntryOrganic e
-            , toField $ _catalogueEntryAddedSugar e
-            , toField $ _catalogueEntryVegan e
-            , toField $ _catalogueEntryUpdated e
-            ]
+  toRow e = map (\fn -> toField . fn $ e) [ _catalogueEntryCode
+                                          , _catalogueEntryCategory
+                                          , _catalogueEntryBrand
+                                          , _catalogueEntryDescription
+                                          , _catalogueEntryText
+                                          , _catalogueEntrySize
+                                          , _catalogueEntryPrice
+                                          , _catalogueEntryVatRateType
+                                          , _catalogueEntryRrp
+                                          , _catalogueEntryBiodynamic
+                                          , _catalogueEntryFairTrade
+                                          , _catalogueEntryGlutenFree
+                                          , _catalogueEntryOrganic
+                                          , _catalogueEntryAddedSugar
+                                          , _catalogueEntryVegan
+                                          , _catalogueEntryUpdated
+                                          ]
 
 data WhereParam = ForOrderGroup OrderGroupId
                 | ForOrder OrderId
