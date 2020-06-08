@@ -146,6 +146,11 @@ orderIsReconciled = all householdOrderIsReconciled . _orderHouseholdOrders
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
 orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . _orderHouseholdOrders
 
+overOrderItems :: (OrderItem -> OrderItem) -> Order -> Order
+overOrderItems fn o = o{ _orderHouseholdOrders = householdOrders' }
+  where
+    householdOrders' = map (overHouseholdOrderItems fn) . _orderHouseholdOrders $ o
+
 {- HouseholdOrder -}
 
 data HouseholdOrder = HouseholdOrder 
@@ -207,6 +212,11 @@ householdOrderIsAwaitingCatalogueUpdateConfirm ho = any ((> orderUpdated ho) . p
     orderUpdated = _householdOrderUpdated . _householdOrderStatusFlags
     productUpdated =  _productUpdated . _productInfo . _itemProduct
 
+overHouseholdOrderItems :: (OrderItem -> OrderItem) -> HouseholdOrder -> HouseholdOrder
+overHouseholdOrderItems fn ho = ho{ _householdOrderItems = items' }
+  where
+    items' = map fn . _householdOrderItems $ ho
+
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
 abandonHouseholdOrder ho@(HouseholdOrder { _householdOrderStatusFlags = f }) =
@@ -260,11 +270,17 @@ data OrderItem = OrderItem
   , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
+itemProductId :: OrderItem -> ProductId
+itemProductId = _productId . _productInfo . _itemProduct
+
+itemProductPrice :: OrderItem -> Price
+itemProductPrice = _productPrice . _productInfo . _itemProduct
+
 itemTotal :: OrderItem -> Money
-itemTotal item = price * fromIntegral quantity
+itemTotal item = price * quantity
   where
-    price = _priceAmount . _productPrice . _productInfo . _itemProduct $ item
-    quantity = _itemQuantity item
+    price = _priceAmount . itemProductPrice $ item
+    quantity = fromIntegral $ _itemQuantity item
 
 updateOrderItemQuantity :: Maybe Int -> OrderItem -> OrderItem
 updateOrderItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
@@ -325,6 +341,12 @@ data ProductFlags = ProductFlags
   , _productIsAddedSugar :: Bool
   , _productIsVegan      :: Bool
   } deriving (Eq, Show, Generic)
+
+productId :: Product -> ProductId
+productId = _productId . _productInfo
+
+productPrice :: Product -> Price
+productPrice = _productPrice . _productInfo
 
 {- Price -}
 
@@ -415,9 +437,24 @@ splitOn ch list = f list [[]] where
   f (x:xs) ws | x == ch = f xs ([]:ws)
   f (x:xs) (w:ws) = f xs ((x:w):ws)
 
-applyCatalogueUpdate :: [Product] -> Order -> Order
-applyCatalogueUpdate products order = order
-
+applyCatalogueUpdate :: UTCTime -> [Product] -> Order -> Order
+applyCatalogueUpdate date products = overOrderItems apply
+  where
+    apply item = case find ((== itemProductId item) . productId) products of
+                   Just p -> applyAdjustment p item
+                   _ -> discontinue item
+    discontinue i@(OrderItem { _itemAdjustment = Nothing }) = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
+    discontinue i@(OrderItem { _itemAdjustment = Just a  }) = i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
+                                                                                         , _itemAdjIsDiscontinued = True
+                                                                                         , _itemAdjDate = date 
+                                                                                         }
+                                                               }
+    applyAdjustment p i@(OrderItem { _itemAdjustment = Nothing }) = i{ _itemAdjustment = Just $ OrderItemAdjustment (productPrice p) (_itemQuantity i) False date }
+    applyAdjustment p i@(OrderItem { _itemAdjustment = Just a  }) = i{ _itemAdjustment = Just a{ _itemAdjNewPrice = productPrice p
+                                                                                               , _itemAdjDate = date 
+                                                                                               }
+                                                                     }
+    
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
 
