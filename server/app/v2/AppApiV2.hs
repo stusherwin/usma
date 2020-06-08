@@ -15,6 +15,8 @@ import Data.Char (toLower, isLower, toUpper)
 import Data.Time.Clock (UTCTime)
 import GHC.Generics
 import Servant
+import Servant.Multipart (MultipartData, MultipartForm)
+
 import DomainV2 (VatRateType)
 
 type AppApiV2 = 
@@ -35,6 +37,7 @@ type CommandApiV2 =
   :<|> "reopen-household-order" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "ensure-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> ReqBody '[JSON] HouseholdOrderItemDetails :> Post '[JSON] ()
   :<|> "remove-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productId" Int :> Post '[JSON] ()
+  :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
 
 data Household = Household 
   { hId :: Int
