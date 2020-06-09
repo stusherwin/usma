@@ -5,6 +5,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 
 module RepositoryV2 where 
 
@@ -15,7 +16,7 @@ import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Control.Monad.Trans.Class (lift)
 import Data.ByteString (ByteString)
 import Data.List (find, foldl')
-import Data.Maybe (listToMaybe, fromMaybe)
+import Data.Maybe (listToMaybe, fromMaybe, maybeToList)
 import Data.Monoid ((<>))
 import qualified Data.Text as T (pack)
 import Data.Text.Encoding (encodeUtf8)
@@ -32,9 +33,9 @@ import Config (Config(..))
 import DomainV2
 
 data RepositoryConfig = RepositoryConfig { repoConnectionString :: ByteString, repoGroupKey :: String }
-data Repository = Repository { connection :: Connection, orderGroupId :: OrderGroupId }
+data Repository = Repository { connection :: Connection }
 
-connect :: RepositoryConfig -> (Repository -> MaybeT IO a) -> MaybeT IO a
+connect :: RepositoryConfig -> ((Repository, OrderGroupId) -> MaybeT IO a) -> MaybeT IO a
 connect config action = do
   conn <- liftIO $ connectPostgreSQL $ repoConnectionString $ config
   (maybeGroupId :: [Only Int]) <- liftIO $ query conn [sql|
@@ -42,21 +43,21 @@ connect config action = do
     from order_group
     where key = ?
   |] (Only $ repoGroupKey config)
-  connection <- MaybeT . return $ Repository conn . OrderGroupId . fromOnly <$> listToMaybe maybeGroupId
+  connection <- MaybeT . return $ (Repository conn, ) . OrderGroupId . fromOnly <$> listToMaybe maybeGroupId
   result <- MaybeT $ liftIO $ withTransaction conn $ runMaybeT $ action connection
   liftIO $ close conn
   return result
 
-getHouseholds :: Repository -> IO [Household]
-getHouseholds repo = do
+getHouseholds :: Repository -> Maybe OrderGroupId -> IO [Household]
+getHouseholds repo groupId = do
   let conn = connection repo
-  let groupId = orderGroupId repo
 
+  let params = ForOrderGroup <$> maybeToList groupId
   (rHouseholds, rHouseholdOrders, rOrderItems, rPayments) <- do
-    rHouseholds <- selectHouseholdRows conn [ForOrderGroup groupId]
-    rHouseholdOrders <- selectHouseholdOrderRows conn [ForOrderGroup groupId]
-    rOrderItems <- selectHouseholdOrderItemRows conn [ForOrderGroup groupId]
-    rPayments <- selectPayments conn [ForOrderGroup groupId]
+    rHouseholds <- selectHouseholdRows conn params 
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
+    rPayments <- selectPayments conn params
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
@@ -87,46 +88,33 @@ createProduct repo code = do
   |] (Only code)
   listToMaybe <$> selectProducts conn [ForProduct code]
 
-getOrder :: Repository -> IO (Maybe Order)
-getOrder repo = do
+getOrder :: Repository -> Maybe OrderGroupId -> IO (Maybe Order)
+getOrder repo groupId = do
   let conn = connection repo
-  let groupId = orderGroupId repo
 
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsCurrent]
   (rOrders, rHouseholdOrders, rOrderItems) <- do
-    rOrders <- selectOrderRows conn [OrderIsCurrent, ForOrderGroup groupId]
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent, ForOrderGroup groupId]
-    rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsCurrent, ForOrderGroup groupId]
+    rOrders <- selectOrderRows conn params
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
-getOrdersForAllGroups :: Repository -> IO [Order]
-getOrdersForAllGroups repo = do
+getPastOrders :: Repository -> Maybe OrderGroupId -> IO [Order]
+getPastOrders repo groupId = do
   let conn = connection repo
-  let groupId = orderGroupId repo
 
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsPast]
   (rOrders, rHouseholdOrders, rOrderItems) <- do
-    rOrders <- selectOrderRows conn [OrderIsCurrent]
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent]
-    rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsCurrent]
+    rOrders <- selectOrderRows conn params 
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
-getPastOrders :: Repository -> IO [Order]
-getPastOrders repo = do
+createHouseholdOrder :: Repository -> Maybe OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
+createHouseholdOrder repo groupId orderId householdId date = do
   let conn = connection repo
-  let groupId = orderGroupId repo
-  
-  (rOrders, rHouseholdOrders, rOrderItems) <- do
-    rOrders <- selectOrderRows conn [OrderIsPast, ForOrderGroup groupId]
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsPast, ForOrderGroup groupId]
-    rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsPast, ForOrderGroup groupId]
-    return (rOrders, rHouseholdOrders, rOrderItems)
-  return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
-
-createHouseholdOrder :: Repository -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
-createHouseholdOrder repo orderId householdId date = do
-  let conn = connection repo
-  let groupId = orderGroupId repo
 
   execute conn [sql|
     insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) 
@@ -134,75 +122,61 @@ createHouseholdOrder repo orderId householdId date = do
     on conflict (order_group_id, order_id, household_id) do nothing
   |] (groupId, orderId, householdId, date)
 
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
   (rHouseholdOrders, rOrderItems) <- do
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent, ForOrderGroup groupId, ForOrder orderId, ForHousehold householdId]
-    rOrderItems <- selectHouseholdOrderItemRows  conn  [OrderIsCurrent, ForOrderGroup groupId, ForOrder orderId, ForHousehold householdId]
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
     return (rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
-getHouseholdOrder :: Repository -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
-getHouseholdOrder repo orderId householdId = do
+getHouseholdOrder :: Repository -> Maybe OrderGroupId -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
+getHouseholdOrder repo groupId orderId householdId = do
   let conn = connection repo
-  let groupId = orderGroupId repo
   
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
   (rHouseholdOrders, rOrderItems) <- do
-    rHouseholdOrders <- selectHouseholdOrderRows conn [OrderIsCurrent, ForOrderGroup groupId, ForOrder orderId, ForHousehold householdId]
-    rOrderItems <- selectHouseholdOrderItemRows  conn [OrderIsCurrent, ForOrderGroup groupId, ForOrder orderId, ForHousehold householdId]
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
     return (rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
-newOrder :: Repository -> OrderSpec -> IO OrderId
-newOrder repo spec = do
+getHouseholdOrders :: Repository -> Maybe OrderGroupId -> IO [HouseholdOrder]
+getHouseholdOrders repo groupId = do
   let conn = connection repo
-  let groupId = orderGroupId repo
+
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsCurrent]
+  (rHouseholdOrders, rOrderItems) <- do
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
+    return (rHouseholdOrders, rOrderItems)
+  return $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
+
+createOrder :: Repository -> OrderSpec -> IO OrderId
+createOrder repo spec = do
+  let conn = connection repo
   
   [Only id] <- query conn [sql|
     insert into "order" (order_group_id, created_date, created_by_id) 
     values (?, ?, ?) 
     returning id
-  |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+  |] (_orderSpecGroupId spec, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
   return id
 
-updateHouseholdOrder :: Repository -> HouseholdOrder -> IO ()
-updateHouseholdOrder repo order = do
+setHouseholdOrders :: Repository -> [HouseholdOrder] -> IO ()
+setHouseholdOrders repo orders = do
   let conn = connection repo
-  let groupId = orderGroupId repo
-  
-  let orderId = _orderId . _householdOrderOrderInfo $ order
-  let householdId = _householdId . _householdOrderHouseholdInfo $ order
-  let abandoned = householdOrderIsAbandoned order
-  let complete = householdOrderIsComplete order
 
-  execute conn [sql|
-    update household_order 
-    set cancelled = ? 
-      , complete = ?
-    where order_group_id = ? and order_id = ? and household_id = ?
-  |] (abandoned, complete, groupId, orderId, householdId)
+  forM_ orders $ \order -> do
+    let orderId = _orderId . _householdOrderOrderInfo $ order
+    let groupId = _orderGroupId . _householdOrderOrderInfo $ order
+    let householdId = _householdId . _householdOrderHouseholdInfo $ order
 
-  forM_ (_householdOrderItems order) $ \i -> do
-    let productInfo = _productInfo . _itemProduct $ i
-    let productId = fromProductId . _productId $ productInfo
-    let productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
-    let productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
-    let quantity = _itemQuantity i
-    void $ execute conn [sql|
-      insert into household_order_item as hoi 
-        ( order_group_id
-        , order_id
-        , household_id
-        , product_id
-        , product_price_exc_vat
-        , product_price_inc_vat
-        , quantity
-        )
-      values (?, ?, ?, ?, ?, ?, ?)
-      on conflict (order_group_id, order_id, household_id, product_id) do update
-      set quantity = hoi.quantity
-    |] (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity)
+    updateHouseholdOrder conn groupId order
+    upsertHouseholdOrderItems conn groupId orderId householdId $ _householdOrderItems order
+    -- TODO: Deleted items??
 
-updateProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
-updateProductCatalogue repo date entries = do
+setProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
+setProductCatalogue repo date entries = do
   let conn = connection repo
   execute_ conn [sql|
     truncate table catalogue_entry
@@ -233,8 +207,44 @@ updateProductCatalogue repo date entries = do
   |] (Only date)
   selectProducts conn []
 
-updateOrders :: Repository -> [Order] -> IO ()
-updateOrders repo orders = return ()
+updateHouseholdOrder :: Connection -> OrderGroupId -> HouseholdOrder -> IO ()
+updateHouseholdOrder conn groupId order = do
+  let orderId = _orderId . _householdOrderOrderInfo $ order
+  let householdId = _householdId . _householdOrderHouseholdInfo $ order
+  let abandoned = householdOrderIsAbandoned order
+  let complete = householdOrderIsComplete order
+
+  void $ execute conn [sql|
+    update household_order 
+    set cancelled = ? 
+      , complete = ?
+    where order_group_id = ? and order_id = ? and household_id = ?
+  |] (abandoned, complete, groupId, orderId, householdId)
+
+upsertHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
+upsertHouseholdOrderItems conn groupId orderId householdId items = do
+  let rows = items <&> \i ->
+                    let productInfo = _productInfo . _itemProduct $ i
+                        productId = fromProductId . _productId $ productInfo
+                        productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
+                        productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
+                        quantity = _itemQuantity i
+                    in (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity)
+  void $ executeMany conn [sql|
+    insert into household_order_item as hoi 
+      ( order_group_id
+      , order_id
+      , household_id
+      , product_id
+      , product_price_exc_vat
+      , product_price_inc_vat
+      , quantity
+      )
+    values (?, ?, ?, ?, ?, ?, ?)
+    on conflict (order_group_id, order_id, household_id, product_id) 
+    do update
+    set quantity = hoi.quantity
+  |] rows
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
 selectHouseholdRows conn whereParams = 
@@ -273,6 +283,7 @@ selectOrderRows :: Connection -> [WhereParam] -> IO [OrderRow]
 selectOrderRows conn whereParams = do
     query conn ([sql|
       select o.id
+           , o.order_group_id
            , o.created
            , cb.id as created_by_household_id
            , cb.name as created_by_household_name
@@ -296,6 +307,7 @@ selectHouseholdOrderRows :: Connection -> [WhereParam] -> IO [HouseholdOrderRow]
 selectHouseholdOrderRows conn whereParams = 
     query conn ([sql|
       select o.id as order_id 
+           , o.order_group_id
            , o.created
            , cb.id as created_by_household_id
            , cb.name as created_by_household_name
@@ -476,10 +488,11 @@ instance FromRow OrderRow where
 orderInfoField :: RowParser OrderInfo
 orderInfoField = do
     orderId  <- field
+    orderGroupId  <- field
     created  <- field
     createdById <- field
     createdByName  <- field
-    return $ OrderInfo orderId created (createdBy createdById createdByName)
+    return $ OrderInfo orderId orderGroupId created (createdBy createdById createdByName)
     where
     createdBy (Just id) (Just name) = Just $ HouseholdInfo id name
     createdBy _ _                   = Nothing
@@ -630,3 +643,11 @@ toWhereClause params fn = foldl' fn' ([sql| |], []) params
 
 toDatabaseChar :: Char -> Action
 toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
+
+(<&>) :: Functor f => f a -> (a -> b) -> f b
+(<&>) = flip (<$>)
+infixl 4 <&>
+
+(&) :: a -> (a -> b) -> b
+(&) = flip ($)
+infixr 0 &

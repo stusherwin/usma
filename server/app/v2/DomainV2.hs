@@ -14,12 +14,6 @@ import GHC.Generics
 import Prelude hiding (product)
 import Text.Read (readMaybe)
 
-{-- OrderGroup --}
-
-newtype OrderGroupId = OrderGroupId 
-  { fromOrderGroupId :: Int 
-  } deriving (Eq, Show, Generic)
-
 {- Household -}
 
 data Household = Household 
@@ -66,10 +60,17 @@ newtype PaymentId = PaymentId
   { fromPaymentId :: Int 
   } deriving (Eq, Show, Generic)
 
+{-- OrderGroup --}
+
+newtype OrderGroupId = OrderGroupId 
+  { fromOrderGroupId :: Int 
+  } deriving (Eq, Show, Generic)
+
 {-- Order --}
 
 data OrderSpec = OrderSpec 
-  { _orderSpecCreated :: UTCTime
+  { _orderSpecGroupId :: OrderGroupId
+  , _orderSpecCreated :: UTCTime
   , _orderSpecCreatedByHouseholdId :: Maybe HouseholdId
   }
 
@@ -85,6 +86,7 @@ newtype OrderId = OrderId
 
 data OrderInfo = OrderInfo
   { _orderId :: OrderId
+  , _orderGroupId :: OrderGroupId
   , _orderCreated :: UTCTime
   , _orderCreatedBy :: Maybe HouseholdInfo
   } deriving (Eq, Show, Generic)
@@ -437,24 +439,28 @@ splitOn ch list = f list [[]] where
   f (x:xs) ws | x == ch = f xs ([]:ws)
   f (x:xs) (w:ws) = f xs ((x:w):ws)
 
-applyCatalogueUpdate :: UTCTime -> [Product] -> Order -> Order
-applyCatalogueUpdate date products = overOrderItems apply
+applyCatalogueUpdate :: UTCTime -> [Product] -> HouseholdOrder -> HouseholdOrder
+applyCatalogueUpdate date products = overHouseholdOrderItems apply
   where
     apply item = case find ((== itemProductId item) . productId) products of
-                   Just p -> applyAdjustment p item
-                   _ -> discontinue item
-    discontinue i@(OrderItem { _itemAdjustment = Nothing }) = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
-    discontinue i@(OrderItem { _itemAdjustment = Just a  }) = i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
-                                                                                         , _itemAdjIsDiscontinued = True
-                                                                                         , _itemAdjDate = date 
-                                                                                         }
-                                                               }
-    applyAdjustment p i@(OrderItem { _itemAdjustment = Nothing }) = i{ _itemAdjustment = Just $ OrderItemAdjustment (productPrice p) (_itemQuantity i) False date }
-    applyAdjustment p i@(OrderItem { _itemAdjustment = Just a  }) = i{ _itemAdjustment = Just a{ _itemAdjNewPrice = productPrice p
-                                                                                               , _itemAdjDate = date 
-                                                                                               }
-                                                                     }
-    
+                   Just p -> adjust p (_itemAdjustment item) item
+                   _      -> discontinue (_itemAdjustment item) item
+
+    adjust p (Just a) i | itemProductPrice i /= productPrice p = 
+                            i{ _itemAdjustment = Just a{ _itemAdjNewPrice = productPrice p
+                                                       , _itemAdjDate = date 
+                                                       }
+                             }
+                        | otherwise = i
+    adjust p _ i  = i{ _itemAdjustment = Just $ OrderItemAdjustment (productPrice p) (_itemQuantity i) False date }
+
+    discontinue (Just a) i = i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
+                                                        , _itemAdjIsDiscontinued = True
+                                                        , _itemAdjDate = date 
+                                                        }
+                              }
+    discontinue _  i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
+                            
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
 
