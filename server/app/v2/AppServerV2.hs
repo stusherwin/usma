@@ -73,21 +73,21 @@ commandServerV2 config  =
     abandonHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getHouseholdOrder repo (Just groupId) (OrderId orderId) (HouseholdId householdId)
       let order' = DomainV2.abandonHouseholdOrder order
-      liftIO $ setHouseholdOrders repo [order']
+      liftIO $ setHouseholdOrders repo [(order, order')]
       return ()
 
     completeHouseholdOrder :: Int -> Int -> Handler ()
     completeHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getHouseholdOrder repo (Just groupId) (OrderId orderId) (HouseholdId householdId)
       let order' = DomainV2.completeHouseholdOrder order
-      liftIO $ setHouseholdOrders repo [order']
+      liftIO $ setHouseholdOrders repo [(order, order')]
       return ()
 
     reopenHouseholdOrder :: Int -> Int -> Handler ()
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getHouseholdOrder repo (Just groupId) (OrderId orderId) (HouseholdId householdId)
       let order' = DomainV2.reopenHouseholdOrder order
-      liftIO $ setHouseholdOrders repo [order']
+      liftIO $ setHouseholdOrders repo [(order, order')]
       return ()
 
     ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
@@ -96,14 +96,14 @@ commandServerV2 config  =
       order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
       product <- MaybeT $ createProduct repo productCode
       let order' = updateHouseholdOrderItem product (hoidetQuantity details) order
-      liftIO $ setHouseholdOrders repo [order']
+      liftIO $ setHouseholdOrders repo [(order, order')]
       return ()
 
     removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem orderId householdId productId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getHouseholdOrder repo (Just groupId) (OrderId orderId) (HouseholdId householdId)
       let order' = DomainV2.removeHouseholdOrderItem (ProductId productId) order
-      liftIO $ setHouseholdOrders repo [order']
+      liftIO $ setHouseholdOrders repo [(order, order')]
       return ()
 
     uploadProductCatalogue :: MultipartData -> Handler ()
@@ -115,7 +115,7 @@ commandServerV2 config  =
       orders <- liftIO $ getHouseholdOrders repo Nothing
       products' <- liftIO $ setProductCatalogue repo date catalogue
       let orders' = map (applyCatalogueUpdate date products') orders
-      liftIO $ setHouseholdOrders repo orders'
+      liftIO $ setHouseholdOrders repo $ zip orders orders'
       return ()
 
 uploadSingleFile :: MultipartData -> MaybeT IO FilePath

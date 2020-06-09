@@ -10,12 +10,13 @@
 module RepositoryV2 where 
 
 import Control.Applicative ((<|>))
-import Control.Monad (mzero, forM_, void)
+import Control.Monad (mzero, forM_, void, when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Control.Monad.Trans.Class (lift)
 import Data.ByteString (ByteString)
-import Data.List (find, foldl')
+import Data.Function (on)
+import Data.List (find, foldl', deleteFirstsBy, intersectBy)
 import Data.Maybe (listToMaybe, fromMaybe, maybeToList)
 import Data.Monoid ((<>))
 import qualified Data.Text as T (pack)
@@ -134,18 +135,29 @@ createHouseholdOrder repo groupId orderId householdId date = do
     return (rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
-setHouseholdOrders :: Repository -> [HouseholdOrder] -> IO ()
+setHouseholdOrders :: Repository -> [(HouseholdOrder, HouseholdOrder)] -> IO ()
 setHouseholdOrders repo orders = do
   let conn = connection repo
 
-  forM_ orders $ \order -> do
-    let orderId = _orderId . _householdOrderOrderInfo $ order
-    let groupId = _orderGroupId . _householdOrderOrderInfo $ order
-    let householdId = _householdId . _householdOrderHouseholdInfo $ order
+  forM_ orders $ \(order, order') -> do
+    let orderId = _orderId . _householdOrderOrderInfo $ order'
+    let groupId = _orderGroupId . _householdOrderOrderInfo $ order'
+    let householdId = _householdId . _householdOrderHouseholdInfo $ order'
 
-    updateHouseholdOrder conn groupId order
-    upsertHouseholdOrderItems conn groupId orderId householdId $ _householdOrderItems order
-    -- TODO: Deleted items??
+    when (_householdOrderStatusFlags order /= _householdOrderStatusFlags order') $
+      updateHouseholdOrder conn groupId order
+
+    let items = _householdOrderItems order
+    let items' = _householdOrderItems order'
+
+    let added   = deleteFirstsBy ((==) `on` itemProductId) items' items
+    insertHouseholdOrderItems conn groupId orderId householdId added
+
+    let removed = deleteFirstsBy ((==) `on` itemProductId) items items'
+    deleteHouseholdOrderItems conn groupId orderId householdId removed
+    
+    let updated = intersectBy    ((==) `on` itemProductId) items items'
+    updateHouseholdOrderItems conn groupId orderId householdId updated
 
 setProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
 setProductCatalogue repo date catalogue = do
@@ -409,8 +421,8 @@ updateHouseholdOrder conn groupId order = do
     where order_group_id = ? and order_id = ? and household_id = ?
   |] (abandoned, complete, groupId, orderId, householdId)
 
-upsertHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
-upsertHouseholdOrderItems conn groupId orderId householdId items = do
+insertHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
+insertHouseholdOrderItems conn groupId orderId householdId items = do
   let rows = items <&> \i ->
                     let productInfo = _productInfo . _itemProduct $ i
                         productId = fromProductId . _productId $ productInfo
@@ -419,7 +431,7 @@ upsertHouseholdOrderItems conn groupId orderId householdId items = do
                         quantity = _itemQuantity i
                     in (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity)
   void $ executeMany conn [sql|
-    insert into household_order_item as hoi 
+    insert into household_order_item 
       ( order_group_id
       , order_id
       , household_id
@@ -429,9 +441,35 @@ upsertHouseholdOrderItems conn groupId orderId householdId items = do
       , quantity
       )
     values (?, ?, ?, ?, ?, ?, ?)
-    on conflict (order_group_id, order_id, household_id, product_id) 
-    do update
-    set quantity = hoi.quantity
+  |] rows
+
+updateHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
+updateHouseholdOrderItems conn groupId orderId householdId items = do
+  let rows = items <&> \i ->
+                    let productInfo = _productInfo . _itemProduct $ i
+                        productId = fromProductId . _productId $ productInfo
+                        productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
+                        productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
+                        quantity = _itemQuantity i
+                    in (productPriceExcVat, productPriceIncVat, quantity, groupId, orderId, householdId, productId)
+  void $ executeMany conn [sql|
+    update household_order_item
+    set product_price_exc_vat = ?
+      , product_price_inc_vat = ?
+      , quantity = ?
+      )
+    where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
+  |] rows
+
+deleteHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
+deleteHouseholdOrderItems conn groupId orderId householdId items = do
+  let rows = items <&> \i ->
+                    let productInfo = _productInfo . _itemProduct $ i
+                        productId = fromProductId . _productId $ productInfo
+                    in (groupId, orderId, householdId, productId)
+  void $ executeMany conn [sql|
+    delete from household_order_item
+    where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
