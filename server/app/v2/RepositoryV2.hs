@@ -61,33 +61,6 @@ getHouseholds repo groupId = do
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
-createProduct :: Repository -> String -> IO (Maybe Product)
-createProduct repo code = do
-  let conn = connection repo
-
-  execute conn [sql|
-    insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
-    select ce.code
-         , concat_ws(' ', nullif(btrim(ce.brand), '')
-                        , nullif(btrim(ce."description"), '')
-                        , nullif('(' || lower(btrim(ce.size)) || ')', '()')
-                        , nullif(btrim(ce."text"), ''))
-         , ce.price
-         , ce.vat_rate
-         , false
-         , ce.updated
-         , ce.biodynamic
-         , ce.fair_trade 
-         , ce.gluten_free 
-         , ce.organic
-         , ce.added_sugar
-         , ce.vegan                    
-    from catalogue_entry ce
-    where ce.code = ?
-    on conflict ("code") do nothing
-  |] (Only code)
-  listToMaybe <$> selectProducts conn [ForProduct code]
-
 getOrder :: Repository -> Maybe OrderGroupId -> IO (Maybe Order)
 getOrder repo groupId = do
   let conn = connection repo
@@ -111,23 +84,6 @@ getPastOrders repo groupId = do
     rOrderItems <- selectHouseholdOrderItemRows conn params
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
-
-createHouseholdOrder :: Repository -> Maybe OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
-createHouseholdOrder repo groupId orderId householdId date = do
-  let conn = connection repo
-
-  execute conn [sql|
-    insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) 
-    values (?, ?, ?, ?, false, false)
-    on conflict (order_group_id, order_id, household_id) do nothing
-  |] (groupId, orderId, householdId, date)
-
-  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
-  (rHouseholdOrders, rOrderItems) <- do
-    rHouseholdOrders <- selectHouseholdOrderRows conn params
-    rOrderItems <- selectHouseholdOrderItemRows conn params
-    return (rHouseholdOrders, rOrderItems)
-  return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
 getHouseholdOrder :: Repository -> Maybe OrderGroupId -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
 getHouseholdOrder repo groupId orderId householdId = do
@@ -154,13 +110,29 @@ getHouseholdOrders repo groupId = do
 createOrder :: Repository -> OrderSpec -> IO OrderId
 createOrder repo spec = do
   let conn = connection repo
-  
-  [Only id] <- query conn [sql|
-    insert into "order" (order_group_id, created_date, created_by_id) 
-    values (?, ?, ?) 
-    returning id
-  |] (_orderSpecGroupId spec, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+
+  [Only id] <- insertOrder conn spec
   return id
+
+createProduct :: Repository -> String -> IO (Maybe Product)
+createProduct repo code = do
+  let conn = connection repo
+
+  insertProduct conn code
+  listToMaybe <$> selectProducts conn [ForProduct code]
+
+createHouseholdOrder :: Repository -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
+createHouseholdOrder repo groupId orderId householdId date = do
+  let conn = connection repo
+
+  insertHouseholdOrder conn groupId orderId householdId date
+
+  let params = [ForOrderGroup groupId, OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
+  (rHouseholdOrders, rOrderItems) <- do
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectHouseholdOrderItemRows conn params
+    return (rHouseholdOrders, rOrderItems)
+  return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
 setHouseholdOrders :: Repository -> [HouseholdOrder] -> IO ()
 setHouseholdOrders repo orders = do
@@ -176,75 +148,13 @@ setHouseholdOrders repo orders = do
     -- TODO: Deleted items??
 
 setProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
-setProductCatalogue repo date entries = do
+setProductCatalogue repo date catalogue = do
   let conn = connection repo
-  execute_ conn [sql|
-    truncate table catalogue_entry
-  |]
-  void $ executeMany conn [sql|
-    insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, updated)
-    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  |] entries
-  void $ execute conn [sql|
-    update product
-    set "name" = case when ce.code is null then p."name" else concat_ws(' ', nullif(btrim(ce.brand), '')
-                                                                           , nullif(btrim(ce."description"), '')
-                                                                           , nullif('(' || lower(btrim(ce.size)) || ')', '()')
-                                                                           , nullif(btrim(ce."text"), '')) end
-      , price = coalesce(ce.price, p.price)
-      , vat_rate = coalesce(ce.vat_rate, p.vat_rate)
-      , biodynamic = coalesce(ce.biodynamic, p.biodynamic)
-      , fair_trade = coalesce(ce.fair_trade, p.fair_trade)
-      , gluten_free = coalesce(ce.gluten_free, p.gluten_free)
-      , organic = coalesce(ce.organic, p.organic)
-      , added_sugar = coalesce(ce.added_sugar, p.added_sugar)
-      , vegan = coalesce(ce.vegan, p.vegan)
-      , discontinued = (ce.code is null)
-      , updated = case when ce.price <> p.price or ce.code is null then ? else p.updated end
-    from product p
-    left join catalogue_entry ce on p.code = ce.code
-    where p.id = product.id
-  |] (Only date)
+
+  truncateCatalogue conn
+  insertCatalogue conn catalogue
+  updateProducts conn date
   selectProducts conn []
-
-updateHouseholdOrder :: Connection -> OrderGroupId -> HouseholdOrder -> IO ()
-updateHouseholdOrder conn groupId order = do
-  let orderId = _orderId . _householdOrderOrderInfo $ order
-  let householdId = _householdId . _householdOrderHouseholdInfo $ order
-  let abandoned = householdOrderIsAbandoned order
-  let complete = householdOrderIsComplete order
-
-  void $ execute conn [sql|
-    update household_order 
-    set cancelled = ? 
-      , complete = ?
-    where order_group_id = ? and order_id = ? and household_id = ?
-  |] (abandoned, complete, groupId, orderId, householdId)
-
-upsertHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
-upsertHouseholdOrderItems conn groupId orderId householdId items = do
-  let rows = items <&> \i ->
-                    let productInfo = _productInfo . _itemProduct $ i
-                        productId = fromProductId . _productId $ productInfo
-                        productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
-                        productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
-                        quantity = _itemQuantity i
-                    in (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity)
-  void $ executeMany conn [sql|
-    insert into household_order_item as hoi 
-      ( order_group_id
-      , order_id
-      , household_id
-      , product_id
-      , product_price_exc_vat
-      , product_price_inc_vat
-      , quantity
-      )
-    values (?, ?, ?, ?, ?, ?, ?)
-    on conflict (order_group_id, order_id, household_id, product_id) 
-    do update
-    set quantity = hoi.quantity
-  |] rows
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
 selectHouseholdRows conn whereParams = 
@@ -408,6 +318,121 @@ selectProducts conn whereParams =
     (whereClause, params) = toWhereClause whereParams $ \case
       (ForProduct _) -> Just [sql| p.code = ? |]
       _ -> Nothing
+
+truncateCatalogue :: Connection -> IO ()
+truncateCatalogue conn =   
+  void $ execute_ conn [sql|
+    truncate table catalogue_entry
+  |]
+
+insertCatalogue :: Connection -> ProductCatalogue -> IO ()
+insertCatalogue conn catalogue = 
+  void $ executeMany conn [sql|
+    insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, updated)
+    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  |] catalogue
+
+updateProducts :: Connection -> UTCTime -> IO ()
+updateProducts conn date = 
+  void $ execute conn [sql|
+    update product
+    set "name" = case when ce.code is null then p."name" else concat_ws(' ', nullif(btrim(ce.brand), '')
+                                                                           , nullif(btrim(ce."description"), '')
+                                                                           , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                                                                           , nullif(btrim(ce."text"), '')) end
+      , price = coalesce(ce.price, p.price)
+      , vat_rate = coalesce(ce.vat_rate, p.vat_rate)
+      , biodynamic = coalesce(ce.biodynamic, p.biodynamic)
+      , fair_trade = coalesce(ce.fair_trade, p.fair_trade)
+      , gluten_free = coalesce(ce.gluten_free, p.gluten_free)
+      , organic = coalesce(ce.organic, p.organic)
+      , added_sugar = coalesce(ce.added_sugar, p.added_sugar)
+      , vegan = coalesce(ce.vegan, p.vegan)
+      , discontinued = (ce.code is null)
+      , updated = case when ce.price <> p.price or ce.code is null then ? else p.updated end
+    from product p
+    left join catalogue_entry ce on p.code = ce.code
+    where p.id = product.id
+  |] (Only date)
+  
+insertOrder :: Connection -> OrderSpec -> IO [Only OrderId]
+insertOrder conn spec = 
+  query conn [sql|
+    insert into "order" (order_group_id, created_date, created_by_id) 
+    values (?, ?, ?) 
+    returning id
+  |] (_orderSpecGroupId spec, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+
+insertHouseholdOrder :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO ()
+insertHouseholdOrder conn groupId orderId householdId date =
+  void $ execute conn [sql|
+    insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) 
+    values (?, ?, ?, ?, false, false)
+    on conflict (order_group_id, order_id, household_id) do nothing
+  |] (groupId, orderId, householdId, date)
+
+insertProduct :: Connection -> String -> IO ()
+insertProduct conn code =
+  void $ execute conn [sql|
+    insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
+    select ce.code
+         , concat_ws(' ', nullif(btrim(ce.brand), '')
+                        , nullif(btrim(ce."description"), '')
+                        , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                        , nullif(btrim(ce."text"), ''))
+         , ce.price
+         , ce.vat_rate
+         , false
+         , ce.updated
+         , ce.biodynamic
+         , ce.fair_trade 
+         , ce.gluten_free 
+         , ce.organic
+         , ce.added_sugar
+         , ce.vegan                    
+    from catalogue_entry ce
+    where ce.code = ?
+    on conflict ("code") do nothing
+  |] (Only code)
+
+updateHouseholdOrder :: Connection -> OrderGroupId -> HouseholdOrder -> IO ()
+updateHouseholdOrder conn groupId order = do
+  let orderId = _orderId . _householdOrderOrderInfo $ order
+  let householdId = _householdId . _householdOrderHouseholdInfo $ order
+  let abandoned = householdOrderIsAbandoned order
+  let complete = householdOrderIsComplete order
+
+  void $ execute conn [sql|
+    update household_order 
+    set cancelled = ? 
+      , complete = ?
+    where order_group_id = ? and order_id = ? and household_id = ?
+  |] (abandoned, complete, groupId, orderId, householdId)
+
+upsertHouseholdOrderItems :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> [OrderItem] -> IO ()
+upsertHouseholdOrderItems conn groupId orderId householdId items = do
+  let rows = items <&> \i ->
+                    let productInfo = _productInfo . _itemProduct $ i
+                        productId = fromProductId . _productId $ productInfo
+                        productPriceExcVat = _moneyExcVat . _priceAmount . _productPrice $ productInfo
+                        productPriceIncVat = _moneyIncVat . _priceAmount . _productPrice $ productInfo
+                        quantity = _itemQuantity i
+                    in (groupId, orderId, householdId, productId, productPriceExcVat, productPriceIncVat, quantity)
+  void $ executeMany conn [sql|
+    insert into household_order_item as hoi 
+      ( order_group_id
+      , order_id
+      , household_id
+      , product_id
+      , product_price_exc_vat
+      , product_price_inc_vat
+      , quantity
+      )
+    values (?, ?, ?, ?, ?, ?, ?)
+    on conflict (order_group_id, order_id, household_id, product_id) 
+    do update
+    set quantity = hoi.quantity
+  |] rows
 
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 
