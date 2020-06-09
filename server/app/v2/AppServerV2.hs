@@ -93,7 +93,7 @@ commandServerV2 config  =
     ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
-      order <- MaybeT $ createHouseholdOrder repo (Just groupId) (OrderId orderId) (HouseholdId householdId) date
+      order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
       product <- MaybeT $ createProduct repo productCode
       let order' = updateHouseholdOrderItem product (hoidetQuantity details) order
       liftIO $ setHouseholdOrders repo [order']
