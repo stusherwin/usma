@@ -148,6 +148,19 @@ createHouseholdOrder repo groupId orderId householdId date = do
     return (rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
+setOrders :: Repository -> ([Order], [Order]) -> IO ()
+setOrders repo orders = do
+    let conn = connection repo
+
+    updateOrders conn $ updatedByComparing orderKey _orderStatusFlags orders
+
+    let householdOrders = join (***) (concatMap _orderHouseholdOrders) $ orders
+    setHouseholdOrders repo householdOrders
+  where
+    orderKey o = let groupId = _orderGroupId . _orderInfo $ o
+                     orderId = _orderId . _orderInfo $ o
+                 in (groupId, orderId)
+
 setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO ()
 setHouseholdOrders repo orders = do
     let conn = connection repo
@@ -177,14 +190,7 @@ setHouseholdOrders repo orders = do
                  in (groupId, orderId, householdId)
     keyedItems o = map (orderKey o, ) $ _householdOrderItems o
     itemKey ((groupId, orderId, householdId), i) = (groupId, orderId, householdId, itemProductId i)
-    keyAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
-    addedBy   key (xs, xs') = deleteFirstsBy ((==) `on` key) xs' xs
-    removedBy key (xs, xs') = deleteFirstsBy ((==) `on` key) xs  xs'
-    updatedByComparing key compare (xs, xs') = map snd
-                                             . filter (uncurry (/=) . join (***) compare)
-                                             $ (intersectBy ((==) `on` key) xs  xs')
-                                               `zip`
-                                               (intersectBy ((==) `on` key) xs' xs)
+    keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
 
 setProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
 setProductCatalogue repo date catalogue = do
@@ -403,6 +409,20 @@ insertOrder conn groupId spec =
     values (?, ?, ?) 
     returning id
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+
+updateOrders :: Connection -> [Order] -> IO ()
+updateOrders conn orders = do
+  let rows = orders <&> \o -> let groupId = _orderGroupId . _orderInfo $ o
+                                  orderId = _orderId . _orderInfo $ o
+                                  abandoned = orderIsAbandoned o
+                                  complete = orderIsComplete o
+                              in (abandoned, complete, groupId, orderId)
+  void $ executeMany conn [sql|
+    update "order"
+    set is_abandoned = ? 
+      , is_complete = ?
+    where order_group_id = ? and order_id = ?
+  |] rows
 
 insertHouseholdOrder :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO ()
 insertHouseholdOrder conn groupId orderId householdId date =
@@ -775,3 +795,16 @@ infixl 4 <&>
 (&) :: a -> (a -> b) -> b
 (&) = flip ($)
 infixr 0 &
+
+addedBy :: Eq b => (a -> b) -> ([a], [a]) -> [a]
+addedBy   key (xs, xs') = deleteFirstsBy ((==) `on` key) xs' xs
+
+removedBy :: Eq b => (a -> b) -> ([a], [a]) -> [a]
+removedBy key (xs, xs') = deleteFirstsBy ((==) `on` key) xs  xs'
+
+updatedByComparing :: (Eq b, Eq c) => (a -> b) -> (a -> c) -> ([a], [a]) -> [a]
+updatedByComparing key compare (xs, xs') = map snd
+                                         . filter (uncurry (/=) . join (***) compare)
+                                         $ (intersectBy ((==) `on` key) xs  xs')
+                                           `zip`
+                                           (intersectBy ((==) `on` key) xs' xs)
