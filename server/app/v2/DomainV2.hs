@@ -152,6 +152,13 @@ overOrderItems fn o = o{ _orderHouseholdOrders = householdOrders' }
   where
     householdOrders' = map (overHouseholdOrderItems fn) . _orderHouseholdOrders $ o
 
+abandonOrder :: Order -> Order
+abandonOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = True
+                                                         , _orderIsPlaced = True 
+                                                         }
+                  , _orderHouseholdOrders = map abandonHouseholdOrder $ _orderHouseholdOrders o
+                  }
+
 {- HouseholdOrder -}
 
 data HouseholdOrder = HouseholdOrder 
