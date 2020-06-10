@@ -69,8 +69,7 @@ newtype OrderGroupId = OrderGroupId
 {-- Order --}
 
 data OrderSpec = OrderSpec 
-  { _orderSpecGroupId :: OrderGroupId
-  , _orderSpecCreated :: UTCTime
+  { _orderSpecCreated :: UTCTime
   , _orderSpecCreatedByHouseholdId :: Maybe HouseholdId
   }
 
@@ -256,7 +255,7 @@ removeHouseholdOrderItem :: ProductId -> HouseholdOrder -> HouseholdOrder
 removeHouseholdOrderItem productId o = o{ _householdOrderItems = items' }
   where
     items = _householdOrderItems o
-    items' = filter ((/= productId) . _productId . _productInfo . _itemProduct) items
+    items' = filter ((/= productId) . itemProductId) items
 
 addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
 addOrUpdate cond n update (x:xs)
@@ -327,6 +326,7 @@ data ProductInfo = ProductInfo
   , _productCode :: String
   , _productName :: String
   , _productPrice :: Price
+  , _productIsDiscontinued :: Bool
   , _productUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
@@ -349,6 +349,9 @@ productId = _productId . _productInfo
 
 productPrice :: Product -> Price
 productPrice = _productPrice . _productInfo
+
+productIsDiscontinued :: Product -> Bool
+productIsDiscontinued = _productIsDiscontinued . _productInfo
 
 {- Price -}
 
@@ -443,7 +446,8 @@ applyCatalogueUpdate :: UTCTime -> [Product] -> HouseholdOrder -> HouseholdOrder
 applyCatalogueUpdate date products = overHouseholdOrderItems apply
   where
     apply item = case find ((== itemProductId item) . productId) products of
-                   Just p -> adjust p (_itemAdjustment item) item
+                   Just p | productIsDiscontinued p -> discontinue (_itemAdjustment item) item
+                          | otherwise -> adjust p (_itemAdjustment item) item
                    _      -> discontinue (_itemAdjustment item) item
 
     adjust p (Just a) i | itemProductPrice i /= productPrice p = 
