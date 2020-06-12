@@ -58,6 +58,7 @@ commandServerV2 config  =
     :<|> ensureHouseholdOrderItem
     :<|> removeHouseholdOrderItem
     :<|> uploadProductCatalogue
+    :<|> acceptCatalogueUpdates
   where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = withRepository config $ \(repo, groupId) -> do
@@ -110,8 +111,9 @@ commandServerV2 config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
-      product <- MaybeT $ createProduct repo productCode
-      let order' = updateHouseholdOrderItem product (hoidetQuantity details) order
+      -- product <- MaybeT $ createProduct repo productCode
+      catalogueEntry <- MaybeT $ getCatalogueEntry repo productCode
+      let order' = updateHouseholdOrderItem catalogueEntry (hoidetQuantity details) order
       liftIO $ setHouseholdOrders repo ([order], [order'])
       return ()
 
@@ -129,9 +131,17 @@ commandServerV2 config  =
       file <- liftIO $ readFile filePath
       let catalogue = parseCatalogue date filePath
       orders <- liftIO $ getCurrentHouseholdOrders repo Nothing
-      products' <- liftIO $ setProductCatalogue repo date catalogue
-      let orders' = map (applyCatalogueUpdate date products') orders
+      let orders' = map (applyCatalogueUpdate date catalogue) orders
+      liftIO $ setProductCatalogue repo date catalogue
       liftIO $ setHouseholdOrders repo (orders, orders')
+      return ()
+
+    acceptCatalogueUpdates :: Int -> Int -> Handler ()
+    acceptCatalogueUpdates orderId householdId = withRepository config $ \(repo, groupId) -> do
+      date <- liftIO getCurrentTime
+      order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
+      let order' = DomainV2.acceptCatalogueUpdates date order
+      liftIO $ setHouseholdOrders repo ([order], [order'])
       return ()
 
 uploadSingleFile :: MultipartData -> MaybeT IO FilePath

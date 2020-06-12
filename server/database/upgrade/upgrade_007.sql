@@ -12,23 +12,23 @@ begin
   , PRIMARY KEY (code)
   );
 
-  CREATE TABLE v2.product 
-  ( id SERIAL NOT NULL
-  , code text NOT NULL
-  , name text NOT NULL
-  , price integer NOT NULL
-  , vat_rate character(1) NOT NULL
-  , is_discontinued boolean NOT NULL
-  , updated timestamp with time zone NOT NULL
-  , is_biodynamic boolean DEFAULT false NOT NULL
-  , is_fair_trade boolean DEFAULT false NOT NULL
-  , is_gluten_free boolean DEFAULT false NOT NULL
-  , is_organic boolean DEFAULT false NOT NULL
-  , is_added_sugar boolean DEFAULT false NOT NULL
-  , is_vegan boolean DEFAULT false NOT NULL
-  , PRIMARY KEY (id)
-  , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
-  );
+  -- CREATE TABLE v2.product 
+  -- ( id SERIAL NOT NULL
+  -- , code text NOT NULL
+  -- , name text NOT NULL
+  -- , price integer NOT NULL
+  -- , vat_rate character(1) NOT NULL
+  -- , is_discontinued boolean NOT NULL
+  -- , updated timestamp with time zone NOT NULL
+  -- , is_biodynamic boolean DEFAULT false NOT NULL
+  -- , is_fair_trade boolean DEFAULT false NOT NULL
+  -- , is_gluten_free boolean DEFAULT false NOT NULL
+  -- , is_organic boolean DEFAULT false NOT NULL
+  -- , is_added_sugar boolean DEFAULT false NOT NULL
+  -- , is_vegan boolean DEFAULT false NOT NULL
+  -- , PRIMARY KEY (id)
+  -- , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
+  -- );
 
   CREATE TABLE v2.order_group 
   ( id SERIAL NOT NULL
@@ -80,19 +80,19 @@ begin
   , order_id integer NOT NULL
   , household_id integer NOT NULL
   , product_id integer NOT NULL
-  , product_code text NULL
-  , product_name text NULL
-  , product_vat_rate character(1) NULL
-  , product_vat_rate_multiplier numeric(3,2) NULL
-  , product_price integer NULL
-  , product_is_discontinued boolean NULL
-  , product_updated timestamp with time zone NULL
-  , product_is_biodynamic boolean DEFAULT false NULL
-  , product_is_fair_trade boolean DEFAULT false NULL
-  , product_is_gluten_free boolean DEFAULT false NULL
-  , product_is_organic boolean DEFAULT false NULL
-  , product_is_added_sugar boolean DEFAULT false NULL
-  , product_is_vegan boolean DEFAULT false NULL
+  , product_code text NOT NULL
+  , product_name text NOT NULL
+  , product_vat_rate character(1) NOT NULL
+  , product_vat_rate_multiplier numeric(3,2) NOT NULL
+  , product_price integer NOT NULL
+  , product_is_discontinued boolean NOT NULL
+  , product_updated timestamp with time zone NOT NULL
+  , product_is_biodynamic boolean DEFAULT false NOT NULL
+  , product_is_fair_trade boolean DEFAULT false NOT NULL
+  , product_is_gluten_free boolean DEFAULT false NOT NULL
+  , product_is_organic boolean DEFAULT false NOT NULL
+  , product_is_added_sugar boolean DEFAULT false NOT NULL
+  , product_is_vegan boolean DEFAULT false NOT NULL
   , quantity integer NOT NULL
   , ix SERIAL NOT NULL
   , PRIMARY KEY (order_id, household_id, product_id)
