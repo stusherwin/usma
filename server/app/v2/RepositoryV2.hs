@@ -152,8 +152,14 @@ setOrders :: Repository -> ([Order], [Order]) -> IO ()
 setOrders repo orders = do
     let conn = connection repo
 
+    updateOrders conn $ updatedByComparing orderKey _orderStatusFlags orders
+
     let householdOrders = join (***) (concatMap _orderHouseholdOrders) $ orders
     setHouseholdOrders repo householdOrders
+  where
+    orderKey o = let groupId = _orderGroupId . _orderInfo $ o
+                     orderId = _orderId . _orderInfo $ o
+                 in (groupId, orderId)
 
 setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO ()
 setHouseholdOrders repo orders = do
@@ -435,6 +441,20 @@ insertProduct conn code =
     on conflict ("code") do nothing
   |] (Only code)
 
+updateOrders :: Connection -> [Order] -> IO ()
+updateOrders conn orders = do
+  let rows = orders <&> \o -> let groupId = _orderGroupId . _orderInfo $ o
+                                  orderId = _orderId . _orderInfo $ o
+                                  abandoned = orderIsAbandoned o
+                                  complete = orderIsComplete o
+                              in (abandoned, complete, groupId, orderId)
+  void $ executeMany conn [sql|
+    update "order"
+    set is_abandoned = ? 
+      , is_complete = ?
+    where order_group_id = ? and order_id = ?
+  |] rows
+
 updateHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
 updateHouseholdOrders conn orders = do
   let rows = orders <&> \o -> let groupId = _orderGroupId . _householdOrderOrderInfo $ o
@@ -442,13 +462,11 @@ updateHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                                  placed = householdOrderIsPlaced o
-                              in (abandoned, complete, placed, groupId, orderId, householdId)
+                              in (abandoned, complete, groupId, orderId, householdId)
   void $ executeMany conn [sql|
     update household_order 
     set is_abandoned = ? 
       , is_complete = ?
-      , is_placed = ?
     where order_group_id = ? and order_id = ? and household_id = ?
   |] rows
 
@@ -570,6 +588,7 @@ toHousehold rHouseholdOrders rOrderItems rPayments h =
 toOrder :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> OrderRow -> Order
 toOrder rHouseholdOrders rOrderItems o = 
   Order orderInfo
+        (orderRow_statusFlags o)
         householdOrders
   where
   orderInfo = orderRow_orderInfo o
@@ -622,10 +641,11 @@ instance ToField HouseholdId where
 
 data OrderRow = OrderRow
   { orderRow_orderInfo :: OrderInfo
+  , orderRow_statusFlags :: OrderStatusFlags 
   }
 
 instance FromRow OrderRow where
-  fromRow = OrderRow <$> orderInfoField
+  fromRow = OrderRow <$> orderInfoField <*> orderStatusFlagsField
 
 orderInfoField :: RowParser OrderInfo
 orderInfoField = do
@@ -638,6 +658,9 @@ orderInfoField = do
     where
     createdBy (Just id) (Just name) = Just $ HouseholdInfo id name
     createdBy _ _                   = Nothing
+
+orderStatusFlagsField :: RowParser OrderStatusFlags
+orderStatusFlagsField = OrderStatusFlags <$> field <*> field
 
 instance FromField OrderId where
   fromField f char = OrderId <$> fromField f char
@@ -772,7 +795,7 @@ instance ToRow UpdateOrderItemRow where
             , toField $ _productCode . _productInfo <$> updateOrderItem_product i
             , toField $ _productName . _productInfo <$> updateOrderItem_product i
             , toField $ _vatRateType . _priceVatRate . _productPrice . _productInfo <$> updateOrderItem_product i
-            , toField $ ((realToFrac . _vatRateMultiplier . _priceVatRate . _productPrice . _productInfo <$> updateOrderItem_product i) :: Maybe Double)
+            , toField $ ((realToFrac . _vatRateMultiplier . _priceVatRate . _productPrice . _productInfo <$> updateOrderItem_product i) :: Maybe Double )
             , toField $ _moneyExcVat . _priceAmount . _productPrice . _productInfo <$> updateOrderItem_product i
             , toField $ _productIsDiscontinued . _productInfo <$> updateOrderItem_product i
             , toField $ _productUpdated . _productInfo <$> updateOrderItem_product i
