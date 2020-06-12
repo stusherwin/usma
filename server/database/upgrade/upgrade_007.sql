@@ -55,8 +55,6 @@ begin
   , id SERIAL     NOT NULL
   , created        timestamp with time zone NOT NULL
   , created_by_id  integer
-  , is_placed      boolean NOT NULL
-  , is_abandoned   boolean NOT NULL
   , PRIMARY KEY (id)
   , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
   , FOREIGN KEY (created_by_id) REFERENCES v2.household(id)
@@ -69,6 +67,7 @@ begin
   , updated timestamp with time zone NOT NULL
   , is_complete boolean NOT NULL
   , is_abandoned boolean NOT NULL
+  , is_placed boolean NOT NULL
   , PRIMARY KEY (order_id, household_id)
   , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
   , FOREIGN KEY (order_id) REFERENCES v2."order"(id)
