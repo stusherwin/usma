@@ -152,14 +152,8 @@ setOrders :: Repository -> ([Order], [Order]) -> IO ()
 setOrders repo orders = do
     let conn = connection repo
 
-    updateOrders conn $ updatedByComparing orderKey _orderStatusFlags orders
-
     let householdOrders = join (***) (concatMap _orderHouseholdOrders) $ orders
     setHouseholdOrders repo householdOrders
-  where
-    orderKey o = let groupId = _orderGroupId . _orderInfo $ o
-                     orderId = _orderId . _orderInfo $ o
-                 in (groupId, orderId)
 
 setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO ()
 setHouseholdOrders repo orders = do
@@ -187,9 +181,10 @@ setHouseholdOrders repo orders = do
     orderKey o = let groupId = _orderGroupId . _householdOrderOrderInfo $ o
                      orderId = _orderId . _householdOrderOrderInfo $ o
                      householdId = _householdId . _householdOrderHouseholdInfo $ o
-                 in (groupId, orderId, householdId)
+                     status = householdOrderStatus o
+                 in (groupId, orderId, householdId, status)
     keyedItems o = map (orderKey o, ) $ _householdOrderItems o
-    itemKey ((groupId, orderId, householdId), i) = (groupId, orderId, householdId, itemProductId i)
+    itemKey ((groupId, orderId, householdId, status), i) = (groupId, orderId, householdId, status, itemProductId i)
     keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
 
 setProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO [Product]
@@ -242,8 +237,6 @@ selectOrderRows conn whereParams = do
            , o.created
            , cb.id as created_by_household_id
            , cb.name as created_by_household_name
-           , o.is_abandoned
-           , o.is_placed
       from v2."order" o
       left join v2.household cb
         on cb.id = o.created_by_id 
@@ -410,20 +403,6 @@ insertOrder conn groupId spec =
     returning id
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
 
-updateOrders :: Connection -> [Order] -> IO ()
-updateOrders conn orders = do
-  let rows = orders <&> \o -> let groupId = _orderGroupId . _orderInfo $ o
-                                  orderId = _orderId . _orderInfo $ o
-                                  abandoned = orderIsAbandoned o
-                                  complete = orderIsComplete o
-                              in (abandoned, complete, groupId, orderId)
-  void $ executeMany conn [sql|
-    update "order"
-    set is_abandoned = ? 
-      , is_complete = ?
-    where order_group_id = ? and order_id = ?
-  |] rows
-
 insertHouseholdOrder :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO ()
 insertHouseholdOrder conn groupId orderId householdId date =
   void $ execute conn [sql|
@@ -463,17 +442,19 @@ updateHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                              in (abandoned, complete, groupId, orderId, householdId)
+                                  placed = householdOrderIsPlaced o
+                              in (abandoned, complete, placed, groupId, orderId, householdId)
   void $ executeMany conn [sql|
     update household_order 
     set is_abandoned = ? 
       , is_complete = ?
+      , is_placed = ?
     where order_group_id = ? and order_id = ? and household_id = ?
   |] rows
 
-insertOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
+insertOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 insertOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId), i) -> (_itemQuantity i, groupId, orderId, householdId, itemProductId i)
+  let rows = items <&> \((groupId, orderId, householdId, _), i) -> (_itemQuantity i, groupId, orderId, householdId, itemProductId i)
   void $ executeMany conn [sql|
     insert into order_item 
       ( quantity
@@ -485,26 +466,45 @@ insertOrderItems conn items = do
     values (?, ?, ?, ?, ?)
   |] rows
 
-updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
+updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 updateOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId), i) -> (_itemQuantity i, groupId, orderId, householdId, itemProductId i)
+  let rows = items <&> \((groupId, orderId, householdId, status), i) ->
+                         UpdateOrderItemRow (_itemQuantity i)
+                                            (justWhen (_itemProduct i) (isPastStatus status))
+                                            groupId
+                                            orderId
+                                            householdId
+                                            (itemProductId i)
   void $ executeMany conn [sql|
     update order_item
     set quantity = ?
+      , product_code = ?
+      , product_name = ?
+      , product_vat_rate = ?
+      , product_vat_rate_multiplier = ?
+      , product_price = ?
+      , product_is_discontinued = ?
+      , product_updated = ?
+      , product_is_biodynamic = ?
+      , product_is_fair_trade = ?
+      , product_is_gluten_free = ?
+      , product_is_organic = ?
+      , product_is_added_sugar = ?
+      , product_is_vegan = ?
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
-deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
+deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 deleteOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId), i) -> (groupId, orderId, householdId, itemProductId i)
+  let rows = items <&> \((groupId, orderId, householdId, _), i) -> (groupId, orderId, householdId, itemProductId i)
   void $ executeMany conn [sql|
     delete from order_item
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
-insertOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductId), OrderItemAdjustment)] -> IO ()
+insertOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus, ProductId), OrderItemAdjustment)] -> IO ()
 insertOrderItemAdjustments conn adjustments = do
-  let rows = adjustments <&> \((groupId, orderId, householdId, productId), adj) ->
+  let rows = adjustments <&> \((groupId, orderId, householdId, _, productId), adj) ->
                     let vatRate = _vatRateType . _priceVatRate . _itemAdjNewPrice $ adj
                         price = _moneyExcVat . _priceAmount . _itemAdjNewPrice $ adj
                         quantity = _itemAdjNewQuantity adj
@@ -526,9 +526,9 @@ insertOrderItemAdjustments conn adjustments = do
     values (?, ?, ?, ?, ?, ?, ?, ?, ?)
   |] rows
 
-updateOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductId), OrderItemAdjustment)] -> IO ()
+updateOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus, ProductId), OrderItemAdjustment)] -> IO ()
 updateOrderItemAdjustments conn adjustments = do
-  let rows = adjustments <&> \((groupId, orderId, householdId, productId), adj) ->
+  let rows = adjustments <&> \((groupId, orderId, householdId, _, productId), adj) ->
                     let vatRate = _vatRateType . _priceVatRate . _itemAdjNewPrice $ adj
                         price = _moneyExcVat . _priceAmount . _itemAdjNewPrice $ adj
                         quantity = _itemAdjNewQuantity adj
@@ -545,9 +545,9 @@ updateOrderItemAdjustments conn adjustments = do
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
-deleteOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductId), OrderItemAdjustment)] -> IO ()
+deleteOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus, ProductId), OrderItemAdjustment)] -> IO ()
 deleteOrderItemAdjustments conn adjustments = do
-  let rows = adjustments <&> \((groupId, orderId, householdId, productId), _) -> (groupId, orderId, householdId, productId)
+  let rows = adjustments <&> \((groupId, orderId, householdId, _, productId), _) -> (groupId, orderId, householdId, productId)
   void $ executeMany conn [sql|
     delete from order_item_adjustment
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
@@ -570,7 +570,6 @@ toHousehold rHouseholdOrders rOrderItems rPayments h =
 toOrder :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> OrderRow -> Order
 toOrder rHouseholdOrders rOrderItems o = 
   Order orderInfo
-        (orderRow_statusFlags o)
         householdOrders
   where
   orderInfo = orderRow_orderInfo o
@@ -623,11 +622,10 @@ instance ToField HouseholdId where
 
 data OrderRow = OrderRow
   { orderRow_orderInfo :: OrderInfo
-  , orderRow_statusFlags :: OrderStatusFlags
   }
 
 instance FromRow OrderRow where
-  fromRow = OrderRow <$> orderInfoField <*> orderStatusFlagsField
+  fromRow = OrderRow <$> orderInfoField
 
 orderInfoField :: RowParser OrderInfo
 orderInfoField = do
@@ -646,9 +644,6 @@ instance FromField OrderId where
 
 instance ToField OrderId where
   toField = toField . fromOrderId
-
-orderStatusFlagsField :: RowParser OrderStatusFlags
-orderStatusFlagsField = OrderStatusFlags <$> field <*> field
 
 data HouseholdOrderRow = HouseholdOrderRow
   { householdOrderRow_orderInfo :: OrderInfo
@@ -761,6 +756,36 @@ instance ToRow ProductCatalogueEntry where
             , toField $ _catalogueEntryAddedSugar e
             , toField $ _catalogueEntryVegan e
             , toField $ _catalogueEntryUpdated e
+            ]
+
+data UpdateOrderItemRow = UpdateOrderItemRow 
+  { updateOrderItem_quantity :: Int
+  , updateOrderItem_product :: Maybe Product
+  , updateOrderItem_groupId :: OrderGroupId
+  , updateOrderItem_orderId :: OrderId
+  , updateOrderItem_householdId :: HouseholdId
+  , updateOrderItem_productId :: ProductId
+  }
+
+instance ToRow UpdateOrderItemRow where
+  toRow i = [ toField $ updateOrderItem_quantity i
+            , toField $ _productCode . _productInfo <$> updateOrderItem_product i
+            , toField $ _productName . _productInfo <$> updateOrderItem_product i
+            , toField $ _vatRateType . _priceVatRate . _productPrice . _productInfo <$> updateOrderItem_product i
+            , toField $ ((realToFrac . _vatRateMultiplier . _priceVatRate . _productPrice . _productInfo <$> updateOrderItem_product i) :: Maybe Double)
+            , toField $ _moneyExcVat . _priceAmount . _productPrice . _productInfo <$> updateOrderItem_product i
+            , toField $ _productIsDiscontinued . _productInfo <$> updateOrderItem_product i
+            , toField $ _productUpdated . _productInfo <$> updateOrderItem_product i
+            , toField $ _productIsBiodynamic . _productFlags <$> updateOrderItem_product i
+            , toField $ _productIsFairTrade . _productFlags <$> updateOrderItem_product i
+            , toField $ _productIsGlutenFree . _productFlags <$> updateOrderItem_product i
+            , toField $ _productIsOrganic . _productFlags <$> updateOrderItem_product i
+            , toField $ _productIsAddedSugar . _productFlags <$> updateOrderItem_product i
+            , toField $ _productIsVegan . _productFlags <$> updateOrderItem_product i
+            , toField $ updateOrderItem_groupId i
+            , toField $ updateOrderItem_orderId i
+            , toField $ updateOrderItem_householdId i
+            , toField $ updateOrderItem_productId i
             ]
 
 data WhereParam = ForOrderGroup OrderGroupId

@@ -75,7 +75,6 @@ data OrderSpec = OrderSpec
 
 data Order = Order 
   { _orderInfo :: OrderInfo
-  , _orderStatusFlags :: OrderStatusFlags
   , _orderHouseholdOrders :: [HouseholdOrder]
   } deriving (Eq, Show, Generic)
 
@@ -88,11 +87,6 @@ data OrderInfo = OrderInfo
   , _orderGroupId :: OrderGroupId
   , _orderCreated :: UTCTime
   , _orderCreatedBy :: Maybe HouseholdInfo
-  } deriving (Eq, Show, Generic)
-
-data OrderStatusFlags = OrderStatusFlags
-  { _orderIsAbandoned :: Bool
-  , _orderIsPlaced :: Bool
   } deriving (Eq, Show, Generic)
 
 data OrderStatus = OrderOpen
@@ -132,12 +126,6 @@ orderStatus o | orderIsAbandoned o = OrderAbandoned
               | orderIsComplete o = OrderComplete
               | otherwise = OrderOpen
 
-orderIsAbandoned :: Order -> Bool
-orderIsAbandoned = _orderIsAbandoned . _orderStatusFlags
-
-orderIsPlaced :: Order -> Bool
-orderIsPlaced = _orderIsPlaced . _orderStatusFlags
-
 orderIsComplete :: Order -> Bool
 orderIsComplete = all householdOrderIsComplete . _orderHouseholdOrders
 
@@ -147,16 +135,19 @@ orderIsReconciled = all householdOrderIsReconciled . _orderHouseholdOrders
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
 orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . _orderHouseholdOrders
 
+orderIsAbandoned :: Order -> Bool
+orderIsAbandoned = all householdOrderIsAbandoned . _orderHouseholdOrders
+
+orderIsPlaced :: Order -> Bool
+orderIsPlaced = all householdOrderIsPlaced . _orderHouseholdOrders
+
 overOrderItems :: (OrderItem -> OrderItem) -> Order -> Order
 overOrderItems fn o = o{ _orderHouseholdOrders = householdOrders' }
   where
     householdOrders' = map (overHouseholdOrderItems fn) . _orderHouseholdOrders $ o
 
 abandonOrder :: Order -> Order
-abandonOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = True
-                                                         , _orderIsPlaced = True 
-                                                         }
-                  , _orderHouseholdOrders = map abandonHouseholdOrder $ _orderHouseholdOrders o
+abandonOrder o = o{ _orderHouseholdOrders = map abandonHouseholdOrder $ _orderHouseholdOrders o
                   }
 
 {- HouseholdOrder -}
@@ -182,6 +173,12 @@ data HouseholdOrderStatus = HouseholdOrderOpen
                           | HouseholdOrderComplete
                             deriving (Eq, Show, Generic)
 
+isPastStatus :: HouseholdOrderStatus -> Bool
+isPastStatus HouseholdOrderPlaced = True
+isPastStatus HouseholdOrderAbandoned = True
+isPastStatus HouseholdOrderReconciled = True
+-- isPastStatus _ = False
+
 householdOrderTotal :: HouseholdOrder -> Money
 householdOrderTotal = sum . map itemTotal . _householdOrderItems
 
@@ -196,9 +193,8 @@ householdOrderAdjustment ho =
 
 householdOrderStatus :: HouseholdOrder -> HouseholdOrderStatus
 householdOrderStatus ho | householdOrderIsAbandoned ho = HouseholdOrderAbandoned
-                        | householdOrderIsPlaced ho = if householdOrderIsReconciled ho
-                                                        then HouseholdOrderReconciled 
-                                                        else HouseholdOrderPlaced
+                        | householdOrderIsReconciled ho = HouseholdOrderReconciled
+                        | householdOrderIsPlaced ho = HouseholdOrderPlaced
                         | householdOrderIsComplete ho = HouseholdOrderComplete
                         | otherwise = HouseholdOrderOpen
 
@@ -212,7 +208,7 @@ householdOrderIsPlaced :: HouseholdOrder -> Bool
 householdOrderIsPlaced = _householdOrderIsPlaced . _householdOrderStatusFlags
 
 householdOrderIsReconciled :: HouseholdOrder -> Bool
-householdOrderIsReconciled = all (isJust . _itemAdjustment) . _householdOrderItems
+householdOrderIsReconciled ho = householdOrderIsPlaced ho && (all (isJust . _itemAdjustment) . _householdOrderItems $ ho)
 
 householdOrderIsAwaitingCatalogueUpdateConfirm :: HouseholdOrder -> Bool
 householdOrderIsAwaitingCatalogueUpdateConfirm ho = any ((> orderUpdated ho) . productUpdated) $ _householdOrderItems ho
