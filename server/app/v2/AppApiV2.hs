@@ -40,7 +40,8 @@ type CommandApiV2 =
   :<|> "ensure-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> ReqBody '[JSON] HouseholdOrderItemDetails :> Post '[JSON] ()
   :<|> "remove-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productId" Int :> Post '[JSON] ()
   :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
-
+  :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+  
 data Household = Household 
   { hId :: Int
   , hName :: String

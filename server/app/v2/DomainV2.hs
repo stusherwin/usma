@@ -3,16 +3,18 @@
 
 module DomainV2 where
 
-import Data.Function (on)
-import Data.Time.Clock (UTCTime)
-import Data.Semigroup (Semigroup(..))
-import Data.List (groupBy, maximumBy, find, delete)
-import Data.Maybe (isJust, maybe, fromMaybe, catMaybes)
-import Data.Ord (comparing)
+import           Control.Arrow ((&&&))
+import           Data.Function (on)
+import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup)
+import           Data.Time.Clock (UTCTime)
+import           Data.Semigroup (Semigroup(..))
+import           Data.List (groupBy, maximumBy, find, delete, lookup)
+import           Data.Maybe (isJust, maybe, fromMaybe, catMaybes)
+import           Data.Ord (comparing)
 import qualified Data.List.NonEmpty as NE (fromList)
-import GHC.Generics
-import Prelude hiding (product)
-import Text.Read (readMaybe)
+import           GHC.Generics
+import           Prelude hiding (product)
+import           Text.Read (readMaybe)
 
 {- Household -}
 
@@ -188,7 +190,8 @@ isPastStatus :: HouseholdOrderStatus -> Bool
 isPastStatus HouseholdOrderPlaced = True
 isPastStatus HouseholdOrderAbandoned = True
 isPastStatus HouseholdOrderReconciled = True
--- isPastStatus _ = False
+--TODO: set compile options to fail on missing case
+isPastStatus _ = False
 
 householdOrderTotal :: HouseholdOrder -> Money
 householdOrderTotal = sum . map itemTotal . _householdOrderItems
@@ -227,6 +230,9 @@ householdOrderIsAwaitingCatalogueUpdateConfirm ho = any ((> orderUpdated ho) . p
     orderUpdated = _householdOrderUpdated . _householdOrderStatusFlags
     productUpdated =  _productUpdated . _productInfo . _itemProduct
 
+householdOrderUpdated :: HouseholdOrder -> UTCTime
+householdOrderUpdated = _householdOrderUpdated . _householdOrderStatusFlags
+
 overHouseholdOrderItems :: (OrderItem -> OrderItem) -> HouseholdOrder -> HouseholdOrder
 overHouseholdOrderItems fn ho = ho{ _householdOrderItems = items' }
   where
@@ -254,16 +260,15 @@ reopenHouseholdOrder ho@(HouseholdOrder { _householdOrderStatusFlags = f }) =
                                     , _householdOrderIsComplete = False
                                     } }
 
-updateHouseholdOrderItem :: Product -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
-updateHouseholdOrderItem product maybeQuantity o = o{ _householdOrderItems = items' }
+updateHouseholdOrderItem :: ProductCatalogueEntry -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
+updateHouseholdOrderItem entry maybeQuantity o = o{ _householdOrderItems = items' }
   where
     items = _householdOrderItems o
-    items' = addOrUpdate ((== productCode) . itemProductCode) 
-                         (OrderItem product 1 Nothing) 
+    items' = addOrUpdate ((== entryCode) . itemProductCode) 
+                         (OrderItem (fromCatalogueEntry entry) 1 Nothing) 
                          (updateOrderItemQuantity maybeQuantity) 
                          items
-    productCode = _productCode . _productInfo $ product
-    itemProductCode = _productCode . _productInfo . _itemProduct
+    entryCode = _catalogueEntryCode entry
 
 removeHouseholdOrderItem :: ProductId -> HouseholdOrder -> HouseholdOrder
 removeHouseholdOrderItem productId o = o{ _householdOrderItems = items' }
@@ -287,6 +292,9 @@ data OrderItem = OrderItem
 
 itemProductId :: OrderItem -> ProductId
 itemProductId = _productId . _productInfo . _itemProduct
+
+itemProductCode :: OrderItem -> String
+itemProductCode = _productCode . _productInfo . _itemProduct
 
 itemProductPrice :: OrderItem -> Price
 itemProductPrice = _productPrice . _productInfo . _itemProduct
@@ -408,7 +416,13 @@ data VatRate = VatRate
   , _vatRateMultiplier :: Rational
   } deriving (Eq, Show, Generic)
 
-{- ProductCatalogueEntry -}
+zeroRate :: VatRate
+zeroRate = VatRate Zero 1
+
+getVatRate :: VatRateType -> [VatRate] -> VatRate
+getVatRate t vs =fromMaybe zeroRate $ lookup t $ map (_vatRateType &&& id) $ vs
+
+{- ProductCatalogue -}
 
 data ProductCatalogueEntry = ProductCatalogueEntry
   { _catalogueEntryCode :: String
@@ -417,8 +431,7 @@ data ProductCatalogueEntry = ProductCatalogueEntry
   , _catalogueEntryDescription :: String
   , _catalogueEntryText :: String
   , _catalogueEntrySize :: String
-  , _catalogueEntryPrice :: Int
-  , _catalogueEntryVatRateType :: VatRateType
+  , _catalogueEntryPrice :: Price
   , _catalogueEntryRrp :: Maybe Int
   , _catalogueEntryBiodynamic :: Bool
   , _catalogueEntryFairTrade :: Bool
@@ -429,48 +442,54 @@ data ProductCatalogueEntry = ProductCatalogueEntry
   , _catalogueEntryUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
-type ProductCatalogue = [ProductCatalogueEntry]
+type ProductCatalogue = H.HashMap String ProductCatalogueEntry
 
-parseCatalogue :: UTCTime -> String -> ProductCatalogue
-parseCatalogue date file =
-  catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
-  parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
-    let price' = fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
-        vat' = case vat of
-                 "1" -> Standard
-                 "5" -> Reduced
-                 _ -> Zero
-        rrp' =  round . (* 100) <$> (readMaybe price :: Maybe Float)
-        b' = b == "B"
-        f' = f == "F"
-        g' = g == "G"
-        o' = o == "O"
-        s' = s == "S"
-        v' = v == "V"
-    in  Just $ ProductCatalogueEntry code cat brand desc text size price' vat' rrp' b' f' g' o' s' v' date
-  parse _ _ = Nothing
+parseCatalogue :: [VatRate] -> UTCTime -> String -> ProductCatalogue
+parseCatalogue vatRates date file =
+    H.fromList 
+    . map (_catalogueEntryCode &&& id) 
+    . catMaybes 
+    . zipWith parse [0..] 
+    . map (splitOn ',')
+    . drop 1 
+    . lines 
+    $ file
+  where
+    parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
+      let vatRateType = case vat of
+            "1" -> Standard
+            "5" -> Reduced
+            _ -> Zero
+          vatRate = getVatRate vatRateType vatRates     
+          price' = atVatRate vatRate $ fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
+          rrp' =  round . (* 100) <$> (readMaybe price :: Maybe Float)
+          b' = b == "B"
+          f' = f == "F"
+          g' = g == "G"
+          o' = o == "O"
+          s' = s == "S"
+          v' = v == "V"
+      in  Just $ ProductCatalogueEntry code cat brand desc text size price' rrp' b' f' g' o' s' v' date
+    parse _ _ = Nothing
 
-splitOn :: Eq a => a -> [a] -> [[a]]
-splitOn ch list = f list [[]] where
-  f [] ws = map reverse $ reverse ws
-  f (x:xs) ws | x == ch = f xs ([]:ws)
-  f (x:xs) (w:ws) = f xs ((x:w):ws)
-
-applyCatalogueUpdate :: UTCTime -> [Product] -> HouseholdOrder -> HouseholdOrder
+applyCatalogueUpdate :: UTCTime -> ProductCatalogue -> HouseholdOrder -> HouseholdOrder
 applyCatalogueUpdate date products = overHouseholdOrderItems apply
   where
-    apply item = case find ((== itemProductId item) . productId) products of
-                   Just p | productIsDiscontinued p -> discontinue (_itemAdjustment item) item
-                          | otherwise -> adjust p (_itemAdjustment item) item
+    apply item = case H.lookup (itemProductCode item) products of
+                   Just e -> adjust e    (_itemAdjustment item) item
                    _      -> discontinue (_itemAdjustment item) item
 
-    adjust p (Just a) i | itemProductPrice i /= productPrice p = 
-                            i{ _itemAdjustment = Just a{ _itemAdjNewPrice = productPrice p
+    adjust e (Just a) i | itemProductPrice i /= _catalogueEntryPrice e = 
+                            i{ _itemAdjustment = Just a{ _itemAdjNewPrice = _catalogueEntryPrice e
                                                        , _itemAdjDate = date 
                                                        }
                              }
                         | otherwise = i
-    adjust p _ i  = i{ _itemAdjustment = Just $ OrderItemAdjustment (productPrice p) (_itemQuantity i) False date }
+    adjust e _ i  = i{ _itemAdjustment = Just $ OrderItemAdjustment (_catalogueEntryPrice e) 
+                                                                    (_itemQuantity i) 
+                                                                    False 
+                                                                    date 
+                     }
 
     discontinue (Just a) i = i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
                                                         , _itemAdjIsDiscontinued = True
@@ -478,9 +497,30 @@ applyCatalogueUpdate date products = overHouseholdOrderItems apply
                                                         }
                               }
     discontinue _  i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
-                            
-zeroRate :: VatRate
-zeroRate = VatRate Zero 1
 
+acceptCatalogueUpdates :: UTCTime -> HouseholdOrder -> HouseholdOrder
+acceptCatalogueUpdates date = id
+-- acceptCatalogueUpdates date order = let o = overHouseholdOrderItems accept
+--                                         f = _householdOrderStatusFlags o
+--                                     in  o{ _householdOrderStatusFlags = f{ _householdOrderUpdated = date } }
+--   where
+--     accept i@(OrderItem { _itemAdjustment = Just (OrderItemAdjustment { { _itemAdjNewPrice :: Price
+--                                                                         , _itemAdjNewQuantity :: Int
+--                                                                         , _itemAdjIsDiscontinued :: Bool
+--                                                                         , _itemAdjDate :: UTCTime
+--                                                                         }})) =
+--       i{ _itemAdjustment = Nothing }
+
+fromCatalogueEntry :: ProductCatalogueEntry -> Product
+fromCatalogueEntry entry = undefined
+
+{- Utils -}
+
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn ch list = f list [[]] where
+  f [] ws = map reverse $ reverse ws
+  f (x:xs) ws | x == ch = f xs ([]:ws)
+  f (x:xs) (w:ws) = f xs ((x:w):ws)
+                            
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
