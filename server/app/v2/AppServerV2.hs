@@ -50,6 +50,7 @@ commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
          createOrderForHousehold
     :<|> createOrder
+    :<|> placeOrder
     :<|> abandonOrder
     :<|> abandonHouseholdOrder
     :<|> completeHouseholdOrder
@@ -74,6 +75,13 @@ commandServerV2 config  =
     abandonOrder orderId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       let order' = DomainV2.abandonOrder order
+      liftIO $ setOrders repo ([order], [order'])
+      return ()
+
+    placeOrder :: Int -> Handler ()
+    placeOrder orderId = withRepository config $ \(repo, groupId) -> do
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.placeOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
