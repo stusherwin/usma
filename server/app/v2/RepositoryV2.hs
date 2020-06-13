@@ -51,6 +51,11 @@ connect config action = do
   liftIO $ close conn
   return result
 
+getVatRates :: Repository -> IO [VatRate]
+getVatRates repo = do
+  let conn = connection repo
+  selectVatRates conn
+
 getHouseholds :: Repository -> Maybe OrderGroupId -> IO [Household]
 getHouseholds repo groupId = do
   let conn = connection repo
@@ -211,6 +216,13 @@ setProductCatalogue repo date catalogue = do
   insertCatalogue conn (H.elems catalogue)
   -- updateProducts conn date
   -- selectProducts conn []
+
+selectVatRates :: Connection -> IO [VatRate]
+selectVatRates conn = 
+  query_ conn ([sql|
+    select code, multiplier
+    from v2.vat_rate
+  |])
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
 selectHouseholdRows conn whereParams = 
@@ -768,8 +780,9 @@ priceField :: RowParser Price
 priceField = atVatRate <$> vatRateField <*> field
 
 instance ToField Price where
-  toField p = (toField . _moneyExcVat . _priceAmount $ p) <>
-              (toField . _vatRateType . _priceVatRate $ p)
+  toField p = Many [ toField . _moneyExcVat . _priceAmount $ p
+                   , toField . _vatRateType . _priceVatRate $ p
+                   ]
 
 vatRateField :: RowParser VatRate
 vatRateField = VatRate <$> field <*> field
@@ -822,6 +835,9 @@ instance ToField VatRateType where
   toField Zero = toDatabaseChar 'Z'
   toField Standard = toDatabaseChar 'S'
   toField Reduced = toDatabaseChar 'R'
+
+instance FromRow VatRate where
+  fromRow = VatRate <$> field <*> field
 
 instance ToRow ProductCatalogueEntry where
   toRow e = [ toField $ _catalogueEntryCode e

@@ -129,7 +129,8 @@ commandServerV2 config  =
       date <- liftIO getCurrentTime
       filePath <- uploadSingleFile multipartData
       file <- liftIO $ readFile filePath
-      let catalogue = parseCatalogue date filePath
+      vatRates <- liftIO $ getVatRates repo
+      let catalogue = parseCatalogue vatRates date filePath
       orders <- liftIO $ getCurrentHouseholdOrders repo Nothing
       let orders' = map (applyCatalogueUpdate date catalogue) orders
       liftIO $ setProductCatalogue repo date catalogue
