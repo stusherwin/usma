@@ -111,7 +111,9 @@ commandServerV2 config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
-      product <- MaybeT $ createProduct repo productCode
+      -- Needed to convert ProductId to ProductCode
+      -- TODO: Remove ProductId altogether
+      product <- MaybeT $ createProduct repo (ProductCode productCode)
       catalogueEntry <- MaybeT $ getCatalogueEntry repo productCode
       let order' = updateHouseholdOrderItem catalogueEntry (hoidetQuantity details) order
       liftIO $ setHouseholdOrders repo ([order], [order'])
@@ -120,7 +122,10 @@ commandServerV2 config  =
     removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem orderId householdId productId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
-      let order' = DomainV2.removeHouseholdOrderItem (ProductId productId) order
+      -- Needed to convert ProductId to ProductCode
+      -- TODO: Remove ProductId altogether
+      product <- MaybeT $ getProduct repo (ProductId productId)
+      let order' = DomainV2.removeHouseholdOrderItem (productCode product) order
       liftIO $ setHouseholdOrders repo ([order], [order'])
       return ()
 
@@ -203,7 +208,7 @@ apiOrderAdjustment _ _ = Nothing
 apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem i = Api.OrderItem
   { oiProductId          = fromProductId . _productId                   . _productInfo . _itemProduct $ i 
-  , oiProductCode        = _productCode                                 . _productInfo . _itemProduct $ i
+  , oiProductCode        = fromProductCode . _productCode               . _productInfo . _itemProduct $ i
   , oiProductName        = _productName                                 . _productInfo . _itemProduct $ i
   , oiProductVatRate     = _vatRateType . _priceVatRate . _productPrice . _productInfo . _itemProduct $ i
   , oiProductPriceExcVat = _moneyExcVat . _priceAmount $ case _itemAdjustment i of
