@@ -6,6 +6,7 @@ module DomainV2 where
 import           Control.Arrow ((&&&))
 import           Data.Function (on)
 import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup)
+import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
 import           Data.Semigroup (Semigroup(..))
 import           Data.List (groupBy, maximumBy, find, delete, lookup)
@@ -270,11 +271,11 @@ updateHouseholdOrderItem entry maybeQuantity o = o{ _householdOrderItems = items
                          items
     entryCode = _catalogueEntryCode entry
 
-removeHouseholdOrderItem :: ProductId -> HouseholdOrder -> HouseholdOrder
-removeHouseholdOrderItem productId o = o{ _householdOrderItems = items' }
+removeHouseholdOrderItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
+removeHouseholdOrderItem productCode o = o{ _householdOrderItems = items' }
   where
     items = _householdOrderItems o
-    items' = filter ((/= productId) . itemProductId) items
+    items' = filter ((/= productCode) . itemProductCode) items
 
 addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
 addOrUpdate cond n update (x:xs)
@@ -293,7 +294,7 @@ data OrderItem = OrderItem
 itemProductId :: OrderItem -> ProductId
 itemProductId = _productId . _productInfo . _itemProduct
 
-itemProductCode :: OrderItem -> String
+itemProductCode :: OrderItem -> ProductCode
 itemProductCode = _productCode . _productInfo . _itemProduct
 
 itemProductPrice :: OrderItem -> Price
@@ -339,13 +340,19 @@ itemAdjNewTotal adj = atQuantity (_itemAdjNewQuantity adj) (_itemAdjNewPrice adj
 
 {- Product -}
 
-newtype ProductId = ProductId 
+newtype ProductId = ProductId
   { fromProductId :: Int 
   } deriving (Eq, Show, Generic)
 
+newtype ProductCode = ProductCode
+  { fromProductCode :: String 
+  } deriving (Eq, Show, Generic)
+
+instance Hashable ProductCode
+
 data ProductInfo = ProductInfo
   { _productId :: ProductId
-  , _productCode :: String
+  , _productCode :: ProductCode
   , _productName :: String
   , _productPrice :: Price
   , _productIsDiscontinued :: Bool
@@ -368,6 +375,9 @@ data ProductFlags = ProductFlags
 
 productId :: Product -> ProductId
 productId = _productId . _productInfo
+
+productCode :: Product -> ProductCode
+productCode = _productCode . _productInfo
 
 productPrice :: Product -> Price
 productPrice = _productPrice . _productInfo
@@ -425,7 +435,7 @@ getVatRate t vs =fromMaybe zeroRate $ lookup t $ map (_vatRateType &&& id) $ vs
 {- ProductCatalogue -}
 
 data ProductCatalogueEntry = ProductCatalogueEntry
-  { _catalogueEntryCode :: String
+  { _catalogueEntryCode :: ProductCode
   , _catalogueEntryCategory :: String
   , _catalogueEntryBrand :: String
   , _catalogueEntryDescription :: String
@@ -442,7 +452,7 @@ data ProductCatalogueEntry = ProductCatalogueEntry
   , _catalogueEntryUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
-type ProductCatalogue = H.HashMap String ProductCatalogueEntry
+type ProductCatalogue = H.HashMap ProductCode ProductCatalogueEntry
 
 parseCatalogue :: [VatRate] -> UTCTime -> String -> ProductCatalogue
 parseCatalogue vatRates date file =
@@ -456,7 +466,8 @@ parseCatalogue vatRates date file =
     $ file
   where
     parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
-      let vatRateType = case vat of
+      let code' = ProductCode code
+          vatRateType = case vat of
             "1" -> Standard
             "5" -> Reduced
             _ -> Zero
@@ -469,7 +480,7 @@ parseCatalogue vatRates date file =
           o' = o == "O"
           s' = s == "S"
           v' = v == "V"
-      in  Just $ ProductCatalogueEntry code cat brand desc text size price' rrp' b' f' g' o' s' v' date
+      in  Just $ ProductCatalogueEntry code' cat brand desc text size price' rrp' b' f' g' o' s' v' date
     parse _ _ = Nothing
 
 applyCatalogueUpdate :: UTCTime -> ProductCatalogue -> HouseholdOrder -> HouseholdOrder
