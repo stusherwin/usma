@@ -143,12 +143,12 @@ createOrder repo groupId spec = do
   [Only id] <- insertOrder conn groupId spec
   return id
 
--- createProduct :: Repository -> String -> IO (Maybe Product)
--- createProduct repo code = do
---   let conn = connection repo
+createProduct :: Repository -> String -> IO (Maybe Product)
+createProduct repo code = do
+  let conn = connection repo
 
---   insertProduct conn code
---   listToMaybe <$> selectProducts conn [ForProduct code]
+  insertProduct conn code
+  listToMaybe <$> selectProducts conn [ForProduct code]
 
 createHouseholdOrder :: Repository -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
 createHouseholdOrder repo groupId orderId householdId date = do
@@ -214,7 +214,7 @@ setProductCatalogue repo date catalogue = do
 
   truncateCatalogue conn
   insertCatalogue conn (H.elems catalogue)
-  -- updateProducts conn date
+  updateProducts conn date
   -- selectProducts conn []
 
 selectVatRates :: Connection -> IO [VatRate]
@@ -361,31 +361,31 @@ selectOrderItemRows conn whereParams =
       (ForOrder _)       -> Just [sql| o.id = ? |]
       (ForHousehold _)   -> Just [sql| ho.household_id = ? |]
 
--- selectProducts :: Connection -> [WhereParam] -> IO [Product]
--- selectProducts conn whereParams = 
---     query conn ([sql|
---       select p.id
---            , p.code
---            , p.name
---            , p.vat_rate
---            , v.multiplier
---            , p.price
---            , p.is_discontinued
---            , p.updated
---            , p.biodynamic
---            , p.fair_trade
---            , p.gluten_free
---            , p.organic
---            , p.added_sugar
---            , p.vegan
---       from v2.product p 
---       where 1 = 1 |] <> whereClause <> [sql|
---       order by p.code
---     |]) params
---   where
---     (whereClause, params) = toWhereClause whereParams $ \case
---       (ForProduct _) -> Just [sql| p.code = ? |]
---       _ -> Nothing
+selectProducts :: Connection -> [WhereParam] -> IO [Product]
+selectProducts conn whereParams = 
+    query conn ([sql|
+      select p.id
+           , p.code
+           , p.name
+           , p.vat_rate
+           , v.multiplier
+           , p.price
+           , p.is_discontinued
+           , p.updated
+           , p.biodynamic
+           , p.fair_trade
+           , p.gluten_free
+           , p.organic
+           , p.added_sugar
+           , p.vegan
+      from v2.product p 
+      where 1 = 1 |] <> whereClause <> [sql|
+      order by p.code
+    |]) params
+  where
+    (whereClause, params) = toWhereClause whereParams $ \case
+      (ForProduct _) -> Just [sql| p.code = ? |]
+      _ -> Nothing
 
 truncateCatalogue :: Connection -> IO ()
 truncateCatalogue conn =   
@@ -408,28 +408,28 @@ selectCatalogueEntry conn code =
     where code = ?
   |] (Only code)
 
--- updateProducts :: Connection -> UTCTime -> IO ()
--- updateProducts conn date = 
---   void $ execute conn [sql|
---     update product
---     set "name" = case when ce.code is null then p."name" else concat_ws(' ', nullif(btrim(ce.brand), '')
---                                                                            , nullif(btrim(ce."description"), '')
---                                                                            , nullif('(' || lower(btrim(ce.size)) || ')', '()')
---                                                                            , nullif(btrim(ce."text"), '')) end
---       , price = coalesce(ce.price, p.price)
---       , vat_rate = coalesce(ce.vat_rate, p.vat_rate)
---       , biodynamic = coalesce(ce.biodynamic, p.biodynamic)
---       , fair_trade = coalesce(ce.fair_trade, p.fair_trade)
---       , gluten_free = coalesce(ce.gluten_free, p.gluten_free)
---       , organic = coalesce(ce.organic, p.organic)
---       , added_sugar = coalesce(ce.added_sugar, p.added_sugar)
---       , vegan = coalesce(ce.vegan, p.vegan)
---       , discontinued = (ce.code is null)
---       , updated = case when ce.price <> p.price or ce.code is null then ? else p.updated end
---     from product p
---     left join catalogue_entry ce on p.code = ce.code
---     where p.id = product.id
-  -- |] (Only date)
+updateProducts :: Connection -> UTCTime -> IO ()
+updateProducts conn date = 
+  void $ execute conn [sql|
+    update product
+    set "name" = case when ce.code is null then p."name" else concat_ws(' ', nullif(btrim(ce.brand), '')
+                                                                           , nullif(btrim(ce."description"), '')
+                                                                           , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                                                                           , nullif(btrim(ce."text"), '')) end
+      , price = coalesce(ce.price, p.price)
+      , vat_rate = coalesce(ce.vat_rate, p.vat_rate)
+      , biodynamic = coalesce(ce.biodynamic, p.biodynamic)
+      , fair_trade = coalesce(ce.fair_trade, p.fair_trade)
+      , gluten_free = coalesce(ce.gluten_free, p.gluten_free)
+      , organic = coalesce(ce.organic, p.organic)
+      , added_sugar = coalesce(ce.added_sugar, p.added_sugar)
+      , vegan = coalesce(ce.vegan, p.vegan)
+      , discontinued = (ce.code is null)
+      , updated = case when ce.price <> p.price or ce.code is null then ? else p.updated end
+    from product p
+    left join catalogue_entry ce on p.code = ce.code
+    where p.id = product.id
+  |] (Only date)
   
 insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
 insertOrder conn groupId spec = 
@@ -447,29 +447,29 @@ insertHouseholdOrder conn groupId orderId householdId date =
     on conflict (order_group_id, order_id, household_id) do nothing
   |] (groupId, orderId, householdId, date)
 
--- insertProduct :: Connection -> String -> IO ()
--- insertProduct conn code =
---   void $ execute conn [sql|
---     insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
---     select ce.code
---          , concat_ws(' ', nullif(btrim(ce.brand), '')
---                         , nullif(btrim(ce."description"), '')
---                         , nullif('(' || lower(btrim(ce.size)) || ')', '()')
---                         , nullif(btrim(ce."text"), ''))
---          , ce.price
---          , ce.vat_rate
---          , false
---          , ce.updated
---          , ce.biodynamic
---          , ce.fair_trade 
---          , ce.gluten_free 
---          , ce.organic
---          , ce.added_sugar
---          , ce.vegan                    
---     from catalogue_entry ce
---     where ce.code = ?
---     on conflict ("code") do nothing
---   |] (Only code)
+insertProduct :: Connection -> String -> IO ()
+insertProduct conn code =
+  void $ execute conn [sql|
+    insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
+    select ce.code
+         , concat_ws(' ', nullif(btrim(ce.brand), '')
+                        , nullif(btrim(ce."description"), '')
+                        , nullif('(' || lower(btrim(ce.size)) || ')', '()')
+                        , nullif(btrim(ce."text"), ''))
+         , ce.price
+         , ce.vat_rate
+         , false
+         , ce.updated
+         , ce.biodynamic
+         , ce.fair_trade 
+         , ce.gluten_free 
+         , ce.organic
+         , ce.added_sugar
+         , ce.vegan                    
+    from catalogue_entry ce
+    where ce.code = ?
+    on conflict ("code") do nothing
+  |] (Only code)
 
 updateOrders :: Connection -> [Order] -> IO ()
 updateOrders conn orders = do
@@ -547,30 +547,6 @@ insertOrderItems conn items = do
          , ?
          , ?
   |] rows
-
--- insertProduct :: Connection -> String -> IO ()
--- insertProduct conn code =
---   void $ execute conn [sql|
---     insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
---     select ce.code
---          , concat_ws(' ', nullif(btrim(ce.brand), '')
---                         , nullif(btrim(ce."description"), '')
---                         , nullif('(' || lower(btrim(ce.size)) || ')', '()')
---                         , nullif(btrim(ce."text"), ''))
---          , ce.price
---          , ce.vat_rate
---          , false
---          , ce.updated
---          , ce.biodynamic
---          , ce.fair_trade 
---          , ce.gluten_free 
---          , ce.organic
---          , ce.added_sugar
---          , ce.vegan                    
---     from catalogue_entry ce
---     where ce.code = ?
---     on conflict ("code") do nothing
---   |] (Only code)
 
 updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 updateOrderItems conn items = do
@@ -758,8 +734,8 @@ data OrderItemRow = OrderItemRow
 instance FromRow OrderItemRow where
   fromRow = OrderItemRow <$> productField <*> field <*> maybeOrderItemAdjustmentField
 
--- instance FromRow Product where
---   fromRow = Product <$> productInfoField <*> productFlagsField
+instance FromRow Product where
+  fromRow = Product <$> productInfoField <*> productFlagsField
 
 productField :: RowParser Product
 productField = Product <$> productInfoField <*> productFlagsField
