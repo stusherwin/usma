@@ -13,7 +13,7 @@ begin
   );
 
   create table v2.catalogue_entry
-  ( code           text        not null primary key
+  ( code           char(10)    not null
   , category       text        not null
   , brand          text        not null
   , "description"  text        not null
@@ -29,20 +29,12 @@ begin
   , added_sugar    boolean     not null
   , vegan          boolean     not null
   , updated        timestamptz not null
+  , PRIMARY KEY (code)
   );
 
   CREATE TABLE v2.product 
   ( id SERIAL NOT NULL
-  , code text NOT NULL
-  , name text NOT NULL
-  , price integer NOT NULL
-  , vat_rate character(1) NOT NULL
-  , is_biodynamic boolean DEFAULT false NOT NULL
-  , is_fair_trade boolean DEFAULT false NOT NULL
-  , is_gluten_free boolean DEFAULT false NOT NULL
-  , is_organic boolean DEFAULT false NOT NULL
-  , is_added_sugar boolean DEFAULT false NOT NULL
-  , is_vegan boolean DEFAULT false NOT NULL
+  , code char(10) NOT NULL
   , PRIMARY KEY (id)
   , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
   );
@@ -96,37 +88,41 @@ begin
   ( order_group_id integer NOT NULL
   , order_id integer NOT NULL
   , household_id integer NOT NULL
-  , product_id integer NOT NULL
+  , product_code char(10) NOT NULL
+  , product_name text NOT NULL
+  , product_price integer NOT NULL
   , product_vat_rate character(1) NOT NULL
   , product_vat_rate_multiplier numeric(3,2) NOT NULL
-  , product_price integer NOT NULL
+  , product_is_biodynamic boolean DEFAULT false NOT NULL
+  , product_is_fair_trade boolean DEFAULT false NOT NULL
+  , product_is_gluten_free boolean DEFAULT false NOT NULL
+  , product_is_organic boolean DEFAULT false NOT NULL
+  , product_is_added_sugar boolean DEFAULT false NOT NULL
+  , product_is_vegan boolean DEFAULT false NOT NULL
   , quantity integer NOT NULL
-  , ix SERIAL NOT NULL
-  , PRIMARY KEY (order_id, household_id, product_id)
+  , PRIMARY KEY (order_id, household_id, product_code)
   , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
-  , FOREIGN KEY (order_id, household_id) REFERENCES v2.household_order(order_id, household_id)
   , FOREIGN KEY (order_id) REFERENCES v2."order"(id)
   , FOREIGN KEY (household_id) REFERENCES v2.household(id)
-  , FOREIGN KEY (product_id) REFERENCES v2.product(id)
+  , FOREIGN KEY (order_id, household_id) REFERENCES v2.household_order(order_id, household_id)
   );
 
   CREATE TABLE v2.order_item_adjustment 
   ( order_group_id integer NOT NULL
   , order_id integer NOT NULL
   , household_id integer NOT NULL
-  , product_id integer NOT NULL
+  , product_code char(10) NOT NULL
   , new_vat_rate character(1) NOT NULL
   , new_price integer NOT NULL
   , new_quantity integer NOT NULL
   , is_discontinued boolean NOT NULL
   , date timestamp with time zone NOT NULL
-  , PRIMARY KEY (order_id, household_id, product_id)
+  , PRIMARY KEY (order_id, household_id, product_code)
   , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
-  , FOREIGN KEY (order_id, household_id, product_id) REFERENCES v2.order_item(order_id, household_id, product_id)
-  , FOREIGN KEY (order_id, household_id) REFERENCES v2.household_order(order_id, household_id)
   , FOREIGN KEY (order_id) REFERENCES v2."order"(id)
   , FOREIGN KEY (household_id) REFERENCES v2.household(id)
-  , FOREIGN KEY (product_id) REFERENCES v2.product(id)
+  , FOREIGN KEY (order_id, household_id) REFERENCES v2.household_order(order_id, household_id)
+  , FOREIGN KEY (order_id, household_id, product_code) REFERENCES v2.order_item(order_id, household_id, product_code)
   , FOREIGN KEY (new_vat_rate) REFERENCES v2.vat_rate(code)
   );
 

@@ -121,8 +121,8 @@ commandServerV2 config  =
       order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
-      product <- MaybeT $ getProduct repo (ProductId productId)
-      let order' = DomainV2.removeHouseholdOrderItem (productCode product) order
+      (_, productCode) <- MaybeT $ getProduct repo (ProductId productId)
+      let order' = DomainV2.removeHouseholdOrderItem productCode order
       liftIO $ setHouseholdOrders repo ([order], [order'])
       return ()
 
@@ -204,7 +204,7 @@ apiOrderAdjustment _ _ = Nothing
 
 apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem i = Api.OrderItem
-  { oiProductId          = fromProductId . _productId                   . _productInfo . _itemProduct $ i 
+  { oiProductId          = fromProductId   . _productId                 . _productInfo . _itemProduct $ i 
   , oiProductCode        = fromProductCode . _productCode               . _productInfo . _itemProduct $ i
   , oiProductName        = _productName                                 . _productInfo . _itemProduct $ i
   , oiProductVatRate     = _vatRateType . _priceVatRate . _productPrice . _productInfo . _itemProduct $ i
