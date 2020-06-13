@@ -123,7 +123,7 @@ orderAdjustment o =
 
 orderItems :: Order -> [OrderItem]
 orderItems = map (sconcat . NE.fromList) 
-           . groupBy ((==) `on` (_productId . _productInfo . _itemProduct))
+           . groupBy ((==) `on` itemProductCode)
            . concatMap _householdOrderItems
            . _orderHouseholdOrders
 
@@ -287,9 +287,6 @@ data OrderItem = OrderItem
   , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
-itemProductId :: OrderItem -> ProductId
-itemProductId = _productId . _productInfo . _itemProduct
-
 itemProductCode :: OrderItem -> ProductCode
 itemProductCode = _productCode . _productInfo . _itemProduct
 
@@ -366,9 +363,6 @@ data ProductFlags = ProductFlags
   , _productIsAddedSugar :: Bool
   , _productIsVegan      :: Bool
   } deriving (Eq, Show, Generic)
-
-productId :: Product -> ProductId
-productId = _productId . _productInfo
 
 productCode :: Product -> ProductCode
 productCode = _productCode . _productInfo
