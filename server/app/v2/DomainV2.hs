@@ -177,7 +177,6 @@ data HouseholdOrderStatusFlags = HouseholdOrderStatusFlags
   { _householdOrderIsAbandoned :: Bool
   , _householdOrderIsPlaced :: Bool
   , _householdOrderIsComplete :: Bool
-  , _householdOrderUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
 data HouseholdOrderStatus = HouseholdOrderOpen
@@ -226,13 +225,10 @@ householdOrderIsReconciled :: HouseholdOrder -> Bool
 householdOrderIsReconciled ho = householdOrderIsPlaced ho && (all (isJust . _itemAdjustment) . _householdOrderItems $ ho)
 
 householdOrderIsAwaitingCatalogueUpdateConfirm :: HouseholdOrder -> Bool
-householdOrderIsAwaitingCatalogueUpdateConfirm ho = any ((> orderUpdated ho) . productUpdated) $ _householdOrderItems ho
-  where
-    orderUpdated = _householdOrderUpdated . _householdOrderStatusFlags
-    productUpdated =  _productUpdated . _productInfo . _itemProduct
-
-householdOrderUpdated :: HouseholdOrder -> UTCTime
-householdOrderUpdated = _householdOrderUpdated . _householdOrderStatusFlags
+householdOrderIsAwaitingCatalogueUpdateConfirm ho = 
+     not (householdOrderIsAbandoned ho)
+  && not (householdOrderIsPlaced ho)
+  && any (isJust . _itemAdjustment) (_householdOrderItems ho)
 
 overHouseholdOrderItems :: (OrderItem -> OrderItem) -> HouseholdOrder -> HouseholdOrder
 overHouseholdOrderItems fn ho = ho{ _householdOrderItems = items' }
@@ -355,8 +351,6 @@ data ProductInfo = ProductInfo
   , _productCode :: ProductCode
   , _productName :: String
   , _productPrice :: Price
-  , _productIsDiscontinued :: Bool
-  , _productUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
 data Product = Product 
@@ -381,9 +375,6 @@ productCode = _productCode . _productInfo
 
 productPrice :: Product -> Price
 productPrice = _productPrice . _productInfo
-
-productIsDiscontinued :: Product -> Bool
-productIsDiscontinued = _productIsDiscontinued . _productInfo
 
 {- Price -}
 

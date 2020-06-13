@@ -303,7 +303,6 @@ selectHouseholdOrderRows conn whereParams =
            , ho.is_abandoned
            , o.is_placed
            , ho.is_complete
-           , ho.updated
       from v2.household_order ho
       inner join v2."order" o 
         on o.id = ho.order_id
@@ -328,19 +327,17 @@ selectOrderItemRows conn whereParams =
       select hoi.order_id
            , hoi.household_id
            , hoi.product_id
-           , coalesce(hoi.product_code, p.code)
-           , coalesce(hoi.product_name, p.name)
-           , coalesce(hoi.product_vat_rate, p.vat_rate)
-           , coalesce(hoi.product_vat_rate_multiplier, v.multiplier)
-           , coalesce(hoi.product_price, p.price)
-           , coalesce(hoi.product_is_discontinued, p.is_discontinued)
-           , coalesce(hoi.product_updated, p.updated)
-           , coalesce(hoi.product_biodynamic, p.biodynamic)
-           , coalesce(hoi.product_fair_trade, p.fair_trade)
-           , coalesce(hoi.product_gluten_free, p.gluten_free)
-           , coalesce(hoi.product_organic, p.organic)
-           , coalesce(hoi.product_added_sugar, p.added_sugar)
-           , coalesce(hoi.product_vegan, p.vegan)
+           , p.code
+           , p.name
+           , hoi.product_vat_rate
+           , hoi.product_vat_rate_multiplier
+           , hoi.product_price
+           , p.biodynamic
+           , p.fair_trade
+           , p.gluten_free
+           , p.organic
+           , p.added_sugar
+           , p.vegan
            , hoi.quantity
            , adj.new_vat_rate 
            , adjv.multiplier
@@ -381,16 +378,50 @@ truncateCatalogue conn =
 insertCatalogue :: Connection -> [ProductCatalogueEntry] -> IO ()
 insertCatalogue conn entries = 
   void $ executeMany conn [sql|
-    insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, updated)
+    insert into v2.catalogue_entry 
+      ( "code"
+      , category
+      , brand
+      , "description"
+      , "text"
+      , size
+      , price
+      , vat_rate
+      , rrp
+      , biodynamic
+      , fair_trade
+      , gluten_free
+      , organic
+      , added_sugar
+      , vegan
+      , updated
+      )
     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   |] entries
 
 selectCatalogueEntry :: Connection -> String -> IO [ProductCatalogueEntry]
 selectCatalogueEntry conn code = 
   query conn [sql|
-    select code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, updated
-    from catalogue_entry
-    where code = ?
+    select ce.code
+         , ce.category
+         , ce.brand
+         , ce."description"
+         , ce."text"
+         , ce.size
+         , ce.price
+         , ce.vat_rate
+         , v.multiplier
+         , ce.rrp
+         , ce.biodynamic
+         , ce.fair_trade
+         , ce.gluten_free
+         , ce.organic
+         , ce.added_sugar
+         , ce.vegan
+         , ce.updated
+    from v2.catalogue_entry ce
+    join v2.vat_rate v on v.code = ce.vat_rate
+    where ce.code = ?
   |] (Only code)
 
 -- Needed to convert ProductId to ProductCode
@@ -404,8 +435,6 @@ selectProducts conn whereParams =
            , p.vat_rate
            , v.multiplier
            , p.price
-           , p.is_discontinued
-           , p.updated
            , p.biodynamic
            , p.fair_trade
            , p.gluten_free
@@ -413,6 +442,7 @@ selectProducts conn whereParams =
            , p.added_sugar
            , p.vegan
       from v2.product p 
+      join v2.vat_rate v on v.code = p.vat_rate
       where 1 = 1 |] <> whereClause <> [sql|
       order by p.code
     |]) params
@@ -427,7 +457,18 @@ selectProducts conn whereParams =
 insertProduct :: Connection -> ProductCode -> IO ()
 insertProduct conn code =
   void $ execute conn [sql|
-    insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
+    insert into v2.product 
+      ( "code"
+      , "name"
+      , price
+      , vat_rate
+      , biodynamic
+      , fair_trade
+      , gluten_free
+      , organic
+      , added_sugar
+      , vegan
+      ) 
     select ce.code
          , concat_ws(' ', nullif(btrim(ce.brand), '')
                         , nullif(btrim(ce."description"), '')
@@ -435,15 +476,13 @@ insertProduct conn code =
                         , nullif(btrim(ce."text"), ''))
          , ce.price
          , ce.vat_rate
-         , false
-         , ce.updated
          , ce.biodynamic
          , ce.fair_trade 
          , ce.gluten_free 
          , ce.organic
          , ce.added_sugar
          , ce.vegan                    
-    from catalogue_entry ce
+    from v2.catalogue_entry ce
     where ce.code = ?
     on conflict ("code") do nothing
   |] (Only code)
@@ -453,7 +492,7 @@ insertProduct conn code =
 updateProducts :: Connection -> UTCTime -> IO ()
 updateProducts conn date = 
   void $ execute conn [sql|
-    update product
+    update v2.product
     set "name" = case when ce.code is null then p."name" else concat_ws(' ', nullif(btrim(ce.brand), '')
                                                                            , nullif(btrim(ce."description"), '')
                                                                            , nullif('(' || lower(btrim(ce.size)) || ')', '()')
@@ -466,28 +505,18 @@ updateProducts conn date =
       , organic = coalesce(ce.organic, p.organic)
       , added_sugar = coalesce(ce.added_sugar, p.added_sugar)
       , vegan = coalesce(ce.vegan, p.vegan)
-      , discontinued = (ce.code is null)
-      , updated = case when ce.price <> p.price or ce.code is null then ? else p.updated end
-    from product p
-    left join catalogue_entry ce on p.code = ce.code
-    where p.id = product.id
+    from v2.product p
+    left join v2.catalogue_entry ce on p.code = ce.code
+    where p.id = v2.product.id
   |] (Only date)
   
 insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
 insertOrder conn groupId spec = 
   query conn [sql|
-    insert into "order" (order_group_id, created_date, created_by_id) 
+    insert into v2."order" (order_group_id, created_date, created_by_id) 
     values (?, ?, ?) 
     returning id
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
-
-insertHouseholdOrder :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO ()
-insertHouseholdOrder conn groupId orderId householdId date =
-  void $ execute conn [sql|
-    insert into household_order (order_group_id, order_id, household_id, updated, is_complete, is_abandoned) 
-    values (?, ?, ?, ?, false, false)
-    on conflict (order_group_id, order_id, household_id) do nothing
-  |] (groupId, orderId, householdId, date)
 
 updateOrders :: Connection -> [Order] -> IO ()
 updateOrders conn orders = do
@@ -497,11 +526,19 @@ updateOrders conn orders = do
                                   complete = orderIsComplete o
                               in (abandoned, complete, groupId, orderId)
   void $ executeMany conn [sql|
-    update "order"
+    update v2."order"
     set is_abandoned = ? 
       , is_complete = ?
     where order_group_id = ? and order_id = ?
   |] rows
+
+insertHouseholdOrder :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO ()
+insertHouseholdOrder conn groupId orderId householdId date =
+  void $ execute conn [sql|
+    insert into v2.household_order (order_group_id, order_id, household_id, updated, is_complete, is_abandoned) 
+    values (?, ?, ?, ?, false, false)
+    on conflict (order_group_id, order_id, household_id) do nothing
+  |] (groupId, orderId, householdId, date)
 
 updateHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
 updateHouseholdOrders conn orders = do
@@ -510,68 +547,58 @@ updateHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                                  updated = householdOrderUpdated o
-                              in (abandoned, complete, updated, groupId, orderId, householdId)
+                              in (abandoned, complete, groupId, orderId, householdId)
   void $ executeMany conn [sql|
-    update household_order 
+    update v2.household_order 
     set is_abandoned = ? 
       , is_complete = ?
-      , updated = ?
     where order_group_id = ? and order_id = ? and household_id = ?
   |] rows
 
 insertOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 insertOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId, _), i) -> (_itemQuantity i, groupId, orderId, householdId, itemProductId i)
+  let rows = items <&> \((groupId, orderId, householdId, _), i) -> 
+                         ( _itemQuantity i
+                         , _moneyExcVat . _priceAmount . itemProductPrice $ i
+                         , _vatRateType . _priceVatRate . itemProductPrice $ i
+                         , (realToFrac $ _vatRateMultiplier . _priceVatRate . itemProductPrice $ i) :: Double
+                         , groupId
+                         , orderId
+                         , householdId
+                         , itemProductId i
+                         )
   void $ executeMany conn [sql|
-    insert into order_item 
+    insert into v2.order_item 
       ( quantity
-      , product_code
-      , product_name
+      , product_price
       , product_vat_rate
       , product_vat_rate_multiplier
-      , product_price
-      , product_is_discontinued
-      , product_updated
-      , product_is_biodynamic
-      , product_is_fair_trade
-      , product_is_gluten_free
-      , product_is_organic
-      , product_is_added_sugar
-      , product_is_vegan
       , order_group_id
       , order_id
       , household_id
       , product_id
       )
-    select ?  
-         , ce.code
-         , concat_ws(' ', nullif(btrim(ce.brand), '')
-                        , nullif(btrim(ce."description"), '')
-                        , nullif('(' || lower(btrim(ce.size)) || ')', '()')
-                        , nullif(btrim(ce."text"), ''))
-         , ce.price
-         , ce.vat_rate
-         , false
-         , ce.updated
-         , ce.biodynamic
-         , ce.fair_trade 
-         , ce.gluten_free 
-         , ce.organic
-         , ce.added_sugar
-         , ce.vegan
-         , ?
-         , ?
-         , ?
-         , ?
+    values (?, ?, ?, ?, ?, ?, ?, ?)
   |] rows
 
 updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 updateOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId, status), i) -> ( _itemQuantity i, groupId, orderId, householdId, itemProductId i)
+  let rows = items <&> \((groupId, orderId, householdId, status), i) -> 
+                         ( _itemQuantity i
+                         , _moneyExcVat . _priceAmount . itemProductPrice $ i
+                         , _vatRateType . _priceVatRate . itemProductPrice $ i
+                         , (realToFrac $ _vatRateMultiplier . _priceVatRate . itemProductPrice $ i) :: Double
+                         , groupId
+                         , orderId
+                         , householdId
+                         , itemProductId i
+                         )
   void $ executeMany conn [sql|
-    update order_item
+    update v2.order_item
     set quantity = ?
+      , product_price = ?
+      , product_vat_rate = ?
+      , product_vat_rate_multiplier = ?
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
@@ -579,7 +606,7 @@ deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, Househo
 deleteOrderItems conn items = do
   let rows = items <&> \((groupId, orderId, householdId, _), i) -> (groupId, orderId, householdId, itemProductId i)
   void $ executeMany conn [sql|
-    delete from order_item
+    delete from v2.order_item
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
@@ -593,7 +620,7 @@ insertOrderItemAdjustments conn adjustments = do
                         date = _itemAdjDate adj
                     in (vatRate, price, quantity, discontinued, date, groupId, orderId, householdId, productId)
   void $ executeMany conn [sql|
-    insert into order_item_adjustment 
+    insert into v2.order_item_adjustment 
     ( new_vat_rate
     , new_price
     , new_quantity
@@ -617,7 +644,7 @@ updateOrderItemAdjustments conn adjustments = do
                         date = _itemAdjDate adj
                     in (vatRate, price, quantity, discontinued, date, groupId, orderId, householdId, productId)
   void $ executeMany conn [sql|
-    update order_item_adjustment
+    update v2.order_item_adjustment
     set new_vat_rate = ?
       , new_price = ?
       , new_quantity = ?
@@ -630,7 +657,7 @@ deleteOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdI
 deleteOrderItemAdjustments conn adjustments = do
   let rows = adjustments <&> \((groupId, orderId, householdId, _, productId), _) -> (groupId, orderId, householdId, productId)
   void $ executeMany conn [sql|
-    delete from order_item_adjustment
+    delete from v2.order_item_adjustment
     where order_group_id = ? and order_id = ? and household_id = ? and product_id = ?
   |] rows
 
@@ -741,7 +768,7 @@ instance FromRow HouseholdOrderRow where
   fromRow = HouseholdOrderRow <$> orderInfoField <*> householdInfoField <*> householdOrderStatusFlagsField
 
 householdOrderStatusFlagsField :: RowParser HouseholdOrderStatusFlags
-householdOrderStatusFlagsField = HouseholdOrderStatusFlags <$> field <*> field <*> field <*> field
+householdOrderStatusFlagsField = HouseholdOrderStatusFlags <$> field <*> field <*> field
 
 data OrderItemRow = OrderItemRow 
   { orderItemRow_product :: Product
@@ -759,7 +786,7 @@ productField :: RowParser Product
 productField = Product <$> productInfoField <*> productFlagsField
 
 productInfoField :: RowParser ProductInfo
-productInfoField = ProductInfo <$> field <*> field <*> field <*> priceField <*> field <*> field
+productInfoField = ProductInfo <$> field <*> field <*> field <*> priceField
 
 instance FromField ProductId where
   fromField f char = ProductId <$> fromField f char

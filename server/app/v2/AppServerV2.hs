@@ -111,9 +111,6 @@ commandServerV2 config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
-      -- Needed to convert ProductId to ProductCode
-      -- TODO: Remove ProductId altogether
-      product <- MaybeT $ createProduct repo (ProductCode productCode)
       catalogueEntry <- MaybeT $ getCatalogueEntry repo productCode
       let order' = updateHouseholdOrderItem catalogueEntry (hoidetQuantity details) order
       liftIO $ setHouseholdOrders repo ([order], [order'])
