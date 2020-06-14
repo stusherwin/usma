@@ -262,9 +262,9 @@ updateHouseholdOrderItem :: ProductCatalogueEntry -> (Maybe Int) -> HouseholdOrd
 updateHouseholdOrderItem entry maybeQuantity o = o{ _householdOrderItems = items' }
   where
     items = _householdOrderItems o
-    items' = addOrUpdate ((== entryCode) . itemProductCode) 
-                         (OrderItem (fromCatalogueEntry entry) 1 Nothing) 
-                         (updateOrderItemQuantity maybeQuantity) 
+    items' = addOrUpdate ((== entryCode) . itemProductCode)
+                         (OrderItem (fromCatalogueEntry entry) 1 Nothing)
+                         (updateItemQuantity maybeQuantity)
                          items
     entryCode = _catalogueEntryCode entry
 
@@ -294,8 +294,12 @@ itemTotal item = price * quantity
     price = _priceAmount . itemProductPrice $ item
     quantity = fromIntegral $ _itemQuantity item
 
-updateOrderItemQuantity :: Maybe Int -> OrderItem -> OrderItem
-updateOrderItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
+updateItemQuantity :: Maybe Int -> OrderItem -> OrderItem
+updateItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
+
+updateItemPrice :: Price -> OrderItem -> OrderItem
+updateItemPrice price i@(OrderItem { _itemProduct = p@(Product { _productInfo = pi })}) = 
+  i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } }
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)
@@ -325,6 +329,45 @@ instance Semigroup OrderItemAdjustment where
 
 itemAdjNewTotal :: OrderItemAdjustment -> Money
 itemAdjNewTotal adj = atQuantity (_itemAdjNewQuantity adj) (_itemAdjNewPrice adj)
+
+adjustItemPrice :: UTCTime -> Price -> OrderItem -> OrderItem
+adjustItemPrice date price i@{ _itemAdjustment = Just a } = 
+  i{ _itemAdjustment = Just a{ _itemAdjNewPrice = price
+                             , _itemAdjDate = date 
+                             }
+   }
+adjustItemPrice date price i = 
+  i{ _itemAdjustment = Just $ OrderItemAdjustment price
+                                                  (_itemQuantity i)
+                                                  False
+                                                  date
+   }
+
+adjustItemQuantity :: UTCTime -> Int -> OrderItem -> OrderItem
+adjustItemQuantity date quantity i@{ _itemAdjustment = Just a } = 
+  i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = quantity
+                             , _itemAdjDate = date 
+                             }
+   }
+adjustItemQuantiity date quantity i = 
+  i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i)
+                                                  quantity
+                                                  False
+                                                  date
+   }
+
+discontinueProduct :: UTCTime -> OrderItem -> OrderItem
+discontinueProduct date i@{ _itemAdjustment = Just a } = 
+  i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
+                             , _itemAdjIsDiscontinued = True
+                             , _itemAdjDate = date 
+                             }
+   }
+discontinueProduct date i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
+
+removeItemAdjustment :: OrderItem -> OrderItem
+removeItemAdjustment i@(_itemAdjustment = Just a) = i{ _itemAdjustment = Nothing }
+removeItemAdjustment i = i
 
 {- Product -}
 
@@ -470,66 +513,33 @@ applyCatalogueUpdate :: UTCTime -> ProductCatalogue -> HouseholdOrder -> Househo
 applyCatalogueUpdate date products = overHouseholdOrderItems apply
   where
     apply item = case H.lookup (itemProductCode item) products of
-                   Just e -> Just $ adjust e    (_itemAdjustment item) item
-                   _      -> Just $ discontinue (_itemAdjustment item) item
-
-    adjust e (Just a) i | itemProductPrice i /= _catalogueEntryPrice e = 
-                            i{ _itemAdjustment = Just a{ _itemAdjNewPrice = _catalogueEntryPrice e
-                                                       , _itemAdjDate = date 
-                                                       }
-                             }
-                        | otherwise = i
-    adjust e _ i  = i{ _itemAdjustment = Just $ OrderItemAdjustment (_catalogueEntryPrice e) 
-                                                                    (_itemQuantity i) 
-                                                                    False 
-                                                                    date 
-                     }
-
-    discontinue (Just a) i = i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
-                                                        , _itemAdjIsDiscontinued = True
-                                                        , _itemAdjDate = date 
-                                                        }
-                              }
-    discontinue _  i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
+      Just e | itemProductPrice item == _catalogueEntryPrice e -> Just item
+             | otherwise -> Just $ adjustItemPrice date (_catalogueEntryPrice e) item
+      _ -> Just $ discontinueProduct date item
 
 acceptCatalogueUpdates :: UTCTime -> HouseholdOrder -> HouseholdOrder
 acceptCatalogueUpdates date = overHouseholdOrderItems accept
   where
-    accept i@(OrderItem { _itemAdjustment = Nothing }) = Just i
-    accept i@(OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
-    accept i@(OrderItem { _itemProduct    = p@(Product { _productInfo = pi })
-                        , _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
+    accept (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
+    accept i@(OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
                                                                       , _itemAdjNewQuantity = quantity
                                                                       })
-                        }) =
-      Just $ i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } }
-              , _itemQuantity = quantity
-              , _itemAdjustment = Nothing
-              }
+                        }) = Just $ updateItemPrice price
+                                  $ updateItemQuantity quantity
+                                  $ removeItemAdjustment i
+    accept i = Just i
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, (ProductCode, (Int, Int)))] -> Order -> Order
 reconcileOrderItems date updates o = o{ _orderHouseholdOrders = householdOrders' }
   where
     householdOrders' = map updateHouseholdOrder $ _orderHouseholdOrders o
     updateHouseholdOrder ho = let householdId = _householdId . _householdOrderHouseholdInfo $ ho
-                              in overHouseholdOrderItems (update $ map snd . filter ((==) householdId . fst) $ updates) ho
-    update householdUpdates i@(OrderItem { _itemAdjustment = Just adj }) = 
-      case lookup (itemProductCode i) householdUpdates of
-        Just (newPrice, newQuantity) -> 
-          Just i{ _itemAdjustment = Just adj{ _itemAdjNewPrice = reprice newPrice $ itemProductPrice i 
-                                            , _itemAdjNewQuantity = newQuantity
-                                            , _itemAdjDate = date
-                                            }
-                }
-        _ -> Just i
+                                  householdUpdates = map snd . filter ((==) householdId . fst) $ updates
+                              in overHouseholdOrderItems (update householdUpdates) ho
     update householdUpdates i = 
       case lookup (itemProductCode i) householdUpdates of
-        Just (newPrice, newQuantity) -> 
-          Just i{ _itemAdjustment = Just $ OrderItemAdjustment (reprice newPrice $ itemProductPrice i)
-                                                               newQuantity
-                                                               False
-                                                               date
-                }
+        Just (newPrice, newQuantity) -> Just $ adjustItemPrice date (reprice newPrice $ itemProductPrice i)
+                                             $ adjustItemQuantity date newQuantity i
         _ -> Just i
 
 fromCatalogueEntry :: ProductCatalogueEntry -> Product
