@@ -150,7 +150,7 @@ orderIsReconciled = all householdOrderIsReconciled . _orderHouseholdOrders
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
 orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . _orderHouseholdOrders
 
-overOrderItems :: (OrderItem -> OrderItem) -> Order -> Order
+overOrderItems :: (OrderItem -> Maybe OrderItem) -> Order -> Order
 overOrderItems fn o = o{ _orderHouseholdOrders = householdOrders' }
   where
     householdOrders' = map (overHouseholdOrderItems fn) . _orderHouseholdOrders $ o
@@ -230,10 +230,10 @@ householdOrderIsAwaitingCatalogueUpdateConfirm ho =
   && not (householdOrderIsPlaced ho)
   && any (isJust . _itemAdjustment) (_householdOrderItems ho)
 
-overHouseholdOrderItems :: (OrderItem -> OrderItem) -> HouseholdOrder -> HouseholdOrder
+overHouseholdOrderItems :: (OrderItem -> Maybe OrderItem) -> HouseholdOrder -> HouseholdOrder
 overHouseholdOrderItems fn ho = ho{ _householdOrderItems = items' }
   where
-    items' = map fn . _householdOrderItems $ ho
+    items' = updateOrRemove fn $ _householdOrderItems $ ho
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
@@ -272,12 +272,6 @@ removeHouseholdOrderItem productCode o = o{ _householdOrderItems = items' }
   where
     items = _householdOrderItems o
     items' = filter ((/= productCode) . itemProductCode) items
-
-addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
-addOrUpdate cond n update (x:xs)
-  | cond x = (update x):xs
-  | otherwise = x:(addOrUpdate cond n update xs)
-addOrUpdate _ n _ [] = [n]
 
 {- OrderItem -}
 
@@ -472,8 +466,8 @@ applyCatalogueUpdate :: UTCTime -> ProductCatalogue -> HouseholdOrder -> Househo
 applyCatalogueUpdate date products = overHouseholdOrderItems apply
   where
     apply item = case H.lookup (itemProductCode item) products of
-                   Just e -> adjust e    (_itemAdjustment item) item
-                   _      -> discontinue (_itemAdjustment item) item
+                   Just e -> Just $ adjust e    (_itemAdjustment item) item
+                   _      -> Just $ discontinue (_itemAdjustment item) item
 
     adjust e (Just a) i | itemProductPrice i /= _catalogueEntryPrice e = 
                             i{ _itemAdjustment = Just a{ _itemAdjNewPrice = _catalogueEntryPrice e
@@ -495,17 +489,19 @@ applyCatalogueUpdate date products = overHouseholdOrderItems apply
     discontinue _  i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
 
 acceptCatalogueUpdates :: UTCTime -> HouseholdOrder -> HouseholdOrder
-acceptCatalogueUpdates date = id
--- acceptCatalogueUpdates date order = let o = overHouseholdOrderItems accept
---                                         f = _householdOrderStatusFlags o
---                                     in  o{ _householdOrderStatusFlags = f{ _householdOrderUpdated = date } }
---   where
---     accept i@(OrderItem { _itemAdjustment = Just (OrderItemAdjustment { { _itemAdjNewPrice :: Price
---                                                                         , _itemAdjNewQuantity :: Int
---                                                                         , _itemAdjIsDiscontinued :: Bool
---                                                                         , _itemAdjDate :: UTCTime
---                                                                         }})) =
---       i{ _itemAdjustment = Nothing }
+acceptCatalogueUpdates date = overHouseholdOrderItems accept
+  where
+    accept i@(OrderItem { _itemAdjustment = Nothing }) = Just i
+    accept i@(OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
+    accept i@(OrderItem { _itemProduct    = p@(Product { _productInfo = pi })
+                        , _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
+                                                                      , _itemAdjNewQuantity = quantity
+                                                                      })
+                        }) =
+      Just $ i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } }
+              , _itemQuantity = quantity
+              , _itemAdjustment = Nothing
+              }
 
 fromCatalogueEntry :: ProductCatalogueEntry -> Product
 fromCatalogueEntry entry = undefined
@@ -520,3 +516,15 @@ splitOn ch list = f list [[]] where
                             
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
+
+addOrUpdate :: (a -> Bool) -> a -> (a -> a) -> [a] -> [a]
+addOrUpdate _ deflt _ [] = [deflt]
+addOrUpdate cond d update (x:xs)
+  | cond x = (update x):xs
+  | otherwise = x:(addOrUpdate cond d update xs)
+
+updateOrRemove :: (a -> Maybe a) -> [a] -> [a]
+updateOrRemove _ [] = []
+updateOrRemove fn (x:xs) = case fn x of
+  Just x' -> x':(updateOrRemove fn xs)
+  _ -> updateOrRemove fn xs
