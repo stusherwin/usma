@@ -41,6 +41,7 @@ type CommandApiV2 =
   :<|> "remove-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productId" Int :> Post '[JSON] ()
   :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
+  :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
   
 data Household = Household 
   { hId :: Int
@@ -117,6 +118,18 @@ instance ToJSON VatRateType
 data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidetQuantity :: Maybe Int
                                                            } deriving (Eq, Show, Generic)
 instance FromJSON HouseholdOrderItemDetails where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data ReconcileOrderItemDetails = ReconcileOrderItemDetails { roidetProductPriceExcVat :: Int
+                                                           , roidetHouseholdQuantities :: [HouseholdQuantityDetails]
+                                                           } deriving (Eq, Show, Generic)
+instance FromJSON ReconcileOrderItemDetails where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data HouseholdQuantityDetails = HouseholdQuantityDetails { hqdetHouseholdId :: Int
+                                                         , hqdetItemQuantity :: Int
+                                                         } deriving (Eq, Show, Generic)
+instance FromJSON HouseholdQuantityDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
