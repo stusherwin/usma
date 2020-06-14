@@ -238,21 +238,21 @@ overHouseholdOrderItems fn ho = ho{ _householdOrderItems = items' }
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-abandonHouseholdOrder ho@(HouseholdOrder { _householdOrderStatusFlags = f }) =
+abandonHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
     ho{ _householdOrderStatusFlags = f{ _householdOrderIsAbandoned = True
                                       , _householdOrderIsPlaced = False 
                                       , _householdOrderIsComplete = False
                                       } }
 
 completeHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-completeHouseholdOrder ho@(HouseholdOrder { _householdOrderStatusFlags = f }) =
+completeHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
   ho{ _householdOrderStatusFlags = f{ _householdOrderIsAbandoned = False
                                     , _householdOrderIsPlaced = False 
                                     , _householdOrderIsComplete = True
                                     } }
 
 reopenHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-reopenHouseholdOrder ho@(HouseholdOrder { _householdOrderStatusFlags = f }) =
+reopenHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
   ho{ _householdOrderStatusFlags = f{ _householdOrderIsAbandoned = False
                                     , _householdOrderIsPlaced = False 
                                     , _householdOrderIsComplete = False
@@ -298,8 +298,8 @@ updateItemQuantity :: Maybe Int -> OrderItem -> OrderItem
 updateItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
 
 updateItemPrice :: Price -> OrderItem -> OrderItem
-updateItemPrice price i@(OrderItem { _itemProduct = p@(Product { _productInfo = pi })}) = 
-  i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } }
+updateItemPrice price i@OrderItem { _itemProduct = p@Product { _productInfo = pi } } = 
+  i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } } }
 
 instance Semigroup OrderItem where
   i1 <> i2 = OrderItem (_itemProduct    i1)
@@ -331,7 +331,7 @@ itemAdjNewTotal :: OrderItemAdjustment -> Money
 itemAdjNewTotal adj = atQuantity (_itemAdjNewQuantity adj) (_itemAdjNewPrice adj)
 
 adjustItemPrice :: UTCTime -> Price -> OrderItem -> OrderItem
-adjustItemPrice date price i@{ _itemAdjustment = Just a } = 
+adjustItemPrice date price i@OrderItem { _itemAdjustment = Just a } = 
   i{ _itemAdjustment = Just a{ _itemAdjNewPrice = price
                              , _itemAdjDate = date 
                              }
@@ -344,7 +344,7 @@ adjustItemPrice date price i =
    }
 
 adjustItemQuantity :: UTCTime -> Int -> OrderItem -> OrderItem
-adjustItemQuantity date quantity i@{ _itemAdjustment = Just a } = 
+adjustItemQuantity date quantity i@OrderItem { _itemAdjustment = Just a } = 
   i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = quantity
                              , _itemAdjDate = date 
                              }
@@ -357,7 +357,7 @@ adjustItemQuantiity date quantity i =
    }
 
 discontinueProduct :: UTCTime -> OrderItem -> OrderItem
-discontinueProduct date i@{ _itemAdjustment = Just a } = 
+discontinueProduct date i@OrderItem { _itemAdjustment = Just a } = 
   i{ _itemAdjustment = Just a{ _itemAdjNewQuantity = 0
                              , _itemAdjIsDiscontinued = True
                              , _itemAdjDate = date 
@@ -366,7 +366,7 @@ discontinueProduct date i@{ _itemAdjustment = Just a } =
 discontinueProduct date i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
 
 removeItemAdjustment :: OrderItem -> OrderItem
-removeItemAdjustment i@(_itemAdjustment = Just a) = i{ _itemAdjustment = Nothing }
+removeItemAdjustment i@OrderItem { _itemAdjustment = Just a } = i{ _itemAdjustment = Nothing }
 removeItemAdjustment i = i
 
 {- Product -}
@@ -520,13 +520,13 @@ applyCatalogueUpdate date products = overHouseholdOrderItems apply
 acceptCatalogueUpdates :: UTCTime -> HouseholdOrder -> HouseholdOrder
 acceptCatalogueUpdates date = overHouseholdOrderItems accept
   where
-    accept (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
-    accept i@(OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
-                                                                      , _itemAdjNewQuantity = quantity
-                                                                      })
-                        }) = Just $ updateItemPrice price
-                                  $ updateItemQuantity quantity
-                                  $ removeItemAdjustment i
+    accept  (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
+    accept i@OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
+                                                                     , _itemAdjNewQuantity = quantity
+                                                                     })
+                        } = Just $ updateItemPrice price
+                                 $ updateItemQuantity (Just quantity)
+                                 $ removeItemAdjustment i
     accept i = Just i
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, (ProductCode, (Int, Int)))] -> Order -> Order
