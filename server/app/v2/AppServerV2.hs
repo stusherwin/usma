@@ -59,6 +59,7 @@ commandServerV2 config  =
     :<|> removeHouseholdOrderItem
     :<|> uploadProductCatalogue
     :<|> acceptCatalogueUpdates
+    :<|> reconcileOrderItem
   where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = withRepository config $ \(repo, groupId) -> do
@@ -145,6 +146,19 @@ commandServerV2 config  =
       order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
       let order' = DomainV2.acceptCatalogueUpdates date order
       liftIO $ setHouseholdOrders repo ([order], [order'])
+      return ()
+
+    reconcileOrderItem :: Int -> Int -> ReconcileOrderItemDetails -> Handler ()
+    reconcileOrderItem orderId productId details = withRepository config $ \(repo, groupId) -> do
+      date <- liftIO getCurrentTime
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      -- Needed to convert ProductId to ProductCode
+      -- TODO: Remove ProductId altogether
+      (_, productCode) <- MaybeT $ getProduct repo (ProductId productId)
+      let updates = map (\h -> (HouseholdId $ hqdetHouseholdId h, (productCode, (roidetProductPriceExcVat details, hqdetItemQuantity h))))
+                    $ roidetHouseholdQuantities details
+      let order' = reconcileOrderItems date updates order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
 uploadSingleFile :: MultipartData -> MaybeT IO FilePath

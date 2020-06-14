@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TupleSections #-}
 
 module DomainV2 where
 
@@ -163,6 +164,31 @@ abandonOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = T
 placeOrder :: Order -> Order
 placeOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = False, _orderIsPlaced = True }
                 }
+
+reconcileOrderItems :: UTCTime -> [(HouseholdId, (ProductCode, (Int, Int)))] -> Order -> Order
+reconcileOrderItems date updates o = o{ _orderHouseholdOrders = householdOrders' }
+  where
+    householdOrders' = map updateHouseholdOrder $ _orderHouseholdOrders o
+    updateHouseholdOrder ho = let householdId = _householdId . _householdOrderHouseholdInfo $ ho
+                              in overHouseholdOrderItems (update $ map snd . filter ((==) householdId . fst) $ updates) ho
+    update householdUpdates i@(OrderItem { _itemAdjustment = Just adj }) = 
+      case lookup (itemProductCode i) householdUpdates of
+        Just (newPrice, newQuantity) -> 
+          Just i{ _itemAdjustment = Just adj{ _itemAdjNewPrice = reprice newPrice $ itemProductPrice i 
+                                            , _itemAdjNewQuantity = newQuantity
+                                            , _itemAdjDate = date
+                                            }
+                }
+        _ -> Just i
+    update householdUpdates i = 
+      case lookup (itemProductCode i) householdUpdates of
+        Just (newPrice, newQuantity) -> 
+          Just i{ _itemAdjustment = Just $ OrderItemAdjustment (reprice newPrice $ itemProductPrice i)
+                                                               newQuantity
+                                                               False
+                                                               date
+                }
+        _ -> Just i
 
 {- HouseholdOrder -}
 
@@ -377,6 +403,9 @@ atVatRate vatRate amountExcVat = Price vatRate $
 
 atQuantity :: Int -> Price -> Money
 atQuantity quantity price = (_priceAmount price * fromIntegral quantity)
+
+reprice :: Int -> Price -> Price
+reprice newAmountExcVat (Price vatRate _) = atVatRate vatRate newAmountExcVat
 
 {- Money -}
 
