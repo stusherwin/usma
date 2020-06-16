@@ -91,43 +91,43 @@ commandServerV2 config  =
 
     abandonHouseholdOrder :: Int -> Int -> Handler ()
     abandonHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
-      order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
-      let order' = DomainV2.abandonHouseholdOrder order
-      liftIO $ setHouseholdOrders repo ([order], [order'])
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.abandonHouseholdOrder (HouseholdId householdId) order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
     completeHouseholdOrder :: Int -> Int -> Handler ()
     completeHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
-      order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
-      let order' = DomainV2.completeHouseholdOrder order
-      liftIO $ setHouseholdOrders repo ([order], [order'])
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.completeHouseholdOrder (HouseholdId householdId) order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
     reopenHouseholdOrder :: Int -> Int -> Handler ()
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
-      order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
-      let order' = DomainV2.reopenHouseholdOrder order
-      liftIO $ setHouseholdOrders repo ([order], [order'])
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.reopenHouseholdOrder (HouseholdId householdId) order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
     ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
-      order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       catalogueEntry <- MaybeT $ getCatalogueEntry repo (ProductCode productCode)
       productId <- liftIO $ getProductId repo (ProductCode productCode)
-      let order' = updateHouseholdOrderItem productId catalogueEntry (hoidetQuantity details) order
-      liftIO $ setHouseholdOrders repo ([order], [order'])
+      let order' = updateHouseholdOrderItem (HouseholdId householdId) productId catalogueEntry (hoidetQuantity details) order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
     removeHouseholdOrderItem :: Int -> Int -> Int -> Handler ()
     removeHouseholdOrderItem orderId householdId productId = withRepository config $ \(repo, groupId) -> do
-      order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
       productCode <- MaybeT $ getProductCode repo (ProductId productId)
-      let order' = DomainV2.removeHouseholdOrderItem productCode order
-      liftIO $ setHouseholdOrders repo ([order], [order'])
+      let order' = DomainV2.removeHouseholdOrderItem (HouseholdId householdId) productCode order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
     uploadProductCatalogue :: MultipartData -> Handler ()

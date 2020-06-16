@@ -159,13 +159,28 @@ overHouseholdOrders :: ([HouseholdOrder] -> [HouseholdOrder]) -> Order -> Order
 overHouseholdOrders fn o = o{ _orderHouseholdOrders = fn $ _orderHouseholdOrders $ o }
 
 abandonOrder :: Order -> Order
-abandonOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = True, _orderIsPlaced = False }
-                  , _orderHouseholdOrders = map abandonHouseholdOrder $ _orderHouseholdOrders o
-                  }
-
+abandonOrder o = let o' = overHouseholdOrders (map abandon) o
+                 in  o'{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = True, _orderIsPlaced = False } }
+                 
 placeOrder :: Order -> Order
-placeOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = False, _orderIsPlaced = True }
-                }
+placeOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = False, _orderIsPlaced = True } }
+
+-- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
+abandonHouseholdOrder :: HouseholdId -> Order -> Order
+abandonHouseholdOrder householdId = overHouseholdOrders $ mapWhere ((== householdId) . householdOrderHouseholdId) abandon
+
+completeHouseholdOrder :: HouseholdId -> Order -> Order
+completeHouseholdOrder householdId = overHouseholdOrders $ mapWhere ((== householdId) . householdOrderHouseholdId) complete
+
+reopenHouseholdOrder :: HouseholdId -> Order -> Order
+reopenHouseholdOrder householdId = overHouseholdOrders $ mapWhere ((== householdId) . householdOrderHouseholdId) reopen
+
+updateHouseholdOrderItem :: HouseholdId -> Maybe ProductId -> ProductCatalogueEntry -> (Maybe Int) -> Order -> Order
+updateHouseholdOrderItem householdId productId entry maybeQuantity =
+  overHouseholdOrders $ mapWhere ((== householdId) . householdOrderHouseholdId) $ updateItem productId entry maybeQuantity
+
+removeHouseholdOrderItem :: HouseholdId -> ProductCode -> Order -> Order
+removeHouseholdOrderItem householdId productCode = overHouseholdOrders $ mapWhere ((== householdId) . householdOrderHouseholdId) $ removeItem productCode
 
 {- HouseholdOrder -}
 
@@ -195,6 +210,9 @@ isPastStatus HouseholdOrderAbandoned = True
 isPastStatus HouseholdOrderReconciled = True
 --TODO: set compile options to fail on missing case
 isPastStatus _ = False
+
+householdOrderHouseholdId :: HouseholdOrder -> HouseholdId
+householdOrderHouseholdId = _householdId . _householdOrderHouseholdInfo
 
 householdOrderTotal :: HouseholdOrder -> Money
 householdOrderTotal = sum . map itemTotal . _householdOrderItems
@@ -236,36 +254,37 @@ householdOrderIsAwaitingCatalogueUpdateConfirm ho =
 overHouseholdOrderItems :: ([OrderItem] -> [OrderItem]) -> HouseholdOrder -> HouseholdOrder
 overHouseholdOrderItems fn ho = ho{ _householdOrderItems = fn $ _householdOrderItems $ ho }
 
--- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
-abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-abandonHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
-    ho{ _householdOrderStatusFlags = f{ _householdOrderIsAbandoned = True
-                                      , _householdOrderIsPlaced = False 
-                                      , _householdOrderIsComplete = False
-                                      } }
+abandon :: HouseholdOrder -> HouseholdOrder
+abandon ho = 
+  ho { _householdOrderStatusFlags = HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True
+                                                              , _householdOrderIsPlaced = False 
+                                                              , _householdOrderIsComplete = False
+                                                              } 
+     }
 
-completeHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-completeHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
-  ho{ _householdOrderStatusFlags = f{ _householdOrderIsAbandoned = False
-                                    , _householdOrderIsPlaced = False 
-                                    , _householdOrderIsComplete = True
-                                    } }
+complete :: HouseholdOrder -> HouseholdOrder
+complete ho = 
+  ho { _householdOrderStatusFlags = HouseholdOrderStatusFlags { _householdOrderIsAbandoned = False
+                                                              , _householdOrderIsPlaced = False 
+                                                              , _householdOrderIsComplete = True
+                                                              } 
+     }
 
-reopenHouseholdOrder :: HouseholdOrder -> HouseholdOrder
-reopenHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
-  ho{ _householdOrderStatusFlags = f{ _householdOrderIsAbandoned = False
-                                    , _householdOrderIsPlaced = False 
-                                    , _householdOrderIsComplete = False
-                                    } }
+reopen :: HouseholdOrder -> HouseholdOrder
+reopen ho =
+  ho { _householdOrderStatusFlags = HouseholdOrderStatusFlags { _householdOrderIsAbandoned = False
+                                                              , _householdOrderIsPlaced = False 
+                                                              , _householdOrderIsComplete = False
+                                                              } }
 
-updateHouseholdOrderItem :: Maybe ProductId -> ProductCatalogueEntry -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
-updateHouseholdOrderItem productId entry maybeQuantity = overHouseholdOrderItems $
+updateItem :: Maybe ProductId -> ProductCatalogueEntry -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
+updateItem productId entry maybeQuantity = overHouseholdOrderItems $
      addOrUpdate ((== (_catalogueEntryCode entry)) . itemProductCode)
                  (OrderItem (fromCatalogueEntry productId entry) 1 Nothing)
                  (updateItemQuantity maybeQuantity)
 
-removeHouseholdOrderItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
-removeHouseholdOrderItem productCode = overHouseholdOrderItems $ filter ((/= productCode) . itemProductCode)
+removeItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
+removeItem productCode = overHouseholdOrderItems $ filter ((/= productCode) . itemProductCode)
 
 {- OrderItem -}
 
@@ -516,7 +535,7 @@ applyCatalogueUpdate date products =
 acceptCatalogueUpdates :: UTCTime -> HouseholdId -> Order -> Order
 acceptCatalogueUpdates date householdId =
     overHouseholdOrders
-  $ mapWhere ((== householdId) . _householdId . _householdOrderHouseholdInfo)
+  $ mapWhere ((== householdId) . householdOrderHouseholdId)
   $ overHouseholdOrderItems (updateOrRemove accept)
   where
     accept  (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
@@ -531,11 +550,10 @@ acceptCatalogueUpdates date householdId =
 reconcileOrderItems :: UTCTime -> [(HouseholdId, (ProductCode, (Int, Int)))] -> Order -> Order
 reconcileOrderItems date updates = overHouseholdOrders (map updateHouseholdOrder)
   where
-    updateHouseholdOrder ho = let householdId = _householdId . _householdOrderHouseholdInfo $ ho
-                                  householdUpdates = map snd . filter ((==) householdId . fst) $ updates
-                              in overHouseholdOrderItems (map (update householdUpdates)) ho
-    update householdUpdates i = 
-      case lookup (itemProductCode i) householdUpdates of
+    updateHouseholdOrder ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ updates
+                              in  overHouseholdOrderItems (map (update updatesForHousehold)) ho
+    update updatesForHousehold i = 
+      case lookup (itemProductCode i) updatesForHousehold of
         Just (newPrice, newQuantity) -> adjustItemPrice date (reprice newPrice $ itemProductPrice i)
                                       $ adjustItemQuantity date newQuantity i
         _ -> i
