@@ -126,5 +126,18 @@ begin
   , FOREIGN KEY (new_vat_rate) REFERENCES v2.vat_rate(code)
   );
 
+  create table v2.payment
+  ( id             serial      not null
+  , order_group_id int         not null
+  , household_id   int         not null
+  , "date"         timestamptz not null
+  , amount         int         not null
+  , archived       boolean     not null
+  , primary key (id)
+  , foreign key (household_id) references v2.household (id)
+  , foreign key (order_group_id) references v2.order_group (id)
+  );
+
+
 end $$ language plpgsql;
 commit;

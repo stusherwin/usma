@@ -11,7 +11,7 @@ module RepositoryV2 where
 
 import Control.Applicative ((<|>))
 import Control.Arrow ((***))
-import Control.Monad (mzero, forM_, void, when, join)
+import Control.Monad (mzero, forM_, void, when, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Control.Monad.Trans.Class (lift)
@@ -93,6 +93,18 @@ getCurrentOrder repo groupId = do
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ listToMaybe $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
+getCurrentOrders :: Repository -> Maybe OrderGroupId -> IO [Order]
+getCurrentOrders repo groupId = do
+  let conn = connection repo
+
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsCurrent]
+  (rOrders, rHouseholdOrders, rOrderItems) <- do
+    rOrders <- selectOrderRows conn params
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectOrderItemRows conn params
+    return (rOrders, rHouseholdOrders, rOrderItems)
+  return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
+
 getPastOrders :: Repository -> Maybe OrderGroupId -> IO [Order]
 getPastOrders repo groupId = do
   let conn = connection repo
@@ -127,7 +139,7 @@ getCurrentHouseholdOrders repo groupId = do
     return (rHouseholdOrders, rOrderItems)
   return $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
-getCatalogueEntry :: Repository -> String -> IO (Maybe ProductCatalogueEntry)
+getCatalogueEntry :: Repository -> ProductCode -> IO (Maybe ProductCatalogueEntry)
 getCatalogueEntry repo code = do
   let conn = connection repo
 
@@ -145,11 +157,19 @@ createOrder repo groupId spec = do
 
 -- Needed to convert ProductId to ProductCode
 -- TODO: Remove ProductId altogether
-getProduct :: Repository -> ProductId -> IO (Maybe (ProductId, ProductCode))
-getProduct repo productId = do
+getProductId :: Repository -> ProductCode -> IO (Maybe ProductId)
+getProductId repo productCode = do
   let conn = connection repo
 
-  listToMaybe <$> selectProducts conn [ForProductId productId]
+  liftM fst <$> listToMaybe <$> selectProducts conn [ForProductCode productCode]
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+getProductCode :: Repository -> ProductId -> IO (Maybe ProductCode)
+getProductCode repo productId = do
+  let conn = connection repo
+
+  liftM snd <$> listToMaybe <$> selectProducts conn [ForProductId productId]
 
 createHouseholdOrder :: Repository -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
 createHouseholdOrder repo groupId orderId householdId date = do
@@ -342,7 +362,7 @@ insertCatalogue conn entries =
     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   |] entries
 
-selectCatalogueEntry :: Connection -> String -> IO [ProductCatalogueEntry]
+selectCatalogueEntry :: Connection -> ProductCode -> IO [ProductCatalogueEntry]
 selectCatalogueEntry conn code = 
   query conn [sql|
     select ce.code
@@ -375,6 +395,7 @@ selectProducts conn whereParams =
       select p.id
            , p.code
       from v2.product p 
+      join v2.order_item oi on oi.product_code = p.code
       where 1 = 1 |] <> whereClause <> [sql|
       order by p.code
     |]) params
@@ -382,6 +403,7 @@ selectProducts conn whereParams =
     (whereClause, params) = toWhereClause whereParams $ \case
       (ForProductCode _) -> Just [sql| p.code = ? |]
       (ForProductId _) -> Just [sql| p.id = ? |]
+      (ForOrder _) -> Just [sql| oi.id = ? |]
       _ -> Nothing
 
 -- Needed to convert ProductId to ProductCode

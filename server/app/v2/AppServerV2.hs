@@ -4,10 +4,12 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
+import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
 import           Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
+import           Data.Tuple (swap)
 import           Safe (headMay)
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
@@ -112,8 +114,9 @@ commandServerV2 config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ createHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId) date
-      catalogueEntry <- MaybeT $ getCatalogueEntry repo productCode
-      let order' = updateHouseholdOrderItem catalogueEntry (hoidetQuantity details) order
+      catalogueEntry <- MaybeT $ getCatalogueEntry repo (ProductCode productCode)
+      productId <- liftIO $ getProductId repo (ProductCode productCode)
+      let order' = updateHouseholdOrderItem productId catalogueEntry (hoidetQuantity details) order
       liftIO $ setHouseholdOrders repo ([order], [order'])
       return ()
 
@@ -122,7 +125,7 @@ commandServerV2 config  =
       order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
-      (_, productCode) <- MaybeT $ getProduct repo (ProductId productId)
+      productCode <- MaybeT $ getProductCode repo (ProductId productId)
       let order' = DomainV2.removeHouseholdOrderItem productCode order
       liftIO $ setHouseholdOrders repo ([order], [order'])
       return ()
@@ -134,18 +137,18 @@ commandServerV2 config  =
       file <- liftIO $ readFile filePath
       vatRates <- liftIO $ getVatRates repo
       let catalogue = parseCatalogue vatRates date filePath
-      orders <- liftIO $ getCurrentHouseholdOrders repo Nothing
+      orders <- liftIO $ getCurrentOrders repo Nothing
       let orders' = map (applyCatalogueUpdate date catalogue) orders
       liftIO $ setProductCatalogue repo date catalogue
-      liftIO $ setHouseholdOrders repo (orders, orders')
+      liftIO $ setOrders repo (orders, orders')
       return ()
 
     acceptCatalogueUpdates :: Int -> Int -> Handler ()
     acceptCatalogueUpdates orderId householdId = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
-      order <- MaybeT $ getHouseholdOrder repo groupId (OrderId orderId) (HouseholdId householdId)
-      let order' = DomainV2.acceptCatalogueUpdates date order
-      liftIO $ setHouseholdOrders repo ([order], [order'])
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.acceptCatalogueUpdates date (HouseholdId householdId) order
+      liftIO $ setOrders repo ([order], [order'])
       return ()
 
     reconcileOrderItem :: Int -> Int -> ReconcileOrderItemDetails -> Handler ()
@@ -154,7 +157,7 @@ commandServerV2 config  =
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
-      (_, productCode) <- MaybeT $ getProduct repo (ProductId productId)
+      productCode <- MaybeT $ getProductCode repo (ProductId productId)
       let updates = map (\h -> (HouseholdId $ hqdetHouseholdId h, (productCode, (roidetProductPriceExcVat details, hqdetItemQuantity h))))
                     $ roidetHouseholdQuantities details
       let order' = reconcileOrderItems date updates order
@@ -191,23 +194,23 @@ apiHousehold h = Api.Household
 
 apiOrder :: Order -> Api.CollectiveOrder
 apiOrder o = Api.CollectiveOrder
-  { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
-  , coOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
-  , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
-  , coOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
-  , coOrderIsPlaced         = orderIsPlaced o
-  , coOrderIsAbandoned      = orderIsAbandoned o
-  , coIsComplete            = orderIsComplete o
-  , coAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
-  , coTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
-                                               Just a -> _orderAdjNewTotal a
-                                               _      -> orderTotal $ o
-  , coTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
-                                               Just a -> _orderAdjNewTotal a
-                                               _      -> orderTotal $ o
-  , coAdjustment            = apiOrderAdjustment o $ orderAdjustment o
-  , coItems = apiOrderItem <$> orderItems o
-  }
+    { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
+    , coOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
+    , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
+    , coOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
+    , coOrderIsPlaced         = orderIsPlaced o
+    , coOrderIsAbandoned      = orderIsAbandoned o
+    , coIsComplete            = orderIsComplete o
+    , coAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
+    , coTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
+                                                 Just a -> _orderAdjNewTotal a
+                                                 _      -> orderTotal $ o
+    , coTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
+                                                 Just a -> _orderAdjNewTotal a
+                                                 _      -> orderTotal $ o
+    , coAdjustment            = apiOrderAdjustment o $ orderAdjustment o
+    , coItems = apiOrderItem <$> orderItems o
+    }
 
 apiOrderAdjustment :: DomainV2.Order -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment o (Just _) = Just $ Api.OrderAdjustment
@@ -218,7 +221,7 @@ apiOrderAdjustment _ _ = Nothing
 
 apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem i = Api.OrderItem
-  { oiProductId          = fromProductId   . _productId                 . _productInfo . _itemProduct $ i 
+  { oiProductId          = fromMaybe 0 $ fromProductId <$> (_productId  . _productInfo . _itemProduct $ i)
   , oiProductCode        = fromProductCode . _productCode               . _productInfo . _itemProduct $ i
   , oiProductName        = _productName                                 . _productInfo . _itemProduct $ i
   , oiProductVatRate     = _vatRateType . _priceVatRate . _productPrice . _productInfo . _itemProduct $ i
