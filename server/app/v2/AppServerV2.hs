@@ -106,7 +106,8 @@ commandServerV2 config  =
     reopenHouseholdOrder :: Int -> Int -> Handler ()
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = DomainV2.reopenHouseholdOrder (HouseholdId householdId) order
+      catalogueEntries <- liftIO $ getCatalogueEntriesForOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.reopenHouseholdOrder catalogueEntries (HouseholdId householdId) order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -138,16 +139,15 @@ commandServerV2 config  =
       vatRates <- liftIO $ getVatRates repo
       let catalogue = parseCatalogue vatRates date filePath
       orders <- liftIO $ getCurrentOrders repo Nothing
-      let orders' = map (applyCatalogueUpdate date catalogue) orders
-      liftIO $ setProductCatalogue repo date catalogue
+      let orders' = map (applyCatalogueUpdate catalogue) orders
+      liftIO $ setProductCatalogue repo catalogue
       liftIO $ setOrders repo (orders, orders')
       return ()
 
     acceptCatalogueUpdates :: Int -> Int -> Handler ()
     acceptCatalogueUpdates orderId householdId = withRepository config $ \(repo, groupId) -> do
-      date <- liftIO getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = DomainV2.acceptCatalogueUpdates date (HouseholdId householdId) order
+      let order' = DomainV2.acceptCatalogueUpdate (HouseholdId householdId) order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
