@@ -11,6 +11,7 @@ import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
 import           Data.Semigroup (Semigroup(..))
 import           Data.List (groupBy, maximumBy, find, delete, lookup)
+import           Data.List.Extra (trim, lower)
 import           Data.Maybe (isJust, maybe, fromMaybe, catMaybes)
 import           Data.Ord (comparing)
 import qualified Data.List.NonEmpty as NE (fromList)
@@ -110,6 +111,9 @@ data OrderAdjustment = OrderAdjustment
   { _orderAdjNewTotal :: Money
   } deriving (Eq, Show, Generic)
 
+orderId :: Order -> OrderId
+orderId = _orderId . _orderInfo
+
 orderTotal :: Order -> Money
 orderTotal = sum . map householdOrderTotal . _orderHouseholdOrders
 
@@ -151,10 +155,8 @@ orderIsReconciled = all householdOrderIsReconciled . _orderHouseholdOrders
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
 orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . _orderHouseholdOrders
 
-overOrderItems :: (OrderItem -> Maybe OrderItem) -> Order -> Order
-overOrderItems fn o = o{ _orderHouseholdOrders = householdOrders' }
-  where
-    householdOrders' = map (overHouseholdOrderItems fn) . _orderHouseholdOrders $ o
+overHouseholdOrders :: ([HouseholdOrder] -> [HouseholdOrder]) -> Order -> Order
+overHouseholdOrders fn o = o{ _orderHouseholdOrders = fn $ _orderHouseholdOrders $ o }
 
 abandonOrder :: Order -> Order
 abandonOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = True, _orderIsPlaced = False }
@@ -231,10 +233,8 @@ householdOrderIsAwaitingCatalogueUpdateConfirm ho =
   && not (householdOrderIsPlaced ho)
   && any (isJust . _itemAdjustment) (_householdOrderItems ho)
 
-overHouseholdOrderItems :: (OrderItem -> Maybe OrderItem) -> HouseholdOrder -> HouseholdOrder
-overHouseholdOrderItems fn ho = ho{ _householdOrderItems = items' }
-  where
-    items' = updateOrRemove fn $ _householdOrderItems $ ho
+overHouseholdOrderItems :: ([OrderItem] -> [OrderItem]) -> HouseholdOrder -> HouseholdOrder
+overHouseholdOrderItems fn ho = ho{ _householdOrderItems = fn $ _householdOrderItems $ ho }
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdOrder -> HouseholdOrder
@@ -258,21 +258,14 @@ reopenHouseholdOrder ho@HouseholdOrder { _householdOrderStatusFlags = f } =
                                     , _householdOrderIsComplete = False
                                     } }
 
-updateHouseholdOrderItem :: ProductCatalogueEntry -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
-updateHouseholdOrderItem entry maybeQuantity o = o{ _householdOrderItems = items' }
-  where
-    items = _householdOrderItems o
-    items' = addOrUpdate ((== entryCode) . itemProductCode)
-                         (OrderItem (fromCatalogueEntry entry) 1 Nothing)
-                         (updateItemQuantity maybeQuantity)
-                         items
-    entryCode = _catalogueEntryCode entry
+updateHouseholdOrderItem :: Maybe ProductId -> ProductCatalogueEntry -> (Maybe Int) -> HouseholdOrder -> HouseholdOrder
+updateHouseholdOrderItem productId entry maybeQuantity = overHouseholdOrderItems $
+     addOrUpdate ((== (_catalogueEntryCode entry)) . itemProductCode)
+                 (OrderItem (fromCatalogueEntry productId entry) 1 Nothing)
+                 (updateItemQuantity maybeQuantity)
 
 removeHouseholdOrderItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
-removeHouseholdOrderItem productCode o = o{ _householdOrderItems = items' }
-  where
-    items = _householdOrderItems o
-    items' = filter ((/= productCode) . itemProductCode) items
+removeHouseholdOrderItem productCode = overHouseholdOrderItems $ filter ((/= productCode) . itemProductCode)
 
 {- OrderItem -}
 
@@ -382,7 +375,7 @@ newtype ProductCode = ProductCode
 instance Hashable ProductCode
 
 data ProductInfo = ProductInfo
-  { _productId :: ProductId
+  { _productId :: Maybe ProductId
   , _productCode :: ProductCode
   , _productName :: String
   , _productPrice :: Price
@@ -485,40 +478,46 @@ parseCatalogue vatRates date file =
     H.fromList 
     . map (_catalogueEntryCode &&& id) 
     . catMaybes 
-    . zipWith parse [0..] 
+    . map parse 
     . map (splitOn ',')
     . drop 1 
     . lines 
     $ file
   where
-    parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
-      let code' = ProductCode code
-          vatRateType = case vat of
+    parse [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
+      let code' = ProductCode $ trim code
+          vatRateType = case trim vat of
             "1" -> Standard
             "5" -> Reduced
             _ -> Zero
           vatRate = getVatRate vatRateType vatRates     
-          price' = atVatRate vatRate $ fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
-          rrp' =  round . (* 100) <$> (readMaybe price :: Maybe Float)
-          b' = b == "B"
-          f' = f == "F"
-          g' = g == "G"
-          o' = o == "O"
-          s' = s == "S"
-          v' = v == "V"
+          price' = atVatRate vatRate $ fromMaybe 0 $ round . (* 100) <$> (readMaybe (trim price) :: Maybe Float)
+          rrp' =  round . (* 100) <$> (readMaybe (trim price) :: Maybe Float)
+          b' = trim b == "B"
+          f' = trim f == "F"
+          g' = trim g == "G"
+          o' = trim o == "O"
+          s' = trim s == "S"
+          v' = trim v == "V"
       in  Just $ ProductCatalogueEntry code' cat brand desc text size price' rrp' b' f' g' o' s' v' date
-    parse _ _ = Nothing
+    parse _ = Nothing
 
-applyCatalogueUpdate :: UTCTime -> ProductCatalogue -> HouseholdOrder -> HouseholdOrder
-applyCatalogueUpdate date products = overHouseholdOrderItems apply
+applyCatalogueUpdate :: UTCTime -> ProductCatalogue -> Order -> Order
+applyCatalogueUpdate date products = 
+    overHouseholdOrders 
+  $ mapWhere (not . householdOrderIsAbandoned) 
+  $ overHouseholdOrderItems (map apply)
   where
     apply item = case H.lookup (itemProductCode item) products of
-      Just e | itemProductPrice item == _catalogueEntryPrice e -> Just item
-             | otherwise -> Just $ adjustItemPrice date (_catalogueEntryPrice e) item
-      _ -> Just $ discontinueProduct date item
+      Just e | itemProductPrice item == _catalogueEntryPrice e -> item
+             | otherwise -> adjustItemPrice date (_catalogueEntryPrice e) item
+      _ -> discontinueProduct date item
 
-acceptCatalogueUpdates :: UTCTime -> HouseholdOrder -> HouseholdOrder
-acceptCatalogueUpdates date = overHouseholdOrderItems accept
+acceptCatalogueUpdates :: UTCTime -> HouseholdId -> Order -> Order
+acceptCatalogueUpdates date householdId =
+    overHouseholdOrders
+  $ mapWhere ((== householdId) . _householdId . _householdOrderHouseholdInfo)
+  $ overHouseholdOrderItems (updateOrRemove accept)
   where
     accept  (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
     accept i@OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
@@ -530,20 +529,42 @@ acceptCatalogueUpdates date = overHouseholdOrderItems accept
     accept i = Just i
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, (ProductCode, (Int, Int)))] -> Order -> Order
-reconcileOrderItems date updates o = o{ _orderHouseholdOrders = householdOrders' }
+reconcileOrderItems date updates = overHouseholdOrders (map updateHouseholdOrder)
   where
-    householdOrders' = map updateHouseholdOrder $ _orderHouseholdOrders o
     updateHouseholdOrder ho = let householdId = _householdId . _householdOrderHouseholdInfo $ ho
                                   householdUpdates = map snd . filter ((==) householdId . fst) $ updates
-                              in overHouseholdOrderItems (update householdUpdates) ho
+                              in overHouseholdOrderItems (map (update householdUpdates)) ho
     update householdUpdates i = 
       case lookup (itemProductCode i) householdUpdates of
-        Just (newPrice, newQuantity) -> Just $ adjustItemPrice date (reprice newPrice $ itemProductPrice i)
-                                             $ adjustItemQuantity date newQuantity i
-        _ -> Just i
+        Just (newPrice, newQuantity) -> adjustItemPrice date (reprice newPrice $ itemProductPrice i)
+                                      $ adjustItemQuantity date newQuantity i
+        _ -> i
 
-fromCatalogueEntry :: ProductCatalogueEntry -> Product
-fromCatalogueEntry entry = undefined
+fromCatalogueEntry :: Maybe ProductId -> ProductCatalogueEntry -> Product
+fromCatalogueEntry productId e = Product 
+  { _productInfo = ProductInfo
+    { _productId = productId
+    , _productCode = _catalogueEntryCode e
+    , _productName = unwords
+                     $ filter (not . null)
+                     [ _catalogueEntryBrand e
+                     , _catalogueEntryDescription $ e
+                     , if null (_catalogueEntrySize e)
+                         then ""
+                         else "(" ++ (lower . _catalogueEntrySize $ e) ++ ")"
+                     , _catalogueEntryText $ e
+                     ]
+    , _productPrice = _catalogueEntryPrice e
+    }
+  , _productFlags = ProductFlags
+    { _productIsBiodynamic = _catalogueEntryBiodynamic e
+    , _productIsFairTrade = _catalogueEntryFairTrade e
+    , _productIsGlutenFree = _catalogueEntryGlutenFree e
+    , _productIsOrganic = _catalogueEntryOrganic e
+    , _productIsAddedSugar = _catalogueEntryAddedSugar e
+    , _productIsVegan = _catalogueEntryVegan e
+    }
+  }
 
 {- Utils -}
 
@@ -567,3 +588,7 @@ updateOrRemove _ [] = []
 updateOrRemove fn (x:xs) = case fn x of
   Just x' -> x':(updateOrRemove fn xs)
   _ -> updateOrRemove fn xs
+
+mapWhere :: (a -> Bool) -> (a -> a) -> [a] -> [a]
+mapWhere _ _ [] = []
+mapWhere cond fn (x:xs) = (if cond x then fn x else x):mapWhere cond fn xs
