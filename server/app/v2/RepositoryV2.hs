@@ -15,7 +15,6 @@ import Control.Monad (mzero, forM_, void, when, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Control.Monad.Trans.Class (lift)
-import qualified Data.HashMap.Lazy as H (elems)
 import Data.ByteString (ByteString)
 import Data.Function (on)
 import Data.List (find, foldl', deleteFirstsBy, intersectBy, nub)
@@ -55,6 +54,44 @@ getVatRates :: Repository -> IO [VatRate]
 getVatRates repo = do
   let conn = connection repo
   selectVatRates conn
+
+getCatalogueEntry :: Repository -> ProductCode -> IO (Maybe ProductCatalogueEntry)
+getCatalogueEntry repo code = do
+  let conn = connection repo
+
+  (rEntries) <- do
+    rEntries <- selectCatalogueEntries conn [ForProductCode code]
+    return (rEntries)
+  return $ listToMaybe rEntries
+
+getCatalogueEntriesForOrder :: Repository -> OrderGroupId -> OrderId -> IO ProductCatalogue
+getCatalogueEntriesForOrder repo groupId orderId = do
+  let conn = connection repo
+
+  productCatalogue <$> selectCatalogueEntries conn [ForOrderGroup groupId, ForOrder orderId]
+
+setProductCatalogue :: Repository -> ProductCatalogue -> IO ()
+setProductCatalogue repo catalogue = do
+  let conn = connection repo
+
+  truncateCatalogueEntries conn
+  insertCatalogueEntries conn (getEntries catalogue)
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+getProductId :: Repository -> ProductCode -> IO (Maybe ProductId)
+getProductId repo productCode = do
+  let conn = connection repo
+
+  liftM fst <$> listToMaybe <$> selectProducts conn [ForProductCode productCode]
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+getProductCode :: Repository -> ProductId -> IO (Maybe ProductCode)
+getProductCode repo productId = do
+  let conn = connection repo
+
+  liftM snd <$> listToMaybe <$> selectProducts conn [ForProductId productId]
 
 getHouseholds :: Repository -> Maybe OrderGroupId -> IO [Household]
 getHouseholds repo groupId = do
@@ -117,6 +154,26 @@ getPastOrders repo groupId = do
     return (rOrders, rHouseholdOrders, rOrderItems)
   return $ map (toOrder rHouseholdOrders rOrderItems) rOrders
 
+createOrder :: Repository -> OrderGroupId -> OrderSpec -> IO OrderId
+createOrder repo groupId spec = do
+  let conn = connection repo
+
+  [Only id] <- insertOrder conn groupId spec
+  return id
+
+setOrders :: Repository -> ([Order], [Order]) -> IO ()
+setOrders repo orders = do
+    let conn = connection repo
+
+    updateOrders conn $ updatedByComparing orderKey _orderStatusFlags orders
+
+    let householdOrders = join (***) (concatMap _orderHouseholdOrders) $ orders
+    setHouseholdOrders repo householdOrders
+  where
+    orderKey o = let groupId = _orderGroupId . _orderInfo $ o
+                     orderId = _orderId . _orderInfo $ o
+                 in (groupId, orderId)
+
 getHouseholdOrder :: Repository -> OrderGroupId -> OrderId -> HouseholdId -> IO (Maybe HouseholdOrder)
 getHouseholdOrder repo groupId orderId householdId = do
   let conn = connection repo
@@ -138,51 +195,6 @@ getCurrentHouseholdOrders repo groupId = do
     rOrderItems <- selectOrderItemRows conn params
     return (rHouseholdOrders, rOrderItems)
   return $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
-
-getCatalogueEntry :: Repository -> ProductCode -> IO (Maybe ProductCatalogueEntry)
-getCatalogueEntry repo code = do
-  let conn = connection repo
-
-  (rEntries) <- do
-    rEntries <- selectCatalogueEntry conn code
-    return (rEntries)
-  return $ listToMaybe rEntries
-
-createOrder :: Repository -> OrderGroupId -> OrderSpec -> IO OrderId
-createOrder repo groupId spec = do
-  let conn = connection repo
-
-  [Only id] <- insertOrder conn groupId spec
-  return id
-
--- Needed to convert ProductId to ProductCode
--- TODO: Remove ProductId altogether
-getProductId :: Repository -> ProductCode -> IO (Maybe ProductId)
-getProductId repo productCode = do
-  let conn = connection repo
-
-  liftM fst <$> listToMaybe <$> selectProducts conn [ForProductCode productCode]
-
--- Needed to convert ProductId to ProductCode
--- TODO: Remove ProductId altogether
-getProductCode :: Repository -> ProductId -> IO (Maybe ProductCode)
-getProductCode repo productId = do
-  let conn = connection repo
-
-  liftM snd <$> listToMaybe <$> selectProducts conn [ForProductId productId]
-
-setOrders :: Repository -> ([Order], [Order]) -> IO ()
-setOrders repo orders = do
-    let conn = connection repo
-
-    updateOrders conn $ updatedByComparing orderKey _orderStatusFlags orders
-
-    let householdOrders = join (***) (concatMap _orderHouseholdOrders) $ orders
-    setHouseholdOrders repo householdOrders
-  where
-    orderKey o = let groupId = _orderGroupId . _orderInfo $ o
-                     orderId = _orderId . _orderInfo $ o
-                 in (groupId, orderId)
 
 setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO ()
 setHouseholdOrders repo orders = do
@@ -219,19 +231,108 @@ setHouseholdOrders repo orders = do
     itemKey ((groupId, orderId, householdId, status), i) = (groupId, orderId, householdId, status, itemProductCode i)
     keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
 
-setProductCatalogue :: Repository -> UTCTime -> ProductCatalogue -> IO ()
-setProductCatalogue repo date catalogue = do
-  let conn = connection repo
-
-  truncateCatalogue conn
-  insertCatalogue conn (H.elems catalogue)
-
 selectVatRates :: Connection -> IO [VatRate]
 selectVatRates conn = 
   query_ conn ([sql|
     select code, multiplier
     from v2.vat_rate
   |])
+
+selectCatalogueEntries :: Connection -> [WhereParam] -> IO [ProductCatalogueEntry]
+selectCatalogueEntries conn whereParams = 
+    query conn ([sql|
+      select ce.code
+           , ce.category
+           , ce.brand
+           , ce."description"
+           , ce."text"
+           , ce.size
+           , ce.price
+           , ce.vat_rate
+           , v.multiplier
+           , ce.rrp
+           , ce.biodynamic
+           , ce.fair_trade
+           , ce.gluten_free
+           , ce.organic
+           , ce.added_sugar
+           , ce.vegan
+           , ce.updated
+      from v2.catalogue_entry ce
+      left join v2.vat_rate v on v.code = ce.vat_rate
+      left join v2.order_item oi on oi.product_code = ce.code
+      left join v2."order" o on oi.order_id = o.id
+      where 1 = 1 |] <> whereClause <> [sql|
+      order by ce.code
+    |]) params
+  where
+    (whereClause, params) = toWhereClause whereParams $ \case
+      (ForProductCode _) -> Just [sql| ce.code = ? |]
+      (ForOrder _) -> Just [sql| o.id = ? |]
+      (ForOrderGroup _) -> Just [sql| o.order_group_id = ? |]
+      _ -> Nothing
+
+
+truncateCatalogueEntries :: Connection -> IO ()
+truncateCatalogueEntries conn =   
+  void $ execute_ conn [sql|
+    truncate table catalogue_entry
+  |]
+
+insertCatalogueEntries :: Connection -> [ProductCatalogueEntry] -> IO ()
+insertCatalogueEntries conn entries = 
+  void $ executeMany conn [sql|
+    insert into v2.catalogue_entry 
+      ( "code"
+      , category
+      , brand
+      , "description"
+      , "text"
+      , size
+      , price
+      , vat_rate
+      , rrp
+      , biodynamic
+      , fair_trade
+      , gluten_free
+      , organic
+      , added_sugar
+      , vegan
+      , updated
+      )
+    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  |] entries
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+selectProducts :: Connection -> [WhereParam] -> IO [(ProductId, ProductCode)]
+selectProducts conn whereParams = 
+    query conn ([sql|
+      select p.id
+           , p.code
+      from v2.product p 
+      join v2.order_item oi on oi.product_code = p.code
+      where 1 = 1 |] <> whereClause <> [sql|
+      order by p.code
+    |]) params
+  where
+    (whereClause, params) = toWhereClause whereParams $ \case
+      (ForProductCode _) -> Just [sql| p.code = ? |]
+      (ForProductId _) -> Just [sql| p.id = ? |]
+      (ForOrder _) -> Just [sql| oi.order_id = ? |]
+      _ -> Nothing
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+insertProducts :: Connection -> [ProductCode] -> IO ()
+insertProducts conn codes =
+  void $ executeMany conn [sql|
+    insert into v2.product 
+      ( "code"
+      )
+    values (?)
+    on conflict ("code") do nothing
+  |] $ map Only codes
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
 selectHouseholdRows conn whereParams = 
@@ -288,6 +389,29 @@ selectOrderRows conn whereParams = do
       (ForOrder orderId) -> Just [sql| o.id = ? |]
       _ -> Nothing
 
+insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
+insertOrder conn groupId spec = 
+  query conn [sql|
+    insert into v2."order" (order_group_id, created_date, created_by_id) 
+    values (?, ?, ?) 
+    returning id
+  |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
+
+updateOrders :: Connection -> [Order] -> IO ()
+updateOrders conn orders = do
+  let rows = orders <&> \o -> let groupId = _orderGroupId . _orderInfo $ o
+                                  orderId = _orderId . _orderInfo $ o
+                                  abandoned = orderIsAbandoned o
+                                  placed = orderIsPlaced o
+                                  --complete?
+                              in (abandoned, placed, {- complete?, -} groupId, orderId)
+  void $ executeMany conn [sql|
+    update v2."order"
+    set is_abandoned = ? 
+      , is_placed = ?
+    where order_group_id = ? and order_id = ?
+  |] rows
+
 selectHouseholdOrderRows :: Connection -> [WhereParam] -> IO [HouseholdOrderRow]
 selectHouseholdOrderRows conn whereParams = 
     query conn ([sql|
@@ -299,7 +423,7 @@ selectHouseholdOrderRows conn whereParams =
            , h.id as household_id
            , h.name as household_name
            , ho.is_abandoned
-           , o.is_placed
+           , ho.is_placed
            , ho.is_complete
       from v2.household_order ho
       inner join v2."order" o 
@@ -319,114 +443,6 @@ selectHouseholdOrderRows conn whereParams =
       (ForOrder _)       -> Just [sql| o.id = ? |]
       (ForHousehold _)   -> Just [sql| h.id = ? |]
 
-truncateCatalogue :: Connection -> IO ()
-truncateCatalogue conn =   
-  void $ execute_ conn [sql|
-    truncate table catalogue_entry
-  |]
-
-insertCatalogue :: Connection -> [ProductCatalogueEntry] -> IO ()
-insertCatalogue conn entries = 
-  void $ executeMany conn [sql|
-    insert into v2.catalogue_entry 
-      ( "code"
-      , category
-      , brand
-      , "description"
-      , "text"
-      , size
-      , price
-      , vat_rate
-      , rrp
-      , biodynamic
-      , fair_trade
-      , gluten_free
-      , organic
-      , added_sugar
-      , vegan
-      , updated
-      )
-    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  |] entries
-
-selectCatalogueEntry :: Connection -> ProductCode -> IO [ProductCatalogueEntry]
-selectCatalogueEntry conn code = 
-  query conn [sql|
-    select ce.code
-         , ce.category
-         , ce.brand
-         , ce."description"
-         , ce."text"
-         , ce.size
-         , ce.price
-         , ce.vat_rate
-         , v.multiplier
-         , ce.rrp
-         , ce.biodynamic
-         , ce.fair_trade
-         , ce.gluten_free
-         , ce.organic
-         , ce.added_sugar
-         , ce.vegan
-         , ce.updated
-    from v2.catalogue_entry ce
-    join v2.vat_rate v on v.code = ce.vat_rate
-    where ce.code = ?
-  |] (Only code)
-
--- Needed to convert ProductId to ProductCode
--- TODO: Remove ProductId altogether
-selectProducts :: Connection -> [WhereParam] -> IO [(ProductId, ProductCode)]
-selectProducts conn whereParams = 
-    query conn ([sql|
-      select p.id
-           , p.code
-      from v2.product p 
-      join v2.order_item oi on oi.product_code = p.code
-      where 1 = 1 |] <> whereClause <> [sql|
-      order by p.code
-    |]) params
-  where
-    (whereClause, params) = toWhereClause whereParams $ \case
-      (ForProductCode _) -> Just [sql| p.code = ? |]
-      (ForProductId _) -> Just [sql| p.id = ? |]
-      (ForOrder _) -> Just [sql| oi.id = ? |]
-      _ -> Nothing
-
--- Needed to convert ProductId to ProductCode
--- TODO: Remove ProductId altogether
-insertProducts :: Connection -> [ProductCode] -> IO ()
-insertProducts conn codes =
-  void $ executeMany conn [sql|
-    insert into v2.product 
-      ( "code"
-      )
-    values (?)
-    on conflict ("code") do nothing
-  |] $ map Only codes
-
-insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
-insertOrder conn groupId spec = 
-  query conn [sql|
-    insert into v2."order" (order_group_id, created_date, created_by_id) 
-    values (?, ?, ?) 
-    returning id
-  |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
-
-updateOrders :: Connection -> [Order] -> IO ()
-updateOrders conn orders = do
-  let rows = orders <&> \o -> let groupId = _orderGroupId . _orderInfo $ o
-                                  orderId = _orderId . _orderInfo $ o
-                                  abandoned = orderIsAbandoned o
-                                  complete = orderIsComplete o
-                              in (abandoned, complete, groupId, orderId)
-  void $ executeMany conn [sql|
-    update v2."order"
-    set is_abandoned = ? 
-      , is_complete = ?
-    where order_group_id = ? and order_id = ?
-  |] rows
-
 insertHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
 insertHouseholdOrders conn orders = do
   let rows = orders <&> \o -> let groupId = _orderGroupId . _householdOrderOrderInfo $ o
@@ -434,10 +450,11 @@ insertHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                              in (abandoned, complete, groupId, orderId, householdId)
+                                  placed = householdOrderIsPlaced o
+                              in (abandoned, complete, placed, groupId, orderId, householdId)
   void $ executeMany conn [sql|
-    insert into v2.household_order (is_abandoned, is_complete, order_group_id, order_id, household_id) 
-    values (?, ?, ?, ?, ?)
+    insert into v2.household_order (is_abandoned, is_complete, is_placed, order_group_id, order_id, household_id) 
+    values (?, ?, ?, ?, ?, ?)
     on conflict (order_group_id, order_id, household_id) do nothing
   |] rows
 
@@ -448,11 +465,13 @@ updateHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                              in (abandoned, complete, groupId, orderId, householdId)
+                                  placed = householdOrderIsPlaced o
+                              in (abandoned, complete, placed, groupId, orderId, householdId)
   void $ executeMany conn [sql|
     update v2.household_order 
     set is_abandoned = ? 
       , is_complete = ?
+      , is_placed = ?
     where order_group_id = ? and order_id = ? and household_id = ?
   |] rows
 
@@ -574,43 +593,6 @@ updateOrderItems conn items = do
       , product_is_vegan = ?
     where order_group_id = ? and order_id = ? and household_id = ? and product_code = ?
   |] rows
-
-data UpdateOrderItem = UpdateOrderItem
-  { updateOrderItem_quantity :: Int
-  , updateOrderItem_product_name :: String
-  , updateOrderItem_product_price :: Int
-  , updateOrderItem_product_vat_rate :: VatRateType
-  , updateOrderItem_product_vat_rate_multiplier :: Double
-  , updateOrderItem_product_is_biodynamic :: Bool
-  , updateOrderItem_product_is_fair_trade :: Bool
-  , updateOrderItem_product_is_gluten_free :: Bool
-  , updateOrderItem_product_is_organic :: Bool
-  , updateOrderItem_product_is_added_sugar :: Bool
-  , updateOrderItem_product_is_vegan :: Bool
-  , updateOrderItem_order_group_id :: OrderGroupId
-  , updateOrderItem_order_id :: OrderId
-  , updateOrderItem_household_id :: HouseholdId
-  , updateOrderItem_product_code :: ProductCode
-  }
-
-instance ToRow UpdateOrderItem where
-  toRow i = [ toField $ updateOrderItem_quantity i
-            , toField $ updateOrderItem_product_name i
-            , toField $ updateOrderItem_product_price i
-            , toField $ updateOrderItem_product_vat_rate i
-            , toField $ updateOrderItem_product_vat_rate_multiplier i
-            , toField $ updateOrderItem_product_is_biodynamic i
-            , toField $ updateOrderItem_product_is_fair_trade i
-            , toField $ updateOrderItem_product_is_gluten_free i
-            , toField $ updateOrderItem_product_is_organic i
-            , toField $ updateOrderItem_product_is_added_sugar i
-            , toField $ updateOrderItem_product_is_vegan i
-            , toField $ updateOrderItem_order_group_id i
-            , toField $ updateOrderItem_order_id i
-            , toField $ updateOrderItem_household_id i
-            , toField $ updateOrderItem_product_code i
-            ]
-
 
 deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, HouseholdOrderStatus), OrderItem)] -> IO ()
 deleteOrderItems conn items = do
@@ -896,6 +878,42 @@ instance ToRow ProductCatalogueEntry where
 
 instance FromRow ProductCatalogueEntry where
   fromRow = ProductCatalogueEntry <$> field <*> field <*> field <*> field <*> field <*> field <*> priceField <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+
+data UpdateOrderItem = UpdateOrderItem
+  { updateOrderItem_quantity :: Int
+  , updateOrderItem_product_name :: String
+  , updateOrderItem_product_price :: Int
+  , updateOrderItem_product_vat_rate :: VatRateType
+  , updateOrderItem_product_vat_rate_multiplier :: Double
+  , updateOrderItem_product_is_biodynamic :: Bool
+  , updateOrderItem_product_is_fair_trade :: Bool
+  , updateOrderItem_product_is_gluten_free :: Bool
+  , updateOrderItem_product_is_organic :: Bool
+  , updateOrderItem_product_is_added_sugar :: Bool
+  , updateOrderItem_product_is_vegan :: Bool
+  , updateOrderItem_order_group_id :: OrderGroupId
+  , updateOrderItem_order_id :: OrderId
+  , updateOrderItem_household_id :: HouseholdId
+  , updateOrderItem_product_code :: ProductCode
+  }
+
+instance ToRow UpdateOrderItem where
+  toRow i = [ toField $ updateOrderItem_quantity i
+            , toField $ updateOrderItem_product_name i
+            , toField $ updateOrderItem_product_price i
+            , toField $ updateOrderItem_product_vat_rate i
+            , toField $ updateOrderItem_product_vat_rate_multiplier i
+            , toField $ updateOrderItem_product_is_biodynamic i
+            , toField $ updateOrderItem_product_is_fair_trade i
+            , toField $ updateOrderItem_product_is_gluten_free i
+            , toField $ updateOrderItem_product_is_organic i
+            , toField $ updateOrderItem_product_is_added_sugar i
+            , toField $ updateOrderItem_product_is_vegan i
+            , toField $ updateOrderItem_order_group_id i
+            , toField $ updateOrderItem_order_id i
+            , toField $ updateOrderItem_household_id i
+            , toField $ updateOrderItem_product_code i
+            ]
 
 data WhereParam = ForOrderGroup OrderGroupId
                 | ForOrder OrderId
