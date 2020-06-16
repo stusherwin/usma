@@ -171,19 +171,6 @@ getProductCode repo productId = do
 
   liftM snd <$> listToMaybe <$> selectProducts conn [ForProductId productId]
 
-createHouseholdOrder :: Repository -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO (Maybe HouseholdOrder)
-createHouseholdOrder repo groupId orderId householdId date = do
-  let conn = connection repo
-
-  insertHouseholdOrder conn groupId orderId householdId date
-
-  let params = [ForOrderGroup groupId, OrderIsCurrent, ForOrder orderId, ForHousehold householdId]
-  (rHouseholdOrders, rOrderItems) <- do
-    rHouseholdOrders <- selectHouseholdOrderRows conn params
-    rOrderItems <- selectOrderItemRows conn params
-    return (rHouseholdOrders, rOrderItems)
-  return $ listToMaybe $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
-
 setOrders :: Repository -> ([Order], [Order]) -> IO ()
 setOrders repo orders = do
     let conn = connection repo
@@ -202,8 +189,8 @@ setHouseholdOrders repo orders = do
     let conn = connection repo
 
     -- TODO?
-    -- let addedOrders    = addedBy   orderKey orders
     -- let removedOrders  = removedBy orderKey orders
+    insertHouseholdOrders conn $ addedBy   orderKey orders
     updateHouseholdOrders conn $ updatedByComparing orderKey _householdOrderStatusFlags orders
 
     let items = join (***) (concat . map keyedItems) $ orders
@@ -440,13 +427,19 @@ updateOrders conn orders = do
     where order_group_id = ? and order_id = ?
   |] rows
 
-insertHouseholdOrder :: Connection -> OrderGroupId -> OrderId -> HouseholdId -> UTCTime -> IO ()
-insertHouseholdOrder conn groupId orderId householdId date =
-  void $ execute conn [sql|
-    insert into v2.household_order (order_group_id, order_id, household_id, updated, is_complete, is_abandoned) 
-    values (?, ?, ?, ?, false, false)
+insertHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
+insertHouseholdOrders conn orders = do
+  let rows = orders <&> \o -> let groupId = _orderGroupId . _householdOrderOrderInfo $ o
+                                  orderId = _orderId . _householdOrderOrderInfo $ o
+                                  householdId = _householdId . _householdOrderHouseholdInfo $ o
+                                  abandoned = householdOrderIsAbandoned o
+                                  complete = householdOrderIsComplete o
+                              in (abandoned, complete, groupId, orderId, householdId)
+  void $ executeMany conn [sql|
+    insert into v2.household_order (is_abandoned, is_complete, order_group_id, order_id, household_id) 
+    values (?, ?, ?, ?, ?)
     on conflict (order_group_id, order_id, household_id) do nothing
-  |] (groupId, orderId, householdId, date)
+  |] rows
 
 updateHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
 updateHouseholdOrders conn orders = do
