@@ -55,17 +55,14 @@ getVatRates repo = do
   let conn = connection repo
   selectVatRates conn
 
-getCatalogueEntry :: Repository -> ProductCode -> IO (Maybe ProductCatalogueEntry)
-getCatalogueEntry repo code = do
+getProductCatalogueForCode :: Repository -> ProductCode -> IO ProductCatalogue
+getProductCatalogueForCode repo code = do
   let conn = connection repo
 
-  (rEntries) <- do
-    rEntries <- selectCatalogueEntries conn [ForProductCode code]
-    return (rEntries)
-  return $ listToMaybe rEntries
+  productCatalogue <$> selectCatalogueEntries conn [ForProductCode code]
 
-getCatalogueEntriesForOrder :: Repository -> OrderGroupId -> OrderId -> IO ProductCatalogue
-getCatalogueEntriesForOrder repo groupId orderId = do
+getProductCatalogueForOrder :: Repository -> OrderGroupId -> OrderId -> IO ProductCatalogue
+getProductCatalogueForOrder repo groupId orderId = do
   let conn = connection repo
 
   productCatalogue <$> selectCatalogueEntries conn [ForOrderGroup groupId, ForOrder orderId]
@@ -79,19 +76,27 @@ setProductCatalogue repo catalogue = do
 
 -- Needed to convert ProductId to ProductCode
 -- TODO: Remove ProductId altogether
-getProductId :: Repository -> ProductCode -> IO (Maybe ProductId)
-getProductId repo productCode = do
-  let conn = connection repo
-
-  liftM fst <$> listToMaybe <$> selectProducts conn [ForProductCode productCode]
-
--- Needed to convert ProductId to ProductCode
--- TODO: Remove ProductId altogether
 getProductCode :: Repository -> ProductId -> IO (Maybe ProductCode)
 getProductCode repo productId = do
   let conn = connection repo
 
-  liftM snd <$> listToMaybe <$> selectProducts conn [ForProductId productId]
+  liftM fst <$> listToMaybe <$> selectProducts conn [ForProductId productId]
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+getProductIdsForCurrentOrder :: Repository -> OrderGroupId -> IO [(ProductCode, ProductId)]
+getProductIdsForCurrentOrder repo groupId = do
+  let conn = connection repo
+
+  selectProducts conn [ForOrderGroup groupId, OrderIsCurrent]
+
+-- Needed to convert ProductId to ProductCode
+-- TODO: Remove ProductId altogether
+getProductIdsForPastOrders :: Repository -> OrderGroupId -> IO [(ProductCode, ProductId)]
+getProductIdsForPastOrders repo groupId = do
+  let conn = connection repo
+
+  selectProducts conn [ForOrderGroup groupId, OrderIsPast]
 
 getHouseholds :: Repository -> Maybe OrderGroupId -> IO [Household]
 getHouseholds repo groupId = do
@@ -272,7 +277,6 @@ selectCatalogueEntries conn whereParams =
       (ForOrderGroup _) -> Just [sql| o.order_group_id = ? |]
       _ -> Nothing
 
-
 truncateCatalogueEntries :: Connection -> IO ()
 truncateCatalogueEntries conn =   
   void $ execute_ conn [sql|
@@ -305,21 +309,25 @@ insertCatalogueEntries conn entries =
 
 -- Needed to convert ProductId to ProductCode
 -- TODO: Remove ProductId altogether
-selectProducts :: Connection -> [WhereParam] -> IO [(ProductId, ProductCode)]
+selectProducts :: Connection -> [WhereParam] -> IO [(ProductCode, ProductId)]
 selectProducts conn whereParams = 
     query conn ([sql|
-      select p.id
-           , p.code
+      select p.code
+           , p.id
       from v2.product p 
       join v2.order_item oi on oi.product_code = p.code
+      join v2."order" o on oi.order_id = o.id
       where 1 = 1 |] <> whereClause <> [sql|
       order by p.code
     |]) params
   where
     (whereClause, params) = toWhereClause whereParams $ \case
       (ForProductCode _) -> Just [sql| p.code = ? |]
-      (ForProductId _) -> Just [sql| p.id = ? |]
-      (ForOrder _) -> Just [sql| oi.order_id = ? |]
+      (ForProductId _)   -> Just [sql| p.id = ? |]
+      (ForOrderGroup _)  -> Just [sql| o.order_group_id = ? |]
+      (ForOrder _)       -> Just [sql| oi.id = ? |]
+      OrderIsCurrent     -> Just [sql| o.is_abandoned = 'f' and o.is_placed = 'f' |]
+      OrderIsPast        -> Just [sql| o.is_abandoned = 't' or o.is_placed = 't' |]
       _ -> Nothing
 
 -- Needed to convert ProductId to ProductCode
@@ -480,7 +488,6 @@ selectOrderItemRows conn whereParams =
     query conn ([sql|
       select hoi.order_id
            , hoi.household_id
-           , p.id
            , hoi.product_code
            , hoi.product_name
            , hoi.product_vat_rate
@@ -778,7 +785,7 @@ productField :: RowParser Product
 productField = Product <$> productInfoField <*> productFlagsField
 
 productInfoField :: RowParser ProductInfo
-productInfoField = ProductInfo <$> field <*> field <*> field <*> priceField
+productInfoField = ProductInfo <$> field <*> field <*> priceField
 
 instance FromField ProductId where
   fromField f char = ProductId <$> fromField f char
@@ -941,14 +948,6 @@ toWhereClause params fn = foldl' fn' ([sql| |], []) params
 
 toDatabaseChar :: Char -> Action
 toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]
-
-(<&>) :: Functor f => f a -> (a -> b) -> f b
-(<&>) = flip (<$>)
-infixl 4 <&>
-
-(&) :: a -> (a -> b) -> b
-(&) = flip ($)
-infixr 0 &
 
 addedBy :: Eq b => (a -> b) -> ([a], [a]) -> [a]
 addedBy   key (xs, xs') = deleteFirstsBy ((==) `on` key) xs' xs
