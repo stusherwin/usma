@@ -41,12 +41,14 @@ queryServerV2 config =
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
       order <- liftIO $ getCurrentOrder repo groupId
-      return $ apiOrder <$> order
+      productIds <- liftIO $ getProductIdsForCurrentOrder repo groupId
+      return $ apiOrder productIds <$> order
 
     pastCollectiveOrders :: Handler [Api.CollectiveOrder]
     pastCollectiveOrders = withRepository config $ \(repo, groupId) -> do
       orders <- liftIO $ getPastOrders repo (Just groupId)
-      return $ apiOrder <$> orders
+      productIds <- liftIO $ getProductIdsForPastOrders repo groupId
+      return $ apiOrder productIds <$> orders
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
@@ -58,6 +60,7 @@ commandServerV2 config  =
     :<|> completeHouseholdOrder
     :<|> reopenHouseholdOrder
     :<|> ensureHouseholdOrderItem
+    :<|> ensureAllItemsFromPastHouseholdOrder
     :<|> removeHouseholdOrderItem
     :<|> uploadProductCatalogue
     :<|> acceptCatalogueUpdates
@@ -106,8 +109,8 @@ commandServerV2 config  =
     reopenHouseholdOrder :: Int -> Int -> Handler ()
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      catalogueEntries <- liftIO $ getCatalogueEntriesForOrder repo groupId (OrderId orderId)
-      let order' = DomainV2.reopenHouseholdOrder catalogueEntries (HouseholdId householdId) order
+      catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId orderId)
+      let order' = DomainV2.reopenHouseholdOrder catalogue (HouseholdId householdId) order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -115,9 +118,18 @@ commandServerV2 config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      catalogueEntry <- MaybeT $ getCatalogueEntry repo (ProductCode productCode)
-      productId <- liftIO $ getProductId repo (ProductCode productCode)
-      let order' = updateHouseholdOrderItem (HouseholdId householdId) productId catalogueEntry (hoidetQuantity details) order
+      catalogue <- liftIO $ getProductCatalogueForCode repo (ProductCode productCode)
+      let order' = addOrUpdateHouseholdOrderItems catalogue (HouseholdId householdId) [(ProductCode productCode, hoidetQuantity details)] order
+      liftIO $ setOrders repo ([order], [order'])
+      return ()
+
+    ensureAllItemsFromPastHouseholdOrder :: Int -> Int -> Int -> Handler ()
+    ensureAllItemsFromPastHouseholdOrder orderId householdId pastOrderId = withRepository config $ \(repo, groupId) -> do
+      date <- liftIO $ getCurrentTime
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      pastOrder <- MaybeT $ getOrder repo groupId (OrderId pastOrderId)
+      catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId pastOrderId)
+      let order' = addItemsFromPastOrder catalogue (HouseholdId householdId) pastOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -192,8 +204,8 @@ apiHousehold h = Api.Household
   , hBalance       = householdBalance h
   }
 
-apiOrder :: Order -> Api.CollectiveOrder
-apiOrder o = Api.CollectiveOrder
+apiOrder :: [(ProductCode, ProductId)] -> Order -> Api.CollectiveOrder
+apiOrder productIds o = Api.CollectiveOrder
     { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
     , coOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
     , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
@@ -209,7 +221,7 @@ apiOrder o = Api.CollectiveOrder
                                                  Just a -> _orderAdjNewTotal a
                                                  _      -> orderTotal $ o
     , coAdjustment            = apiOrderAdjustment o $ orderAdjustment o
-    , coItems = apiOrderItem <$> orderItems o
+    , coItems = apiOrderItem productIds <$> orderItems o
     }
 
 apiOrderAdjustment :: DomainV2.Order -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
@@ -219,18 +231,18 @@ apiOrderAdjustment o (Just _) = Just $ Api.OrderAdjustment
   }
 apiOrderAdjustment _ _ = Nothing
 
-apiOrderItem :: DomainV2.OrderItem -> Api.OrderItem
-apiOrderItem i = Api.OrderItem
-  { oiProductId          = fromMaybe 0 $ fromProductId <$> (_productId  . _productInfo . _itemProduct $ i)
-  , oiProductCode        = fromProductCode . _productCode               . _productInfo . _itemProduct $ i
-  , oiProductName        = _productName                                 . _productInfo . _itemProduct $ i
-  , oiProductVatRate     = _vatRateType . _priceVatRate . _productPrice . _productInfo . _itemProduct $ i
+apiOrderItem :: [(ProductCode, ProductId)] -> DomainV2.OrderItem -> Api.OrderItem
+apiOrderItem productIds i = Api.OrderItem
+  { oiProductId          = fromMaybe 0 $ fromProductId <$> lookup (itemProductCode i) productIds
+  , oiProductCode        = fromProductCode . itemProductCode $ i
+  , oiProductName        = _productName . _productInfo . _itemProduct $ i
+  , oiProductVatRate     = _vatRateType . _priceVatRate . itemProductPrice $ i
   , oiProductPriceExcVat = _moneyExcVat . _priceAmount $ case _itemAdjustment i of
                                                            Just a -> _itemAdjNewPrice a
-                                                           _      -> _productPrice . _productInfo . _itemProduct $ i
+                                                           _      -> itemProductPrice $ i
   , oiProductPriceIncVat = _moneyIncVat . _priceAmount $ case _itemAdjustment i of
                                                            Just a -> _itemAdjNewPrice a
-                                                           _      -> _productPrice . _productInfo . _itemProduct $ i
+                                                           _      -> itemProductPrice $ i
   , oiItemQuantity       = case _itemAdjustment i of
                              Just a -> _itemAdjNewQuantity a
                              _      -> _itemQuantity i
