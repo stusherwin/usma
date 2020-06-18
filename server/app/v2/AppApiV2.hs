@@ -12,6 +12,7 @@ module AppApiV2 where
 import Data.Aeson
 import Data.Aeson.Types (Options(..))
 import Data.Char (toLower, isLower, toUpper)
+import Data.Time.Calendar (Day)
 import Data.Time.Clock (UTCTime)
 import GHC.Generics
 import Servant
@@ -40,6 +41,12 @@ type CommandApiV2 =
   :<|> "ensure-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> ReqBody '[JSON] HouseholdOrderItemDetails :> Post '[JSON] ()
   :<|> "ensure-all-past-order-items" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "pastOrderId" Int :> Post '[JSON] ()
   :<|> "remove-household-order-item" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productId" Int :> Post '[JSON] ()
+  :<|> "create-household"  :> ReqBody '[JSON] HouseholdDetails :> Post '[JSON] Int
+  :<|> "update-household"  :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdDetails :> Post '[JSON] ()
+  :<|> "archive-household" :> Capture "householdId" Int :> Post '[JSON] ()
+  :<|> "create-household-payment" :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] Int
+  :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] ()
+  :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
   :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
@@ -131,6 +138,20 @@ data HouseholdQuantityDetails = HouseholdQuantityDetails { hqdetHouseholdId :: I
                                                          , hqdetItemQuantity :: Int
                                                          } deriving (Eq, Show, Generic)
 instance FromJSON HouseholdQuantityDetails where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data HouseholdDetails = HouseholdDetails { hdetName :: String
+                                         , hdetContactName :: Maybe String
+                                         , hdetContactEmail :: Maybe String
+                                         , hdetContactPhone :: Maybe String
+                                         } deriving (Eq, Show, Generic)
+instance FromJSON HouseholdDetails where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data HouseholdPaymentDetails = HouseholdPaymentDetails { hpdetDate :: Day
+                                                       , hpdetAmount :: Int
+                                                       } deriving (Eq, Show, Generic)
+instance FromJSON HouseholdPaymentDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where

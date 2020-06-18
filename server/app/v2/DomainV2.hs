@@ -9,6 +9,7 @@ import           Data.Function (on)
 import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup, elems)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
+import           Data.Time.Calendar (Day)
 import           Data.Semigroup (Semigroup(..))
 import           Data.List (groupBy, maximumBy, find, delete, lookup, partition)
 import           Data.List.Extra (trim, lower)
@@ -28,6 +29,13 @@ data Household = Household
   , _householdContactPhone :: Maybe String
   , _householdOrders :: [HouseholdOrder]
   , _householdPayments :: [Payment]
+  }
+
+data HouseholdSpec = HouseholdSpec
+  { _householdSpecName :: String
+  , _householdSpecContactName :: Maybe String
+  , _householdSpecContactEmail :: Maybe String
+  , _householdSpecContactPhone :: Maybe String
   }
 
 newtype HouseholdId = HouseholdId 
@@ -57,8 +65,14 @@ householdBalance h = householdTotalPayments h - householdTotalOrders h
 data Payment = Payment 
   { _paymentId :: PaymentId
   , _paymentHouseholdId :: HouseholdId
-  , _paymentDate :: UTCTime
+  , _paymentDate :: Day
   , _paymentAmount :: Int
+  } deriving (Eq, Show, Generic)
+
+data PaymentSpec = PaymentSpec
+  { _paymentSpecHouseholdId :: HouseholdId
+  , _paymentSpecDate :: Day
+  , _paymentSpecAmount :: Int
   } deriving (Eq, Show, Generic)
 
 newtype PaymentId = PaymentId 
