@@ -151,27 +151,44 @@ commandServerV2 config  =
 
     createHousehold :: HouseholdDetails -> Handler Int
     createHousehold details = withRepository config $ \(repo, groupId) -> do
-      householdId <- liftIO $ R.createHousehold repo groupId $ HouseholdSpec (hdetName details)
-                                                                             (hdetContactName details)
-                                                                             (hdetContactEmail details)
-                                                                             (hdetContactPhone details)
-      return $ fromHouseholdId householdId
+        householdId <- liftIO $ R.createHousehold repo groupId spec
+        return $ fromHouseholdId householdId
+      where
+        contact = Contact (hdetContactName details)
+                          (hdetContactEmail details)
+                          (hdetContactPhone details)
+        spec = HouseholdSpec (hdetName details) contact
 
     updateHousehold :: Int -> HouseholdDetails -> Handler ()
-    updateHousehold householdId details = undefined
+    updateHousehold householdId details = withRepository config $ \(repo, groupId) -> do
+        household <- MaybeT $ getHousehold repo groupId (HouseholdId householdId)
+        let household' = DomainV2.updateHousehold name contact household
+        liftIO $ setHousehold repo groupId (household, household')
+      where
+        name = hdetName details
+        contact = Contact (hdetContactName details)
+                          (hdetContactEmail details)
+                          (hdetContactPhone details)
 
     archiveHousehold :: Int -> Handler ()
     archiveHousehold householdId = undefined
 
     createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
     createHouseholdPayment householdId details = withRepository config $ \(repo, groupId) -> do
-      paymentId <- liftIO $ R.createPayment repo groupId $ PaymentSpec (HouseholdId householdId)
-                                                                       (hpdetDate details)
-                                                                       (hpdetAmount details)
-      return $ fromPaymentId paymentId
+        paymentId <- liftIO $ R.createPayment repo groupId $ PaymentSpec (HouseholdId householdId) date amount
+        return $ fromPaymentId paymentId
+      where
+        date = hpdetDate details
+        amount = hpdetAmount details
 
     updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
-    updateHouseholdPayment paymentId details = undefined
+    updateHouseholdPayment paymentId details = withRepository config $ \(repo, groupId) -> do
+        payment <- MaybeT $ getPayment repo groupId (PaymentId paymentId)
+        let payment' = DomainV2.updatePayment date amount payment
+        liftIO $ setPayment repo groupId (payment, payment')
+      where
+        date = hpdetDate details
+        amount = hpdetAmount details
     
     archiveHouseholdPayment :: Int -> Handler ()
     archiveHouseholdPayment paymentId = undefined
@@ -229,9 +246,9 @@ apiHousehold :: DomainV2.Household -> Api.Household
 apiHousehold h = Api.Household
   { hId            = fromHouseholdId . _householdId . _householdInfo $ h
   , hName          = _householdName                 . _householdInfo $ h
-  , hContactName   = _householdContactName h
-  , hContactEmail  = _householdContactEmail h
-  , hContactPhone  = _householdContactPhone h
+  , hContactName   = _contactName  . _householdContact $ h
+  , hContactEmail  = _contactEmail . _householdContact $ h
+  , hContactPhone  = _contactPhone . _householdContact $ h
   , hTotalOrders   = householdTotalOrders h
   , hTotalPayments = householdTotalPayments h
   , hBalance       = householdBalance h

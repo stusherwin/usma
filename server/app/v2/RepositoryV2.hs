@@ -111,6 +111,19 @@ getHouseholds repo groupId = do
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
+getHousehold :: Repository -> OrderGroupId -> HouseholdId -> IO (Maybe Household)
+getHousehold repo groupId householdId = do
+  let conn = connection repo
+
+  let params = [ForOrderGroup groupId, ForHousehold householdId]
+  (rHouseholds, rHouseholdOrders, rOrderItems, rPayments) <- do
+    rHouseholds <- selectHouseholdRows conn params 
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectOrderItemRows conn params
+    rPayments <- selectPayments conn params
+    return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
+  return $ listToMaybe $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
+
 createHousehold :: Repository -> OrderGroupId -> HouseholdSpec -> IO HouseholdId
 createHousehold repo groupId spec = do
   let conn = connection repo
@@ -118,12 +131,45 @@ createHousehold repo groupId spec = do
   [Only id] <- insertHousehold conn groupId spec
   return id
 
+setHousehold :: Repository -> OrderGroupId -> (Household, Household) -> IO ()
+setHousehold repo groupId (household, household') = do
+  let conn = connection repo
+
+  when (_householdInfo household' /= _householdInfo household 
+     || _householdContact household' /= _householdContact household)
+    (updateHouseholds conn groupId [household'])
+
+removeHousehold :: Repository -> OrderGroupId -> HouseholdId -> IO ()
+removeHousehold repo groupId householdId = do
+  let conn = connection repo
+
+  deleteHousehold conn groupId householdId
+
+getPayment :: Repository -> OrderGroupId -> PaymentId -> IO (Maybe Payment)
+getPayment repo groupId paymentId = do
+  let conn = connection repo
+
+  let params = [ForOrderGroup groupId, ForPayment paymentId]
+  listToMaybe <$> selectPayments conn params
+
 createPayment :: Repository -> OrderGroupId -> PaymentSpec -> IO PaymentId
 createPayment repo groupId spec = do
   let conn = connection repo
 
   [Only id] <- insertPayment conn groupId spec
   return id
+
+setPayment :: Repository -> OrderGroupId -> (Payment, Payment) -> IO ()
+setPayment repo groupId (payment, payment') = do
+  let conn = connection repo
+
+  when (payment' /= payment) (updatePayments conn groupId [payment'])
+
+removePayment :: Repository -> OrderGroupId -> PaymentId -> IO ()
+removePayment repo groupId paymentId = do
+  let conn = connection repo
+
+  deletePayment conn groupId paymentId
 
 getOrder :: Repository -> OrderGroupId -> OrderId -> IO (Maybe Order)
 getOrder repo groupId orderId = do
@@ -336,7 +382,7 @@ selectProducts conn whereParams =
     |]) params
   where
     (whereClause, params) = toWhereClause whereParams $ \case
-      (ForProductCode _) -> Just [sql| p.code = ? |]
+      (ForProductCode _)     -> Just [sql| p.code = ? |]
       (ForProductId _)   -> Just [sql| p.id = ? |]
       (ForOrderGroup _)  -> Just [sql| o.order_group_id = ? |]
       (ForOrder _)       -> Just [sql| oi.id = ? |]
@@ -371,6 +417,7 @@ selectHouseholdRows conn whereParams =
   where 
     (whereClause, params) = toWhereClause whereParams $ \case
       (ForOrderGroup _)  -> Just [sql| h.order_group_id = ? |]
+      (ForHousehold _)  -> Just [sql| h.id = ? |]
       _ -> Nothing
 
 insertHousehold :: Connection -> OrderGroupId -> HouseholdSpec -> IO [Only HouseholdId]
@@ -388,9 +435,39 @@ insertHousehold conn groupId spec =
     returning id
   |] ( groupId
      , _householdSpecName spec
-     , _householdSpecContactName spec
-     , _householdSpecContactEmail spec
-     , _householdSpecContactPhone spec
+     , _contactName . _householdSpecContact $ spec
+     , _contactEmail . _householdSpecContact $ spec
+     , _contactPhone . _householdSpecContact $ spec
+     )
+
+updateHouseholds :: Connection -> OrderGroupId -> [Household] -> IO ()
+updateHouseholds conn groupId households = do
+  let rows = households <&> \h -> ( _householdName . _householdInfo $ h
+                                  , _contactName . _householdContact $ h
+                                  , _contactEmail . _householdContact $ h
+                                  , _contactPhone . _householdContact $ h
+                                  , _householdId . _householdInfo $ h
+                                  , groupId
+                                  )
+  void $ executeMany conn [sql|
+    update v2.household 
+    set name = ?
+      , contact_name = ?
+      , contact_email = ?
+      , contact_phone = ?
+    where id = ?
+      and order_group_id = ?
+  |] rows
+
+deleteHousehold :: Connection -> OrderGroupId -> HouseholdId -> IO ()
+deleteHousehold conn groupId householdId = 
+  void $ execute conn [sql|
+    update v2.household
+    set is_archived = true
+    where id = ?
+      and order_group_id = ?
+  |] ( householdId
+     , groupId
      )
 
 selectPayments :: Connection -> [WhereParam] -> IO [Payment]
@@ -407,6 +484,8 @@ selectPayments conn whereParams =
   where 
     (whereClause, params) = toWhereClause whereParams $ \case
       (ForOrderGroup _)  -> Just [sql| p.order_group_id = ? |]
+      (ForHousehold _)  -> Just [sql| p.household_id = ? |]
+      (ForPayment _)  -> Just [sql| p.id = ? |]
       _ -> Nothing
 
 insertPayment :: Connection -> OrderGroupId -> PaymentSpec -> IO [Only PaymentId]
@@ -417,7 +496,7 @@ insertPayment conn groupId spec =
       , household_id
       , "date"
       , amount
-      , archived
+      , is_archived
       ) 
     values (?, ?, ?, ?, false)
     returning id
@@ -425,6 +504,32 @@ insertPayment conn groupId spec =
      , _paymentSpecHouseholdId spec
      , _paymentSpecDate spec
      , _paymentSpecAmount spec
+     )
+
+updatePayments :: Connection -> OrderGroupId -> [Payment] -> IO ()
+updatePayments conn groupId payments = do
+  let rows = payments <&> \p -> ( _paymentDate p
+                                , _paymentAmount p
+                                , _paymentId p
+                                , groupId
+                                )
+  void $ executeMany conn [sql|
+    update v2.payment 
+    set "date" = ?
+      , amount = ?
+    where id = ?
+      and order_group_id = ?
+  |] rows
+
+deletePayment :: Connection -> OrderGroupId -> PaymentId -> IO ()
+deletePayment conn groupId paymentId = 
+  void $ execute conn [sql|
+    update v2.payment 
+    set is_archived = true
+    where id = ?
+      and order_group_id = ?
+  |] ( paymentId
+     , groupId
      )
 
 selectOrderRows :: Connection -> [WhereParam] -> IO [OrderRow]
@@ -715,13 +820,12 @@ deleteOrderItemAdjustments conn adjustments = do
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 
   Household householdInfo
-            (householdRow_contact_name h)
-            (householdRow_contact_email h)
-            (householdRow_contact_phone h)
+            householdContact
             householdOrders
             rPayments
   where
   householdInfo = householdRow_householdInfo h
+  householdContact = householdRow_contact h
   householdOrders = map (toHouseholdOrder rOrderItems)
                   . filter (( == _householdId householdInfo) . _householdId . householdOrderRow_householdInfo)
                   $ rHouseholdOrders      
@@ -763,16 +867,17 @@ instance ToField OrderGroupId where
 
 data HouseholdRow = HouseholdRow
   { householdRow_householdInfo :: HouseholdInfo
-  , householdRow_contact_name :: Maybe String
-  , householdRow_contact_email :: Maybe String
-  , householdRow_contact_phone :: Maybe String
+  , householdRow_contact :: Contact
   }
 
 instance FromRow HouseholdRow where
-  fromRow = HouseholdRow <$> householdInfoField <*> field <*> field <*> field
+  fromRow = HouseholdRow <$> householdInfoField <*> contactField
 
 householdInfoField :: RowParser HouseholdInfo
 householdInfoField = HouseholdInfo <$> field <*> field
+
+contactField :: RowParser Contact
+contactField = Contact <$> field <*> field <*> field
 
 instance FromField HouseholdId where
   fromField f char = HouseholdId <$> fromField f char
@@ -979,6 +1084,7 @@ data WhereParam = ForOrderGroup OrderGroupId
                 | ForHousehold HouseholdId
                 | ForProductId ProductId
                 | ForProductCode ProductCode
+                | ForPayment PaymentId
                 | OrderIsCurrent
                 | OrderIsPast
 
@@ -988,6 +1094,7 @@ instance ToField WhereParam where
   toField (ForHousehold a) = toField a
   toField (ForProductId a) = toField a
   toField (ForProductCode a) = toField a
+  toField (ForPayment a) = toField a
   -- Never used but need to handle the case
   toField _ = Plain "null"
 
