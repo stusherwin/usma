@@ -149,8 +149,8 @@ commandServerV2 config  =
       filePath <- uploadSingleFile multipartData
       file <- liftIO $ readFile filePath
       vatRates <- liftIO $ getVatRates repo
-      let catalogue = parseCatalogue vatRates date filePath
       orders <- liftIO $ getCurrentOrders repo Nothing
+      let catalogue = parseCatalogue vatRates date filePath
       let orders' = map (applyCatalogueUpdate catalogue) orders
       liftIO $ setProductCatalogue repo catalogue
       liftIO $ setOrders repo (orders, orders')
