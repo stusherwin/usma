@@ -167,10 +167,16 @@ placeOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = Fal
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdId -> Order -> Order
-abandonHouseholdOrder householdId = 
-    overHouseholdOrders 
-  $ mapWhere ((== householdId) . householdOrderHouseholdId)
-  $ abandon
+abandonHouseholdOrder householdId o = 
+    o{ _orderHouseholdOrders = householdOrders' 
+     , _orderStatusFlags = OrderStatusFlags 
+       { _orderIsAbandoned = all householdOrderIsAbandoned householdOrders'
+       , _orderIsPlaced = False
+       }
+     }
+  where 
+    householdOrders' = mapWhere ((== householdId) . householdOrderHouseholdId) abandon
+                     $ _orderHouseholdOrders o
 
 completeHouseholdOrder :: HouseholdId -> Order -> Order
 completeHouseholdOrder householdId = 
@@ -179,10 +185,16 @@ completeHouseholdOrder householdId =
   $ complete
 
 reopenHouseholdOrder :: ProductCatalogue -> HouseholdId -> Order -> Order
-reopenHouseholdOrder catalogue householdId = 
-    overHouseholdOrders 
-  $ mapWhere ((== householdId) . householdOrderHouseholdId)
-  $ reopen . (applyUpdate catalogue)
+reopenHouseholdOrder catalogue householdId o = 
+    o{ _orderHouseholdOrders = householdOrders' 
+     , _orderStatusFlags = OrderStatusFlags 
+       { _orderIsAbandoned = all householdOrderIsAbandoned householdOrders'
+       , _orderIsPlaced = False
+       }
+     }
+  where 
+    householdOrders' = mapWhere ((== householdId) . householdOrderHouseholdId) (reopen . (applyUpdate catalogue)) 
+                     $ _orderHouseholdOrders o
 
 addOrUpdateHouseholdOrderItems :: ProductCatalogue -> HouseholdId  -> [(ProductCode, Maybe Int)] -> Order -> Order
 addOrUpdateHouseholdOrderItems catalogue householdId itemQuantities =
@@ -654,15 +666,14 @@ splitOn ch list = f list [[]] where
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
 
--- TODO: Change Maybe b to b
 addOrUpdate :: (a -> b -> Bool) -> (a -> Maybe b) -> (a -> b -> b) -> [a] -> [b] -> [b]
 addOrUpdate _ _ _ [] ys = ys
 addOrUpdate eq add update (x:xs) ys = 
   case partition (eq x) ys of
     (y:_, ys') -> (update x y):addOrUpdate eq add update xs ys' 
     _ -> case add x of
-           Just y -> y:addOrUpdate eq add update xs ys
-           _ -> addOrUpdate eq add update xs ys
+      Just y -> y:addOrUpdate eq add update xs ys
+      _ -> addOrUpdate eq add update xs ys
 
 updateOrRemove :: (a -> Maybe a) -> [a] -> [a]
 updateOrRemove _ [] = []
