@@ -111,6 +111,20 @@ getHouseholds repo groupId = do
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
+createHousehold :: Repository -> OrderGroupId -> HouseholdSpec -> IO HouseholdId
+createHousehold repo groupId spec = do
+  let conn = connection repo
+
+  [Only id] <- insertHousehold conn groupId spec
+  return id
+
+createPayment :: Repository -> OrderGroupId -> PaymentSpec -> IO PaymentId
+createPayment repo groupId spec = do
+  let conn = connection repo
+
+  [Only id] <- insertPayment conn groupId spec
+  return id
+
 getOrder :: Repository -> OrderGroupId -> OrderId -> IO (Maybe Order)
 getOrder repo groupId orderId = do
   let conn = connection repo
@@ -359,6 +373,26 @@ selectHouseholdRows conn whereParams =
       (ForOrderGroup _)  -> Just [sql| h.order_group_id = ? |]
       _ -> Nothing
 
+insertHousehold :: Connection -> OrderGroupId -> HouseholdSpec -> IO [Only HouseholdId]
+insertHousehold conn groupId spec = 
+  query conn [sql|
+    insert into v2.household 
+      ( order_group_id
+      , name
+      , contact_name
+      , contact_email
+      , contact_phone
+      , is_archived
+      ) 
+    values (?, ?, ?, ?, ?, false)
+    returning id
+  |] ( groupId
+     , _householdSpecName spec
+     , _householdSpecContactName spec
+     , _householdSpecContactEmail spec
+     , _householdSpecContactPhone spec
+     )
+
 selectPayments :: Connection -> [WhereParam] -> IO [Payment]
 selectPayments conn whereParams = 
     query conn ([sql|
@@ -374,6 +408,24 @@ selectPayments conn whereParams =
     (whereClause, params) = toWhereClause whereParams $ \case
       (ForOrderGroup _)  -> Just [sql| p.order_group_id = ? |]
       _ -> Nothing
+
+insertPayment :: Connection -> OrderGroupId -> PaymentSpec -> IO [Only PaymentId]
+insertPayment conn groupId spec = 
+  query conn [sql|
+    insert into v2.payment 
+      ( order_group_id
+      , household_id
+      , "date"
+      , amount
+      , archived
+      ) 
+    values (?, ?, ?, ?, false)
+    returning id
+  |] ( groupId
+     , _paymentSpecHouseholdId spec
+     , _paymentSpecDate spec
+     , _paymentSpecAmount spec
+     )
 
 selectOrderRows :: Connection -> [WhereParam] -> IO [OrderRow]
 selectOrderRows conn whereParams = do

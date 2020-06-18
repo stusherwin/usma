@@ -62,6 +62,12 @@ commandServerV2 config  =
     :<|> ensureHouseholdOrderItem
     :<|> ensureAllItemsFromPastHouseholdOrder
     :<|> removeHouseholdOrderItem
+    :<|> createHousehold
+    :<|> updateHousehold
+    :<|> archiveHousehold
+    :<|> createHouseholdPayment
+    :<|> updateHouseholdPayment
+    :<|> archiveHouseholdPayment
     :<|> uploadProductCatalogue
     :<|> acceptCatalogueUpdates
     :<|> reconcileOrderItem
@@ -142,6 +148,33 @@ commandServerV2 config  =
       let order' = DomainV2.removeHouseholdOrderItem (HouseholdId householdId) productCode order
       liftIO $ setOrders repo ([order], [order'])
       return ()
+
+    createHousehold :: HouseholdDetails -> Handler Int
+    createHousehold details = withRepository config $ \(repo, groupId) -> do
+      householdId <- liftIO $ R.createHousehold repo groupId $ HouseholdSpec (hdetName details)
+                                                                             (hdetContactName details)
+                                                                             (hdetContactEmail details)
+                                                                             (hdetContactPhone details)
+      return $ fromHouseholdId householdId
+
+    updateHousehold :: Int -> HouseholdDetails -> Handler ()
+    updateHousehold householdId details = undefined
+
+    archiveHousehold :: Int -> Handler ()
+    archiveHousehold householdId = undefined
+
+    createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
+    createHouseholdPayment householdId details = withRepository config $ \(repo, groupId) -> do
+      paymentId <- liftIO $ R.createPayment repo groupId $ PaymentSpec (HouseholdId householdId)
+                                                                       (hpdetDate details)
+                                                                       (hpdetAmount details)
+      return $ fromPaymentId paymentId
+
+    updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
+    updateHouseholdPayment paymentId details = undefined
+    
+    archiveHouseholdPayment :: Int -> Handler ()
+    archiveHouseholdPayment paymentId = undefined
 
     uploadProductCatalogue :: MultipartData -> Handler ()
     uploadProductCatalogue multipartData = withRepository config $ \(repo, _) -> do
