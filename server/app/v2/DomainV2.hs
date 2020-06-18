@@ -24,19 +24,21 @@ import           Text.Read (readMaybe)
 
 data Household = Household 
   { _householdInfo :: HouseholdInfo
-  , _householdContactName :: Maybe String
-  , _householdContactEmail :: Maybe String
-  , _householdContactPhone :: Maybe String
+  , _householdContact :: Contact
   , _householdOrders :: [HouseholdOrder]
   , _householdPayments :: [Payment]
-  }
+  } deriving (Eq, Show, Generic)
+
+data Contact = Contact
+  { _contactName :: Maybe String
+  , _contactEmail :: Maybe String
+  , _contactPhone :: Maybe String
+  } deriving (Eq, Show, Generic)
 
 data HouseholdSpec = HouseholdSpec
   { _householdSpecName :: String
-  , _householdSpecContactName :: Maybe String
-  , _householdSpecContactEmail :: Maybe String
-  , _householdSpecContactPhone :: Maybe String
-  }
+  , _householdSpecContact :: Contact
+  } deriving (Eq, Show, Generic)
 
 newtype HouseholdId = HouseholdId 
   { fromHouseholdId :: Int 
@@ -60,6 +62,12 @@ householdTotalPayments = (sum . map _paymentAmount)
 householdBalance :: Household -> Int
 householdBalance h = householdTotalPayments h - householdTotalOrders h
 
+updateHousehold :: String -> Contact -> Household -> Household
+updateHousehold name contact h = let i = _householdInfo h
+                                 in  h{ _householdInfo = i{ _householdName = name }
+                                      , _householdContact = contact 
+                                      }
+
 {- Payment -}
 
 data Payment = Payment 
@@ -78,6 +86,11 @@ data PaymentSpec = PaymentSpec
 newtype PaymentId = PaymentId 
   { fromPaymentId :: Int 
   } deriving (Eq, Show, Generic)
+
+updatePayment :: Day -> Int -> Payment -> Payment
+updatePayment date amount p = p{ _paymentDate = date
+                               , _paymentAmount = amount 
+                               }
 
 {-- OrderGroup --}
 
