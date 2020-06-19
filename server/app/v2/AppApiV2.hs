@@ -33,7 +33,9 @@ type QueryApiV2 =
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
-
+  :<|> "product-catalogue-categories" :> Get '[JSON] [String]
+  :<|> "product-catalogue-brands" :> Get '[JSON] [String]
+  
 type CommandApiV2 =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
   :<|> "create-order" :> Post '[JSON] Int

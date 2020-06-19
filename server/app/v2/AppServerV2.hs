@@ -36,6 +36,8 @@ queryServerV2 config =
     :<|> households
     :<|> householdPayments
     :<|> productCatalogue
+    :<|> productCatalogueCategories
+    :<|> productCatalogueBrands
   where
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
@@ -77,6 +79,14 @@ queryServerV2 config =
       let entries = getEntries catalogue
       return $ apiProductCatalogueEntry <$> entries
     
+    productCatalogueCategories :: Handler [String]
+    productCatalogueCategories = withRepository config $ \(repo, _) -> do
+      liftIO $ getProductCatalogueCategories repo
+
+    productCatalogueBrands :: Handler [String]
+    productCatalogueBrands = withRepository config $ \(repo, _) -> do
+      liftIO $ getProductCatalogueBrands repo
+
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
          createOrderForHousehold

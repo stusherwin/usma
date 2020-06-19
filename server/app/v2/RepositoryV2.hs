@@ -73,6 +73,18 @@ getProductCatalogueForOrder repo groupId orderId = do
 
   productCatalogue <$> selectCatalogueEntries conn [ForOrderGroup groupId, ForOrder orderId]
 
+getProductCatalogueCategories :: Repository -> IO [String]
+getProductCatalogueCategories repo = do
+  let conn = connection repo
+
+  selectCatalogueEntryCategories conn []
+
+getProductCatalogueBrands :: Repository -> IO [String]
+getProductCatalogueBrands repo = do
+  let conn = connection repo
+
+  selectCatalogueEntryBrands conn []
+
 setProductCatalogue :: Repository -> ProductCatalogue -> IO ()
 setProductCatalogue repo catalogue = do
   let conn = connection repo
@@ -360,6 +372,22 @@ selectCatalogueEntries conn whereParams =
       (ForOrder _) -> Just [sql| o.id = ? |]
       (ForOrderGroup _) -> Just [sql| o.order_group_id = ? |]
       _ -> Nothing
+
+selectCatalogueEntryCategories :: Connection -> IO [String]
+selectCatalogueEntryCategories conn = 
+    query_ conn [sql|
+      select distinct ce.category
+      from v2.catalogue_entry ce
+      order by ce.category
+    |]
+
+selectCatalogueEntryCategories :: Connection -> IO [String]
+selectCatalogueEntryCategories conn = 
+    query_ conn [sql|
+      select distinct ce.brand
+      from v2.catalogue_entry ce
+      order by ce.category
+    |]
 
 truncateCatalogueEntries :: Connection -> IO ()
 truncateCatalogueEntries conn =   
