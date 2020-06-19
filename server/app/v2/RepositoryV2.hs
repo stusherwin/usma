@@ -152,6 +152,13 @@ getPayment repo groupId paymentId = do
   let params = [ForOrderGroup groupId, ForPayment paymentId]
   listToMaybe <$> selectPayments conn params
 
+getPayments :: Repository -> Maybe OrderGroupId -> IO [Payment]
+getPayments repo groupId = do
+  let conn = connection repo
+
+  let params = ForOrderGroup <$> maybeToList groupId
+  selectPayments conn params
+
 createPayment :: Repository -> OrderGroupId -> PaymentSpec -> IO PaymentId
 createPayment repo groupId spec = do
   let conn = connection repo

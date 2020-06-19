@@ -7,7 +7,7 @@ import qualified Data.ByteString as B (ByteString)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
-import           Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
+import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
 import           Data.Tuple (swap)
 import           Safe (headMay)
@@ -34,6 +34,7 @@ queryServerV2 config =
     :<|> householdOrders
     :<|> pastHouseholdOrders
     :<|> households
+    :<|> householdPayments
   where
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
@@ -64,6 +65,10 @@ queryServerV2 config =
       households <- liftIO $ getHouseholds repo (Just groupId)
       return $ apiHousehold <$> households
 
+    householdPayments :: Handler [Api.HouseholdPayment]
+    householdPayments = withRepository config $ \(repo, groupId) -> do
+      payments <- liftIO $ getPayments repo (Just groupId)
+      return $ apiHouseholdPayment <$> payments
     
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
@@ -267,6 +272,14 @@ apiHousehold h = Api.Household
   , hTotalOrders   = householdTotalOrders h
   , hTotalPayments = householdTotalPayments h
   , hBalance       = householdBalance h
+  }
+
+apiHouseholdPayment :: Payment -> HouseholdPayment
+apiHouseholdPayment p = HouseholdPayment 
+  { hpId = fromPaymentId . _paymentId $ p
+  , hpHouseholdId = fromHouseholdId . _paymentHouseholdId $ p
+  , hpDate = UTCTime (_paymentDate p) (secondsToDiffTime 0)
+  , hpAmount = _paymentAmount p
   }
 
 apiOrder :: [(ProductCode, ProductId)] -> Order -> Api.CollectiveOrder

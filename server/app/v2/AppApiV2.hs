@@ -31,6 +31,7 @@ type QueryApiV2 =
   :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
   :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]
   :<|> "households" :> Get '[JSON] [Household]
+  :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
 
 type CommandApiV2 =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
@@ -65,6 +66,14 @@ data Household = Household
   } deriving (Eq, Show, Generic)
 
 instance ToJSON Household where
+  toJSON = genericToJSON dropFieldPrefixOptions
+
+data HouseholdPayment = HouseholdPayment { hpId :: Int
+                                         , hpHouseholdId :: Int
+                                         , hpDate :: UTCTime
+                                         , hpAmount :: Int
+                                         } deriving (Eq, Show, Generic)
+instance ToJSON HouseholdPayment where
   toJSON = genericToJSON dropFieldPrefixOptions
 
 data CollectiveOrder = CollectiveOrder 
@@ -194,8 +203,6 @@ data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
                                              } deriving (Eq, Show, Generic)
 instance ToJSON PastHouseholdOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
-
-
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
