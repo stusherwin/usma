@@ -29,7 +29,9 @@ appServerV2 config groupKey =
 
 queryServerV2 :: RepositoryConfig -> Server Api.QueryApiV2
 queryServerV2 config = 
-         collectiveOrder
+         allData
+    :<|> productCatalogueData     
+    :<|> collectiveOrder
     :<|> pastCollectiveOrders
     :<|> householdOrders
     :<|> pastHouseholdOrders
@@ -40,17 +42,59 @@ queryServerV2 config =
     :<|> productCatalogueBrands
     :<|> groupSettings
   where
+    allData :: Handler Api.ApiData
+    allData = withRepository config $ \(repo, groupId) -> do
+      currentProductIds <- liftIO $ getProductIdsForCurrentOrder repo groupId
+      pastProductIds <- liftIO $ getProductIdsForPastOrders repo groupId
+
+      collectiveOrder <- liftIO $ getCurrentOrder repo groupId
+      let collectiveOrder' = apiCollectiveOrder currentProductIds <$> collectiveOrder
+
+      pastCollectiveOrders <- liftIO $ getPastOrders repo (Just groupId)
+      let pastCollectiveOrders' = apiPastCollectiveOrder pastProductIds <$> pastCollectiveOrders
+
+      householdOrders <- liftIO $ getCurrentHouseholdOrders repo (Just groupId)
+      let householdOrders' = apiHouseholdOrder currentProductIds <$> householdOrders
+
+      pastHouseholdOrders <- liftIO $ getPastHouseholdOrders repo (Just groupId)
+      let pastHouseholdOrders' = apiPastHouseholdOrder pastProductIds <$> pastHouseholdOrders
+
+      households <- liftIO $ getHouseholds repo (Just groupId)
+      let households' = apiHousehold <$> households
+
+      householdPayments <- liftIO $ getPayments repo (Just groupId)
+      let householdPayments' = apiHouseholdPayment <$> householdPayments
+
+      groupSettings <- liftIO $ getOrderGroup repo groupId
+      let groupSettings' = apiGroupSettings groupSettings
+
+      return $ ApiData collectiveOrder' 
+                       pastCollectiveOrders'
+                       householdOrders' 
+                       pastHouseholdOrders' 
+                       households' 
+                       householdPayments' 
+                       groupSettings'
+
+    productCatalogueData :: Handler Api.ProductCatalogueApiData
+    productCatalogueData = withRepository config $ \(repo, groupId) -> do
+      productCatalogue <- map apiProductCatalogueEntry . getEntries <$> (liftIO $ getProductCatalogue repo)
+      categories <- liftIO $ getProductCatalogueCategories repo
+      brands <- liftIO $ getProductCatalogueBrands repo
+    
+      return $ ProductCatalogueApiData productCatalogue categories brands
+
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
       order <- liftIO $ getCurrentOrder repo groupId
       productIds <- liftIO $ getProductIdsForCurrentOrder repo groupId
-      return $ apiOrder productIds <$> order
+      return $ apiCollectiveOrder productIds <$> order
 
-    pastCollectiveOrders :: Handler [Api.CollectiveOrder]
+    pastCollectiveOrders :: Handler [Api.PastCollectiveOrder]
     pastCollectiveOrders = withRepository config $ \(repo, groupId) -> do
       orders <- liftIO $ getPastOrders repo (Just groupId)
       productIds <- liftIO $ getProductIdsForPastOrders repo groupId
-      return $ apiOrder productIds <$> orders
+      return $ apiPastCollectiveOrder productIds <$> orders
 
     householdOrders :: Handler [Api.HouseholdOrder]
     householdOrders = withRepository config $ \(repo, groupId) -> do
@@ -305,8 +349,8 @@ apiHouseholdPayment p = HouseholdPayment
   , hpAmount = _paymentAmount p
   }
 
-apiOrder :: [(ProductCode, ProductId)] -> Order -> Api.CollectiveOrder
-apiOrder productIds o = Api.CollectiveOrder
+apiCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.CollectiveOrder
+apiCollectiveOrder productIds o = Api.CollectiveOrder
     { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
     , coOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
     , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
@@ -323,6 +367,28 @@ apiOrder productIds o = Api.CollectiveOrder
                                                  _      -> orderTotal $ o
     , coAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
     , coItems = apiOrderItem productIds <$> orderItems o
+    }
+
+apiPastCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.PastCollectiveOrder
+apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
+    { pcoId                    = fromOrderId . _orderId                                     . _orderInfo $ o
+    , pcoOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
+    , pcoOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
+    , pcoOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
+    , pcoOrderIsPlaced         = orderIsPlaced o
+    , pcoOrderIsAbandoned      = orderIsAbandoned o
+    , pcoIsComplete            = orderIsComplete o
+    , pcoIsAbandoned           = orderIsAbandoned o
+    , pcoIsReconciled          = orderIsReconciled o
+    , pcoAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
+    , pcoTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
+                                                  Just a -> _orderAdjNewTotal a
+                                                  _      -> orderTotal $ o
+    , pcoTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
+                                                  Just a -> _orderAdjNewTotal a
+                                                  _      -> orderTotal $ o
+    , pcoAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
+    , pcoItems = apiOrderItem productIds <$> orderItems o
     }
 
 apiOrderAdjustment :: Money -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment

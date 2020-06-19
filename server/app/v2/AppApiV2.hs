@@ -26,8 +26,10 @@ type AppApiV2 =
           )
 
 type QueryApiV2 =
-       "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
-  :<|> "past-collective-orders" :> Get '[JSON] [CollectiveOrder]
+       "data" :> Get '[JSON] ApiData
+  :<|> "product-catalogue-data" :> Get '[JSON] ProductCatalogueApiData
+  :<|> "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
+  :<|> "past-collective-orders" :> Get '[JSON] [PastCollectiveOrder]
   :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
   :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]
   :<|> "households" :> Get '[JSON] [Household]
@@ -57,7 +59,25 @@ type CommandApiV2 =
   :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
-  
+
+data ApiData = ApiData 
+  { collectiveOrder :: (Maybe CollectiveOrder)
+  , pastCollectiveOrders :: [PastCollectiveOrder]
+  , householdOrders :: [HouseholdOrder]
+  , pastHouseholdOrders :: [PastHouseholdOrder]
+  , households :: [Household]
+  , householdPayments :: [HouseholdPayment]
+  , groupSettings ::  GroupSettings
+  } deriving (Eq, Show, Generic)
+instance ToJSON ApiData
+
+data ProductCatalogueApiData = ProductCatalogueApiData 
+  { productCatalogue :: [ProductCatalogueEntry]
+  , categories :: [String]
+  , brands :: [String]
+  } deriving (Eq, Show, Generic)
+instance ToJSON ProductCatalogueApiData
+
 data Household = Household 
   { hId :: Int
   , hName :: String
@@ -95,6 +115,24 @@ data CollectiveOrder = CollectiveOrder
   , coItems :: [OrderItem]
   } deriving (Eq, Show, Generic)
 instance ToJSON CollectiveOrder where
+  toJSON = genericToJSON dropFieldPrefixOptions
+
+data PastCollectiveOrder = PastCollectiveOrder { pcoId :: Int
+                                               , pcoOrderCreatedDate :: UTCTime
+                                               , pcoOrderCreatedBy :: Maybe Int
+                                               , pcoOrderCreatedByName :: Maybe String
+                                               , pcoOrderIsPlaced :: Bool
+                                               , pcoOrderIsAbandoned :: Bool
+                                               , pcoIsAbandoned :: Bool
+                                               , pcoIsComplete :: Bool
+                                               , pcoIsReconciled :: Bool
+                                               , pcoTotalExcVat :: Int
+                                               , pcoTotalIncVat :: Int
+                                               , pcoAllHouseholdsUpToDate :: Bool
+                                               , pcoAdjustment :: Maybe OrderAdjustment
+                                               , pcoItems :: [OrderItem]
+                                               } deriving (Eq, Show, Generic)
+instance ToJSON PastCollectiveOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
 
 data OrderAdjustment = OrderAdjustment 
@@ -229,7 +267,7 @@ data GroupSettings = GroupSettings { gsEnablePayments :: Bool
                                    } deriving (Eq, Show, Generic)
 instance ToJSON GroupSettings where
   toJSON = genericToJSON dropFieldPrefixOptions
-  
+
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
   first f (c:cs) = (f c):cs
