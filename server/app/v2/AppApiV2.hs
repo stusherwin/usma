@@ -11,6 +11,7 @@ module AppApiV2 where
 
 import Data.Aeson
 import Data.Aeson.Types (Options(..))
+import qualified Data.ByteString.Lazy as L (ByteString)
 import Data.Char (toLower, isLower, toUpper)
 import Data.Time.Calendar (Day)
 import Data.Time.Clock (UTCTime)
@@ -35,6 +36,10 @@ type QueryApiV2 =
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
+  :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
   :<|> "product-catalogue-categories" :> Get '[JSON] [String]
   :<|> "product-catalogue-brands" :> Get '[JSON] [String]
   :<|> "group-settings" :> Get '[JSON] GroupSettings
@@ -272,3 +277,9 @@ dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix }
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
   first f (c:cs) = (f c):cs
   first _ [] = []
+
+data Csv
+instance Accept Csv where
+  contentType _ = "text" // "csv"
+instance MimeRender Csv (L.ByteString) where
+  mimeRender _ = Prelude.id

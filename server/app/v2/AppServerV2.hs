@@ -38,6 +38,10 @@ queryServerV2 config =
     :<|> households
     :<|> householdPayments
     :<|> productCatalogue
+    :<|> collectiveOrderDownload
+    :<|> householdOrdersDownload
+    :<|> pastCollectiveOrderDownload
+    :<|> pastHouseholdOrdersDownload
     :<|> productCatalogueCategories
     :<|> productCatalogueBrands
     :<|> groupSettings
@@ -124,6 +128,66 @@ queryServerV2 config =
       let entries = getEntries catalogue
       return $ apiProductCatalogueEntry <$> entries
     
+    collectiveOrderDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    collectiveOrderDownload = withRepository config $ \(repo, _) -> do
+        order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
+        let items = map toCsvItem $ orderItems order
+        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
+      where
+        toCsvItem i = CsvItem
+          { csvName = itemProductName i
+          , csvCode = itemProductCode i
+          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
+          , csvQuantity = _itemQuantity i
+          , csvTotal = _moneyExcVat . itemTotal $ i
+          , csvReference = ""
+          }
+
+    householdOrdersDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    householdOrdersDownload = withRepository config $ \(repo, _) -> do
+        order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
+        let items = map toCsvItem . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
+        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
+      where
+        toCsvItem (householdName, i) = CsvItem
+          { csvName = itemProductName i
+          , csvCode = itemProductCode i
+          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
+          , csvQuantity = _itemQuantity i
+          , csvTotal = _moneyExcVat . itemTotal $ i
+          , csvReference = householdName
+          }
+
+    pastCollectiveOrderDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastCollectiveOrderDownload orderId = withRepository config $ \(repo, _) -> do
+        order <- MaybeT $ liftIO $ getOrder repo groupId orderId
+        let items = map toCsvItem $ orderItems order
+        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
+      where
+        toCsvItem i = CsvItem
+          { csvName = itemProductName i
+          , csvCode = itemProductCode i
+          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
+          , csvQuantity = _itemQuantity i
+          , csvTotal = _moneyExcVat . itemTotal $ i
+          , csvReference = ""
+          }
+
+    pastHouseholdOrdersDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastHouseholdOrdersDownload orderId = withRepository config $ \(repo, _) -> do
+        order <- MaybeT $ liftIO $ getOrder repo groupId orderId
+        let items = map toCsvItem . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
+        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
+      where
+        toCsvItem (householdName, i) = CsvItem
+          { csvName = itemProductName i
+          , csvCode = itemProductCode i
+          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
+          , csvQuantity = _itemQuantity i
+          , csvTotal = _moneyExcVat . itemTotal $ i
+          , csvReference = householdName
+          }
+
     productCatalogueCategories :: Handler [String]
     productCatalogueCategories = withRepository config $ \(repo, _) -> do
       liftIO $ getProductCatalogueCategories repo
@@ -136,6 +200,36 @@ queryServerV2 config =
     groupSettings = withRepository config $ \(repo, groupId) -> do
       group <- liftIO $ getOrderGroup repo groupId
       return $ apiGroupSettings group
+
+data CsvItem = CsvItem 
+  { csvName :: String
+  , csvCode :: String
+  , csvPrice :: Int
+  , csvQuantity :: Int
+  , csvTotal :: Int
+  , csvReference :: String
+  }
+
+instance ToNamedRecord CsvItem where
+  toNamedRecord (CsvItem 
+    { csvName = name
+    , csvCode = code
+    , csvPrice = price
+    , csvQuantity = qty
+    , csvTotal = tot
+    , csvReference = ref
+    }) 
+    = namedRecord 
+      [ "Product" .= name
+      , "Code" .= code
+      , "Price" .= price'
+      , "Quantity" .= qty
+      , "Total" .= total' 
+      , "Reference" .= ref 
+      ]
+    where
+    price' = ((fromIntegral price) :: Double) / 100.0
+    total' = ((fromIntegral tot) :: Double) / 100.0
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 

@@ -310,6 +310,9 @@ isPastStatus _ = False
 householdOrderHouseholdId :: HouseholdOrder -> HouseholdId
 householdOrderHouseholdId = _householdId . _householdOrderHouseholdInfo
 
+householdOrderHouseholdName :: HouseholdOrder -> String
+householdOrderHouseholdName = _householdName . _householdOrderHouseholdInfo
+
 householdOrderTotal :: HouseholdOrder -> Money
 householdOrderTotal = sum . map itemTotal . _householdOrderItems
 
@@ -435,6 +438,9 @@ data OrderItem = OrderItem
 
 itemProductCode :: OrderItem -> ProductCode
 itemProductCode = _productCode . _productInfo . _itemProduct
+
+itemProductName :: OrderItem -> String
+itemProductName = _productName . _productInfo . _itemProduct
 
 itemProductPrice :: OrderItem -> Price
 itemProductPrice = _productPrice . _productInfo . _itemProduct
