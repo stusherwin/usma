@@ -35,6 +35,7 @@ queryServerV2 config =
     :<|> pastHouseholdOrders
     :<|> households
     :<|> householdPayments
+    :<|> productCatalogue
   where
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
@@ -69,6 +70,12 @@ queryServerV2 config =
     householdPayments = withRepository config $ \(repo, groupId) -> do
       payments <- liftIO $ getPayments repo (Just groupId)
       return $ apiHouseholdPayment <$> payments
+
+    productCatalogue :: Handler [Api.ProductCatalogueEntry]
+    productCatalogue = withRepository config $ \(repo, _) -> do
+      catalogue <- liftIO $ getProductCatalogue repo
+      let entries = getEntries catalogue
+      return $ apiProductCatalogueEntry <$> entries
     
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
@@ -396,3 +403,20 @@ apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
   , oiaProductDiscontinued   = _itemAdjIsDiscontinued a
   }
 apiOrderItemAdjustment _ _ = Nothing
+
+apiProductCatalogueEntry :: DomainV2.ProductCatalogueEntry -> Api.ProductCatalogueEntry
+apiProductCatalogueEntry e = Api.ProductCatalogueEntry
+  { pceCode = fromProductCode . _catalogueEntryCode $ e
+  , pceName = productName e
+  , pcePriceExcVat = _moneyExcVat . _priceAmount . _catalogueEntryPrice $ e
+  , pcePriceIncVat = _moneyIncVat . _priceAmount . _catalogueEntryPrice $ e
+  , pceVatRate = _vatRateType . _priceVatRate . _catalogueEntryPrice $ e
+  , pceBiodynamic = _catalogueEntryBiodynamic e
+  , pceFairTrade = _catalogueEntryFairTrade e
+  , pceGlutenFree = _catalogueEntryGlutenFree e
+  , pceOrganic = _catalogueEntryOrganic e
+  , pceAddedSugar = _catalogueEntryAddedSugar e
+  , pceVegan = _catalogueEntryVegan e
+  , pceCategory = _catalogueEntryCategory e
+  , pceBrand = _catalogueEntryBrand e
+  }

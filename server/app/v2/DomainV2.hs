@@ -664,15 +664,7 @@ fromCatalogueEntry :: ProductCatalogueEntry -> Product
 fromCatalogueEntry e = Product 
   { _productInfo = ProductInfo
     { _productCode = _catalogueEntryCode e
-    , _productName = unwords
-                     $ filter (not . null)
-                     [ _catalogueEntryBrand e
-                     , _catalogueEntryDescription $ e
-                     , if null (_catalogueEntrySize e)
-                         then ""
-                         else "(" ++ (lower . _catalogueEntrySize $ e) ++ ")"
-                     , _catalogueEntryText $ e
-                     ]
+    , _productName = productName e
     , _productPrice = _catalogueEntryPrice e
     }
   , _productFlags = ProductFlags
@@ -684,6 +676,17 @@ fromCatalogueEntry e = Product
     , _productIsVegan = _catalogueEntryVegan e
     }
   }
+
+productName :: ProductCatalogueEntry -> String
+productName e = unwords
+              $ filter (not . null)
+              [ _catalogueEntryBrand e
+              , _catalogueEntryDescription $ e
+              , if null (_catalogueEntrySize e)
+                  then ""
+                  else "(" ++ (lower . _catalogueEntrySize $ e) ++ ")"
+              , _catalogueEntryText $ e
+              ]
 
 {- Utils -}
 

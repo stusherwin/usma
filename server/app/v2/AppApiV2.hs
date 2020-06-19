@@ -32,6 +32,7 @@ type QueryApiV2 =
   :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
+  :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
 
 type CommandApiV2 =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
@@ -202,6 +203,23 @@ data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
                                              , phoItems :: [OrderItem]
                                              } deriving (Eq, Show, Generic)
 instance ToJSON PastHouseholdOrder where
+  toJSON = genericToJSON dropFieldPrefixOptions
+
+data ProductCatalogueEntry = ProductCatalogueEntry { pceCode :: String
+                                                   , pceName :: String
+                                                   , pcePriceExcVat :: Int
+                                                   , pcePriceIncVat :: Int
+                                                   , pceVatRate :: VatRateType
+                                                   , pceBiodynamic :: Bool
+                                                   , pceFairTrade :: Bool
+                                                   , pceGlutenFree :: Bool
+                                                   , pceOrganic :: Bool
+                                                   , pceAddedSugar :: Bool
+                                                   , pceVegan :: Bool
+                                                   , pceCategory :: String
+                                                   , pceBrand :: String
+                                                   } deriving (Eq, Show, Generic)
+instance ToJSON ProductCatalogueEntry where
   toJSON = genericToJSON dropFieldPrefixOptions
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where

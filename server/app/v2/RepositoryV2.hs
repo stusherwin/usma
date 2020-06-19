@@ -55,6 +55,12 @@ getVatRates repo = do
   let conn = connection repo
   selectVatRates conn
 
+getProductCatalogue :: Repository -> IO ProductCatalogue
+getProductCatalogue repo = do
+  let conn = connection repo
+
+  productCatalogue <$> selectCatalogueEntries conn []
+
 getProductCatalogueForCode :: Repository -> ProductCode -> IO ProductCatalogue
 getProductCatalogueForCode repo code = do
   let conn = connection repo
