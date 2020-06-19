@@ -77,13 +77,13 @@ getProductCatalogueCategories :: Repository -> IO [String]
 getProductCatalogueCategories repo = do
   let conn = connection repo
 
-  selectCatalogueEntryCategories conn []
+  selectCatalogueEntryCategories conn
 
 getProductCatalogueBrands :: Repository -> IO [String]
 getProductCatalogueBrands repo = do
   let conn = connection repo
 
-  selectCatalogueEntryBrands conn []
+  selectCatalogueEntryBrands conn
 
 setProductCatalogue :: Repository -> ProductCatalogue -> IO ()
 setProductCatalogue repo catalogue = do
@@ -381,8 +381,8 @@ selectCatalogueEntryCategories conn =
       order by ce.category
     |]
 
-selectCatalogueEntryCategories :: Connection -> IO [String]
-selectCatalogueEntryCategories conn = 
+selectCatalogueEntryBrands :: Connection -> IO [String]
+selectCatalogueEntryBrands conn = 
     query_ conn [sql|
       select distinct ce.brand
       from v2.catalogue_entry ce
