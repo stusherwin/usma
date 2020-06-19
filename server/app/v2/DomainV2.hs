@@ -94,6 +94,17 @@ updatePayment date amount p = p{ _paymentDate = date
 
 {-- OrderGroup --}
 
+data OrderGroup = OrderGroup
+  { _groupId :: OrderGroupId
+  , _groupName :: String
+  , _groupKey :: String
+  , _groupSettings :: OrderGroupSettings
+  }
+
+data OrderGroupSettings = OrderGroupSettings
+  { _groupSettingsPaymentsEnabled :: Bool
+  }
+
 newtype OrderGroupId = OrderGroupId 
   { fromOrderGroupId :: Int 
   } deriving (Eq, Show, Generic)

@@ -38,6 +38,7 @@ queryServerV2 config =
     :<|> productCatalogue
     :<|> productCatalogueCategories
     :<|> productCatalogueBrands
+    :<|> groupSettings
   where
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
@@ -86,6 +87,11 @@ queryServerV2 config =
     productCatalogueBrands :: Handler [String]
     productCatalogueBrands = withRepository config $ \(repo, _) -> do
       liftIO $ getProductCatalogueBrands repo
+
+    groupSettings :: Handler Api.GroupSettings
+    groupSettings = withRepository config $ \(repo, groupId) -> do
+      group <- liftIO $ getOrderGroup repo groupId
+      return $ apiGroupSettings group
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
@@ -429,4 +435,9 @@ apiProductCatalogueEntry e = Api.ProductCatalogueEntry
   , pceVegan = _catalogueEntryVegan e
   , pceCategory = _catalogueEntryCategory e
   , pceBrand = _catalogueEntryBrand e
+  }
+
+apiGroupSettings :: DomainV2.OrderGroup -> Api.GroupSettings
+apiGroupSettings g = Api.GroupSettings
+  { gsEnablePayments = _groupSettingsPaymentsEnabled . _groupSettings $ g
   }

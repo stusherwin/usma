@@ -35,7 +35,8 @@ type QueryApiV2 =
   :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
   :<|> "product-catalogue-categories" :> Get '[JSON] [String]
   :<|> "product-catalogue-brands" :> Get '[JSON] [String]
-  
+  :<|> "group-settings" :> Get '[JSON] GroupSettings
+
 type CommandApiV2 =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
   :<|> "create-order" :> Post '[JSON] Int
@@ -224,6 +225,11 @@ data ProductCatalogueEntry = ProductCatalogueEntry { pceCode :: String
 instance ToJSON ProductCatalogueEntry where
   toJSON = genericToJSON dropFieldPrefixOptions
 
+data GroupSettings = GroupSettings { gsEnablePayments :: Bool
+                                   } deriving (Eq, Show, Generic)
+instance ToJSON GroupSettings where
+  toJSON = genericToJSON dropFieldPrefixOptions
+  
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
   first f (c:cs) = (f c):cs

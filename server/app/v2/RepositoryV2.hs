@@ -50,6 +50,11 @@ connect config action = do
   liftIO $ close conn
   return result
 
+getOrderGroup :: Repository -> OrderGroupId -> IO OrderGroup
+getOrderGroup repo groupId = do
+  let conn = connection repo
+  head <$> selectOrderGroup conn groupId
+
 getVatRates :: Repository -> IO [VatRate]
 getVatRates repo = do
   let conn = connection repo
@@ -331,6 +336,17 @@ setHouseholdOrders repo orders = do
     keyedItems o = map (orderKey o, ) $ _householdOrderItems o
     itemKey ((groupId, orderId, householdId, status), i) = (groupId, orderId, householdId, status, itemProductCode i)
     keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
+
+selectOrderGroup :: Connection -> OrderGroupId -> IO [OrderGroup]
+selectOrderGroup conn groupId = 
+  query conn [sql|
+    select id
+         , name
+         , key
+         , is_payments_enabled
+    from v2.order_group
+    where id = ?
+  |] (Only groupId)
 
 selectVatRates :: Connection -> IO [VatRate]
 selectVatRates conn = 
@@ -910,6 +926,12 @@ toOrderItem :: ((OrderId, HouseholdId) :. OrderItemRow) -> OrderItem
 toOrderItem (_ :. i) = OrderItem (orderItemRow_product i)
                                  (orderItemRow_quantity i)
                                  (orderItemRow_adjustment i)
+
+instance FromRow OrderGroup where
+  fromRow = OrderGroup <$> field <*> field <*> field <*> groupSettingsField
+
+groupSettingsField :: RowParser OrderGroupSettings
+groupSettingsField = OrderGroupSettings <$> field
 
 instance FromField OrderGroupId where
   fromField f char = OrderGroupId <$> fromField f char
