@@ -327,6 +327,9 @@ householdOrderIsComplete = _householdOrderIsComplete . _householdOrderStatusFlag
 householdOrderIsPlaced :: HouseholdOrder -> Bool
 householdOrderIsPlaced = _householdOrderIsPlaced . _householdOrderStatusFlags
 
+householdOrderIsOpen :: HouseholdOrder -> Bool
+householdOrderIsOpen ho = (not (householdOrderIsComplete ho) && not (householdOrderIsAbandoned ho) && not (householdOrderIsPlaced ho))
+
 householdOrderIsReconciled :: HouseholdOrder -> Bool
 householdOrderIsReconciled ho = householdOrderIsPlaced ho && (all (isJust . _itemAdjustment) . _householdOrderItems $ ho)
 

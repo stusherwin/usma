@@ -26,9 +26,11 @@ type AppApiV2 =
           )
 
 type QueryApiV2 =
-       "households" :> Get '[JSON] [Household]
-  :<|> "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
+       "collective-order" :> Get '[JSON] (Maybe CollectiveOrder)
   :<|> "past-collective-orders" :> Get '[JSON] [CollectiveOrder]
+  :<|> "household-orders" :> Get '[JSON] [HouseholdOrder]
+  :<|> "past-household-orders" :> Get '[JSON] [PastHouseholdOrder]
+  :<|> "households" :> Get '[JSON] [Household]
 
 type CommandApiV2 =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
@@ -153,6 +155,47 @@ data HouseholdPaymentDetails = HouseholdPaymentDetails { hpdetDate :: Day
                                                        } deriving (Eq, Show, Generic)
 instance FromJSON HouseholdPaymentDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data HouseholdOrder = HouseholdOrder { hoOrderId :: Int
+                                     , hoOrderCreatedDate :: UTCTime
+                                     , hoOrderCreatedBy :: Maybe Int
+                                     , hoOrderCreatedByName :: Maybe String
+                                     , hoOrderIsPlaced :: Bool
+                                     , hoOrderIsAbandoned :: Bool
+                                     , hoHouseholdId :: Int
+                                     , hoHouseholdName :: String
+                                     , hoIsComplete :: Bool
+                                     , hoIsAbandoned :: Bool
+                                     , hoIsOpen :: Bool
+                                     , hoTotalExcVat :: Int
+                                     , hoTotalIncVat :: Int
+                                     , hoAdjustment :: Maybe OrderAdjustment
+                                     , hoItems :: [OrderItem]
+                                     } deriving (Eq, Show, Generic)
+instance ToJSON HouseholdOrder where
+  toJSON = genericToJSON dropFieldPrefixOptions
+
+data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
+                                             , phoOrderCreatedDate :: UTCTime
+                                             , phoOrderCreatedBy :: Maybe Int
+                                             , phoOrderCreatedByName :: Maybe String
+                                             , phoOrderIsPlaced :: Bool
+                                             , phoOrderIsAbandoned :: Bool
+                                             , phoHouseholdId :: Int
+                                             , phoHouseholdName :: String 
+                                             , phoIsAbandoned :: Bool
+                                             , phoIsComplete :: Bool
+                                             , phoIsOpen :: Bool
+                                             , phoIsReconciled :: Bool
+                                             , phoTotalExcVat :: Int
+                                             , phoTotalIncVat :: Int
+                                             , phoAdjustment :: Maybe OrderAdjustment
+                                             , phoItems :: [OrderItem]
+                                             } deriving (Eq, Show, Generic)
+instance ToJSON PastHouseholdOrder where
+  toJSON = genericToJSON dropFieldPrefixOptions
+
+
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)

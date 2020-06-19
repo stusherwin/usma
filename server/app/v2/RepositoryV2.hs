@@ -261,6 +261,17 @@ getCurrentHouseholdOrders repo groupId = do
     return (rHouseholdOrders, rOrderItems)
   return $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
 
+getPastHouseholdOrders :: Repository -> Maybe OrderGroupId -> IO [HouseholdOrder]
+getPastHouseholdOrders repo groupId = do
+  let conn = connection repo
+
+  let params = (ForOrderGroup <$> maybeToList groupId) <> [OrderIsPast]
+  (rHouseholdOrders, rOrderItems) <- do
+    rHouseholdOrders <- selectHouseholdOrderRows conn params
+    rOrderItems <- selectOrderItemRows conn params
+    return (rHouseholdOrders, rOrderItems)
+  return $ map (toHouseholdOrder rOrderItems) rHouseholdOrders
+
 setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO ()
 setHouseholdOrders repo orders = do
     let conn = connection repo
