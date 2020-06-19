@@ -1,9 +1,14 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
+
 module AppServerV2 (appServerV2) where
 
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
+import           Data.Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
 import           Data.Text as T (unpack)
@@ -11,6 +16,9 @@ import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsT
 import           Data.Time.Format (formatTime, defaultTimeLocale)
 import           Data.Tuple (swap)
 import           Safe (headMay)
+import qualified Data.Vector as V (fromList)
+import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, readFile)
+
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
 import           System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
@@ -129,14 +137,14 @@ queryServerV2 config =
       return $ apiProductCatalogueEntry <$> entries
     
     collectiveOrderDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-    collectiveOrderDownload = withRepository config $ \(repo, _) -> do
+    collectiveOrderDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
         let items = map toCsvItem $ orderItems order
         return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
       where
         toCsvItem i = CsvItem
           { csvName = itemProductName i
-          , csvCode = itemProductCode i
+          , csvCode = fromProductCode . itemProductCode $ i
           , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
           , csvQuantity = _itemQuantity i
           , csvTotal = _moneyExcVat . itemTotal $ i
@@ -144,14 +152,14 @@ queryServerV2 config =
           }
 
     householdOrdersDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-    householdOrdersDownload = withRepository config $ \(repo, _) -> do
+    householdOrdersDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
         let items = map toCsvItem . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
         return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
       where
         toCsvItem (householdName, i) = CsvItem
           { csvName = itemProductName i
-          , csvCode = itemProductCode i
+          , csvCode = fromProductCode . itemProductCode $ i
           , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
           , csvQuantity = _itemQuantity i
           , csvTotal = _moneyExcVat . itemTotal $ i
@@ -159,14 +167,14 @@ queryServerV2 config =
           }
 
     pastCollectiveOrderDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-    pastCollectiveOrderDownload orderId = withRepository config $ \(repo, _) -> do
-        order <- MaybeT $ liftIO $ getOrder repo groupId orderId
+    pastCollectiveOrderDownload orderId = withRepository config $ \(repo, groupId) -> do
+        order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
         let items = map toCsvItem $ orderItems order
         return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
       where
         toCsvItem i = CsvItem
           { csvName = itemProductName i
-          , csvCode = itemProductCode i
+          , csvCode = fromProductCode . itemProductCode $ i
           , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
           , csvQuantity = _itemQuantity i
           , csvTotal = _moneyExcVat . itemTotal $ i
@@ -174,14 +182,14 @@ queryServerV2 config =
           }
 
     pastHouseholdOrdersDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
-    pastHouseholdOrdersDownload orderId = withRepository config $ \(repo, _) -> do
-        order <- MaybeT $ liftIO $ getOrder repo groupId orderId
+    pastHouseholdOrdersDownload orderId = withRepository config $ \(repo, groupId) -> do
+        order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
         let items = map toCsvItem . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
         return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
       where
         toCsvItem (householdName, i) = CsvItem
           { csvName = itemProductName i
-          , csvCode = itemProductCode i
+          , csvCode = fromProductCode . itemProductCode $ i
           , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
           , csvQuantity = _itemQuantity i
           , csvTotal = _moneyExcVat . itemTotal $ i
