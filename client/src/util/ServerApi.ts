@@ -177,7 +177,7 @@ export const ServerApi = {
   command,
   url: (url: string) => groupUrl(`/${url}`),
   verifyGroup(groupKey: string | null): Promise<boolean> {
-    return Http.post(`/api/verify/${groupKey}`, {})
+    return Http.post(`/api/${groupKey}/verify`, {})
   }
 }
 
