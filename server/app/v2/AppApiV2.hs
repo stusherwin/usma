@@ -11,7 +11,7 @@ module AppApiV2 where
 
 import Data.Aeson
 import Data.Aeson.Types (Options(..))
-import qualified Data.ByteString.Lazy as L (ByteString)
+import qualified Data.ByteString.Lazy as BL (ByteString)
 import Data.Char (toLower, isLower, toUpper)
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
@@ -38,11 +38,11 @@ type QueryApiV2 =
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
-  :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] L.ByteString
-  :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
+  :<|> "collective-order-download" :> Get '[Csv] FileDownload
+  :<|> "household-orders-download" :> Get '[Csv] FileDownload
+  :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] FileDownload
+  :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] FileDownload
   :<|> "product-catalogue-categories" :> Get '[JSON] [String]
   :<|> "product-catalogue-brands" :> Get '[JSON] [String]
   :<|> "group-settings" :> Get '[JSON] GroupSettings
@@ -281,14 +281,16 @@ dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix }
   first f (c:cs) = (f c):cs
   first _ [] = []
 
+type FileDownload = Headers '[Header "Content-Disposition" Text] BL.ByteString
+
 data Csv
 instance Accept Csv where
   contentType _ = "text" // "csv"
-instance MimeRender Csv (L.ByteString) where
+instance MimeRender Csv (BL.ByteString) where
   mimeRender _ = Prelude.id
 
 data Jpeg
 instance Accept Jpeg where
   contentType _ = "image" // "jpeg"
-instance MimeRender Jpeg (L.ByteString) where
+instance MimeRender Jpeg (BL.ByteString) where
   mimeRender _ = Prelude.id

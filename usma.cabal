@@ -42,6 +42,7 @@ executable usma
                      , AppApiV2
                      , AppServerV2
                      , RepositoryV2
+                     , CsvExport
   build-depends:       base
                      , containers
                      , cookie

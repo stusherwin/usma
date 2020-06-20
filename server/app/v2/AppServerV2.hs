@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 
 module AppServerV2 (appServerV2) where
 
@@ -9,20 +8,17 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as C (unpack)
-import           Data.Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
+import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
+import qualified Data.ByteString.Lazy.Char8 as BL (unpack)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
-import           Data.Text as T (unpack)
+import qualified Data.Text as T (unpack, pack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
 import           Data.Tuple (swap)
 import           Network.HTTP.Conduit (HttpException, simpleHttp)
 import           Safe (headMay)
-import qualified Data.Vector as V (fromList)
-import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, readFile)
 import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
-
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
 import           System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
@@ -31,6 +27,7 @@ import           AppApiV2 as Api
 import           Config
 import           DomainV2
 import           RepositoryV2 as R
+import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 
 appServerV2 :: Config -> Text -> Server Api.AppApiV2
 appServerV2 config groupKey =
@@ -141,69 +138,29 @@ queryServerV2 config =
       let entries = getEntries catalogue
       return $ apiProductCatalogueEntry <$> entries
     
-    productImage :: String -> Handler L.ByteString
+    productImage :: String -> Handler BL.ByteString
     productImage code = withRepository config $ \(repo, _) -> do
       MaybeT $ liftIO $ fetchProductImage repo code
 
-    collectiveOrderDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    collectiveOrderDownload :: Handler FileDownload
     collectiveOrderDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
-        let items = map toCsvItem $ orderItems order
-        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
-      where
-        toCsvItem i = CsvItem
-          { csvName = itemProductName i
-          , csvCode = fromProductCode . itemProductCode $ i
-          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
-          , csvQuantity = _itemQuantity i
-          , csvTotal = _moneyExcVat . itemTotal $ i
-          , csvReference = ""
-          }
+        return $ fileDownload "order.csv" $ exportOrderItems order
 
-    householdOrdersDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    householdOrdersDownload :: Handler FileDownload
     householdOrdersDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
-        let items = map toCsvItem . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
-        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
-      where
-        toCsvItem (householdName, i) = CsvItem
-          { csvName = itemProductName i
-          , csvCode = fromProductCode . itemProductCode $ i
-          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
-          , csvQuantity = _itemQuantity i
-          , csvTotal = _moneyExcVat . itemTotal $ i
-          , csvReference = householdName
-          }
+        return $ fileDownload "order.csv" $ exportOrderItemsByHousehold order
 
-    pastCollectiveOrderDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastCollectiveOrderDownload :: Int -> Handler FileDownload
     pastCollectiveOrderDownload orderId = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
-        let items = map toCsvItem $ orderItems order
-        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total"]) items
-      where
-        toCsvItem i = CsvItem
-          { csvName = itemProductName i
-          , csvCode = fromProductCode . itemProductCode $ i
-          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
-          , csvQuantity = _itemQuantity i
-          , csvTotal = _moneyExcVat . itemTotal $ i
-          , csvReference = ""
-          }
+        return $ fileDownload "order.csv" $ exportOrderItems order
 
-    pastHouseholdOrdersDownload :: Int -> Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
+    pastHouseholdOrdersDownload :: Int -> Handler FileDownload
     pastHouseholdOrdersDownload orderId = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
-        let items = map toCsvItem . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
-        return $ addHeader "attachment; filename=\"order.csv\"" $ encodeByName (V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]) items
-      where
-        toCsvItem (householdName, i) = CsvItem
-          { csvName = itemProductName i
-          , csvCode = fromProductCode . itemProductCode $ i
-          , csvPrice = _moneyExcVat . _priceAmount . itemProductPrice $ i
-          , csvQuantity = _itemQuantity i
-          , csvTotal = _moneyExcVat . itemTotal $ i
-          , csvReference = householdName
-          }
+        return $ fileDownload "order.csv" $ exportOrderItemsByHousehold order
 
     productCatalogueCategories :: Handler [String]
     productCatalogueCategories = withRepository config $ \(repo, _) -> do
@@ -217,36 +174,6 @@ queryServerV2 config =
     groupSettings = withRepository config $ \(repo, groupId) -> do
       group <- liftIO $ getOrderGroup repo groupId
       return $ apiGroupSettings group
-
-data CsvItem = CsvItem 
-  { csvName :: String
-  , csvCode :: String
-  , csvPrice :: Int
-  , csvQuantity :: Int
-  , csvTotal :: Int
-  , csvReference :: String
-  }
-
-instance ToNamedRecord CsvItem where
-  toNamedRecord (CsvItem 
-    { csvName = name
-    , csvCode = code
-    , csvPrice = price
-    , csvQuantity = qty
-    , csvTotal = tot
-    , csvReference = ref
-    }) 
-    = namedRecord 
-      [ "Product" .= name
-      , "Code" .= code
-      , "Price" .= price'
-      , "Quantity" .= qty
-      , "Total" .= total' 
-      , "Reference" .= ref 
-      ]
-    where
-    price' = ((fromIntegral price) :: Double) / 100.0
-    total' = ((fromIntegral tot) :: Double) / 100.0
 
 commandServerV2 :: RepositoryConfig -> Server CommandApiV2
 commandServerV2 config  = 
@@ -433,6 +360,11 @@ uploadSingleFile multipartData = do
   liftIO $ copyFile (fdFilePath file) destFilePath
   return destFilePath
 
+fileDownload :: String -> BL.ByteString -> FileDownload
+fileDownload fileName file = addHeader header file
+  where
+    header = T.pack $ "attachment; filename=\"" ++ fileName ++ "\""
+
 data ProductData = ProductData 
   { url :: String
   , title :: String
@@ -443,7 +375,7 @@ data ProductData = ProductData
 fetchProductData :: String -> IO (Maybe ProductData)
 fetchProductData code = handle handleException $ do
   html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
-  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ C.unpack html of
+  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ BL.unpack html of
     [] -> return Nothing
     (tags:_) -> do
       let a = tags !! 2
@@ -457,25 +389,25 @@ fetchProductData code = handle handleException $ do
   handleException :: HttpException -> IO (Maybe ProductData)
   handleException _ = return Nothing
 
-fetchProductImage :: Repository -> String -> IO (Maybe L.ByteString)
+fetchProductImage :: Repository -> String -> IO (Maybe BL.ByteString)
 fetchProductImage repo code = handle handleException $ do 
   image <- getProductImage repo (ProductCode code)
   case image of
-    Just i -> return $ Just $ L.fromStrict i
+    Just i -> return $ Just $ BL.fromStrict i
     _ -> do
       productData <- fetchProductData code
       case productData of
         Just r -> do
           imageData <- simpleHttp (imageUrl r)
-          setProductImage repo (ProductCode code) $ L.toStrict imageData
+          setProductImage repo (ProductCode code) $ BL.toStrict imageData
           return $ Just $ imageData
         _ -> do
-          img <- L.readFile "client/static/img/404.jpg"
+          img <- BL.readFile "client/static/img/404.jpg"
           return $ Just $ img
   where
-  handleException :: HttpException -> IO (Maybe L.ByteString)
+  handleException :: HttpException -> IO (Maybe BL.ByteString)
   handleException _ = do
-    img <- L.readFile "client/static/img/404.jpg"
+    img <- BL.readFile "client/static/img/404.jpg"
     return $ Just $ img
 
 withRepository :: RepositoryConfig -> ((Repository, OrderGroupId) -> MaybeT IO a) -> Handler a
