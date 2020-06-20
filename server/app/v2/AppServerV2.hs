@@ -4,10 +4,12 @@
 
 module AppServerV2 (appServerV2) where
 
+import           Control.Exception (handle)  
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as C (unpack)
 import           Data.Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
@@ -15,9 +17,11 @@ import           Data.Text as T (unpack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
 import           Data.Tuple (swap)
+import           Network.HTTP.Conduit (HttpException, simpleHttp)
 import           Safe (headMay)
 import qualified Data.Vector as V (fromList)
 import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, readFile)
+import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
@@ -46,6 +50,7 @@ queryServerV2 config =
     :<|> households
     :<|> householdPayments
     :<|> productCatalogue
+    :<|> productImage
     :<|> collectiveOrderDownload
     :<|> householdOrdersDownload
     :<|> pastCollectiveOrderDownload
@@ -136,6 +141,10 @@ queryServerV2 config =
       let entries = getEntries catalogue
       return $ apiProductCatalogueEntry <$> entries
     
+    productImage :: String -> Handler L.ByteString
+    productImage code = withRepository config $ \(repo, _) -> do
+      MaybeT $ liftIO $ fetchProductImage repo code
+
     collectiveOrderDownload :: Handler (Headers '[Header "Content-Disposition" Text] L.ByteString)
     collectiveOrderDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
@@ -423,6 +432,51 @@ uploadSingleFile multipartData = do
   let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
   liftIO $ copyFile (fdFilePath file) destFilePath
   return destFilePath
+
+data ProductData = ProductData 
+  { url :: String
+  , title :: String
+  , imageUrl :: String
+  , size :: Int
+  }
+
+fetchProductData :: String -> IO (Maybe ProductData)
+fetchProductData code = handle handleException $ do
+  html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
+  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ C.unpack html of
+    [] -> return Nothing
+    (tags:_) -> do
+      let a = tags !! 2
+      let img = tags !! 4
+      return $ Just $ ProductData { url = fromAttrib "href" a
+                                  , title = fromAttrib "title" a
+                                  , imageUrl = fromAttrib "src" img
+                                  , size = read $ fromAttrib "height" img
+                                  }
+  where
+  handleException :: HttpException -> IO (Maybe ProductData)
+  handleException _ = return Nothing
+
+fetchProductImage :: Repository -> String -> IO (Maybe L.ByteString)
+fetchProductImage repo code = handle handleException $ do 
+  image <- getProductImage repo (ProductCode code)
+  case image of
+    Just i -> return $ Just $ L.fromStrict i
+    _ -> do
+      productData <- fetchProductData code
+      case productData of
+        Just r -> do
+          imageData <- simpleHttp (imageUrl r)
+          setProductImage repo (ProductCode code) $ L.toStrict imageData
+          return $ Just $ imageData
+        _ -> do
+          img <- L.readFile "client/static/img/404.jpg"
+          return $ Just $ img
+  where
+  handleException :: HttpException -> IO (Maybe L.ByteString)
+  handleException _ = do
+    img <- L.readFile "client/static/img/404.jpg"
+    return $ Just $ img
 
 withRepository :: RepositoryConfig -> ((Repository, OrderGroupId) -> MaybeT IO a) -> Handler a
 withRepository config query = do

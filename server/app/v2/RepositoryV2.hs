@@ -23,12 +23,12 @@ import Data.Monoid ((<>))
 import qualified Data.Text as T (pack)
 import Data.Text.Encoding (encodeUtf8)
 import Data.Time.Clock (UTCTime)
-import Database.PostgreSQL.Simple (Connection, Only(..), Query, (:.)(..), connectPostgreSQL, close, withTransaction, query, query_, execute, execute_, executeMany)
+import Database.PostgreSQL.Simple (Connection, Only(..), Query, Binary(..), (:.)(..), connectPostgreSQL, close, withTransaction, query, query_, execute, execute_, executeMany)
 import Database.PostgreSQL.Simple.FromField (FromField(..))
 import Database.PostgreSQL.Simple.FromRow (FromRow(..), RowParser, field)
 import Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
 import Database.PostgreSQL.Simple.ToRow (ToRow(..))
-import Database.PostgreSQL.Simple.SqlQQ
+import Database.PostgreSQL.Simple.SqlQQ (sql)
 import Prelude hiding (sum)
 
 import Config (Config(..))
@@ -120,6 +120,19 @@ getProductIdsForPastOrders repo groupId = do
   let conn = connection repo
 
   selectProducts conn [ForOrderGroup groupId, OrderIsPast]
+
+getProductImage :: Repository -> ProductCode -> IO (Maybe ByteString)
+getProductImage repo code = do
+  let conn = connection repo
+  
+  image <- selectProductImage conn code
+  return $ listToMaybe $ fmap fromOnly $ image
+
+setProductImage :: Repository -> ProductCode -> ByteString -> IO ()
+setProductImage repo code image = do
+  let conn = connection repo
+  
+  insertProductImage conn code image  
 
 getHouseholds :: Repository -> Maybe OrderGroupId -> IO [Household]
 getHouseholds repo groupId = do
@@ -434,6 +447,22 @@ insertCatalogueEntries conn entries =
       )
     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   |] entries
+
+selectProductImage :: Connection -> ProductCode -> IO [Only ByteString]
+selectProductImage conn code =
+  query conn [sql|
+    select image
+    from product_image
+    where code = ?
+  |] (Only code)
+
+insertProductImage :: Connection -> ProductCode -> ByteString -> IO ()
+insertProductImage conn code image = 
+  void $ execute conn [sql|
+    insert into product_image (code, image)
+    values (?, ?)
+    ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
+  |] (code, Binary image)
 
 -- Needed to convert ProductId to ProductCode
 -- TODO: Remove ProductId altogether

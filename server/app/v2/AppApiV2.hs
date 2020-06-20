@@ -38,6 +38,7 @@ type QueryApiV2 =
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
+  :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] L.ByteString
   :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
   :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
   :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
@@ -284,4 +285,10 @@ data Csv
 instance Accept Csv where
   contentType _ = "text" // "csv"
 instance MimeRender Csv (L.ByteString) where
+  mimeRender _ = Prelude.id
+
+data Jpeg
+instance Accept Jpeg where
+  contentType _ = "image" // "jpeg"
+instance MimeRender Jpeg (L.ByteString) where
   mimeRender _ = Prelude.id
