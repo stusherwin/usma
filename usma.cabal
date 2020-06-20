@@ -24,6 +24,7 @@ library
 
 executable usma
   hs-source-dirs:      server/app
+                     , server/app/v2
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Database
@@ -31,6 +32,9 @@ executable usma
                      , Api
                      , Config
                      , ProductCatalogueImport
+                     , ApiV2
+                     , ServerV2
+                     , DomainV2
   build-depends:       base
                      , containers
                      , cookie
