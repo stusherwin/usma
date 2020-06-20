@@ -43,6 +43,7 @@ executable usma
                      , AppServerV2
                      , RepositoryV2
                      , CsvExport
+                     , SumaCatalogue
   build-depends:       base
                      , containers
                      , cookie

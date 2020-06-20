@@ -3,31 +3,27 @@
 
 module AppServerV2 (appServerV2) where
 
-import           Control.Exception (handle)  
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
-import qualified Data.ByteString.Lazy.Char8 as BL (unpack)
+import qualified Data.ByteString.Lazy as BL (ByteString)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
 import           Data.Tuple (swap)
-import           Network.HTTP.Conduit (HttpException, simpleHttp)
 import           Safe (headMay)
-import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
 import           System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
 
 import           AppApiV2 as Api
-import           Config
+import           Config (Config(..), getConfig)
+import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           DomainV2
 import           RepositoryV2 as R
-import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
+import           SumaCatalogue (fetchProductImage)
 
 appServerV2 :: Config -> Text -> Server Api.AppApiV2
 appServerV2 config groupKey =
@@ -364,51 +360,6 @@ fileDownload :: String -> BL.ByteString -> FileDownload
 fileDownload fileName file = addHeader header file
   where
     header = T.pack $ "attachment; filename=\"" ++ fileName ++ "\""
-
-data ProductData = ProductData 
-  { url :: String
-  , title :: String
-  , imageUrl :: String
-  , size :: Int
-  }
-
-fetchProductData :: String -> IO (Maybe ProductData)
-fetchProductData code = handle handleException $ do
-  html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
-  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ BL.unpack html of
-    [] -> return Nothing
-    (tags:_) -> do
-      let a = tags !! 2
-      let img = tags !! 4
-      return $ Just $ ProductData { url = fromAttrib "href" a
-                                  , title = fromAttrib "title" a
-                                  , imageUrl = fromAttrib "src" img
-                                  , size = read $ fromAttrib "height" img
-                                  }
-  where
-  handleException :: HttpException -> IO (Maybe ProductData)
-  handleException _ = return Nothing
-
-fetchProductImage :: Repository -> String -> IO (Maybe BL.ByteString)
-fetchProductImage repo code = handle handleException $ do 
-  image <- getProductImage repo (ProductCode code)
-  case image of
-    Just i -> return $ Just $ BL.fromStrict i
-    _ -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          imageData <- simpleHttp (imageUrl r)
-          setProductImage repo (ProductCode code) $ BL.toStrict imageData
-          return $ Just $ imageData
-        _ -> do
-          img <- BL.readFile "client/static/img/404.jpg"
-          return $ Just $ img
-  where
-  handleException :: HttpException -> IO (Maybe BL.ByteString)
-  handleException _ = do
-    img <- BL.readFile "client/static/img/404.jpg"
-    return $ Just $ img
 
 withRepository :: RepositoryConfig -> ((Repository, OrderGroupId) -> MaybeT IO a) -> Handler a
 withRepository config query = do
