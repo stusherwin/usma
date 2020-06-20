@@ -15,11 +15,16 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
+                     , server/src/v2
   exposed-modules:     Types
+                     , DomainV2
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , extra
+                     , hashable
                      , time
                      , text
+                     , unordered-containers
   default-language:    Haskell2010
 
 executable usma
@@ -36,7 +41,6 @@ executable usma
                      , ProductCatalogueImport
                      , AppApiV2
                      , AppServerV2
-                     , DomainV2
                      , RepositoryV2
   build-depends:       base
                      , containers
@@ -67,9 +71,6 @@ executable usma
                      , cassava
                      , vector
                      , safe
-                     , unordered-containers
-                     , hashable
-                     , extra
   default-language:    Haskell2010
 
 executable usma-upgradedb
