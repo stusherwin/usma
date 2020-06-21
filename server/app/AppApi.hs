@@ -18,7 +18,6 @@ import qualified Data.ByteString.Lazy as L
 import Network.HTTP.Media ((//))
 
 import Types
-import UploadedOrderFile
 
 data ApiData = ApiData 
   { collectiveOrder :: (Maybe CollectiveOrder)

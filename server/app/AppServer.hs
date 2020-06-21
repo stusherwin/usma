@@ -34,7 +34,6 @@ import AppApi
 import qualified Database as D
 import Config
 import ProductCatalogueImport
-import UploadedOrderFile
 import ReconcileHouseholdOrderFile
 import ProductImage (fetchProductImage)
 

@@ -17,7 +17,6 @@ library
   hs-source-dirs:      server/src
                      , server/src/v2
   exposed-modules:     Types
-                     , UploadedOrderFile
                      , DomainV2
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -47,6 +46,7 @@ executable usma
                      , RepositoryV2
                      , CsvExport
                      , SumaCatalogue
+                     , ReconcileSumaOrderFile
   build-depends:       aeson
                      , base
                      , bytestring

@@ -350,6 +350,24 @@ setHouseholdOrders repo orders = do
     itemKey ((groupId, orderId, householdId, status), i) = (groupId, orderId, householdId, status, itemProductCode i)
     keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
 
+getFileUpload :: Repository -> OrderGroupId -> String -> IO (Maybe ByteString)
+getFileUpload repo groupId fileId = do
+  let conn = connection repo
+
+  listToMaybe <$> fmap fromOnly <$> selectFileUpload conn groupId fileId
+
+setFileUpload :: Repository -> OrderGroupId -> String -> ByteString -> IO ()
+setFileUpload repo groupId fileId contents =  do
+  let conn = connection repo
+
+  upsertFileUpload conn groupId fileId contents
+
+removeFileUpload :: Repository -> OrderGroupId -> String -> IO ()
+removeFileUpload repo groupId fileId =  do
+  let conn = connection repo
+
+  deleteFileUpload conn groupId fileId
+
 selectOrderGroup :: Connection -> OrderGroupId -> IO [OrderGroup]
 selectOrderGroup conn groupId = 
   query conn [sql|
@@ -913,6 +931,31 @@ deleteOrderItemAdjustments conn adjustments = do
     delete from v2.order_item_adjustment
     where order_group_id = ? and order_id = ? and household_id = ? and product_code = ?
   |] rows
+
+selectFileUpload :: Connection -> OrderGroupId -> String -> IO [Only ByteString]
+selectFileUpload conn groupId fileId = do
+  query conn [sql|
+    select contents
+    from v2.file_upload
+    where order_group_id = ?
+      and id = ?
+  |] (groupId, fileId)
+
+upsertFileUpload :: Connection -> OrderGroupId -> String -> ByteString -> IO ()
+upsertFileUpload conn groupId fileId fileContents = do
+  void $ execute conn [sql|
+    insert into v2.file_upload (order_group_id, id, contents)
+    values (?, ?, ?)
+    ON CONFLICT (order_group_id, id) DO UPDATE SET contents = EXCLUDED.contents;
+  |] (groupId, fileId, Binary fileContents)
+
+deleteFileUpload :: Connection -> OrderGroupId -> String -> IO ()
+deleteFileUpload conn groupId fileId = do
+  void $ execute conn [sql|
+    delete from v2.file_upload
+    where order_group_id = ?
+      and id = ?
+  |] (groupId, fileId)
 
 toHousehold :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> [Payment] -> (HouseholdRow) -> Household
 toHousehold rHouseholdOrders rOrderItems rPayments h = 

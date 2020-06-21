@@ -139,6 +139,14 @@ begin
   , foreign key (order_group_id) references v2.order_group (id)
   );
 
+  create table v2.file_upload
+  ( id             text  not null
+  , order_group_id int   not null
+  , contents       bytea not null
+  , primary key (id)
+  , foreign key (order_group_id) references v2.order_group (id)
+  );
+
 
 end $$ language plpgsql;
 commit;

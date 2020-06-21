@@ -1,11 +1,14 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module AppServerV2 (appServerV2) where
 
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import qualified Data.ByteString as B (ByteString)
+import qualified Data.ByteString.Char8 as B (pack, unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
@@ -13,6 +16,8 @@ import qualified Data.Text as T (unpack, pack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
 import           Data.Tuple (swap)
+import           Data.UUID (UUID, toString)
+import           Data.UUID.V1 (nextUUID)
 import           Safe (headMay)
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
@@ -24,6 +29,7 @@ import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           DomainV2
 import           RepositoryV2 as R
 import           SumaCatalogue (fetchProductImage)
+import           ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
 
 appServerV2 :: Config -> Text -> Server Api.AppApiV2
 appServerV2 config groupKey =
@@ -192,6 +198,8 @@ commandServerV2 config  =
     :<|> uploadProductCatalogue
     :<|> acceptCatalogueUpdates
     :<|> reconcileOrderItem
+    :<|> uploadOrderFile
+    :<|> reconcileHouseholdOrderFromFile
   where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = withRepository config $ \(repo, groupId) -> do
@@ -341,11 +349,32 @@ commandServerV2 config  =
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
       productCode <- MaybeT $ getProductCode repo (ProductId productId)
-      let updates = map (\h -> (HouseholdId $ hqdetHouseholdId h, (productCode, (roidetProductPriceExcVat details, hqdetItemQuantity h))))
-                    $ roidetHouseholdQuantities details
+      let updates = map (\h -> (HouseholdId $ hqdetHouseholdId h, OrderItemSpec productCode (roidetProductPriceExcVat details) (hqdetItemQuantity h)))
+                  $ roidetHouseholdQuantities details
       let order' = reconcileOrderItems date updates order
       liftIO $ setOrders repo ([order], [order'])
       return ()
+
+    uploadOrderFile :: MultipartData -> Handler (Headers '[Header "Cache-Control" String] (Maybe Api.UploadedOrderFile))
+    uploadOrderFile multipartData = withRepository config $ \(repo, groupId) -> do
+      filePath <- uploadSingleFile multipartData
+      fileContents <- liftIO $ readFile filePath
+      uuid <- MaybeT $ liftIO nextUUID
+      let fileId = toString uuid
+      liftIO $ setFileUpload repo groupId fileId $ B.pack fileContents
+      let orderFile = parseOrderFileDetails fileId fileContents
+      return $ addHeader "no-cache" orderFile
+
+    reconcileHouseholdOrderFromFile :: Int -> Int -> String -> Handler ()
+    reconcileHouseholdOrderFromFile orderId householdId fileId = withRepository config $ \(repo, groupId) -> do
+      date <- liftIO getCurrentTime
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      fileContents <- MaybeT $ liftIO $ getFileUpload repo groupId fileId
+      let updates = map (HouseholdId householdId,)
+                  $ parseOrderFileUpdates $ B.unpack fileContents
+      let order' = reconcileOrderItems date updates order
+      liftIO $ setOrders repo ([order], [order'])
+      liftIO $ removeFileUpload repo groupId fileId
 
 uploadSingleFile :: MultipartData -> MaybeT IO FilePath
 uploadSingleFile multipartData = do

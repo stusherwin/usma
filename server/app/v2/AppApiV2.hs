@@ -67,6 +67,8 @@ type CommandApiV2 =
   :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
+  :<|> "upload-order-file" :> MultipartForm MultipartData :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
+  :<|> "reconcile-household-order-from-file" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "uuid" String :> Post '[JSON] ()
 
 data ApiData = ApiData 
   { collectiveOrder :: (Maybe CollectiveOrder)
@@ -275,6 +277,29 @@ data GroupSettings = GroupSettings { gsEnablePayments :: Bool
                                    } deriving (Eq, Show, Generic)
 instance ToJSON GroupSettings where
   toJSON = genericToJSON dropFieldPrefixOptions
+
+data UploadedOrderFile = UploadedOrderFile { uofFileId :: String 
+                                           , uofOrderDescription :: String
+                                           , uofTotalExcVat :: Int
+                                           , uofTotalIncVat :: Int
+                                           , uofRows :: [UploadedOrderFileRow]
+                                           } deriving (Eq, Show, Generic)
+instance ToJSON UploadedOrderFile where
+  toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON UploadedOrderFile where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data UploadedOrderFileRow = UploadedOrderFileRow { uofrCode :: String 
+                                                 , uofrProductDescription :: String
+                                                 , uofrProductSize :: String
+                                                 , uofrPrice :: Int
+                                                 , uofrQuantity :: Int
+                                                 , uofrTotal :: Int
+                                                 } deriving (Eq, Show, Generic)
+instance ToJSON UploadedOrderFileRow where
+  toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON UploadedOrderFileRow where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)

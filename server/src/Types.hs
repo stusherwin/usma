@@ -7,7 +7,7 @@ module Types where
 import Data.Aeson
 import Data.Aeson.Types (Options(..))
 import GHC.Generics
-import Data.Char (toLower, isLower, toUpper)
+import Data.Char (toLower, isLower)
 import Data.Time.Clock (UTCTime)
 import Data.Time.Calendar (Day)
 import Prelude hiding (id)
@@ -231,3 +231,22 @@ instance ToJSON ReconcileHouseholdOrderItemDetails where
   toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON ReconcileHouseholdOrderItemDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data UploadedOrderFile = UploadedOrderFile { fileId :: String 
+                                           , orderDescription :: String
+                                           , totalExcVat :: Int
+                                           , totalIncVat :: Int
+                                           , rows :: [UploadedOrderFileRow]
+                                           } deriving (Eq, Show, Generic)
+instance ToJSON UploadedOrderFile
+instance FromJSON UploadedOrderFile
+
+data UploadedOrderFileRow = UploadedOrderFileRow { code :: String 
+                                                 , productDescription :: String
+                                                 , productSize :: String
+                                                 , price :: Int
+                                                 , quantity :: Int
+                                                 , total :: Int
+                                                 } deriving (Eq, Show, Generic)
+instance ToJSON UploadedOrderFileRow
+instance FromJSON UploadedOrderFileRow

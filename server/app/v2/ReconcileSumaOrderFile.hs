@@ -1,24 +1,24 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module ReconcileHouseholdOrderFile where
+module ReconcileSumaOrderFile where
   import Control.Monad (forM_)
   import Data.ByteString (ByteString)
   import Data.Char (isSpace, isNumber, isPunctuation)
   import Data.List (intercalate)
   import Data.Maybe (catMaybes, listToMaybe)
   import Data.Text (Text)
-  import Data.Text.Encoding
+  import Data.Text.Encoding ()
   import Data.Time.Clock (UTCTime)
   import Safe (atMay)
-  import Text.HTML.TagSoup
+  import Text.HTML.TagSoup (Tag, parseTags, fromAttrib, sections, partitions, innerText, fromTagText, isTagText, (~==))
   import Text.Read (readMaybe)
 
-  import Types
-  import Database
+  import AppApiV2 as Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
+  import DomainV2
 
-  getHouseholdOrderFileDetails :: String -> String -> Maybe UploadedOrderFile
-  getHouseholdOrderFileDetails fileId html =
+  parseOrderFileDetails :: String -> String -> Maybe UploadedOrderFile
+  parseOrderFileDetails fileId html =
     let tags = parseTags html
         rows = map toRow $ parseOrderRows tags
         description = parseOrderDescription tags
@@ -32,15 +32,10 @@ module ReconcileHouseholdOrderFile where
                                                                          rows
       _ -> Nothing
   
-  reconcileHouseholdOrderFile :: ByteString -> Int -> Int -> Int -> String -> IO ()
-  reconcileHouseholdOrderFile connectionString groupId orderId householdId html = do
-    let reconcileDetails = readReconcileOrderDetails html
-    reconcileHouseholdOrderItems connectionString groupId orderId householdId reconcileDetails
-  
-  readReconcileOrderDetails :: String -> [ReconcileHouseholdOrderItemDetails]
-  readReconcileOrderDetails html =
+  parseOrderFileUpdates :: String -> [OrderItemSpec]
+  parseOrderFileUpdates html =
     let tags = parseTags html
-        toDetails (c, _, _, q, p, _) = ReconcileHouseholdOrderItemDetails c p q
+        toDetails (c, _, _, q, p, _) = OrderItemSpec (ProductCode c) p q
     in map toDetails $ parseOrderRows tags 
 
   parseOrderDescription :: [Tag String] -> String

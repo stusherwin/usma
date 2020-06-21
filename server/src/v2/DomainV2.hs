@@ -271,12 +271,18 @@ acceptCatalogueUpdate householdId =
   $ mapWhere ((== householdId) . householdOrderHouseholdId)
   $ acceptUpdate
 
-reconcileOrderItems :: UTCTime -> [(HouseholdId, (ProductCode, (Int, Int)))] -> Order -> Order
+reconcileOrderItems :: UTCTime -> [(HouseholdId, OrderItemSpec)] -> Order -> Order
 reconcileOrderItems date updates = 
     overHouseholdOrders (map reconcile)
   where
     reconcile ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ updates
                    in  reconcileItems date updatesForHousehold ho
+
+data OrderItemSpec = OrderItemSpec
+  { _itemSpecProductCode :: ProductCode
+  , _itemSpecProductPrice :: Int
+  , _itemSpecQuantity :: Int
+  } deriving (Eq, Show, Generic)
 
 {- HouseholdOrder -}
 
@@ -417,15 +423,15 @@ acceptUpdate =
                                  $ removeItemAdjustment i
     accept i = Just i
 
-reconcileItems :: UTCTime -> [(ProductCode, (Int, Int))] -> HouseholdOrder -> HouseholdOrder
+reconcileItems :: UTCTime -> [OrderItemSpec] -> HouseholdOrder -> HouseholdOrder
 reconcileItems date updates = 
     overHouseholdOrderItems 
   $ map update
   where
     update i = 
-      case lookup (itemProductCode i) updates of
-        Just (newPrice, newQuantity) -> adjustItemPrice date (reprice newPrice $ itemProductPrice i)
-                                      $ adjustItemQuantity date newQuantity i
+      case find ((== itemProductCode i) . _itemSpecProductCode) updates of
+        Just spec -> adjustItemPrice date (reprice (_itemSpecProductPrice spec) (itemProductPrice i))
+                   $ adjustItemQuantity date (_itemSpecQuantity spec) i
         _ -> i
 
 {- OrderItem -}
