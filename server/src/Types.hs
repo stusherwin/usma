@@ -12,11 +12,6 @@ import Data.Time.Clock (UTCTime)
 import Data.Time.Calendar (Day)
 import Prelude hiding (id)
 
-dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
-  dropFieldPrefix = (first toLower) . (dropWhile isLower)
-  first f (c:cs) = (f c):cs
-  first _ [] = []
-
 data CollectiveOrder = CollectiveOrder { coId :: Int
                                        , coOrderCreatedDate :: UTCTime
                                        , coOrderCreatedBy :: Maybe Int
@@ -250,3 +245,26 @@ data UploadedOrderFileRow = UploadedOrderFileRow { code :: String
                                                  } deriving (Eq, Show, Generic)
 instance ToJSON UploadedOrderFileRow
 instance FromJSON UploadedOrderFileRow
+
+data ApiData = ApiData 
+  { collectiveOrder :: (Maybe CollectiveOrder)
+  , pastCollectiveOrders :: [PastCollectiveOrder]
+  , householdOrders :: [HouseholdOrder]
+  , pastHouseholdOrders :: [PastHouseholdOrder]
+  , households :: [Household]
+  , householdPayments :: [HouseholdPayment]
+  , groupSettings ::  GroupSettings
+  } deriving (Eq, Show, Generic)
+instance ToJSON ApiData
+
+data ProductCatalogueApiData = ProductCatalogueApiData 
+  { productCatalogue :: [ProductCatalogueEntry]
+  , categories :: [String]
+  , brands :: [String]
+  } deriving (Eq, Show, Generic)
+instance ToJSON ProductCatalogueApiData
+
+dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
+  dropFieldPrefix = (first toLower) . (dropWhile isLower)
+  first f (c:cs) = (f c):cs
+  first _ [] = []

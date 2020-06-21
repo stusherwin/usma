@@ -14,7 +14,7 @@ module ReconcileSumaOrderFile where
   import Text.HTML.TagSoup (Tag, parseTags, fromAttrib, sections, partitions, innerText, fromTagText, isTagText, (~==))
   import Text.Read (readMaybe)
 
-  import AppApiV2 as Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
+  import Types as Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
   import DomainV2
 
   parseOrderFileDetails :: String -> String -> Maybe UploadedOrderFile

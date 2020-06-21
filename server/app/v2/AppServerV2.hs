@@ -24,6 +24,7 @@ import           Servant.Multipart (MultipartData(..), FileData(..))
 import           System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
 
 import           AppApiV2 as Api
+import           Types as Api
 import           Config (Config(..), getConfig)
 import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           DomainV2
@@ -518,7 +519,7 @@ apiOrderItem productIds i = Api.OrderItem
   { oiProductId          = fromMaybe 0 $ fromProductId <$> lookup (itemProductCode i) productIds
   , oiProductCode        = fromProductCode . itemProductCode $ i
   , oiProductName        = _productName . _productInfo . _itemProduct $ i
-  , oiProductVatRate     = _vatRateType . _priceVatRate . itemProductPrice $ i
+  , oiProductVatRate     = apiVatRate . _vatRateType . _priceVatRate . itemProductPrice $ i
   , oiProductPriceExcVat = _moneyExcVat . _priceAmount $ case _itemAdjustment i of
                                                            Just a -> _itemAdjNewPrice a
                                                            _      -> itemProductPrice $ i
@@ -560,7 +561,7 @@ apiProductCatalogueEntry e = Api.ProductCatalogueEntry
   , pceName = productName e
   , pcePriceExcVat = _moneyExcVat . _priceAmount . _catalogueEntryPrice $ e
   , pcePriceIncVat = _moneyIncVat . _priceAmount . _catalogueEntryPrice $ e
-  , pceVatRate = _vatRateType . _priceVatRate . _catalogueEntryPrice $ e
+  , pceVatRate = apiVatRate . _vatRateType . _priceVatRate . _catalogueEntryPrice $ e
   , pceBiodynamic = _catalogueEntryBiodynamic e
   , pceFairTrade = _catalogueEntryFairTrade e
   , pceGlutenFree = _catalogueEntryGlutenFree e
@@ -575,3 +576,8 @@ apiGroupSettings :: DomainV2.OrderGroup -> Api.GroupSettings
 apiGroupSettings g = Api.GroupSettings
   { gsEnablePayments = _groupSettingsPaymentsEnabled . _groupSettings $ g
   }
+
+apiVatRate :: DomainV2.VatRateType -> Api.VatRate
+apiVatRate DomainV2.Zero = Api.Zero
+apiVatRate DomainV2.Standard = Api.Standard
+apiVatRate DomainV2.Reduced = Api.Reduced

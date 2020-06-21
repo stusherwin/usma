@@ -19,24 +19,6 @@ import Network.HTTP.Media ((//))
 
 import Types
 
-data ApiData = ApiData 
-  { collectiveOrder :: (Maybe CollectiveOrder)
-  , pastCollectiveOrders :: [PastCollectiveOrder]
-  , householdOrders :: [HouseholdOrder]
-  , pastHouseholdOrders :: [PastHouseholdOrder]
-  , households :: [Household]
-  , householdPayments :: [HouseholdPayment]
-  , groupSettings ::  GroupSettings
-  } deriving (Eq, Show, Generic)
-instance ToJSON ApiData
-
-data ProductCatalogueApiData = ProductCatalogueApiData 
-  { productCatalogue :: [ProductCatalogueEntry]
-  , categories :: [String]
-  , brands :: [String]
-  } deriving (Eq, Show, Generic)
-instance ToJSON ProductCatalogueApiData
-
 type AppApi = 
        "query" :> QueryApi
   :<|> "command" :> CommandApi
