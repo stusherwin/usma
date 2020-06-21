@@ -30,6 +30,7 @@ library
 executable usma
   hs-source-dirs:      server/app
                      , server/app/v2
+                     , server/app/v2/RepositoryV2
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Api
@@ -44,6 +45,7 @@ executable usma
                      , AppApiV2
                      , AppServerV2
                      , RepositoryV2
+                     , RepositoryV2.SQL
                      , CsvExport
                      , SumaCatalogue
                      , ReconcileSumaOrderFile
