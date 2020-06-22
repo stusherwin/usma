@@ -28,7 +28,7 @@ selectOrderGroupId :: Connection -> String -> IO [Only OrderGroupId]
 selectOrderGroupId conn groupKey = 
   query conn [sql|
     select id
-    from order_group
+    from v2/order_group
     where key = ?
   |] (Only groupKey)
 
@@ -103,7 +103,7 @@ selectCatalogueEntryBrands conn =
 truncateCatalogueEntries :: Connection -> IO ()
 truncateCatalogueEntries conn =   
   void $ execute_ conn [sql|
-    truncate table catalogue_entry
+    truncate table v2.catalogue_entry
   |]
 
 insertCatalogueEntries :: Connection -> [ProductCatalogueEntry] -> IO ()
@@ -134,14 +134,14 @@ selectProductImage :: Connection -> ProductCode -> IO [Only ByteString]
 selectProductImage conn code =
   query conn [sql|
     select image
-    from product_image
+    from v2.product_image
     where code = ?
   |] (Only code)
 
 insertProductImage :: Connection -> ProductCode -> ByteString -> IO ()
 insertProductImage conn code image = 
   void $ execute conn [sql|
-    insert into product_image (code, image)
+    insert into v2.product_image (code, image)
     values (?, ?)
     ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
   |] (code, Binary image)
@@ -189,7 +189,7 @@ selectHouseholdRows conn whereParams =
            , h.contact_name
            , h.contact_email
            , h.contact_phone
-      from household h
+      from v2.household h
       where h.archived = false |] <> whereClause <> [sql| 
       order by h.name asc
     |]) params
@@ -256,7 +256,7 @@ selectPayments conn whereParams =
            , p.household_id
            , p."date"
            , p.amount
-      from household_payment p
+      from v2.payment p
       where p.archived = false |] <> whereClause <> [sql|
       order by p.id asc
     |]) params

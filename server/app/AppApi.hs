@@ -20,8 +20,9 @@ import Network.HTTP.Media ((//))
 import Types
 
 type AppApi = 
-       "query" :> QueryApi
-  :<|> "command" :> CommandApi
+  "v1" :> (    "query" :> QueryApi
+          :<|> "command" :> CommandApi
+          )
 
 type QueryApi =
        "data" :> Get '[JSON] ApiData

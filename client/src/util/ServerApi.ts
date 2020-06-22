@@ -169,7 +169,7 @@ const command = {
 
 const groupUrl = (url: string) => {
   const groupKey = window.location.href.split('/').filter(l => l.length).slice(3, 4).join('/')
-  return `/api/${groupKey}${url}`
+  return `/api/${groupKey}/v1${url}`
 }
 
 export const ServerApi = {
@@ -205,6 +205,7 @@ export class Http {
     try {
       return fetch(req, {credentials: 'same-origin'})
         .then(res => {
+          console.log(res);
           if(!res.ok) {
             return res.text().then(txt => { throw new ApiError(`${res.statusText} (${res.status})`, txt, res.status) })
           }

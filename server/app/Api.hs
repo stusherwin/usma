@@ -16,9 +16,9 @@ import AppApiV2 (AppApiV2)
 
 type FullApi =
        "api" :> GroupApi
-  :<|> "g" :> Capture "groupKey" Text :> Raw
-  :<|> "g" :> Raw
-  :<|> Raw
+  -- :<|> "g" :> Capture "groupKey" Text :> Raw
+  -- :<|> "g" :> Raw
+  -- :<|> Raw
 
 type GroupApi = 
   Capture "groupKey" Text :> (    VerifyApi
