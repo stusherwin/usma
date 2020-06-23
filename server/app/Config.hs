@@ -8,6 +8,7 @@ module Config where
 
   data Config = Config { port :: Int
                        , connectionString :: ByteString
+                       , connectionStringV2 :: ByteString
                        }
 
   getConfig :: IO Config
@@ -21,4 +22,7 @@ module Config where
                           (_:cs:_) -> return cs
                           _        -> getEnv "DATABASE_URL"
     putStrLn $ "connection string: " ++ connectionString
-    return $ Config port (B.pack connectionString)
+    connectionStringV2 <- case args of
+                          (_:_:cs:_) -> return cs
+                          _          -> getEnv "DATABASE_URL"
+    return $ Config port (B.pack connectionString) (B.pack connectionStringV2)

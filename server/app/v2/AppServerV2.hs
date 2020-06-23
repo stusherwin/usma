@@ -37,7 +37,7 @@ appServerV2 config groupKey =
          queryServerV2 repoConfig
     :<|> commandServerV2 repoConfig
   where
-    repoConfig = RepositoryConfig (connectionString config) (T.unpack groupKey)
+    repoConfig = RepositoryConfig (connectionStringV2 config) (T.unpack groupKey)
 
 queryServerV2 :: RepositoryConfig -> Server Api.QueryApiV2
 queryServerV2 config = 

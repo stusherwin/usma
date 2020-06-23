@@ -25,10 +25,11 @@ import Database.PostgreSQL.Simple.SqlQQ (sql)
 import DomainV2
 
 selectOrderGroupId :: Connection -> String -> IO [Only OrderGroupId]
-selectOrderGroupId conn groupKey = 
+selectOrderGroupId conn groupKey = do
+  putStrLn $ "Key: " ++ groupKey
   query conn [sql|
     select id
-    from v2/order_group
+    from v2.order_group
     where key = ?
   |] (Only groupKey)
 

@@ -30,13 +30,13 @@ begin
   , vegan          boolean     not null
   , updated        timestamptz not null
   , PRIMARY KEY (code)
+  , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
   );
 
   CREATE TABLE v2.product 
   ( id SERIAL NOT NULL
   , code char(10) NOT NULL
   , PRIMARY KEY (id)
-  , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
   );
 
   CREATE TABLE v2.order_group 

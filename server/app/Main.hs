@@ -100,15 +100,14 @@ compareApiV1WithApiV2 app req sendResponse = do
             sendResponse resp)
     else app req sendResponse
   where
-    reqPathInfo = pathInfo req
-    isApiV1 req = length reqPathInfo > 2 && reqPathInfo !! 2 == "v1"
-    toApiV2 req = case reqPathInfo of 
+    isApiV1 req = length (pathInfo req) > 2 && (pathInfo req) !! 2 == "v1"
+    toApiV2 req = case pathInfo req of 
       ("api":g:"v1":rest) -> let pi = "api":g:"v2":rest
                              in  req { pathInfo = pi
                                      , rawPathInfo = B.pack $ T.unpack $ T.intercalate "/" pi
                                      }
       _ -> req
-    path req = T.unpack $ T.intercalate "/" reqPathInfo
+    path req = T.unpack $ T.intercalate "/" $ pathInfo req
     compare (reqV1, (statusV1, headersV1, getBodyV1)) (reqV2, (statusV2, headersV2, getBodyV2)) = do
       if statusV1 /= statusV2 then do
         setColor Red
