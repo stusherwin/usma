@@ -52,23 +52,18 @@ app config = logStdoutDev
 server :: Config -> Server FullApi
 server config = 
        groupServer config
-  -- :<|> serveFilesWithGroup
-  -- :<|> serveFiles
-  -- :<|> serveFiles
-  where
-  serveFilesWithGroup :: Text -> Server Raw
-  serveFilesWithGroup _ = serveFiles
-  
-  serveFiles :: Server Raw
-  serveFiles = Tagged (staticPolicy (addBase "client/static") staticOrDefault)
+  :<|> serveGroupPage
+  :<|> serveDirectoryWebApp "client/static"
 
-staticOrDefault :: Application
-staticOrDefault req respond = respond $ 
-  responseFile
-  status200
-  [(hContentType, "text/html")]
-  "client/static/index.html"
-  Nothing
+serveGroupPage :: Text -> Server Raw
+serveGroupPage _ = Tagged (staticPolicy (addBase "client/static") indexPage)
+  where
+    indexPage :: Application
+    indexPage req respond = respond $ 
+      responseFile status200
+                   [(hContentType, "text/html")]
+                   "client/static/index.html"
+               Nothing
 
 groupServer :: Config -> Server GroupApi
 groupServer config groupKey = 
@@ -105,14 +100,15 @@ compareApiV1WithApiV2 app req sendResponse = do
             sendResponse resp)
     else app req sendResponse
   where
-    isApiV1 req = (pathInfo req) !! 2 == "v1"
-    toApiV2 req = case pathInfo req of 
-      ("api":g:"v1":rest) -> let pathInfo = "api":g:"v2":rest
-                             in  req { pathInfo = pathInfo
-                                     , rawPathInfo = B.pack $ T.unpack $ T.intercalate "/" $ pathInfo
+    reqPathInfo = pathInfo req
+    isApiV1 req = length reqPathInfo > 2 && reqPathInfo !! 2 == "v1"
+    toApiV2 req = case reqPathInfo of 
+      ("api":g:"v1":rest) -> let pi = "api":g:"v2":rest
+                             in  req { pathInfo = pi
+                                     , rawPathInfo = B.pack $ T.unpack $ T.intercalate "/" pi
                                      }
       _ -> req
-    path req = T.unpack $ T.intercalate "/" $ pathInfo req
+    path req = T.unpack $ T.intercalate "/" reqPathInfo
     compare (reqV1, (statusV1, headersV1, getBodyV1)) (reqV2, (statusV2, headersV2, getBodyV2)) = do
       if statusV1 /= statusV2 then do
         setColor Red
