@@ -49,6 +49,7 @@ executable usma
                      , CsvExport
                      , SumaCatalogue
                      , ReconcileSumaOrderFile
+                     , CompareV2Api
   build-depends:       aeson
                      , aeson-pretty
                      , base
