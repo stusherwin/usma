@@ -6,4 +6,4 @@ shutdown() {
 
 trap "shutdown" SIGINT SIGTERM
 
-stack exec usma-upgradedb 8082 postgres://col_ord_user:password@localhost:5432/col_ord CurrentSumaPrices.csv
+stack exec usma-upgradedb 8082 postgres://v1_user:password@localhost:5432/col_ord postgres://v2_user:password@localhost:5432/col_ord

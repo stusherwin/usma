@@ -12,6 +12,15 @@ begin
   , PRIMARY KEY (code)
   );
 
+  insert into v2.vat_rate 
+  ( code
+  , multiplier
+  )
+  select 
+    code
+  , multiplier
+  from public.vat_rate;
+
   create table v2.catalogue_entry
   ( code           char(10)    not null
   , category       text        not null
@@ -33,11 +42,72 @@ begin
   , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
   );
 
+  insert into v2.catalogue_entry
+  ( code
+  , category
+  , brand
+  , "description"
+  , "text"
+  , size
+  , price
+  , vat_rate
+  , rrp
+  , biodynamic
+  , fair_trade
+  , gluten_free
+  , organic
+  , added_sugar
+  , vegan
+  , updated
+  )
+  select 
+    code
+  , category
+  , brand
+  , description
+  , text
+  , size
+  , price
+  , vat_rate
+  , rrp
+  , biodynamic
+  , fair_trade
+  , gluten_free
+  , organic
+  , added_sugar
+  , vegan
+  , updated
+  from public.catalogue_entry;
+
   CREATE TABLE v2.product 
   ( id SERIAL NOT NULL
   , code char(10) NOT NULL
   , PRIMARY KEY (id)
   );
+
+  insert into v2.product 
+  ( id
+  , code
+  )
+  select
+    id
+  , code
+  from public.product;
+
+  CREATE TABLE v2.product_image (
+    code char(10) NOT NULL
+  , image bytea NOT NULL
+  , primary key (code)
+  );
+
+  insert into v2.product_image
+  ( code
+  , image
+  )
+  select
+    code
+  , image
+  from public.product_image;
 
   CREATE TABLE v2.order_group 
   ( id SERIAL NOT NULL
@@ -46,6 +116,19 @@ begin
   , is_payments_enabled boolean DEFAULT true NOT NULL
   , PRIMARY KEY (id)
   );
+
+  insert into v2.order_group 
+  ( id
+  , name
+  , key
+  , is_payments_enabled
+  )
+  select 
+    id
+  , name
+  , key
+  , enable_payments
+  from public.order_group;
 
   CREATE TABLE v2.household 
   ( order_group_id integer NOT NULL
@@ -59,6 +142,25 @@ begin
   , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
   );
 
+  insert into v2.household 
+  ( order_group_id
+  , id
+  , name
+  , contact_name
+  , contact_email
+  , contact_phone
+  , is_archived
+  )
+  select
+    order_group_id
+  , id
+  , name
+  , contact_name
+  , contact_email
+  , contact_phone
+  , archived
+  from public.household;
+
   CREATE TABLE v2."order" 
   ( order_group_id integer NOT NULL
   , id SERIAL     NOT NULL
@@ -70,6 +172,23 @@ begin
   , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
   , FOREIGN KEY (created_by_id) REFERENCES v2.household(id)
   );
+
+  insert into v2."order" 
+  ( order_group_id
+  , id
+  , created
+  , created_by_id
+  , is_placed
+  , is_abandoned
+  )
+  select
+    order_group_id
+  , id
+  , created_date
+  , created_by_id
+  , false
+  , false
+  from public."order";
 
   CREATE TABLE v2.household_order 
   ( order_group_id integer NOT NULL
@@ -139,6 +258,23 @@ begin
   , foreign key (order_group_id) references v2.order_group (id)
   );
 
+  insert into v2.payment
+  ( id
+  , order_group_id
+  , household_id
+  , "date"
+  , amount
+  , is_archived
+  )
+  select
+    id
+  , order_group_id
+  , household_id
+  , date
+  , amount
+  , archived
+  from public.household_payment;
+
   create table v2.file_upload
   ( id             text  not null
   , order_group_id int   not null
@@ -146,7 +282,6 @@ begin
   , primary key (id)
   , foreign key (order_group_id) references v2.order_group (id)
   );
-
 
 end $$ language plpgsql;
 commit;
