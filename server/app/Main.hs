@@ -7,15 +7,19 @@
 
 module Main where
 
+import           Data.Aeson (Object, decode)
+import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as B (pack, unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStrLn, length, take, putStr)
+import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStrLn, length, take, putStr, writeFile)
 import           Data.ByteString.Builder (toLazyByteString, string8, lazyByteString)
 import           Data.CaseInsensitive  (foldedCase)
 import           Data.IORef (newIORef, modifyIORef', readIORef)
 import           Data.List (intercalate, isInfixOf)
 import           Data.Monoid ((<>))
+import           Data.UUID (UUID, toString)
+import           Data.UUID.V1 (nextUUID)
 import           Control.Exception (SomeException(..), catch, displayException)
 import           Control.Monad (when, void)  
 import           Control.Monad.Except (ExceptT(..))  
@@ -30,6 +34,8 @@ import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Network.Wai.Middleware.Static (staticPolicy, addBase)
 import           Servant
 import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensity(..), SGR(..), setSGRCode)
+import           System.Command (readProcessWithExitCode)
+import           System.Directory (createDirectoryIfMissing, removeFile)
 
 import Api
 import qualified Database as D
@@ -126,22 +132,38 @@ compareApiV1WithApiV2 app req sendResponse = do
         putStrLn ""
         resetColor
       else do
-        b1 <- getBodyV1 ()
-        b2 <- getBodyV2 ()
-        if b1 /= b2 then do
+        bodyV1 <- getBodyV1 ()
+        bodyV2 <- getBodyV2 ()
+        if bodyV1 /= bodyV2 then do
           setColor Red
           putStrLn ""
           putStrLn $ "** V1/V2 Body mismatch ** -- " ++ (path reqV2)
-          putStr $ "V1: "
-          BL.putStrLn b1
-          putStr $ "V2: "
-          BL.putStrLn b2
-          putStrLn ""
           resetColor
+          showDiff bodyV1 bodyV2
+          putStrLn ""
         else do
           setColor Green
           putStrLn $ "V1/V2 OK -- " ++ (path reqV1)
           resetColor
+
+showDiff :: BL.ByteString -> BL.ByteString -> IO ()
+showDiff v1 v2 = do
+  diffId <- fmap toString <$> liftIO nextUUID
+  case diffId of
+    Nothing -> return ()
+    Just diffId -> do
+      let objV1 = decode v1 :: Maybe Object
+      let objV2 = decode v2 :: Maybe Object
+      let diffDir = "server/data/diffs/"
+      liftIO $ createDirectoryIfMissing True diffDir
+      let v1File = diffDir ++ diffId ++ "-v1.txt"
+      let v2File = diffDir ++ diffId ++ "-v2.txt"
+      BL.writeFile v1File $ encodePretty objV1
+      BL.writeFile v2File $ encodePretty objV2
+      (exit, out, err) <- readProcessWithExitCode "git" ["diff", "--no-index", "--word-diff=color", v1File, v2File] ""
+      putStrLn out
+      removeFile v1File
+      removeFile v2File
 
 getResponseStr :: Response -> IO (String, String, () -> IO BL.ByteString)
 getResponseStr resp = do
@@ -150,32 +172,17 @@ getResponseStr resp = do
         headersStr = showHeaders headers
     return (statusStr, headersStr, if isImage headersStr
         then \() -> return . BL.pack $ "{image data}"
-        else \() -> getResponseBody 1000 body)
+        else \() -> getResponseBody body)
   where
     isImage = isInfixOf "content-type: image/jpeg"
     showStatus status = (show . statusCode $ status) ++ " " ++ (B.unpack . statusMessage $ status)
     showHeaders headers = intercalate "," . map showHeader $ headers
     showHeader (header, value) = (B.unpack . foldedCase $ header) ++ ": " ++ (B.unpack value)
 
-getResponseBody :: Int -> ((StreamingBody -> IO BL.ByteString) -> IO BL.ByteString) -> IO BL.ByteString
-getResponseBody maxLen body = body $ \f -> do
-  length <- newIORef (Just 0)
+getResponseBody :: ((StreamingBody -> IO BL.ByteString) -> IO BL.ByteString) -> IO BL.ByteString
+getResponseBody body = body $ \f -> do
   content <- newIORef mempty
-  f (\chunk -> readIORef length >>= \case
-      Just len -> do
-        let chunkBL = toLazyByteString chunk
-        let chunkLen = fromIntegral $ BL.length chunkBL
-        if len + chunkLen > maxLen
-          then do
-            let truncChunkBL = BL.take (fromIntegral $ maxLen - len) chunkBL
-            modifyIORef' content (<> (lazyByteString truncChunkBL))
-            modifyIORef' content (<> (string8 "..."))
-            modifyIORef' length (const Nothing)
-          else do
-            modifyIORef' content (<> chunk)
-            modifyIORef' length $ fmap (+ chunkLen)
-      _ -> return ())
-    (return ())
+  f (\chunk -> modifyIORef' content (<> chunk)) (return ())
   toLazyByteString <$> readIORef content
 
 setColor :: Color -> IO ()
