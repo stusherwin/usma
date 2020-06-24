@@ -73,13 +73,13 @@ updateHousehold name contact h = let i = _householdInfo h
 data Payment = Payment 
   { _paymentId :: PaymentId
   , _paymentHouseholdId :: HouseholdId
-  , _paymentDate :: Day
+  , _paymentDate :: UTCTime
   , _paymentAmount :: Int
   } deriving (Eq, Show, Generic)
 
 data PaymentSpec = PaymentSpec
   { _paymentSpecHouseholdId :: HouseholdId
-  , _paymentSpecDate :: Day
+  , _paymentSpecDate :: UTCTime
   , _paymentSpecAmount :: Int
   } deriving (Eq, Show, Generic)
 
@@ -87,7 +87,7 @@ newtype PaymentId = PaymentId
   { fromPaymentId :: Int 
   } deriving (Eq, Show, Generic)
 
-updatePayment :: Day -> Int -> Payment -> Payment
+updatePayment :: UTCTime -> Int -> Payment -> Payment
 updatePayment date amount p = p{ _paymentDate = date
                                , _paymentAmount = amount 
                                }

@@ -308,7 +308,7 @@ commandServerV2 config  =
         paymentId <- liftIO $ R.createPayment repo groupId $ PaymentSpec (HouseholdId householdId) date amount
         return $ fromPaymentId paymentId
       where
-        date = hpdetDate details
+        date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
         amount = hpdetAmount details
 
     updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
@@ -317,7 +317,7 @@ commandServerV2 config  =
         let payment' = DomainV2.updatePayment date amount payment
         liftIO $ setPayment repo groupId (payment, payment')
       where
-        date = hpdetDate details
+        date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
         amount = hpdetAmount details
     
     archiveHouseholdPayment :: Int -> Handler ()
@@ -414,7 +414,7 @@ apiHouseholdPayment :: Payment -> HouseholdPayment
 apiHouseholdPayment p = HouseholdPayment 
   { hpId = fromPaymentId . _paymentId $ p
   , hpHouseholdId = fromHouseholdId . _paymentHouseholdId $ p
-  , hpDate = UTCTime (_paymentDate p) (secondsToDiffTime 0)
+  , hpDate = _paymentDate p
   , hpAmount = _paymentAmount p
   }
 

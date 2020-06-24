@@ -191,7 +191,7 @@ selectHouseholdRows conn whereParams =
            , h.contact_email
            , h.contact_phone
       from v2.household h
-      where h.archived = false |] <> whereClause <> [sql| 
+      where h.is_archived = false |] <> whereClause <> [sql| 
       order by h.name asc
     |]) params
   where 
@@ -258,7 +258,7 @@ selectPayments conn whereParams =
            , p."date"
            , p.amount
       from v2.payment p
-      where p.archived = false |] <> whereClause <> [sql|
+      where p.is_archived = false |] <> whereClause <> [sql|
       order by p.id asc
     |]) params
   where 
@@ -451,11 +451,11 @@ selectOrderItemRows conn whereParams =
       left join v2.product p
         on hoi.product_code = p.code
       left join v2.order_item_adjustment adj
-        on hoi.adjustment_id adj.id
+        on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_code = adj.product_code
       left join v2.vat_rate adjv
         on adjv.code = adj.new_vat_rate
       where 1 = 1 |] <> whereClause <> [sql|
-      order by hoi.id
+      order by hoi.ix
     |]) params
   where
     (whereClause, params) = toWhereClause whereParams $ \case
@@ -857,6 +857,11 @@ data WhereParam = ForOrderGroup OrderGroupId
                 | OrderIsCurrent
                 | OrderIsPast
 
+hasParam :: WhereParam -> Bool
+hasParam OrderIsCurrent = False
+hasParam OrderIsPast = False
+hasParam _ = True
+
 instance ToField WhereParam where
   toField (ForOrderGroup a) = toField a
   toField (ForOrder a) = toField a
@@ -871,7 +876,7 @@ toWhereClause :: [WhereParam] -> (WhereParam -> Maybe Query) -> (Query, [WherePa
 toWhereClause params fn = foldl' fn' ([sql| |], []) params
   where
     fn' (q, p) wp = case fn wp of
-                     Just wq -> (q <> " and (" <> wq <> ")", p <> [wp])
+                     Just wq -> (q <> " and (" <> wq <> ") ", p <> if hasParam wp then [wp] else [])
                      _ -> (q, p)
 
 toDatabaseChar :: Char -> Action

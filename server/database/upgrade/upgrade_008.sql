@@ -6,10 +6,10 @@ begin
   drop schema if exists v2 cascade;
   create schema v2;
 
-  CREATE TABLE v2.vat_rate 
-  ( code character(1) NOT NULL
-  , multiplier numeric(3,2) NOT NULL
-  , PRIMARY KEY (code)
+  create table v2.vat_rate 
+  ( code character(1) not null
+  , multiplier numeric(3,2) not null
+  , primary key (code)
   );
 
   insert into v2.vat_rate 
@@ -38,8 +38,8 @@ begin
   , added_sugar    boolean     not null
   , vegan          boolean     not null
   , updated        timestamptz not null
-  , PRIMARY KEY (code)
-  , FOREIGN KEY (vat_rate) REFERENCES v2.vat_rate(code)
+  , primary key (code)
+  , foreign key (vat_rate) references v2.vat_rate(code)
   );
 
   insert into v2.catalogue_entry
@@ -79,10 +79,10 @@ begin
   , updated
   from public.catalogue_entry;
 
-  CREATE TABLE v2.product 
-  ( id SERIAL NOT NULL
-  , code char(10) NOT NULL
-  , PRIMARY KEY (id)
+  create table v2.product 
+  ( id SERIAL not null
+  , code char(10) not null
+  , primary key (id)
   );
 
   insert into v2.product 
@@ -94,9 +94,9 @@ begin
   , code
   from public.product;
 
-  CREATE TABLE v2.product_image (
-    code char(10) NOT NULL
-  , image bytea NOT NULL
+  create table v2.product_image (
+    code char(10) not null
+  , image bytea not null
   , primary key (code)
   );
 
@@ -109,12 +109,12 @@ begin
   , image
   from public.product_image;
 
-  CREATE TABLE v2.order_group 
-  ( id SERIAL NOT NULL
-  , name text NOT NULL
-  , key text NOT NULL
-  , is_payments_enabled boolean DEFAULT true NOT NULL
-  , PRIMARY KEY (id)
+  create table v2.order_group 
+  ( id SERIAL not null
+  , name text not null
+  , key text not null
+  , is_payments_enabled boolean default true not null
+  , primary key (id)
   );
 
   insert into v2.order_group 
@@ -130,16 +130,16 @@ begin
   , enable_payments
   from public.order_group;
 
-  CREATE TABLE v2.household 
-  ( order_group_id integer NOT NULL
-  , id SERIAL NOT NULL
-  , name text NOT NULL
+  create table v2.household 
+  ( order_group_id integer not null
+  , id SERIAL not null
+  , name text not null
   , contact_name text
   , contact_email text
   , contact_phone text
-  , is_archived boolean NOT NULL
-  , PRIMARY KEY (id)
-  , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
+  , is_archived boolean not null
+  , primary key (id)
+  , foreign key (order_group_id) references v2.order_group(id)
   );
 
   insert into v2.household 
@@ -161,16 +161,16 @@ begin
   , archived
   from public.household;
 
-  CREATE TABLE v2."order" 
-  ( order_group_id integer NOT NULL
-  , id SERIAL     NOT NULL
-  , created        timestamp with time zone NOT NULL
+  create table v2."order" 
+  ( order_group_id integer not null
+  , id SERIAL     not null
+  , created        timestamp with time zone not null
   , created_by_id  integer
-  , is_placed      boolean NOT NULL
-  , is_abandoned   boolean NOT NULL
-  , PRIMARY KEY (id)
-  , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
-  , FOREIGN KEY (created_by_id) REFERENCES v2.household(id)
+  , is_placed      boolean not null
+  , is_abandoned   boolean not null
+  , primary key (id)
+  , foreign key (order_group_id) references v2.order_group(id)
+  , foreign key (created_by_id) references v2.household(id)
   );
 
   insert into v2."order" 
@@ -190,60 +190,61 @@ begin
   , false
   from public."order";
 
-  CREATE TABLE v2.household_order 
-  ( order_group_id integer NOT NULL
-  , order_id integer NOT NULL
-  , household_id integer NOT NULL
-  , updated timestamp with time zone NOT NULL
-  , is_complete boolean NOT NULL
-  , is_placed boolean NOT NULL
-  , is_abandoned boolean NOT NULL
-  , PRIMARY KEY (order_id, household_id)
-  , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
-  , FOREIGN KEY (order_id) REFERENCES v2."order"(id)
-  , FOREIGN KEY (household_id) REFERENCES v2.household(id)
+  create table v2.household_order 
+  ( order_group_id integer not null
+  , order_id integer not null
+  , household_id integer not null
+  , updated timestamp with time zone not null
+  , is_complete boolean not null
+  , is_placed boolean not null
+  , is_abandoned boolean not null
+  , primary key (order_id, household_id)
+  , foreign key (order_group_id) references v2.order_group(id)
+  , foreign key (order_id) references v2."order"(id)
+  , foreign key (household_id) references v2.household(id)
   );
 
-  CREATE TABLE v2.order_item 
-  ( order_group_id integer NOT NULL
-  , order_id integer NOT NULL
-  , household_id integer NOT NULL
-  , product_code char(10) NOT NULL
-  , product_name text NOT NULL
-  , product_price integer NOT NULL
-  , product_vat_rate character(1) NOT NULL
-  , product_vat_rate_multiplier numeric(3,2) NOT NULL
-  , product_is_biodynamic boolean DEFAULT false NOT NULL
-  , product_is_fair_trade boolean DEFAULT false NOT NULL
-  , product_is_gluten_free boolean DEFAULT false NOT NULL
-  , product_is_organic boolean DEFAULT false NOT NULL
-  , product_is_added_sugar boolean DEFAULT false NOT NULL
-  , product_is_vegan boolean DEFAULT false NOT NULL
-  , quantity integer NOT NULL
-  , PRIMARY KEY (order_id, household_id, product_code)
-  , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
-  , FOREIGN KEY (order_id) REFERENCES v2."order"(id)
-  , FOREIGN KEY (household_id) REFERENCES v2.household(id)
-  , FOREIGN KEY (order_id, household_id) REFERENCES v2.household_order(order_id, household_id)
+  create table v2.order_item 
+  ( order_group_id integer not null
+  , order_id integer not null
+  , household_id integer not null
+  , product_code char(10) not null
+  , product_name text not null
+  , product_price integer not null
+  , product_vat_rate character(1) not null
+  , product_vat_rate_multiplier numeric(3,2) not null
+  , product_is_biodynamic boolean default false not null
+  , product_is_fair_trade boolean default false not null
+  , product_is_gluten_free boolean default false not null
+  , product_is_organic boolean default false not null
+  , product_is_added_sugar boolean default false not null
+  , product_is_vegan boolean default false not null
+  , quantity integer not null
+  , ix serial not null
+  , primary key (order_id, household_id, product_code)
+  , foreign key (order_group_id) references v2.order_group(id)
+  , foreign key (order_id) references v2."order"(id)
+  , foreign key (household_id) references v2.household(id)
+  , foreign key (order_id, household_id) references v2.household_order(order_id, household_id)
   );
 
-  CREATE TABLE v2.order_item_adjustment 
-  ( order_group_id integer NOT NULL
-  , order_id integer NOT NULL
-  , household_id integer NOT NULL
-  , product_code char(10) NOT NULL
-  , new_vat_rate character(1) NOT NULL
-  , new_price integer NOT NULL
-  , new_quantity integer NOT NULL
-  , is_discontinued boolean NOT NULL
-  , date timestamp with time zone NOT NULL
-  , PRIMARY KEY (order_id, household_id, product_code)
-  , FOREIGN KEY (order_group_id) REFERENCES v2.order_group(id)
-  , FOREIGN KEY (order_id) REFERENCES v2."order"(id)
-  , FOREIGN KEY (household_id) REFERENCES v2.household(id)
-  , FOREIGN KEY (order_id, household_id) REFERENCES v2.household_order(order_id, household_id)
-  , FOREIGN KEY (order_id, household_id, product_code) REFERENCES v2.order_item(order_id, household_id, product_code)
-  , FOREIGN KEY (new_vat_rate) REFERENCES v2.vat_rate(code)
+  create table v2.order_item_adjustment 
+  ( order_group_id integer not null
+  , order_id integer not null
+  , household_id integer not null
+  , product_code char(10) not null
+  , new_vat_rate character(1) not null
+  , new_price integer not null
+  , new_quantity integer not null
+  , is_discontinued boolean not null
+  , date timestamp with time zone not null
+  , primary key (order_id, household_id, product_code)
+  , foreign key (order_group_id) references v2.order_group(id)
+  , foreign key (order_id) references v2."order"(id)
+  , foreign key (household_id) references v2.household(id)
+  , foreign key (order_id, household_id) references v2.household_order(order_id, household_id)
+  , foreign key (order_id, household_id, product_code) references v2.order_item(order_id, household_id, product_code)
+  , foreign key (new_vat_rate) references v2.vat_rate(code)
   );
 
   create table v2.payment
