@@ -224,7 +224,7 @@ getCollectiveOrderItemData conn groupId =
     inner join vat_rate v on v.code = p.vat_rate
     where ho.order_group_id = ? and not ho.cancelled
     group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
-    order by p.code asc
+    order by p.code
   |] (Only groupId)
 
 getPastOrderItemData :: Connection -> Int -> IO [(Int, PastOrderItemData)]
@@ -255,7 +255,7 @@ getPastOrderItemData conn groupId = do
     left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
     where hoi.order_group_id = ?
     group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.product_biodynamic, hoi.product_fair_trade, hoi.product_gluten_free, hoi.product_organic, hoi.product_added_sugar, hoi.product_vegan
-    order by hoi.order_id, hoi.product_code asc
+    order by hoi.product_code
   |] (Only groupId)
   return $ map (\((Only id) :. d) -> (id, d)) items
 
@@ -264,7 +264,6 @@ getHouseholdOrderItemData conn groupId =
   query conn [sql|
     select hoi.order_id
          , hoi.household_id
-
          , p.id
          , p.code
          , p.name
@@ -300,7 +299,7 @@ getHouseholdOrderItemData conn groupId =
     inner join product p on p.id = hoi.product_id
     inner join vat_rate v on v.code = p.vat_rate
     where ho.order_group_id = ?
-    order by hoi.ix
+    order by p.code
   |] (Only groupId)
 
 getPastHouseholdOrderItemData :: Connection -> Int -> IO [((Int, Int), PastOrderItemData)]
@@ -331,7 +330,7 @@ getPastHouseholdOrderItemData conn groupId = do
     from past_household_order_item hoi
     left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
     where hoi.order_group_id = ?
-    order by hoi.household_id, hoi.product_code
+    order by hoi.product_code
   |] (Only groupId)
   return $ map (\(id :. d) -> (id, d)) items
 

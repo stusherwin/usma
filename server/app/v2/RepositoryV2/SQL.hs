@@ -11,6 +11,7 @@ module RepositoryV2.SQL where
 
 import Control.Monad (mzero, void, join)
 import Data.ByteString (ByteString)
+import Data.Char (isSpace)
 import Data.List (foldl')
 import Data.Monoid ((<>))
 import qualified Data.Text as T (pack)
@@ -457,7 +458,7 @@ selectOrderItemRows conn whereParams =
       left join v2.vat_rate adjv
         on adjv.code = adj.new_vat_rate
       where 1 = 1 |] <> whereClause <> [sql|
-      order by hoi.ix
+      order by hoi.product_code
     |]) params
   where
     (whereClause, params) = toWhereClause whereParams $ \case
@@ -722,7 +723,7 @@ instance ToField ProductId where
   toField = toField . fromProductId
 
 instance FromField ProductCode where
-  fromField f char = ProductCode <$> fromField f char
+  fromField f char = ProductCode . takeWhile (not . isSpace) <$> fromField f char
 
 instance ToField ProductCode where
   toField = toField . fromProductCode
