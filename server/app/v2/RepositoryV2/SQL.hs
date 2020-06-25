@@ -320,6 +320,8 @@ selectOrderRows conn whereParams = do
            , o.created
            , cb.id as created_by_household_id
            , cb.name as created_by_household_name
+           , o.is_abandoned
+           , o.is_placed
       from v2."order" o
       left join v2.household cb
         on cb.id = o.created_by_id 

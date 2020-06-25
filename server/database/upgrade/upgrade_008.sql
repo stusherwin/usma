@@ -188,13 +188,21 @@ begin
   , created_by_id
   , false
   , false
-  from public."order";
+  from public."order"
+  union all
+  select
+    order_group_id
+  , id
+  , created_date
+  , created_by_id
+  , not cancelled
+  , cancelled
+  from public.past_order;
 
   create table v2.household_order 
   ( order_group_id integer not null
   , order_id integer not null
   , household_id integer not null
-  , updated timestamp with time zone not null
   , is_complete boolean not null
   , is_placed boolean not null
   , is_abandoned boolean not null
@@ -203,6 +211,40 @@ begin
   , foreign key (order_id) references v2."order"(id)
   , foreign key (household_id) references v2.household(id)
   );
+
+  insert into v2.household_order 
+  ( order_group_id
+  , order_id
+  , household_id
+  , is_complete
+  , is_placed
+  , is_abandoned
+  )
+  select 
+    ho.order_group_id
+  , ho.order_id
+  , ho.household_id
+  , ho.complete
+  , false
+  , ho.cancelled
+  from public.household_order ho
+  union all
+  select 
+    ho.order_group_id
+  , ho.order_id
+  , ho.household_id
+  , not ho.cancelled
+  , case 
+      when ho.cancelled then false
+      else not o.cancelled
+    end
+  , case 
+      when ho.cancelled then true
+      else o.cancelled
+    end
+  from public.past_household_order ho
+  inner join public.past_order o 
+    on o.id = ho.order_id;
 
   create table v2.order_item 
   ( order_group_id integer not null
