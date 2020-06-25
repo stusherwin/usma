@@ -362,13 +362,15 @@ toHousehold rHouseholdOrders rOrderItems rPayments h =
   Household householdInfo
             householdContact
             householdOrders
-            rPayments
+            householdPayments
   where
   householdInfo = householdRow_householdInfo h
   householdContact = householdRow_contact h
   householdOrders = map (toHouseholdOrder rOrderItems)
                   . filter (( == _householdId householdInfo) . _householdId . householdOrderRow_householdInfo)
                   $ rHouseholdOrders      
+  householdPayments = filter (( == _householdId householdInfo) . _paymentHouseholdId)
+                    $ rPayments
 
 toOrder :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> OrderRow -> Order
 toOrder rHouseholdOrders rOrderItems o = 
