@@ -115,7 +115,7 @@ showDiff v1 v2 = do
       let v2File = diffDir ++ diffId ++ "-v2.txt"
       BL.writeFile v1File $ encodePretty objV1
       BL.writeFile v2File $ encodePretty objV2
-      (exit, out, err) <- readProcessWithExitCode "git" ["diff", "--no-index", "--word-diff=color", v1File, v2File] ""
+      (exit, out, err) <- readProcessWithExitCode "git" ["diff", "--no-index", "--word-diff=color", "--inter-hunk-context=999", v1File, v2File] ""
       putStrLn out
       removeFile v1File
       removeFile v2File

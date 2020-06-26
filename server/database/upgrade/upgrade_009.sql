@@ -314,7 +314,10 @@ begin
   , hoi.household_id
   , hoi.product_code
   , hoi.product_name
-  , hoi.product_price_exc_vat
+  , case 
+      when adj.old_product_price_exc_vat is not null then adj.old_product_price_exc_vat
+      else hoi.product_price_exc_vat 
+    end
   , hoi.product_vat_rate
   , v.multiplier
   , hoi.product_biodynamic
@@ -323,8 +326,13 @@ begin
   , hoi.product_organic
   , hoi.product_added_sugar
   , hoi.product_vegan
-  , hoi.quantity
+  , case 
+      when adj.old_quantity is not null then adj.old_quantity
+      else hoi.quantity
+    end
   from public.past_household_order_item hoi
+  left join public.order_item_adjustment adj 
+    on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
   inner join public.product p
     on p.id = hoi.product_id
   inner join public.vat_rate v
@@ -348,6 +356,50 @@ begin
   , foreign key (order_id, household_id, product_code) references v2.order_item(order_id, household_id, product_code)
   , foreign key (new_vat_rate) references v2.vat_rate(code)
   );
+
+  insert into v2.order_item_adjustment 
+  ( order_group_id
+  , order_id
+  , household_id
+  , product_code
+  , new_vat_rate
+  , new_price
+  , new_quantity
+  , is_discontinued
+  , date
+  )
+  select
+    hoi.order_group_id
+  , hoi.order_id
+  , hoi.household_id
+  , p.code
+  , p.vat_rate
+  , case when p.discontinued then 0 
+         else p.price 
+    end
+  , hoi.quantity
+  , p.discontinued
+  , p.updated
+    from public.household_order_item hoi
+    inner join public.household_order ho 
+      on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
+    inner join public.product p 
+      on p.id = hoi.product_id
+    where p.updated > ho.updated 
+  union all
+  select 
+    hoi.order_group_id
+  , hoi.order_id
+  , hoi.household_id
+  , hoi.product_code
+  , hoi.product_vat_rate
+  , hoi.product_price_exc_vat
+  , hoi.quantity
+  , false
+  , now()
+  from public.past_household_order_item hoi
+  inner join public.order_item_adjustment adj 
+    on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id;
 
   create table v2.payment
   ( id             serial      not null
