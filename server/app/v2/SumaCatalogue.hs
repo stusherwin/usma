@@ -1,8 +1,8 @@
 module SumaCatalogue where
 
-import           Control.Exception (handle)  
+import           Control.Exception (Exception, SomeException(..), handle)  
 import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
-import qualified Data.ByteString.Lazy.Char8 as BL (unpack)
+import qualified Data.ByteString.Lazy.Char8 as BL (unpack, putStrLn)
 import           Network.HTTP.Conduit (HttpException, simpleHttp)
 import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 
@@ -31,8 +31,9 @@ fetchDataFromWebsite code = handle handleException $ do
                                   , size = read $ fromAttrib "height" img
                                   }
   where
-  handleException :: HttpException -> IO (Maybe WebsiteProductData)
-  handleException _ = return Nothing
+  handleException (SomeException ex) = do
+    putStrLn $ show ex
+    return Nothing
 
 fetchProductImage :: Repository -> String -> IO (Maybe BL.ByteString)
 fetchProductImage repo code = handle handleException $ do 
@@ -50,7 +51,7 @@ fetchProductImage repo code = handle handleException $ do
           img <- BL.readFile "client/static/img/404.jpg"
           return $ Just $ img
   where
-  handleException :: HttpException -> IO (Maybe BL.ByteString)
-  handleException _ = do
+  handleException (SomeException ex) = do
+    putStrLn $ show ex
     img <- BL.readFile "client/static/img/404.jpg"
     return $ Just $ img

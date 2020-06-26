@@ -726,7 +726,10 @@ instance FromField ProductCode where
   fromField f char = ProductCode . takeWhile (not . isSpace) <$> fromField f char
 
 instance ToField ProductCode where
-  toField = toField . fromProductCode
+  toField = toField . padChar10 . fromProductCode
+ 
+padChar10 :: String -> String
+padChar10 s = take 10 $ s ++ repeat ' '
 
 productFlagsField :: RowParser ProductFlags
 productFlagsField = ProductFlags <$> field <*> field <*> field <*> field <*> field <*> field
