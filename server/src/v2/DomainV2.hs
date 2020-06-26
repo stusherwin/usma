@@ -10,8 +10,8 @@ import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup, elems)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
 import           Data.Time.Calendar (Day)
-import           Data.Semigroup (Semigroup(..))
-import           Data.List (groupBy, maximumBy, find, delete, lookup, partition)
+import           Data.Semigroup (Semigroup(..), sconcat)
+import           Data.List (groupBy, maximumBy, find, delete, lookup, partition, sortBy)
 import           Data.List.Extra (trim, lower)
 import           Data.Maybe (isJust, maybe, fromMaybe, catMaybes)
 import           Data.Ord (comparing)
@@ -167,6 +167,7 @@ orderAdjustment o =
 orderItems :: Order -> [OrderItem]
 orderItems = map (sconcat . NE.fromList) 
            . groupBy ((==) `on` itemProductCode)
+           . sortBy (compare `on` fromProductCode . itemProductCode)
            . concatMap _householdOrderItems
            . _orderHouseholdOrders
 

@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module AppServerV2 (appServerV2) where
+module AppServerV2 where
 
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
