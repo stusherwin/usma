@@ -71,13 +71,13 @@ getProductCatalogueCategories :: Repository -> IO [String]
 getProductCatalogueCategories repo = do
   let conn = connection repo
 
-  selectCatalogueEntryCategories conn
+  (fromOnly <$>) <$> selectCatalogueEntryCategories conn
 
 getProductCatalogueBrands :: Repository -> IO [String]
 getProductCatalogueBrands repo = do
   let conn = connection repo
 
-  selectCatalogueEntryBrands conn
+  (fromOnly <$>) <$> selectCatalogueEntryBrands conn
 
 setProductCatalogue :: Repository -> ProductCatalogue -> IO ()
 setProductCatalogue repo catalogue = do

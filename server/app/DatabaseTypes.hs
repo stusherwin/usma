@@ -252,8 +252,8 @@ fromCollectiveOrderData items d
 
 fromPastCollectiveOrderData :: [(Int, PastOrderItemData)] -> PastCollectiveOrderData -> PastCollectiveOrder
 fromPastCollectiveOrderData items (d@PastCollectiveOrderData { pcodOldTotalExcVat = Just oldTotalExcVat
-                                                             , pcodOldTotalIncVat = Just oldTotalIncVat })
-  = PastCollectiveOrder (pcodOrderId d)
+                                                             , pcodOldTotalIncVat = Just oldTotalIncVat }) =
+    PastCollectiveOrder (pcodOrderId d)
                         (pcodOrderCreated d)
                         (pcodOrderCreatedBy d)
                         (pcodOrderCreatedByName d)
@@ -267,9 +267,8 @@ fromPastCollectiveOrderData items (d@PastCollectiveOrderData { pcodOldTotalExcVa
                         True 
                         (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) 
                         $ map (fromPastOrderItemData . snd) $ filter (\(orderId, _) -> orderId == pcodOrderId d) items
-
-fromPastCollectiveOrderData items d 
-  = PastCollectiveOrder (pcodOrderId d)
+fromPastCollectiveOrderData items d =
+    PastCollectiveOrder (pcodOrderId d)
                         (pcodOrderCreated d)
                         (pcodOrderCreatedBy d)
                         (pcodOrderCreatedByName d)

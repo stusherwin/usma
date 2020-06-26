@@ -61,9 +61,9 @@ selectCatalogueEntries conn whereParams =
            , ce."description"
            , ce."text"
            , ce.size
-           , ce.price
            , ce.vat_rate
            , v.multiplier
+           , ce.price
            , ce.rrp
            , ce.biodynamic
            , ce.fair_trade
@@ -86,7 +86,7 @@ selectCatalogueEntries conn whereParams =
       (ForOrderGroup _) -> Just [sql| o.order_group_id = ? |]
       _ -> Nothing
 
-selectCatalogueEntryCategories :: Connection -> IO [String]
+selectCatalogueEntryCategories :: Connection -> IO [Only String]
 selectCatalogueEntryCategories conn = 
     query_ conn [sql|
       select distinct ce.category
@@ -94,12 +94,12 @@ selectCatalogueEntryCategories conn =
       order by ce.category
     |]
 
-selectCatalogueEntryBrands :: Connection -> IO [String]
+selectCatalogueEntryBrands :: Connection -> IO [Only String]
 selectCatalogueEntryBrands conn = 
     query_ conn [sql|
       select distinct ce.brand
       from v2.catalogue_entry ce
-      order by ce.category
+      order by ce.brand
     |]
 
 truncateCatalogueEntries :: Connection -> IO ()
@@ -118,8 +118,8 @@ insertCatalogueEntries conn entries =
       , "description"
       , "text"
       , size
-      , price
       , vat_rate
+      , price
       , rrp
       , biodynamic
       , fair_trade
@@ -473,9 +473,9 @@ insertOrderItems conn items = do
   let rows = items <&> \((groupId, orderId, householdId, _), i) -> 
                          UpdateOrderItem (_itemQuantity i)
                                          (_productName . _productInfo . _itemProduct $ i)
-                                         (_moneyExcVat . _priceAmount . itemProductPrice $ i)
                                          (_vatRateType . _priceVatRate . itemProductPrice $ i)
                                          ((realToFrac $ _vatRateMultiplier . _priceVatRate . itemProductPrice $ i) :: Double)
+                                         (_moneyExcVat . _priceAmount . itemProductPrice $ i)
                                          (_productIsBiodynamic . _productFlags . _itemProduct $ i)
                                          (_productIsFairTrade  . _productFlags . _itemProduct $ i)
                                          (_productIsGlutenFree . _productFlags . _itemProduct $ i)
@@ -490,9 +490,9 @@ insertOrderItems conn items = do
     insert into v2.order_item 
       ( quantity
       , product_name
-      , product_price
       , product_vat_rate
       , product_vat_rate_multiplier
+      , product_price
       , product_is_biodynamic
       , product_is_fair_trade
       , product_is_gluten_free
@@ -512,9 +512,9 @@ updateOrderItems conn items = do
   let rows = items <&> \((groupId, orderId, householdId, status), i) -> 
                          UpdateOrderItem (_itemQuantity i)
                                          (_productName . _productInfo . _itemProduct $ i)
-                                         (_moneyExcVat . _priceAmount . itemProductPrice $ i)
                                          (_vatRateType . _priceVatRate . itemProductPrice $ i)
                                          ((realToFrac $ _vatRateMultiplier . _priceVatRate . itemProductPrice $ i) :: Double)
+                                         (_moneyExcVat . _priceAmount . itemProductPrice $ i)
                                          (_productIsBiodynamic . _productFlags . _itemProduct $ i)
                                          (_productIsFairTrade  . _productFlags . _itemProduct $ i)
                                          (_productIsGlutenFree . _productFlags . _itemProduct $ i)
@@ -529,9 +529,9 @@ updateOrderItems conn items = do
     update v2.order_item
     set quantity = ?
       , product_name = ?
-      , product_price = ?
       , product_vat_rate = ?
       , product_vat_rate_multiplier = ?
+      , product_price = ?
       , product_is_biodynamic = ?
       , product_is_fair_trade = ?
       , product_is_gluten_free = ?
@@ -735,8 +735,8 @@ priceField :: RowParser Price
 priceField = atVatRate <$> vatRateField <*> field
 
 instance ToField Price where
-  toField p = Many [ toField . _moneyExcVat . _priceAmount $ p
-                   , toField . _vatRateType . _priceVatRate $ p
+  toField p = Many [ toField . _vatRateType . _priceVatRate $ p
+                   , toField (realToFrac . _moneyExcVat . _priceAmount $ p :: Double)
                    ]
 
 vatRateField :: RowParser VatRate
@@ -801,7 +801,7 @@ instance ToRow ProductCatalogueEntry where
             , toField $ _catalogueEntryDescription e
             , toField $ _catalogueEntryText e
             , toField $ _catalogueEntrySize e
-            , toField $ _catalogueEntryPrice e
+            , toField $ _catalogueEntryPrice $ e
             , toField $ _catalogueEntryRrp e
             , toField $ _catalogueEntryBiodynamic e
             , toField $ _catalogueEntryFairTrade e
@@ -818,9 +818,9 @@ instance FromRow ProductCatalogueEntry where
 data UpdateOrderItem = UpdateOrderItem
   { updateOrderItem_quantity :: Int
   , updateOrderItem_product_name :: String
-  , updateOrderItem_product_price :: Int
   , updateOrderItem_product_vat_rate :: VatRateType
   , updateOrderItem_product_vat_rate_multiplier :: Double
+  , updateOrderItem_product_price :: Int
   , updateOrderItem_product_is_biodynamic :: Bool
   , updateOrderItem_product_is_fair_trade :: Bool
   , updateOrderItem_product_is_gluten_free :: Bool
@@ -836,9 +836,9 @@ data UpdateOrderItem = UpdateOrderItem
 instance ToRow UpdateOrderItem where
   toRow i = [ toField $ updateOrderItem_quantity i
             , toField $ updateOrderItem_product_name i
-            , toField $ updateOrderItem_product_price i
             , toField $ updateOrderItem_product_vat_rate i
             , toField $ updateOrderItem_product_vat_rate_multiplier i
+            , toField $ updateOrderItem_product_price i
             , toField $ updateOrderItem_product_is_biodynamic i
             , toField $ updateOrderItem_product_is_fair_trade i
             , toField $ updateOrderItem_product_is_gluten_free i

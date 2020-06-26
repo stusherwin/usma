@@ -157,9 +157,9 @@ orderTotal = sum . map householdOrderTotal . _orderHouseholdOrders
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
-    if orderTotal o == adjTotal
-      then Nothing
-      else Just $ OrderAdjustment adjTotal
+    if any (isJust . householdOrderAdjustment) (_orderHouseholdOrders o)
+      then Just $ OrderAdjustment adjTotal
+      else Nothing
   where
     adjTotal = sum . map adjHouseholdOrderTotal . _orderHouseholdOrders $ o
     adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
@@ -325,9 +325,9 @@ householdOrderTotal = sum . map itemTotal . _householdOrderItems
 
 householdOrderAdjustment :: HouseholdOrder -> Maybe OrderAdjustment
 householdOrderAdjustment ho =
-    if householdOrderTotal ho == adjTotal 
-      then Nothing 
-      else Just $ OrderAdjustment adjTotal
+    if any (isJust . _itemAdjustment) (_householdOrderItems ho)
+      then Just $ OrderAdjustment adjTotal
+      else Nothing
   where
     adjTotal = sum . map adjItemTotal . _householdOrderItems $ ho
     adjItemTotal i = fromMaybe (itemTotal i) $ fmap itemAdjNewTotal $ _itemAdjustment i
@@ -650,7 +650,7 @@ findEntry :: ProductCode -> ProductCatalogue -> Maybe ProductCatalogueEntry
 findEntry code = H.lookup code . fromProductCatalogue
 
 getEntries :: ProductCatalogue -> [ProductCatalogueEntry]
-getEntries = H.elems . fromProductCatalogue
+getEntries = sortBy (compare `on` fromProductCode . _catalogueEntryCode) . H.elems . fromProductCatalogue
 
 --TODO: Safe version? If catalogue empty
 getDate :: ProductCatalogue -> UTCTime

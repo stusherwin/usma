@@ -669,6 +669,7 @@ getProductCatalogue connectionString = do
          , ce.brand
     from catalogue_entry ce
     inner join vat_rate v on ce.vat_rate = v.code
+    order by ce.code
   |]
   close conn
   return $ (rEntries :: [ProductCatalogueEntryData]) <&> \(ProductCatalogueEntryData { pcedCode, pcedName, pcedPriceExcVat, pcedPriceIncVat, pcedVatRate, pcedBiodynamic, pcedFairTrade, pcedGlutenFree, pcedOrganic, pcedAddedSugar, pcedVegan, pcedCategory, pcedBrand }) -> ProductCatalogueEntry pcedCode pcedName pcedPriceExcVat pcedPriceIncVat pcedVatRate pcedBiodynamic pcedFairTrade pcedGlutenFree pcedOrganic pcedAddedSugar pcedVegan pcedCategory pcedBrand
