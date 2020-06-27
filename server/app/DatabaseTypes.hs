@@ -4,6 +4,7 @@ module DatabaseTypes where
   
 import Control.Monad (mzero, when, void, forM_)
 import qualified Data.Text as T
+import Data.Maybe (isJust)
 import Data.Time.Clock (UTCTime)
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple
@@ -265,8 +266,12 @@ fromPastCollectiveOrderData items (d@PastCollectiveOrderData { pcodOldTotalExcVa
                         (pcodTotalExcVat d)
                         (pcodTotalIncVat d)
                         True 
-                        (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat) 
-                        $ map (fromPastOrderItemData . snd) $ filter (\(orderId, _) -> orderId == pcodOrderId d) items
+                        (if any (isJust . oiAdjustment) items'
+                          then Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat
+                          else Nothing)
+                        $ items'
+  where
+    items' = map (fromPastOrderItemData . snd) $ filter (\(orderId, _) -> orderId == pcodOrderId d) items
 fromPastCollectiveOrderData items d =
     PastCollectiveOrder (pcodOrderId d)
                         (pcodOrderCreated d)
@@ -303,8 +308,8 @@ fromHouseholdOrderData items d
 
 fromPastHouseholdOrderData :: [((Int, Int), PastOrderItemData)] -> PastHouseholdOrderData -> PastHouseholdOrder
 fromPastHouseholdOrderData items (d@PastHouseholdOrderData { phodOldTotalExcVat = Just oldTotalExcVat
-                                                           , phodOldTotalIncVat = Just oldTotalIncVat })
-  = PastHouseholdOrder (phodOrderId d) 
+                                                           , phodOldTotalIncVat = Just oldTotalIncVat }) =
+    PastHouseholdOrder (phodOrderId d) 
                        (phodOrderCreated d)
                        (phodOrderCreatedBy d) 
                        (phodOrderCreatedByName d) 
@@ -318,8 +323,13 @@ fromPastHouseholdOrderData items (d@PastHouseholdOrderData { phodOldTotalExcVat 
                        (phodReconciled d)
                        (phodTotalExcVat d)
                        (phodTotalIncVat d)
-                       (Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat)
-                       $ map (fromPastOrderItemData . snd) $ filter (\((orderId, householdId), _) -> orderId == phodOrderId d && householdId == phodHouseholdId d) items
+                       (if any (isJust . oiAdjustment) items'
+                         then Just $ OrderAdjustment oldTotalExcVat oldTotalIncVat
+                         else Nothing)
+                       $ items'
+  where
+    items' = map (fromPastOrderItemData . snd) $ filter (\((orderId, householdId), _) -> orderId == phodOrderId d && householdId == phodHouseholdId d) items
+  
 
 fromPastHouseholdOrderData items d
   = PastHouseholdOrder (phodOrderId d) 

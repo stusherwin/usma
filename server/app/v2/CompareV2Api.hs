@@ -176,6 +176,7 @@ showDiff v1 v2 = do
         , "--no-index"
         , "--word-diff=color"
         -- , "--inter-hunk-context=999"
+        , "--function-context"
         , v1File
         , v2File
         ] ""
