@@ -323,6 +323,12 @@ setHouseholdOrders repo orders = do
 
     let items = join (***) (concat . map keyedItems) $ orders
     let products = join (***) (nub . map (itemProductCode . snd)) $ items
+    putStrLn "Old Products:"
+    putStrLn $ unlines $ map show $ fst products
+    putStrLn ""
+    putStrLn "New Products:"
+    putStrLn $ unlines $ map show $ snd products
+    putStrLn ""
     let adjustments = join (***) (catMaybes . map keyedAdjustment) $ items
 
     let addedItems = addedBy fst items

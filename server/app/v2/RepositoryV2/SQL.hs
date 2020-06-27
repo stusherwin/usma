@@ -179,7 +179,6 @@ insertProducts conn codes =
       ( "code"
       )
     values (?)
-    on conflict ("code") do nothing
   |] $ map Only codes
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
@@ -423,7 +422,6 @@ insertHouseholdOrders conn orders = do
   void $ executeMany conn [sql|
     insert into v2.household_order (is_abandoned, is_complete, is_placed, order_group_id, order_id, household_id) 
     values (?, ?, ?, ?, ?, ?)
-    on conflict (order_group_id, order_id, household_id) do nothing
   |] rows
 
 updateHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
@@ -595,10 +593,21 @@ updateOrderItems conn items = do
 deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
 deleteOrderItems conn items = do
   let rows = items <&> \((groupId, orderId, householdId), i) -> (groupId, orderId, householdId, itemProductCode i)
-  void $ executeMany conn [sql|
-    delete from v2.order_item
-    where order_group_id = ? and order_id = ? and household_id = ? and product_code = ?
+  putStrLn $ unlines $ map show rows
+  n <- executeMany conn [sql|
+    delete from v2.order_item i
+    using (values (?, ?, ?, ?)) as d 
+    ( order_group_id
+    , order_id
+    , household_id
+    , product_code
+    )
+    where i.order_group_id = d.order_group_id
+      and i.order_id = d.order_id
+      and i.household_id = d.household_id
+      and i.product_code = d.product_code
   |] rows
+  putStrLn $ show n
 
 insertOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItemAdjustment)] -> IO ()
 insertOrderItemAdjustments conn adjustments = do
@@ -661,8 +670,17 @@ deleteOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdI
 deleteOrderItemAdjustments conn adjustments = do
   let rows = adjustments <&> \((groupId, orderId, householdId, productCode), _) -> (groupId, orderId, householdId, productCode)
   void $ executeMany conn [sql|
-    delete from v2.order_item_adjustment
-    where order_group_id = ? and order_id = ? and household_id = ? and product_code = ?
+    delete from v2.order_item_adjustment a
+    using (values (?, ?, ?, ?)) as d 
+    ( order_group_id
+    , order_id
+    , household_id
+    , product_code
+    )
+    where a.order_group_id = d.order_group_id
+      and a.order_id = d.order_id
+      and a.household_id = d.household_id
+      and a.product_code = d.product_code
   |] rows
 
 selectFileUpload :: Connection -> OrderGroupId -> String -> IO [Only ByteString]
