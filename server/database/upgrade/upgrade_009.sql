@@ -80,7 +80,7 @@ begin
   from public.catalogue_entry;
 
   create table v2.product 
-  ( id SERIAL not null
+  ( id serial not null
   , code char(10) not null
   , primary key (id)
   );
@@ -110,7 +110,7 @@ begin
   from public.product_image;
 
   create table v2.order_group 
-  ( id SERIAL not null
+  ( id serial not null
   , name text not null
   , key text not null
   , is_payments_enabled boolean default true not null
@@ -132,13 +132,13 @@ begin
 
   create table v2.household 
   ( order_group_id integer not null
-  , id SERIAL not null
+  , id serial not null
   , name text not null
   , contact_name text
   , contact_email text
   , contact_phone text
   , is_archived boolean not null
-  , primary key (id)
+  , primary key (order_group_id, id)
   , foreign key (order_group_id) references v2.order_group(id)
   );
 
@@ -163,14 +163,14 @@ begin
 
   create table v2."order" 
   ( order_group_id integer not null
-  , id SERIAL     not null
+  , id serial     not null
   , created        timestamp with time zone not null
   , created_by_id  integer
   , is_placed      boolean not null
   , is_abandoned   boolean not null
-  , primary key (id)
+  , primary key (order_group_id, id)
   , foreign key (order_group_id) references v2.order_group(id)
-  , foreign key (created_by_id) references v2.household(id)
+  , foreign key (order_group_id, created_by_id) references v2.household(order_group_id, id)
   );
 
   insert into v2."order" 
@@ -206,10 +206,10 @@ begin
   , is_complete boolean not null
   , is_placed boolean not null
   , is_abandoned boolean not null
-  , primary key (order_id, household_id)
+  , primary key (order_group_id, order_id, household_id)
   , foreign key (order_group_id) references v2.order_group(id)
-  , foreign key (order_id) references v2."order"(id)
-  , foreign key (household_id) references v2.household(id)
+  , foreign key (order_group_id, order_id) references v2."order"(order_group_id, id)
+  , foreign key (order_group_id, household_id) references v2.household(order_group_id, id)
   );
 
   insert into v2.household_order 
@@ -262,11 +262,11 @@ begin
   , product_is_added_sugar boolean default false not null
   , product_is_vegan boolean default false not null
   , quantity integer not null
-  , primary key (order_id, household_id, product_code)
+  , primary key (order_group_id, order_id, household_id, product_code)
   , foreign key (order_group_id) references v2.order_group(id)
-  , foreign key (order_id) references v2."order"(id)
-  , foreign key (household_id) references v2.household(id)
-  , foreign key (order_id, household_id) references v2.household_order(order_id, household_id)
+  , foreign key (order_group_id, order_id) references v2."order"(order_group_id, id)
+  , foreign key (order_group_id, household_id) references v2.household(order_group_id, id)
+  , foreign key (order_group_id, order_id, household_id) references v2.household_order(order_group_id, order_id, household_id)
   );
 
   insert into v2.order_item 
@@ -348,12 +348,12 @@ begin
   , new_quantity integer not null
   , is_discontinued boolean not null
   , date timestamp with time zone not null
-  , primary key (order_id, household_id, product_code)
+  , primary key (order_group_id, order_id, household_id, product_code)
   , foreign key (order_group_id) references v2.order_group(id)
-  , foreign key (order_id) references v2."order"(id)
-  , foreign key (household_id) references v2.household(id)
-  , foreign key (order_id, household_id) references v2.household_order(order_id, household_id)
-  , foreign key (order_id, household_id, product_code) references v2.order_item(order_id, household_id, product_code)
+  , foreign key (order_group_id, order_id) references v2."order"(order_group_id, id)
+  , foreign key (order_group_id, household_id) references v2.household(order_group_id, id)
+  , foreign key (order_group_id, order_id, household_id) references v2.household_order(order_group_id, order_id, household_id)
+  , foreign key (order_group_id, order_id, household_id, product_code) references v2.order_item(order_group_id, order_id, household_id, product_code)
   , foreign key (new_vat_rate) references v2.vat_rate(code)
   );
 
@@ -402,28 +402,28 @@ begin
     on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id;
 
   create table v2.payment
-  ( id             serial      not null
-  , order_group_id int         not null
+  ( order_group_id int         not null
+  , id             serial      not null
   , household_id   int         not null
   , "date"         timestamptz not null
   , amount         int         not null
   , is_archived    boolean     not null
-  , primary key (id)
-  , foreign key (household_id) references v2.household (id)
+  , primary key (order_group_id, id)
   , foreign key (order_group_id) references v2.order_group (id)
+  , foreign key (order_group_id, household_id) references v2.household (order_group_id, id)
   );
 
   insert into v2.payment
-  ( id
-  , order_group_id
+  ( order_group_id
+  , id
   , household_id
   , "date"
   , amount
   , is_archived
   )
   select
-    id
-  , order_group_id
+    order_group_id
+  , id
   , household_id
   , date
   , amount
@@ -431,18 +431,18 @@ begin
   from public.household_payment;
 
   create table v2.file_upload
-  ( id             text  not null
-  , order_group_id int   not null
+  ( order_group_id int   not null
+  , id             text  not null
   , contents       bytea not null
-  , primary key (id)
+  , primary key (order_group_id, id)
   , foreign key (order_group_id) references v2.order_group (id)
   );
 
-  PERFORM SETVAL('v2.household_id_seq', COALESCE(MAX(id), 1) ) FROM v2.household;
-  PERFORM SETVAL('v2.order_group_id_seq', COALESCE(MAX(id), 1) ) FROM v2.order_group;
-  PERFORM SETVAL('v2.order_id_seq', COALESCE(MAX(id), 1) ) FROM v2."order";
-  PERFORM SETVAL('v2.payment_id_seq', COALESCE(MAX(id), 1) ) FROM v2.payment;
-  PERFORM SETVAL('v2.product_id_seq', COALESCE(MAX(id), 1) ) FROM v2.product;
+  perform setval('v2.household_id_seq', coalesce(max(id), 1) ) from v2.household;
+  perform setval('v2.order_group_id_seq', coalesce(max(id), 1) ) from v2.order_group;
+  perform setval('v2.order_id_seq', coalesce(max(id), 1) ) from v2."order";
+  perform setval('v2.payment_id_seq', coalesce(max(id), 1) ) from v2.payment;
+  perform setval('v2.product_id_seq', coalesce(max(id), 1) ) from v2.product;
 
 end $$ language plpgsql;
 commit;

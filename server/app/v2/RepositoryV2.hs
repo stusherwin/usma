@@ -308,35 +308,87 @@ setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO (
 setHouseholdOrders repo orders = do
     let conn = connection repo
 
+    putStrLn "Old Orders:"
+    putStrLn $ unlines $ map show $ fst orders
+    putStrLn ""
+
+    putStrLn "New Orders:"
+    putStrLn $ unlines $ map show $ snd orders
+    putStrLn ""
+
     -- TODO?
     -- let removedOrders  = removedBy orderKey orders
-    insertHouseholdOrders conn $ addedBy   orderKey orders
-    updateHouseholdOrders conn $ updatedByComparing orderKey _householdOrderStatusFlags orders
+    let addedOrders = addedBy orderKey orders
+    let updatedOrders = updatedByComparing orderKey _householdOrderStatusFlags orders
 
     let items = join (***) (concat . map keyedItems) $ orders
     let products = join (***) (nub . map (itemProductCode . snd)) $ items
     let adjustments = join (***) (catMaybes . map keyedAdjustment) $ items
 
-    insertProducts conn $ addedBy id products
+    let addedItems = addedBy fst items
+    let updatedItems = updatedByComparing fst snd items
+    let removedItems = removedBy fst items
 
-    insertOrderItems conn $ addedBy fst items
-    insertOrderItemAdjustments conn $ addedBy fst adjustments
+    let addedAdjustments = addedBy fst adjustments
+    let updatedAdjustments = updatedByComparing fst snd adjustments
+    let removedAdjustments = removedBy fst adjustments
 
-    deleteOrderItemAdjustments conn $ removedBy fst adjustments
-    deleteOrderItems conn $ removedBy fst items
-    
-    updateOrderItems conn $ updatedByComparing fst snd items
-    updateOrderItemAdjustments conn $ updatedByComparing fst snd adjustments
+    let addedProducts = addedBy id products
+
+    putStrLn "Inserting orders:"
+    putStrLn $ unlines $ map show addedOrders
+    putStrLn ""
+
+    putStrLn "Updating orders:"
+    putStrLn $ unlines $ map show updatedOrders
+    putStrLn ""
+
+    putStrLn "Inserting items:"
+    putStrLn $ unlines $ map show addedItems
+    putStrLn ""
+
+    putStrLn "Updating items:"
+    putStrLn $ unlines $ map show updatedItems
+    putStrLn ""
+
+    putStrLn "Deleting items:"
+    putStrLn $ unlines $ map show removedItems
+    putStrLn ""
+
+    putStrLn "Inserting adjustments:"
+    putStrLn $ unlines $ map show addedAdjustments
+    putStrLn ""
+
+    putStrLn "Updating adjustments:"
+    putStrLn $ unlines $ map show updatedAdjustments
+    putStrLn ""
+
+    putStrLn "Deleting adjustments:"
+    putStrLn $ unlines $ map show removedAdjustments
+    putStrLn ""
+
+    putStrLn "Adding products:"
+    putStrLn $ unlines $ map show addedProducts
+    putStrLn ""
+
+    insertHouseholdOrders conn $ addedOrders
+    updateHouseholdOrders conn $ updatedOrders
+    insertProducts conn $ addedProducts
+    insertOrderItems conn $ addedItems
+    insertOrderItemAdjustments conn $ addedAdjustments
+    deleteOrderItemAdjustments conn $ removedAdjustments
+    deleteOrderItems conn $ removedItems
+    updateOrderItems conn $ updatedItems
+    updateOrderItemAdjustments conn $ updatedAdjustments
 
     return ()
   where
     orderKey o = let groupId = _orderGroupId . _householdOrderOrderInfo $ o
                      orderId = _orderId . _householdOrderOrderInfo $ o
                      householdId = _householdId . _householdOrderHouseholdInfo $ o
-                     status = householdOrderStatus o
-                 in (groupId, orderId, householdId, status)
+                 in (groupId, orderId, householdId)
     keyedItems o = map (orderKey o, ) $ _householdOrderItems o
-    itemKey ((groupId, orderId, householdId, status), i) = (groupId, orderId, householdId, status, itemProductCode i)
+    itemKey ((groupId, orderId, householdId), i) = (groupId, orderId, householdId, itemProductCode i)
     keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
 
 getFileUpload :: Repository -> OrderGroupId -> String -> IO (Maybe ByteString)
