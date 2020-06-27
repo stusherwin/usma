@@ -10,7 +10,7 @@ module CompareV2Api where
 import           Data.Aeson (Object, decode)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Char8 as B (pack, unpack)
+import qualified Data.ByteString.Char8 as B (pack, unpack, null, empty)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStrLn, length, take, putStr, writeFile)
 import           Data.ByteString.Builder (toLazyByteString, string8, lazyByteString)
@@ -34,21 +34,25 @@ import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensit
 import           System.Command (readProcessWithExitCode)
 import           System.Directory (createDirectoryIfMissing, removeFile)
 
+type ResponseInfo = (String, String, IO BL.ByteString)
+
 compareApiV1WithApiV2 :: Middleware
 compareApiV1WithApiV2 app req sendResponse = do
   if isApiV1 req
     then do
-      let reqV2 = toApiV2 req
-      app req $ \resp -> do
-        respInfo <- getResponseInfo resp
+      chunks <- getRequestBodyChunks req
+      reqV1 <- withRequestBodyChunks chunks req
+      reqV2 <- toApiV2 <$> withRequestBodyChunks chunks req
+      app reqV1 $ \resp -> do
+        respInfoV1 <- getResponseInfo resp
         catch 
           (app reqV2 $ \respV2 -> do
             respInfoV2 <- getResponseInfo respV2
-            compareResponses (path reqV2) respInfo respInfoV2
+            compareResponses (path reqV2) respInfoV1 respInfoV2
             sendResponse resp)
           (\(SomeException ex) -> do
-            let exceptionInfo = ("500 Server Error: \n    " ++ displayException ex, "", \() -> return $ BL.pack "")
-            compareResponses (path reqV2) respInfo exceptionInfo
+            let exceptionInfo = ("500 Server Error: \n    " ++ displayException ex, "", return $ BL.pack "")
+            compareResponses (path reqV2) respInfoV1 exceptionInfo
             sendResponse resp)
     else app req sendResponse
 
@@ -58,15 +62,67 @@ isApiV1 req = length (pathInfo req) > 2 && (pathInfo req) !! 2 == "v1"
 toApiV2 :: Request -> Request
 toApiV2 req = case pathInfo req of 
   ("api":g:"v1":rest) -> let pi = "api":g:"v2":rest
-                         in  req { pathInfo = pi
-                                 , rawPathInfo = B.pack $ T.unpack $ T.intercalate "/" pi
-                                 }
+                         in  req{ pathInfo = pi
+                                , rawPathInfo = B.pack $ T.unpack $ T.intercalate "/" pi
+                                }
   _ -> req
+
+getRequestBodyChunks :: Request -> IO [B.ByteString]
+getRequestBodyChunks req = do
+    chunksRef <- newIORef []
+    nextChunk chunksRef
+    readIORef chunksRef
+  where
+    nextChunk chunksRef = do
+      chunk <- requestBody req
+      if (not . B.null) chunk 
+        then do
+          modifyIORef' chunksRef (chunk :)
+          nextChunk chunksRef
+        else return ()
+
+withRequestBodyChunks :: [B.ByteString] -> Request -> IO Request
+withRequestBodyChunks chunks req = do
+  reqBody <- getRequestBody chunks
+  return req{ requestBody = reqBody }
+
+getRequestBody :: [B.ByteString] -> IO (IO B.ByteString)
+getRequestBody chunks = do
+    chunksRef <- newIORef chunks
+    return $ getNextChunk chunksRef
+  where
+    getNextChunk chunksRef = do
+      chunks <- readIORef chunksRef
+      case chunks of
+        (c:cs) -> do
+          modifyIORef' chunksRef (const cs)
+          return c
+        _ -> return B.empty
+
+getResponseInfo :: Response -> IO ResponseInfo
+getResponseInfo resp = do
+    let (status, headers, body) = responseToStream resp
+        statusStr = showStatus status
+        headersStr = showHeaders headers
+    return (statusStr, headersStr, 
+      if isImage headersStr
+        then return . BL.pack $ "{image data}"
+        else getResponseBody body
+      )
+  where
+    isImage = isInfixOf "content-type: image/jpeg"
+    showStatus status = (show . statusCode $ status) ++ " " ++ (B.unpack . statusMessage $ status)
+    showHeaders headers = intercalate "," . map showHeader $ headers
+    showHeader (header, value) = (B.unpack . foldedCase $ header) ++ ": " ++ (B.unpack value)
+
+getResponseBody :: ((StreamingBody -> IO BL.ByteString) -> IO BL.ByteString) -> IO BL.ByteString
+getResponseBody body = body $ \f -> do
+  content <- newIORef mempty
+  f (\chunk -> modifyIORef' content (<> chunk)) (return ())
+  toLazyByteString <$> readIORef content
 
 path :: Request -> String
 path req = T.unpack $ T.intercalate "/" $ pathInfo req
-
-type ResponseInfo = (String, String, () -> IO BL.ByteString)
 
 compareResponses :: String -> ResponseInfo -> ResponseInfo -> IO ()
 compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, getBodyV2) = do
@@ -87,8 +143,8 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
     putStrLn ""
     resetColor
   else do
-    bodyV1 <- getBodyV1 ()
-    bodyV2 <- getBodyV2 ()
+    bodyV1 <- getBodyV1
+    bodyV2 <- getBodyV2
     if bodyV1 /= bodyV2 then do
       setColor Red
       putStrLn ""
@@ -126,26 +182,6 @@ showDiff v1 v2 = do
       putStrLn out
       removeFile v1File
       removeFile v2File
-
-getResponseInfo :: Response -> IO ResponseInfo
-getResponseInfo resp = do
-    let (status, headers, body) = responseToStream resp
-        statusStr = showStatus status
-        headersStr = showHeaders headers
-    return (statusStr, headersStr, if isImage headersStr
-        then \() -> return . BL.pack $ "{image data}"
-        else \() -> getResponseBody body)
-  where
-    isImage = isInfixOf "content-type: image/jpeg"
-    showStatus status = (show . statusCode $ status) ++ " " ++ (B.unpack . statusMessage $ status)
-    showHeaders headers = intercalate "," . map showHeader $ headers
-    showHeader (header, value) = (B.unpack . foldedCase $ header) ++ ": " ++ (B.unpack value)
-
-getResponseBody :: ((StreamingBody -> IO BL.ByteString) -> IO BL.ByteString) -> IO BL.ByteString
-getResponseBody body = body $ \f -> do
-  content <- newIORef mempty
-  f (\chunk -> modifyIORef' content (<> chunk)) (return ())
-  toLazyByteString <$> readIORef content
 
 setColor :: Color -> IO ()
 setColor color = BL.putStr $ BL.pack $ setSGRCode [SetColor Foreground Dull color]

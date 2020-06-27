@@ -27,7 +27,6 @@ import DomainV2
 
 selectOrderGroupId :: Connection -> String -> IO [Only OrderGroupId]
 selectOrderGroupId conn groupKey = do
-  putStrLn $ "Key: " ++ groupKey
   query conn [sql|
     select id
     from v2.order_group
@@ -340,7 +339,7 @@ selectOrderRows conn whereParams = do
 insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
 insertOrder conn groupId spec = 
   query conn [sql|
-    insert into v2."order" (order_group_id, created_date, created_by_id) 
+    insert into v2."order" (order_group_id, created, created_by_id) 
     values (?, ?, ?) 
     returning id
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)

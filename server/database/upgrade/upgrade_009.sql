@@ -438,5 +438,11 @@ begin
   , foreign key (order_group_id) references v2.order_group (id)
   );
 
+  PERFORM SETVAL('v2.household_id_seq', COALESCE(MAX(id), 1) ) FROM v2.household;
+  PERFORM SETVAL('v2.order_group_id_seq', COALESCE(MAX(id), 1) ) FROM v2.order_group;
+  PERFORM SETVAL('v2.order_id_seq', COALESCE(MAX(id), 1) ) FROM v2."order";
+  PERFORM SETVAL('v2.payment_id_seq', COALESCE(MAX(id), 1) ) FROM v2.payment;
+  PERFORM SETVAL('v2.product_id_seq', COALESCE(MAX(id), 1) ) FROM v2.product;
+
 end $$ language plpgsql;
 commit;

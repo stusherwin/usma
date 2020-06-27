@@ -301,11 +301,12 @@ commandServerV2 config  =
                           (hdetContactPhone details)
 
     archiveHousehold :: Int -> Handler ()
-    archiveHousehold householdId = undefined
+    archiveHousehold householdId = withRepository config $ \(repo, groupId) ->
+      liftIO $ removeHousehold repo groupId (HouseholdId householdId)
 
     createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
     createHouseholdPayment householdId details = withRepository config $ \(repo, groupId) -> do
-        paymentId <- liftIO $ R.createPayment repo groupId $ PaymentSpec (HouseholdId householdId) date amount
+        paymentId <- liftIO $ createPayment repo groupId $ PaymentSpec (HouseholdId householdId) date amount
         return $ fromPaymentId paymentId
       where
         date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
@@ -314,14 +315,15 @@ commandServerV2 config  =
     updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
     updateHouseholdPayment paymentId details = withRepository config $ \(repo, groupId) -> do
         payment <- MaybeT $ getPayment repo groupId (PaymentId paymentId)
-        let payment' = DomainV2.updatePayment date amount payment
+        let payment' = updatePayment date amount payment
         liftIO $ setPayment repo groupId (payment, payment')
       where
         date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
         amount = hpdetAmount details
     
     archiveHouseholdPayment :: Int -> Handler ()
-    archiveHouseholdPayment paymentId = undefined
+    archiveHouseholdPayment paymentId = withRepository config $ \(repo, groupId) ->
+      liftIO $ removePayment repo groupId (PaymentId paymentId)
 
     uploadProductCatalogue :: MultipartData -> Handler ()
     uploadProductCatalogue multipartData = withRepository config $ \(repo, _) -> do
