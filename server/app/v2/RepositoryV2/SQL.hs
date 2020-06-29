@@ -179,6 +179,7 @@ insertProducts conn codes =
       ( "code"
       )
     values (?)
+    on conflict (code) do nothing
   |] $ map Only codes
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
@@ -352,8 +353,8 @@ selectOrderRows conn whereParams = do
 insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
 insertOrder conn groupId spec = 
   query conn [sql|
-    insert into v2."order" (order_group_id, created, created_by_id) 
-    values (?, ?, ?) 
+    insert into v2."order" (order_group_id, created, created_by_id, is_abandoned, is_placed) 
+    values (?, ?, ?, false, false) 
     returning id
   |] (groupId, _orderSpecCreated spec, _orderSpecCreatedByHouseholdId spec)
 
@@ -496,9 +497,9 @@ selectOrderItemRows conn whereParams =
       (ForOrder _)       -> Just [sql| o.id = ? |]
       (ForHousehold _)   -> Just [sql| ho.household_id = ? |]
 
-insertOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
+insertOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItem)] -> IO ()
 insertOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId), i) -> 
+  let rows = items <&> \((groupId, orderId, householdId, productCode), i) -> 
                          UpdateOrderItem (_itemQuantity i)
                                          (_productName . _productInfo . _itemProduct $ i)
                                          (_vatRateType . _priceVatRate . itemProductPrice $ i)
@@ -510,11 +511,10 @@ insertOrderItems conn items = do
                                          (_productIsOrganic    . _productFlags . _itemProduct $ i)
                                          (_productIsAddedSugar . _productFlags . _itemProduct $ i)
                                          (_productIsVegan      . _productFlags . _itemProduct $ i)
-                                         (groupId)
-                                         (orderId)
-                                         (householdId)
-                                         (itemProductCode i)  
-  putStrLn $ unlines $ map show rows
+                                         groupId
+                                         orderId
+                                         householdId
+                                         productCode
   void $ executeMany conn [sql|
     insert into v2.order_item 
       ( quantity
@@ -536,9 +536,9 @@ insertOrderItems conn items = do
     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   |] rows
 
-updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
+updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItem)] -> IO ()
 updateOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId), i) -> 
+  let rows = items <&> \((groupId, orderId, householdId, productCode), i) -> 
                          UpdateOrderItem (_itemQuantity i)
                                          (_productName . _productInfo . _itemProduct $ i)
                                          (_vatRateType . _priceVatRate . itemProductPrice $ i)
@@ -550,10 +550,10 @@ updateOrderItems conn items = do
                                          (_productIsOrganic    . _productFlags . _itemProduct $ i)
                                          (_productIsAddedSugar . _productFlags . _itemProduct $ i)
                                          (_productIsVegan      . _productFlags . _itemProduct $ i)
-                                         (groupId)
-                                         (orderId)
-                                         (householdId)
-                                         (itemProductCode i)
+                                         groupId
+                                         orderId
+                                         householdId
+                                         productCode
   void $ executeMany conn [sql|
     update v2.order_item i
     set quantity = u.quantity
@@ -590,11 +590,10 @@ updateOrderItems conn items = do
       and i.product_code = u.product_code
   |] rows
 
-deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId), OrderItem)] -> IO ()
+deleteOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItem)] -> IO ()
 deleteOrderItems conn items = do
-  let rows = items <&> \((groupId, orderId, householdId), i) -> (groupId, orderId, householdId, itemProductCode i)
-  putStrLn $ unlines $ map show rows
-  n <- executeMany conn [sql|
+  let rows = fst <$> items
+  void $ executeMany conn [sql|
     delete from v2.order_item i
     using (values (?, ?, ?, ?)) as d 
     ( order_group_id
@@ -607,7 +606,6 @@ deleteOrderItems conn items = do
       and i.household_id = d.household_id
       and i.product_code = d.product_code
   |] rows
-  putStrLn $ show n
 
 insertOrderItemAdjustments :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItemAdjustment)] -> IO ()
 insertOrderItemAdjustments conn adjustments = do
@@ -809,7 +807,7 @@ instance FromField ProductCode where
   fromField f char = ProductCode . takeWhile (not . isSpace) <$> fromField f char
 
 instance ToField ProductCode where
-  toField = toField . padChar10 . fromProductCode
+  toField = toField . {- padChar10 . -} fromProductCode
  
 padChar10 :: String -> String
 padChar10 s = take 10 $ s ++ repeat ' '

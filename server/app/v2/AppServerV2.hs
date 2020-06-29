@@ -242,7 +242,7 @@ commandServerV2 config  =
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
-    reopenHouseholdOrder :: Int -> Int -> Handler ()
+    reopenHouseholdOrder :: Int -> Int -> Handler ()  
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId orderId)
@@ -254,8 +254,9 @@ commandServerV2 config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
       catalogue <- liftIO $ getProductCatalogueForCode repo (ProductCode productCode)
-      let order' = addOrUpdateHouseholdOrderItems catalogue (HouseholdId householdId) [(ProductCode productCode, hoidetQuantity details)] order
+      let order' = addOrUpdateHouseholdOrderItems catalogue household [(ProductCode productCode, hoidetQuantity details)] order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -264,8 +265,9 @@ commandServerV2 config  =
       date <- liftIO $ getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       pastOrder <- MaybeT $ getOrder repo groupId (OrderId pastOrderId)
+      household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
       catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId pastOrderId)
-      let order' = addItemsFromPastOrder catalogue (HouseholdId householdId) pastOrder order
+      let order' = addItemsFromPastOrder catalogue household pastOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 

@@ -149,6 +149,13 @@ getHousehold repo groupId householdId = do
     return (rHouseholds, rHouseholdOrders, rOrderItems, rPayments)
   return $ listToMaybe $ map (toHousehold rHouseholdOrders rOrderItems rPayments) rHouseholds
 
+getHouseholdInfo :: Repository -> OrderGroupId -> HouseholdId -> IO (Maybe HouseholdInfo)
+getHouseholdInfo repo groupId householdId = do
+  let conn = connection repo
+
+  let params = [ForOrderGroup groupId, ForHousehold householdId]
+  listToMaybe . (map householdRow_householdInfo) <$> selectHouseholdRows conn params 
+
 createHousehold :: Repository -> OrderGroupId -> HouseholdSpec -> IO HouseholdId
 createHousehold repo groupId spec = do
   let conn = connection repo
@@ -308,28 +315,23 @@ setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO (
 setHouseholdOrders repo orders = do
     let conn = connection repo
 
-    putStrLn "Old Orders:"
-    putStrLn $ unlines $ map show $ fst orders
-    putStrLn ""
+    let orderKey o = let groupId = _orderGroupId . _householdOrderOrderInfo $ o
+                         orderId = _orderId . _householdOrderOrderInfo $ o
+                         householdId = _householdId . _householdOrderHouseholdInfo $ o
+                     in (groupId, orderId, householdId)
 
-    putStrLn "New Orders:"
-    putStrLn $ unlines $ map show $ snd orders
-    putStrLn ""
+    let itemKey ((groupId, orderId, householdId), i) = ((groupId, orderId, householdId, itemProductCode i), i)
+    let keyedItems o = map itemKey . map (orderKey o, ) $ _householdOrderItems o
+    let keyedAdjustment (k, i) = (k, ) <$> _itemAdjustment i
+
+    let items = join (***) (concatMap keyedItems) $ orders
+    let products = join (***) (nub . map (itemProductCode . snd)) $ items
+    let adjustments = join (***) (catMaybes . map keyedAdjustment) $ items
 
     -- TODO?
     -- let removedOrders  = removedBy orderKey orders
     let addedOrders = addedBy orderKey orders
     let updatedOrders = updatedByComparing orderKey _householdOrderStatusFlags orders
-
-    let items = join (***) (concat . map keyedItems) $ orders
-    let products = join (***) (nub . map (itemProductCode . snd)) $ items
-    putStrLn "Old Products:"
-    putStrLn $ unlines $ map show $ fst products
-    putStrLn ""
-    putStrLn "New Products:"
-    putStrLn $ unlines $ map show $ snd products
-    putStrLn ""
-    let adjustments = join (***) (catMaybes . map keyedAdjustment) $ items
 
     let addedItems = addedBy fst items
     let updatedItems = updatedByComparing fst snd items
@@ -340,42 +342,6 @@ setHouseholdOrders repo orders = do
     let removedAdjustments = removedBy fst adjustments
 
     let addedProducts = addedBy id products
-
-    putStrLn "Inserting orders:"
-    putStrLn $ unlines $ map show addedOrders
-    putStrLn ""
-
-    putStrLn "Updating orders:"
-    putStrLn $ unlines $ map show updatedOrders
-    putStrLn ""
-
-    putStrLn "Inserting items:"
-    putStrLn $ unlines $ map show addedItems
-    putStrLn ""
-
-    putStrLn "Updating items:"
-    putStrLn $ unlines $ map show updatedItems
-    putStrLn ""
-
-    putStrLn "Deleting items:"
-    putStrLn $ unlines $ map show removedItems
-    putStrLn ""
-
-    putStrLn "Inserting adjustments:"
-    putStrLn $ unlines $ map show addedAdjustments
-    putStrLn ""
-
-    putStrLn "Updating adjustments:"
-    putStrLn $ unlines $ map show updatedAdjustments
-    putStrLn ""
-
-    putStrLn "Deleting adjustments:"
-    putStrLn $ unlines $ map show removedAdjustments
-    putStrLn ""
-
-    putStrLn "Adding products:"
-    putStrLn $ unlines $ map show addedProducts
-    putStrLn ""
 
     insertHouseholdOrders conn $ addedOrders
     updateHouseholdOrders conn $ updatedOrders
@@ -388,14 +354,6 @@ setHouseholdOrders repo orders = do
     updateOrderItemAdjustments conn $ updatedAdjustments
 
     return ()
-  where
-    orderKey o = let groupId = _orderGroupId . _householdOrderOrderInfo $ o
-                     orderId = _orderId . _householdOrderOrderInfo $ o
-                     householdId = _householdId . _householdOrderHouseholdInfo $ o
-                 in (groupId, orderId, householdId)
-    keyedItems o = map (orderKey o, ) $ _householdOrderItems o
-    itemKey ((groupId, orderId, householdId), i) = (groupId, orderId, householdId, itemProductCode i)
-    keyedAdjustment i = (itemKey i, ) <$> (_itemAdjustment . snd) i
 
 getFileUpload :: Repository -> OrderGroupId -> String -> IO (Maybe ByteString)
 getFileUpload repo groupId fileId = do

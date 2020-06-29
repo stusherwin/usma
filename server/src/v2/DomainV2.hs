@@ -235,24 +235,34 @@ reopenHouseholdOrder catalogue householdId o =
     householdOrders' = mapWhere ((== householdId) . householdOrderHouseholdId) (reopen . (applyUpdate catalogue)) 
                      $ _orderHouseholdOrders o
 
-addOrUpdateHouseholdOrderItems :: ProductCatalogue -> HouseholdId  -> [(ProductCode, Maybe Int)] -> Order -> Order
-addOrUpdateHouseholdOrderItems catalogue householdId itemQuantities =
-    overHouseholdOrders 
-  $ mapWhere ((== householdId) . householdOrderHouseholdId) 
-  $ addOrUpdateItems catalogue itemQuantities
+addOrUpdateHouseholdOrderItems :: ProductCatalogue -> HouseholdInfo  -> [(ProductCode, Maybe Int)] -> Order -> Order
+addOrUpdateHouseholdOrderItems catalogue household itemQuantities =    
+    (overHouseholdOrders 
+    $ mapWhere ((== _householdId household) . householdOrderHouseholdId) 
+    $ addOrUpdateItems catalogue itemQuantities)
+    . ensureHouseholdOrder household
 
-addItemsFromPastOrder :: ProductCatalogue -> HouseholdId -> Order -> Order -> Order
-addItemsFromPastOrder catalogue householdId pastOrder = 
-  overHouseholdOrders 
-  $ mapWhere ((== householdId) . householdOrderHouseholdId) 
-  $ addOrUpdateItems catalogue pastItemQuantities
+addItemsFromPastOrder :: ProductCatalogue -> HouseholdInfo -> Order -> Order -> Order
+addItemsFromPastOrder catalogue household pastOrder = 
+    (overHouseholdOrders 
+    $ mapWhere ((== _householdId household) . householdOrderHouseholdId) 
+    $ addOrUpdateItems catalogue pastItemQuantities)
+    . ensureHouseholdOrder household
   where
     pastItemQuantities = map (itemProductCode &&& Just . (const 1))-- TODO: Should be . _itemQuantity)
                        . concatMap _householdOrderItems
-                       . filter ((== householdId) . householdOrderHouseholdId) 
+                       . filter ((== _householdId household) . householdOrderHouseholdId) 
                        . _orderHouseholdOrders 
                        $ pastOrder
 
+ensureHouseholdOrder :: HouseholdInfo -> Order -> Order
+ensureHouseholdOrder household o = 
+    overHouseholdOrders (modify new update) o
+  where
+    new = Just $ newHouseholdOrder (_orderInfo o) household
+    update ho = if _householdId household == householdOrderHouseholdId ho
+      then Just (Update ho)
+      else Nothing
 
 removeHouseholdOrderItem :: HouseholdId -> ProductCode -> Order -> Order
 removeHouseholdOrderItem householdId productCode = 
@@ -279,12 +289,6 @@ reconcileOrderItems date updates =
     reconcile ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ updates
                    in  reconcileItems date updatesForHousehold ho
 
-data OrderItemSpec = OrderItemSpec
-  { _itemSpecProductCode :: ProductCode
-  , _itemSpecProductPrice :: Int
-  , _itemSpecQuantity :: Int
-  } deriving (Eq, Show, Generic)
-
 {- HouseholdOrder -}
 
 data HouseholdOrder = HouseholdOrder 
@@ -306,6 +310,8 @@ data HouseholdOrderStatus = HouseholdOrderOpen
                           | HouseholdOrderReconciled
                           | HouseholdOrderComplete
                             deriving (Eq, Show, Generic)
+
+newHouseholdOrder order household = HouseholdOrder order household (HouseholdOrderStatusFlags False False False) []
 
 isPastStatus :: HouseholdOrderStatus -> Bool
 isPastStatus HouseholdOrderPlaced = True
@@ -413,16 +419,16 @@ applyUpdate catalogue =
 acceptUpdate :: HouseholdOrder -> HouseholdOrder
 acceptUpdate = 
     overHouseholdOrderItems 
-  $ updateOrRemove accept
+  $ modify Nothing accept
   where
-    accept  (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Nothing
+    accept  (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Just Remove
     accept i@OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
                                                                      , _itemAdjNewQuantity = quantity
                                                                      })
-                        } = Just $ updateItemPrice price
-                                 $ updateItemQuantity (Just quantity)
-                                 $ removeItemAdjustment i
-    accept i = Just i
+                        } = Just $ Update $ updateItemPrice price
+                                          $ updateItemQuantity (Just quantity)
+                                          $ removeItemAdjustment i
+    accept _ = Nothing
 
 reconcileItems :: UTCTime -> [OrderItemSpec] -> HouseholdOrder -> HouseholdOrder
 reconcileItems date updates = 
@@ -441,6 +447,12 @@ data OrderItem = OrderItem
   { _itemProduct :: Product
   , _itemQuantity :: Int
   , _itemAdjustment :: Maybe OrderItemAdjustment
+  } deriving (Eq, Show, Generic)
+
+data OrderItemSpec = OrderItemSpec
+  { _itemSpecProductCode :: ProductCode
+  , _itemSpecProductPrice :: Int
+  , _itemSpecQuantity :: Int
   } deriving (Eq, Show, Generic)
 
 itemProductCode :: OrderItem -> ProductCode
@@ -737,6 +749,19 @@ updateOrRemove _ [] = []
 updateOrRemove fn (x:xs) = case fn x of
   Just x' -> x':(updateOrRemove fn xs)
   _ -> updateOrRemove fn xs
+
+data Modification a = Update a
+                    | Remove
+
+modify :: Maybe a -> (a -> Maybe (Modification a)) -> [a] -> [a]
+modify = modify' False
+  where
+    modify' False (Just new) _ [] = [new]
+    modify' _ _ _ [] = []
+    modify' found new fn (x : xs) = case fn x of
+      Just (Update x') -> x' : modify' True  new fn xs
+      Just Remove      ->      modify' True  new fn xs
+      _                -> x  : modify' found new fn xs
 
 mapWhere :: (a -> Bool) -> (a -> a) -> [a] -> [a]
 mapWhere _ _ [] = []

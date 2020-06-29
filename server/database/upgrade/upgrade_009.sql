@@ -83,6 +83,7 @@ begin
   ( id serial not null
   , code char(10) not null
   , primary key (id)
+  , unique (code)
   );
 
   insert into v2.product 
@@ -112,21 +113,22 @@ begin
   create table v2.order_group 
   ( id serial not null
   , name text not null
-  , key text not null
+  , "key" text not null
   , is_payments_enabled boolean default true not null
   , primary key (id)
+  , unique ("key")
   );
 
   insert into v2.order_group 
   ( id
   , name
-  , key
+  , "key"
   , is_payments_enabled
   )
   select 
     id
   , name
-  , key
+  , "key"
   , enable_payments
   from public.order_group;
 
