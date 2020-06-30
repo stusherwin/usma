@@ -153,15 +153,15 @@ orderId :: Order -> OrderId
 orderId = _orderId . _orderInfo
 
 orderTotal :: Order -> Money
-orderTotal = sum . map householdOrderTotal . _orderHouseholdOrders
+orderTotal = sum . map householdOrderTotal . remove householdOrderIsAbandoned . _orderHouseholdOrders
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
-    if any (isJust . householdOrderAdjustment) (_orderHouseholdOrders o)
+    if any (isJust . householdOrderAdjustment) (remove householdOrderIsAbandoned . _orderHouseholdOrders $ o)
       then Just $ OrderAdjustment adjTotal
       else Nothing
   where
-    adjTotal = sum . map adjHouseholdOrderTotal . _orderHouseholdOrders $ o
+    adjTotal = sum . map adjHouseholdOrderTotal . remove householdOrderIsAbandoned . _orderHouseholdOrders $ o
     adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
 
 orderItems :: Order -> [OrderItem]
@@ -169,6 +169,7 @@ orderItems = map (sconcat . NE.fromList)
            . groupBy ((==) `on` itemProductCode)
            . sortBy (compare `on` fromProductCode . itemProductCode)
            . concatMap _householdOrderItems
+           . remove householdOrderIsAbandoned
            . _orderHouseholdOrders
 
 orderStatus :: Order -> OrderStatus
@@ -186,13 +187,13 @@ orderIsPlaced :: Order -> Bool
 orderIsPlaced = _orderIsPlaced . _orderStatusFlags
 
 orderIsComplete :: Order -> Bool
-orderIsComplete = all householdOrderIsComplete . _orderHouseholdOrders
+orderIsComplete = all householdOrderIsComplete . remove householdOrderIsAbandoned . _orderHouseholdOrders
 
 orderIsReconciled :: Order -> Bool
-orderIsReconciled = all householdOrderIsReconciled . _orderHouseholdOrders
+orderIsReconciled = all householdOrderIsReconciled . remove householdOrderIsAbandoned . _orderHouseholdOrders
 
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
-orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . _orderHouseholdOrders
+orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . remove householdOrderIsAbandoned . _orderHouseholdOrders
 
 overHouseholdOrders :: ([HouseholdOrder] -> [HouseholdOrder]) -> Order -> Order
 overHouseholdOrders fn o = o{ _orderHouseholdOrders = fn $ _orderHouseholdOrders $ o }
