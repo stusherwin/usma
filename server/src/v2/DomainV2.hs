@@ -52,7 +52,7 @@ data HouseholdInfo = HouseholdInfo
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat
                      . (sum . map (\ho -> fromMaybe (householdOrderTotal ho) (fmap _orderAdjNewTotal . householdOrderAdjustment $ ho)))
-                     .  filter (not . householdOrderIsAbandoned) 
+                     . remove householdOrderIsAbandoned
                      . _householdOrders
 
 householdTotalPayments :: Household -> Int
@@ -198,88 +198,70 @@ overHouseholdOrders :: ([HouseholdOrder] -> [HouseholdOrder]) -> Order -> Order
 overHouseholdOrders fn o = o{ _orderHouseholdOrders = fn $ _orderHouseholdOrders $ o }
 
 abandonOrder :: Order -> Order
-abandonOrder o = let o' = overHouseholdOrders (map abandon) o
-                 in  o'{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = True, _orderIsPlaced = False } }
+abandonOrder = 
+    updateOrderAbandonedStatus 
+  . (overHouseholdOrders $ map abandon)
                  
 placeOrder :: Order -> Order
 placeOrder o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = False, _orderIsPlaced = True } }
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdId -> Order -> Order
-abandonHouseholdOrder householdId o = 
-    o{ _orderHouseholdOrders = householdOrders' 
-     , _orderStatusFlags = OrderStatusFlags 
-       { _orderIsAbandoned = all householdOrderIsAbandoned householdOrders'
-       , _orderIsPlaced = False
-       }
-     }
-  where 
-    householdOrders' = mapWhere ((== householdId) . householdOrderHouseholdId) abandon
-                     $ _orderHouseholdOrders o
+abandonHouseholdOrder householdId = 
+    updateOrderAbandonedStatus 
+  . (overHouseholdOrders $ update (whereHouseholdId householdId) abandon)
 
 completeHouseholdOrder :: HouseholdId -> Order -> Order
 completeHouseholdOrder householdId = 
-    overHouseholdOrders 
-  $ mapWhere ((== householdId) . householdOrderHouseholdId) 
-  $ complete
+    overHouseholdOrders $ update (whereHouseholdId householdId) complete
 
 reopenHouseholdOrder :: ProductCatalogue -> HouseholdId -> Order -> Order
-reopenHouseholdOrder catalogue householdId o = 
-    o{ _orderHouseholdOrders = householdOrders' 
-     , _orderStatusFlags = OrderStatusFlags 
-       { _orderIsAbandoned = all householdOrderIsAbandoned householdOrders'
-       , _orderIsPlaced = False
-       }
-     }
-  where 
-    householdOrders' = mapWhere ((== householdId) . householdOrderHouseholdId) (reopen . (applyUpdate catalogue)) 
-                     $ _orderHouseholdOrders o
+reopenHouseholdOrder catalogue householdId = 
+    updateOrderAbandonedStatus 
+  . (overHouseholdOrders $ update (whereHouseholdId householdId) $ reopen . applyUpdate catalogue)
+
+updateOrderAbandonedStatus :: Order -> Order
+updateOrderAbandonedStatus o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = all householdOrderIsAbandoned $ _orderHouseholdOrders o
+                                                                       , _orderIsPlaced = False
+                                                                       }
+                                }
 
 addOrUpdateHouseholdOrderItems :: ProductCatalogue -> HouseholdInfo  -> [(ProductCode, Maybe Int)] -> Order -> Order
-addOrUpdateHouseholdOrderItems catalogue household itemQuantities =    
-    (overHouseholdOrders 
-    $ mapWhere ((== _householdId household) . householdOrderHouseholdId) 
-    $ addOrUpdateItems catalogue itemQuantities)
-    . ensureHouseholdOrder household
+addOrUpdateHouseholdOrderItems catalogue household itemQuantities =
+    (overHouseholdOrders $ update (whereHousehold household) $ addOrUpdateItems catalogue itemQuantities)
+  . ensureHouseholdOrder household
 
 addItemsFromPastOrder :: ProductCatalogue -> HouseholdInfo -> Order -> Order -> Order
 addItemsFromPastOrder catalogue household pastOrder = 
-    (overHouseholdOrders 
-    $ mapWhere ((== _householdId household) . householdOrderHouseholdId) 
-    $ addOrUpdateItems catalogue pastItemQuantities)
-    . ensureHouseholdOrder household
+    (overHouseholdOrders $ update (whereHousehold household) $ addOrUpdateItems catalogue pastItemQuantities)
+  . ensureHouseholdOrder household
   where
     pastItemQuantities = map (itemProductCode &&& Just . (const 1))-- TODO: Should be . _itemQuantity)
                        . concatMap _householdOrderItems
-                       . filter ((== _householdId household) . householdOrderHouseholdId) 
+                       . filter (whereHousehold household)
                        . _orderHouseholdOrders 
                        $ pastOrder
 
 ensureHouseholdOrder :: HouseholdInfo -> Order -> Order
 ensureHouseholdOrder household o = 
-    overHouseholdOrders (modify new update) o
-  where
-    new = Just $ newHouseholdOrder (_orderInfo o) household
-    update ho = if _householdId household == householdOrderHouseholdId ho
-      then Just (Update ho)
-      else Nothing
+    (overHouseholdOrders $ ensure (whereHousehold household) $ newHouseholdOrder (_orderInfo o) household) o
 
 removeHouseholdOrderItem :: HouseholdId -> ProductCode -> Order -> Order
 removeHouseholdOrderItem householdId productCode = 
     overHouseholdOrders 
-  $ mapWhere ((== householdId) . householdOrderHouseholdId) 
+  $ update (whereHouseholdId householdId)
   $ removeItem productCode
 
 applyCatalogueUpdate :: ProductCatalogue -> Order -> Order
 applyCatalogueUpdate catalogue = 
     overHouseholdOrders 
-  $ mapWhere (not . householdOrderIsAbandoned) 
+  $ update (not . householdOrderIsAbandoned) 
   $ applyUpdate catalogue
 
 acceptCatalogueUpdate :: HouseholdId -> Order -> Order
 acceptCatalogueUpdate householdId =
     overHouseholdOrders
-  $ mapWhere ((== householdId) . householdOrderHouseholdId)
+  $ update (whereHouseholdId householdId)
   $ acceptUpdate
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, OrderItemSpec)] -> Order -> Order
@@ -288,6 +270,12 @@ reconcileOrderItems date updates =
   where
     reconcile ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ updates
                    in  reconcileItems date updatesForHousehold ho
+
+whereHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
+whereHouseholdId householdId = (== householdId) . householdOrderHouseholdId
+
+whereHousehold :: HouseholdInfo -> HouseholdOrder -> Bool
+whereHousehold household = (== _householdId household) . householdOrderHouseholdId
 
 {- HouseholdOrder -}
 
@@ -390,56 +378,49 @@ reopen ho =
   ho { _householdOrderStatusFlags = HouseholdOrderStatusFlags { _householdOrderIsAbandoned = False
                                                               , _householdOrderIsPlaced = False 
                                                               , _householdOrderIsComplete = False
-                                                              } }
+                                                              } 
+     }
 
 addOrUpdateItems :: ProductCatalogue -> [(ProductCode, Maybe Int)] -> HouseholdOrder -> HouseholdOrder
-addOrUpdateItems catalogue itemQuantities = 
-    overHouseholdOrderItems 
-  $ addOrUpdate (\(code, _) i -> code == itemProductCode i)
-                (\(code, quantity) -> findEntry code catalogue <&> \e -> OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing)
-                (\(_, quantity) i -> updateItemQuantity quantity i)
-                itemQuantities
+addOrUpdateItems catalogue = 
+    overHouseholdOrderItems
+  . addOrUpdate ((==) `on` itemProductCode) (updateItemQuantity . Just . _itemQuantity)
+  . catMaybes 
+  . map toOrderItem
+  where 
+    toOrderItem (code, quantity) = let orderItem e = OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing
+                                   in  orderItem <$> findEntry code catalogue
 
 removeItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
 removeItem productCode = 
     overHouseholdOrderItems 
-  $ filter ((/= productCode) . itemProductCode)
+  $ remove ((== productCode) . itemProductCode)
 
 applyUpdate :: ProductCatalogue -> HouseholdOrder -> HouseholdOrder
-applyUpdate catalogue = 
-    overHouseholdOrderItems 
-  $ map apply
+applyUpdate catalogue = overHouseholdOrderItems $ map apply
   where
-    date = getDate catalogue
     apply item = case findEntry (itemProductCode item) catalogue of
       Just e | itemProductPrice item == _catalogueEntryPrice e -> item
              | otherwise -> adjustItemPrice date (_catalogueEntryPrice e) item
       _ -> discontinueProduct date item
+    date = getDate catalogue
 
 acceptUpdate :: HouseholdOrder -> HouseholdOrder
-acceptUpdate = 
-    overHouseholdOrderItems 
-  $ modify Nothing accept
+acceptUpdate = overHouseholdOrderItems $ 
+      remove (fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
+    . map accept
   where
-    accept  (OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjIsDiscontinued = True }) }) = Just Remove
-    accept i@OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price
-                                                                     , _itemAdjNewQuantity = quantity
-                                                                     })
-                        } = Just $ Update $ updateItemPrice price
-                                          $ updateItemQuantity (Just quantity)
-                                          $ removeItemAdjustment i
-    accept _ = Nothing
+    accept item@OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price, _itemAdjNewQuantity = quantity })} = 
+      updateItemPrice price . updateItemQuantity (Just quantity) . removeItemAdjustment $ item
+    accept item = item
 
 reconcileItems :: UTCTime -> [OrderItemSpec] -> HouseholdOrder -> HouseholdOrder
-reconcileItems date updates = 
-    overHouseholdOrderItems 
-  $ map update
+reconcileItems date updates = overHouseholdOrderItems $ map update
   where
-    update i = 
-      case find ((== itemProductCode i) . _itemSpecProductCode) updates of
-        Just spec -> adjustItemPrice date (reprice (_itemSpecProductPrice spec) (itemProductPrice i))
-                   $ adjustItemQuantity date (_itemSpecQuantity spec) i
-        _ -> i
+    update item = case find ((== itemProductCode item) . _itemSpecProductCode) updates of
+      Just spec -> adjustItemPrice date (reprice (_itemSpecProductPrice spec) (itemProductPrice item))
+                 $ adjustItemQuantity date (_itemSpecQuantity spec) item
+      _ -> item
 
 {- OrderItem -}
 
@@ -735,37 +716,29 @@ splitOn ch list = f list [[]] where
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
 
-addOrUpdate :: (a -> b -> Bool) -> (a -> Maybe b) -> (a -> b -> b) -> [a] -> [b] -> [b]
-addOrUpdate _ _ _ [] ys = ys
-addOrUpdate eq add update (x:xs) ys = 
+addOrUpdate :: (a -> a -> Bool) -> (a -> a -> a) -> [a] -> [a] -> [a]
+addOrUpdate _ _ [] ys = ys
+addOrUpdate eq update (x : xs) ys = 
   case partition (eq x) ys of
-    (y:_, ys') -> (update x y):addOrUpdate eq add update xs ys' 
-    _ -> case add x of
-      Just y -> y:addOrUpdate eq add update xs ys
-      _ -> addOrUpdate eq add update xs ys
+    (y : _, ys') -> (update x y) : addOrUpdate eq update xs ys' 
+    _ -> x : addOrUpdate eq update xs ys
 
-updateOrRemove :: (a -> Maybe a) -> [a] -> [a]
-updateOrRemove _ [] = []
-updateOrRemove fn (x:xs) = case fn x of
-  Just x' -> x':(updateOrRemove fn xs)
-  _ -> updateOrRemove fn xs
-
-data Modification a = Update a
-                    | Remove
-
-modify :: Maybe a -> (a -> Maybe (Modification a)) -> [a] -> [a]
-modify = modify' False
+ensure :: (a -> Bool) -> a -> [a] -> [a]
+ensure = ensure' False
   where
-    modify' False (Just new) _ [] = [new]
-    modify' _ _ _ [] = []
-    modify' found new fn (x : xs) = case fn x of
-      Just (Update x') -> x' : modify' True  new fn xs
-      Just Remove      ->      modify' True  new fn xs
-      _                -> x  : modify' found new fn xs
+    ensure' False _ new [] = [new]
+    ensure' _ _ _ [] = []
+    ensure' found eq new (x : xs)
+      | eq x      = x : ensure' True  eq new xs
+      | otherwise = x : ensure' found eq new xs
 
-mapWhere :: (a -> Bool) -> (a -> a) -> [a] -> [a]
-mapWhere _ _ [] = []
-mapWhere cond fn (x:xs) = (if cond x then fn x else x):mapWhere cond fn xs
+remove :: (a -> Bool) -> [a] -> [a]
+remove eq = filter (not . eq)
+
+update :: (a -> Bool) -> (a -> a) -> [a] -> [a]
+update _ _ [] = []
+update cond fn (x:xs) | cond x = fn x : update cond fn xs
+                           | otherwise = x : update cond fn xs
 
 (<&>) :: Functor f => f a -> (a -> b) -> f b
 (<&>) = flip (<$>)
