@@ -10,7 +10,7 @@ import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as B (pack, unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
-import           Data.Maybe (fromMaybe)
+import           Data.Maybe (fromMaybe, isJust)
 import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
@@ -453,16 +453,25 @@ apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
     , pcoIsComplete            = orderIsComplete o
     , pcoIsAbandoned           = orderIsAbandoned o
     , pcoIsReconciled          = orderIsReconciled o
-    , pcoAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
-    , pcoTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
-                                                  Just a -> _orderAdjNewTotal a
-                                                  _      -> orderTotal $ o
-    , pcoTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
-                                                  Just a -> _orderAdjNewTotal a
-                                                  _      -> orderTotal $ o
-    , pcoAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
-    , pcoItems = apiOrderItem productIds <$> orderItems o
+    , pcoAllHouseholdsUpToDate = True
+    , pcoTotalExcVat           = _moneyExcVat adjustedTotal
+    , pcoTotalIncVat           = _moneyIncVat adjustedTotal
+    , pcoAdjustment            = apiOrderAdjustment total $ adjustment
+    , pcoItems = apiOrderItem productIds <$> items
     }
+  where 
+    adjustedTotal = case adjustment of
+                      Just a -> _orderAdjNewTotal a
+                      _      -> total
+    total = if orderIsAbandoned o 
+              then abandonedOrderTotal o 
+              else orderTotal o
+    adjustment = if orderIsAbandoned o 
+                   then abandonedOrderAdjustment o
+                   else orderAdjustment o
+    items = if orderIsAbandoned o 
+              then abandonedOrderItems o 
+              else orderItems o
 
 apiOrderAdjustment :: Money -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment total (Just _) = Just $ Api.OrderAdjustment
@@ -477,13 +486,13 @@ apiHouseholdOrder productIds ho = Api.HouseholdOrder
     , hoOrderCreatedDate   = _orderCreated                                              . _householdOrderOrderInfo $ ho
     , hoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
     , hoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
-    , hoOrderIsPlaced      = householdOrderIsPlaced ho
-    , hoOrderIsAbandoned   = householdOrderIsAbandoned ho
+    , hoOrderIsPlaced      = apiOrderIsPlaced ho
+    , hoOrderIsAbandoned   = apiOrderIsAbandoned ho
     , hoHouseholdId        = fromHouseholdId . _householdId . _householdOrderHouseholdInfo $ ho
     , hoHouseholdName      = _householdName                 . _householdOrderHouseholdInfo $ ho
-    , hoIsComplete         = householdOrderIsComplete ho
-    , hoIsAbandoned        = householdOrderIsAbandoned ho
-    , hoIsOpen             = householdOrderIsOpen ho
+    , hoIsComplete         = apiHouseholdOrderIsComplete ho
+    , hoIsAbandoned        = apiHouseholdOrderIsAbandoned ho
+    , hoIsOpen             = apiHouseholdOrderIsOpen ho
     , hoTotalExcVat        = _moneyExcVat $ case householdOrderAdjustment ho of
                                               Just a -> _orderAdjNewTotal a
                                               _      -> householdOrderTotal $ ho
@@ -494,20 +503,35 @@ apiHouseholdOrder productIds ho = Api.HouseholdOrder
     , hoItems = apiOrderItem productIds <$> _householdOrderItems ho
     }
 
+apiOrderIsAbandoned :: DomainV2.HouseholdOrder -> Bool
+apiOrderIsAbandoned = _orderIsAbandoned . _householdOrderOrderStatusFlags
+
+apiOrderIsPlaced :: DomainV2.HouseholdOrder -> Bool
+apiOrderIsPlaced = _orderIsPlaced . _householdOrderOrderStatusFlags
+
+apiHouseholdOrderIsAbandoned :: DomainV2.HouseholdOrder -> Bool
+apiHouseholdOrderIsAbandoned = _householdOrderIsAbandoned . _householdOrderStatusFlags
+
+apiHouseholdOrderIsComplete :: DomainV2.HouseholdOrder -> Bool
+apiHouseholdOrderIsComplete = _householdOrderIsComplete . _householdOrderStatusFlags
+
+apiHouseholdOrderIsOpen :: DomainV2.HouseholdOrder -> Bool
+apiHouseholdOrderIsOpen ho = (not (apiHouseholdOrderIsComplete ho) && not (apiHouseholdOrderIsAbandoned ho) && not (apiOrderIsAbandoned ho) && not (apiOrderIsPlaced ho))
+
 apiPastHouseholdOrder :: [(ProductCode, ProductId)] -> DomainV2.HouseholdOrder -> Api.PastHouseholdOrder
 apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
     { phoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
     , phoOrderCreatedDate   = _orderCreated                                              . _householdOrderOrderInfo $ ho
     , phoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
     , phoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
-    , phoOrderIsPlaced      = householdOrderIsPlaced ho
-    , phoOrderIsAbandoned   = householdOrderIsAbandoned ho
+    , phoOrderIsPlaced      = apiOrderIsPlaced ho
+    , phoOrderIsAbandoned   = apiOrderIsAbandoned ho
     , phoHouseholdId        = fromHouseholdId . _householdId . _householdOrderHouseholdInfo $ ho
     , phoHouseholdName      = _householdName                 . _householdOrderHouseholdInfo $ ho
-    , phoIsComplete         = householdOrderIsComplete ho
-    , phoIsAbandoned        = householdOrderIsAbandoned ho
-    , phoIsOpen             = householdOrderIsOpen ho
-    , phoIsReconciled       = householdOrderIsReconciled ho
+    , phoIsComplete         = apiHouseholdOrderIsComplete ho
+    , phoIsAbandoned        = apiHouseholdOrderIsAbandoned ho
+    , phoIsOpen             = apiHouseholdOrderIsOpen ho
+    , phoIsReconciled       = apiHouseholdOrderIsReconciled ho
     , phoTotalExcVat        = _moneyExcVat $ case householdOrderAdjustment ho of
                                               Just a -> _orderAdjNewTotal a
                                               _      -> householdOrderTotal $ ho
@@ -517,6 +541,9 @@ apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
     , phoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
     , phoItems = apiOrderItem productIds <$> _householdOrderItems ho
     }
+
+apiHouseholdOrderIsReconciled :: DomainV2.HouseholdOrder -> Bool
+apiHouseholdOrderIsReconciled ho = apiOrderIsPlaced ho && (all (isJust . _itemAdjustment) . _householdOrderItems $ ho)
 
 apiOrderItem :: [(ProductCode, ProductId)] -> DomainV2.OrderItem -> Api.OrderItem
 apiOrderItem productIds i = Api.OrderItem

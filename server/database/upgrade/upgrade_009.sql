@@ -206,7 +206,6 @@ begin
   , order_id integer not null
   , household_id integer not null
   , is_complete boolean not null
-  , is_placed boolean not null
   , is_abandoned boolean not null
   , primary key (order_group_id, order_id, household_id)
   , foreign key (order_group_id) references v2.order_group(id)
@@ -219,7 +218,6 @@ begin
   , order_id
   , household_id
   , is_complete
-  , is_placed
   , is_abandoned
   )
   select 
@@ -227,7 +225,6 @@ begin
   , ho.order_id
   , ho.household_id
   , ho.complete
-  , false
   , ho.cancelled
   from public.household_order ho
   union all
@@ -236,10 +233,6 @@ begin
   , ho.order_id
   , ho.household_id
   , not ho.cancelled
-  , case 
-      when ho.cancelled then false
-      else not o.cancelled
-    end
   , case 
       when ho.cancelled then true
       else o.cancelled

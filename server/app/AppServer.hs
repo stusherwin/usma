@@ -236,8 +236,11 @@ commandServer config groupKey =
     liftIO $ D.closeOrder conn groupId True orderId
 
   abandonHouseholdOrder :: Text -> Int -> Int -> Handler ()
-  abandonHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->
+  abandonHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
     liftIO $ D.cancelHouseholdOrder conn groupId orderId householdId
+    householdOrders <- liftIO $ D.getHouseholdOrders conn groupId
+    when (all hoIsAbandoned householdOrders) $ do
+      liftIO $ D.closeOrder conn groupId True orderId
 
   completeHouseholdOrder :: Text -> Int -> Int -> Handler ()
   completeHouseholdOrder groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId ->

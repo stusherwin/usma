@@ -402,11 +402,13 @@ toOrder rHouseholdOrders rOrderItems o =
 toHouseholdOrder :: [(OrderId, HouseholdId) :. OrderItemRow] -> HouseholdOrderRow -> HouseholdOrder
 toHouseholdOrder rOrderItems ho = 
   HouseholdOrder orderInfo
+                 orderStatusFlags
                  householdInfo
                  (householdOrderRow_statusFlags ho)
                  orderItems
   where
   orderInfo = householdOrderRow_orderInfo ho
+  orderStatusFlags = householdOrderRow_orderStatusFlags ho
   householdInfo = householdOrderRow_householdInfo ho
   orderItems = map toOrderItem 
              . filter (\((oId, hId) :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)

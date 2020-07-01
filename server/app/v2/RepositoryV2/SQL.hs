@@ -388,10 +388,11 @@ selectHouseholdOrderRows conn whereParams =
            , o.created
            , cb.id as created_by_household_id
            , cb.name as created_by_household_name
+           , o.is_abandoned
+           , o.is_placed
            , h.id as household_id
            , h.name as household_name
            , ho.is_abandoned
-           , ho.is_placed
            , ho.is_complete
       from v2.household_order ho
       inner join v2."order" o 
@@ -418,11 +419,10 @@ insertHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                                  placed = householdOrderIsPlaced o
-                              in (abandoned, complete, placed, groupId, orderId, householdId)
+                              in (abandoned, complete, groupId, orderId, householdId)
   void $ executeMany conn [sql|
-    insert into v2.household_order (is_abandoned, is_complete, is_placed, order_group_id, order_id, household_id) 
-    values (?, ?, ?, ?, ?, ?)
+    insert into v2.household_order (is_abandoned, is_complete, order_group_id, order_id, household_id) 
+    values (?, ?, ?, ?, ?)
   |] rows
 
 updateHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
@@ -432,17 +432,14 @@ updateHouseholdOrders conn orders = do
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
                                   abandoned = householdOrderIsAbandoned o
                                   complete = householdOrderIsComplete o
-                                  placed = householdOrderIsPlaced o
-                              in (abandoned, complete, placed, groupId, orderId, householdId)
+                              in (abandoned, complete, groupId, orderId, householdId)
   void $ executeMany conn [sql|
     update v2.household_order ho
     set is_abandoned = u.is_abandoned
       , is_complete = u.is_complete
-      , is_placed = u.is_placed
-    from (values (?, ?, ?, ?, ?, ?)) as u
+    from (values (?, ?, ?, ?, ?)) as u
     ( is_abandoned
     , is_complete
-    , is_placed
     , order_group_id
     , order_id
     , household_id
@@ -769,15 +766,16 @@ instance ToField OrderId where
 
 data HouseholdOrderRow = HouseholdOrderRow
   { householdOrderRow_orderInfo :: OrderInfo
+  , householdOrderRow_orderStatusFlags :: OrderStatusFlags
   , householdOrderRow_householdInfo :: HouseholdInfo
   , householdOrderRow_statusFlags :: HouseholdOrderStatusFlags
   }
 
 instance FromRow HouseholdOrderRow where
-  fromRow = HouseholdOrderRow <$> orderInfoField <*> householdInfoField <*> householdOrderStatusFlagsField
+  fromRow = HouseholdOrderRow <$> orderInfoField <*> orderStatusFlagsField <*> householdInfoField <*> householdOrderStatusFlagsField
 
 householdOrderStatusFlagsField :: RowParser HouseholdOrderStatusFlags
-householdOrderStatusFlagsField = HouseholdOrderStatusFlags <$> field <*> field <*> field
+householdOrderStatusFlagsField = HouseholdOrderStatusFlags <$> field <*> field
 
 data OrderItemRow = OrderItemRow 
   { orderItemRow_product :: Product
