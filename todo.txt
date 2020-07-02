@@ -6,6 +6,20 @@ Refactor
 * Repository should do creating of householdorders/products if they don't exist
 * CollectiveOrder abandoned/placed derived from HouseholdOrder?
 * Change MaybeT IO to EitherT IO with NotFound, InvalidOperation, Unauthorised error states
+* Household order status is "Complete" when no household order exists yet (<OrderStatus householdOrder || order/>)
+* Long word in description squashes image
+* Want to click on product for more info/ images
+* Household image sticking to page
+* Don't show "waiting for all households to accept changes" when waiting for this household to accept changes
+* See current order from outside of admin?
+* Still waiting for all orders to be complete?
+* Add product doesn't remove from product list
+* Waiting for all orders to be complete => waiting for this order to be complete
+* Add bank details to app
+* Images seem to be broken
+* Merge product_image with product? Only show products in catalogue that exist on the website?
+  - include product url
+* Product id not sequential with "insert on conflict" (only a problem when comparing v1/v2)
 
 Bugs/Quick wins
 * Add all missing items from past order

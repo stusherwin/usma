@@ -418,14 +418,14 @@ apiHouseholdPayment :: Payment -> HouseholdPayment
 apiHouseholdPayment p = HouseholdPayment 
   { hpId = fromPaymentId . _paymentId $ p
   , hpHouseholdId = fromHouseholdId . _paymentHouseholdId $ p
-  , hpDate = _paymentDate p
+  , hpDate = apiToNearestSecond . _paymentDate $ p
   , hpAmount = _paymentAmount p
   }
 
 apiCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.CollectiveOrder
 apiCollectiveOrder productIds o = Api.CollectiveOrder
     { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
-    , coOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
+    , coOrderCreatedDate      = apiToNearestSecond . _orderCreated                         . _orderInfo $ o
     , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
     , coOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
     , coOrderIsPlaced         = orderIsPlaced o
@@ -445,7 +445,7 @@ apiCollectiveOrder productIds o = Api.CollectiveOrder
 apiPastCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.PastCollectiveOrder
 apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
     { pcoId                    = fromOrderId . _orderId                                     . _orderInfo $ o
-    , pcoOrderCreatedDate      = _orderCreated                                              . _orderInfo $ o
+    , pcoOrderCreatedDate      = apiToNearestSecond . _orderCreated                         . _orderInfo $ o
     , pcoOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
     , pcoOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
     , pcoOrderIsPlaced         = orderIsPlaced o
@@ -483,7 +483,7 @@ apiOrderAdjustment _ _ = Nothing
 apiHouseholdOrder :: [(ProductCode, ProductId)] -> DomainV2.HouseholdOrder -> Api.HouseholdOrder
 apiHouseholdOrder productIds ho = Api.HouseholdOrder
     { hoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
-    , hoOrderCreatedDate   = _orderCreated                                              . _householdOrderOrderInfo $ ho
+    , hoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
     , hoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
     , hoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
     , hoOrderIsPlaced      = apiOrderIsPlaced ho
@@ -521,7 +521,7 @@ apiHouseholdOrderIsOpen ho = (not (apiHouseholdOrderIsComplete ho) && not (apiHo
 apiPastHouseholdOrder :: [(ProductCode, ProductId)] -> DomainV2.HouseholdOrder -> Api.PastHouseholdOrder
 apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
     { phoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
-    , phoOrderCreatedDate   = _orderCreated                                              . _householdOrderOrderInfo $ ho
+    , phoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
     , phoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
     , phoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
     , phoOrderIsPlaced      = apiOrderIsPlaced ho
@@ -612,3 +612,6 @@ apiVatRate :: DomainV2.VatRateType -> Api.VatRate
 apiVatRate DomainV2.Zero = Api.Zero
 apiVatRate DomainV2.Standard = Api.Standard
 apiVatRate DomainV2.Reduced = Api.Reduced
+
+apiToNearestSecond :: UTCTime -> UTCTime
+apiToNearestSecond (UTCTime day time) = UTCTime day (fromIntegral . floor . realToFrac $ time)

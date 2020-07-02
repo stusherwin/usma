@@ -5,7 +5,7 @@ module DatabaseTypes where
 import Control.Monad (mzero, when, void, forM_)
 import qualified Data.Text as T
 import Data.Maybe (isJust)
-import Data.Time.Clock (UTCTime)
+import Data.Time.Clock (UTCTime(..))
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.ToField
@@ -225,7 +225,7 @@ instance FromRow ProductCatalogueEntryData where
 fromCollectiveOrderData :: [CollectiveOrderItemData] -> CollectiveOrderData -> CollectiveOrder
 fromCollectiveOrderData items (d@CollectiveOrderData { codAllUpToDate = True }) 
   = CollectiveOrder (codId d) 
-                    (codCreated d) 
+                    (toNearestSecond . codCreated $ d) 
                     (codCreatedBy d) 
                     (codCreatedByName d) 
                     False 
@@ -239,7 +239,7 @@ fromCollectiveOrderData items (d@CollectiveOrderData { codAllUpToDate = True })
 
 fromCollectiveOrderData items d
   = CollectiveOrder (codId d)
-                    (codCreated d)
+                    (toNearestSecond . codCreated $ d)
                     (codCreatedBy d)
                     (codCreatedByName d)
                     False 
@@ -255,7 +255,7 @@ fromPastCollectiveOrderData :: [(Int, PastOrderItemData)] -> PastCollectiveOrder
 fromPastCollectiveOrderData items (d@PastCollectiveOrderData { pcodOldTotalExcVat = Just oldTotalExcVat
                                                              , pcodOldTotalIncVat = Just oldTotalIncVat }) =
     PastCollectiveOrder (pcodOrderId d)
-                        (pcodOrderCreated d)
+                        (toNearestSecond . pcodOrderCreated $ d)
                         (pcodOrderCreatedBy d)
                         (pcodOrderCreatedByName d)
                         (not $ pcodCancelled d)
@@ -274,7 +274,7 @@ fromPastCollectiveOrderData items (d@PastCollectiveOrderData { pcodOldTotalExcVa
     items' = map (fromPastOrderItemData . snd) $ filter (\(orderId, _) -> orderId == pcodOrderId d) items
 fromPastCollectiveOrderData items d =
     PastCollectiveOrder (pcodOrderId d)
-                        (pcodOrderCreated d)
+                        (toNearestSecond . pcodOrderCreated $ d)
                         (pcodOrderCreatedBy d)
                         (pcodOrderCreatedByName d)
                         (not $ pcodCancelled d)
@@ -291,7 +291,7 @@ fromPastCollectiveOrderData items d =
 fromHouseholdOrderData :: [HouseholdOrderItemData] -> HouseholdOrderData -> HouseholdOrder
 fromHouseholdOrderData items d 
   = HouseholdOrder (hodOrderId d) 
-                   (hodOrderCreated d)
+                   (toNearestSecond . hodOrderCreated $ d)
                    (hodOrderCreatedBy d)
                    (hodOrderCreatedByName d)
                    False 
@@ -310,7 +310,7 @@ fromPastHouseholdOrderData :: [((Int, Int), PastOrderItemData)] -> PastHousehold
 fromPastHouseholdOrderData items (d@PastHouseholdOrderData { phodOldTotalExcVat = Just oldTotalExcVat
                                                            , phodOldTotalIncVat = Just oldTotalIncVat }) =
     PastHouseholdOrder (phodOrderId d) 
-                       (phodOrderCreated d)
+                       (toNearestSecond . phodOrderCreated $ d)
                        (phodOrderCreatedBy d) 
                        (phodOrderCreatedByName d) 
                        (not $ phodOrderAbandoned d)
@@ -333,7 +333,7 @@ fromPastHouseholdOrderData items (d@PastHouseholdOrderData { phodOldTotalExcVat 
 
 fromPastHouseholdOrderData items d
   = PastHouseholdOrder (phodOrderId d) 
-                       (phodOrderCreated d)
+                       (toNearestSecond . phodOrderCreated $ d)
                        (phodOrderCreatedBy d) 
                        (phodOrderCreatedByName d) 
                        (not $ phodOrderAbandoned d)
@@ -448,3 +448,6 @@ infixl 4 <&>
 (&) :: a -> (a -> b) -> b
 (&) = flip ($)
 infixr 0 &
+
+toNearestSecond :: UTCTime -> UTCTime
+toNearestSecond (UTCTime day time) = UTCTime day (fromIntegral . floor . realToFrac $ time)

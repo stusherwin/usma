@@ -203,7 +203,9 @@ orderIsPlaced :: Order -> Bool
 orderIsPlaced = _orderIsPlaced . _orderStatusFlags
 
 orderIsComplete :: Order -> Bool
-orderIsComplete = not . orderIsAbandoned .&&. all householdOrderIsComplete . householdOrdersToPlace
+orderIsComplete = not . orderIsAbandoned 
+             .&&. (not . null) . householdOrdersToPlace
+             .&&. all householdOrderIsComplete . householdOrdersToPlace 
 
 orderIsReconciled :: Order -> Bool
 orderIsReconciled = orderIsPlaced .&&. all householdOrderIsReconciled . householdOrdersToPlace
