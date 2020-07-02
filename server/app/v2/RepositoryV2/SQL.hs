@@ -179,7 +179,6 @@ insertProducts conn codes =
       ( "code"
       )
     values (?)
-    on conflict (code) do nothing
   |] $ map Only codes
 
 selectHouseholdRows :: Connection -> [WhereParam] -> IO [HouseholdRow]
