@@ -3,7 +3,7 @@
 
 module CsvExport where
 
-import           Data.Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
+import           Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.Vector as V (fromList)
 

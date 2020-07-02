@@ -1,9 +1,9 @@
 module SumaCatalogue where
 
-import           Control.Exception (Exception, SomeException(..), handle)  
+import           Control.Exception (SomeException(..), handle)  
 import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
-import qualified Data.ByteString.Lazy.Char8 as BL (unpack, putStrLn)
-import           Network.HTTP.Conduit (HttpException, simpleHttp)
+import qualified Data.ByteString.Lazy.Char8 as BL (unpack)
+import           Network.HTTP.Conduit (simpleHttp)
 import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 
 --TODO: Extract catalogue stuff out of repository and domain

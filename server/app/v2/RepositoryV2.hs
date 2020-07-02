@@ -10,17 +10,15 @@
 module RepositoryV2 where 
 
 import Control.Arrow ((***))
-import Control.Monad (void, when, join, liftM)
+import Control.Monad (when, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import Control.Monad.Trans.Class (lift)
 import Data.ByteString (ByteString)
 import Data.Function (on)
 import Data.List (deleteFirstsBy, intersectBy, nub)
 import Data.Maybe (listToMaybe, maybeToList, catMaybes)
 import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgreSQL, close, withTransaction)
 
-import Config (Config(..))
 import DomainV2
 import RepositoryV2.SQL
 

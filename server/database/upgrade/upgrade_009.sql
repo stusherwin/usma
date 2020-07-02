@@ -166,7 +166,7 @@ begin
   create table v2."order" 
   ( order_group_id integer not null
   , id serial     not null
-  , created        timestamp with time zone not null
+  , created        timestamptz not null
   , created_by_id  integer
   , is_placed      boolean not null
   , is_abandoned   boolean not null
@@ -342,7 +342,7 @@ begin
   , new_price integer not null
   , new_quantity integer not null
   , is_discontinued boolean not null
-  , date timestamp with time zone not null
+  , "date" timestamptz not null
   , primary key (order_group_id, order_id, household_id, product_code)
   , foreign key (order_group_id) references v2.order_group(id)
   , foreign key (order_group_id, order_id) references v2."order"(order_group_id, id)
@@ -433,11 +433,11 @@ begin
   , foreign key (order_group_id) references v2.order_group (id)
   );
 
-  perform setval('v2.household_id_seq', coalesce(max(id), 1) ) from v2.household;
-  perform setval('v2.order_group_id_seq', coalesce(max(id), 1) ) from v2.order_group;
-  perform setval('v2.order_id_seq', coalesce(max(id), 1) ) from v2."order";
-  perform setval('v2.payment_id_seq', coalesce(max(id), 1) ) from v2.payment;
-  perform setval('v2.product_id_seq', coalesce(max(id), 1) ) from v2.product;
+  perform setval('v2.household_id_seq', max(id) ) from v2.household;
+  perform setval('v2.order_group_id_seq', max(id) ) from v2.order_group;
+  perform setval('v2.order_id_seq', max(id) ) from v2."order";
+  perform setval('v2.payment_id_seq', max(id) ) from v2.payment;
+  perform setval('v2.product_id_seq', max(id) ) from v2.product;
 
 end $$ language plpgsql;
 commit;

@@ -5,9 +5,7 @@
 module AppServerV2 where
 
 import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Trans.Class (lift)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as B (pack, unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import           Data.Maybe (fromMaybe, isJust)
@@ -15,17 +13,16 @@ import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
 import           Data.Time.Format (formatTime, defaultTimeLocale)
-import           Data.Tuple (swap)
-import           Data.UUID (UUID, toString)
+import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
 import           Safe (headMay)
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..))
-import           System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
+import           System.Directory (copyFile, createDirectoryIfMissing)
 
 import           AppApiV2 as Api
 import           Types as Api
-import           Config (Config(..), getConfig)
+import           Config (Config(..))
 import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           DomainV2
 import           RepositoryV2 as R
@@ -94,7 +91,7 @@ queryServerV2 config =
                        groupSettings'
 
     productCatalogueData :: Handler Api.ProductCatalogueApiData
-    productCatalogueData = withRepository config $ \(repo, groupId) -> do
+    productCatalogueData = withRepository config $ \(repo, _) -> do
       productCatalogue <- map apiProductCatalogueEntry . getEntries <$> (liftIO $ getProductCatalogue repo)
       categories <- liftIO $ getProductCatalogueCategories repo
       brands <- liftIO $ getProductCatalogueBrands repo
@@ -252,7 +249,6 @@ commandServerV2 config  =
 
     ensureHouseholdOrderItem :: Int -> Int -> String -> Api.HouseholdOrderItemDetails -> Handler ()
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
-      date <- liftIO getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
       catalogue <- liftIO $ getProductCatalogueForCode repo (ProductCode productCode)
@@ -262,7 +258,6 @@ commandServerV2 config  =
 
     ensureAllItemsFromPastHouseholdOrder :: Int -> Int -> Int -> Handler ()
     ensureAllItemsFromPastHouseholdOrder orderId householdId pastOrderId = withRepository config $ \(repo, groupId) -> do
-      date <- liftIO $ getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       pastOrder <- MaybeT $ getOrder repo groupId (OrderId pastOrderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
@@ -331,7 +326,6 @@ commandServerV2 config  =
     uploadProductCatalogue multipartData = withRepository config $ \(repo, _) -> do
       date <- liftIO getCurrentTime
       filePath <- uploadSingleFile multipartData
-      file <- liftIO $ readFile filePath
       vatRates <- liftIO $ getVatRates repo
       orders <- liftIO $ getCurrentOrders repo Nothing
       let catalogue = parseCatalogue vatRates date filePath
@@ -614,4 +608,4 @@ apiVatRate DomainV2.Standard = Api.Standard
 apiVatRate DomainV2.Reduced = Api.Reduced
 
 apiToNearestSecond :: UTCTime -> UTCTime
-apiToNearestSecond (UTCTime day time) = UTCTime day (fromIntegral . floor . realToFrac $ time)
+apiToNearestSecond (UTCTime day time) = UTCTime day (fromIntegral (floor (realToFrac time :: Double) :: Int))

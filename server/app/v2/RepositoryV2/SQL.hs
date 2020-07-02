@@ -9,7 +9,7 @@
 
 module RepositoryV2.SQL where 
 
-import Control.Monad (mzero, void, join)
+import Control.Monad (mzero, void)
 import Data.ByteString (ByteString)
 import Data.Char (isSpace)
 import Data.List (foldl')
@@ -346,7 +346,7 @@ selectOrderRows conn whereParams = do
       (ForOrderGroup _)  -> Just [sql| o.order_group_id = ? |]
       OrderIsCurrent     -> Just [sql| o.is_abandoned = 'f' and o.is_placed = 'f' |]
       OrderIsPast        -> Just [sql| o.is_abandoned = 't' or o.is_placed = 't' |]
-      (ForOrder orderId) -> Just [sql| o.id = ? |]
+      (ForOrder _)       -> Just [sql| o.id = ? |]
       _ -> Nothing
 
 insertOrder :: Connection -> OrderGroupId -> OrderSpec -> IO [Only OrderId]
@@ -410,6 +410,7 @@ selectHouseholdOrderRows conn whereParams =
       OrderIsPast        -> Just [sql| o.is_abandoned = 't' or o.is_placed = 't' |]
       (ForOrder _)       -> Just [sql| o.id = ? |]
       (ForHousehold _)   -> Just [sql| h.id = ? |]
+      _ -> Nothing
 
 insertHouseholdOrders :: Connection -> [HouseholdOrder] -> IO ()
 insertHouseholdOrders conn orders = do
@@ -492,6 +493,7 @@ selectOrderItemRows conn whereParams =
       OrderIsPast        -> Just [sql| o.is_abandoned = 't' or o.is_placed = 't' |]
       (ForOrder _)       -> Just [sql| o.id = ? |]
       (ForHousehold _)   -> Just [sql| ho.household_id = ? |]
+      _ -> Nothing
 
 insertOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItem)] -> IO ()
 insertOrderItems conn items = do
@@ -618,7 +620,7 @@ insertOrderItemAdjustments conn adjustments = do
     , new_price
     , new_quantity
     , is_discontinued
-    , date
+    , "date"
     , order_group_id
     , order_id
     , household_id
@@ -642,13 +644,13 @@ updateOrderItemAdjustments conn adjustments = do
       , new_price = u.new_price
       , new_quantity = u.new_quantity
       , is_discontinued = u.is_discontinued
-      , date = u.date
+      , "date" = cast(u."date" as timestamptz)
     from (values (?, ?, ?, ?, ?, ?, ?, ?, ?)) as u
     ( new_vat_rate
     , new_price
     , new_quantity
     , is_discontinued
-    , date
+    , "date"
     , order_group_id
     , order_id
     , household_id

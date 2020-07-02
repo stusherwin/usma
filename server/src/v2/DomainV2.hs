@@ -9,11 +9,10 @@ import           Data.Function (on)
 import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup, elems)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
-import           Data.Time.Calendar (Day)
 import           Data.Semigroup (Semigroup(..), sconcat)
-import           Data.List (groupBy, maximumBy, find, delete, lookup, partition, sortBy)
+import           Data.List (groupBy, maximumBy, find, lookup, partition, sortBy)
 import           Data.List.Extra (trim, lower)
-import           Data.Maybe (isJust, maybe, fromMaybe, catMaybes)
+import           Data.Maybe (isJust, fromMaybe, catMaybes)
 import           Data.Ord (comparing)
 import qualified Data.List.NonEmpty as NE (fromList)
 import           GHC.Generics
@@ -324,6 +323,7 @@ data HouseholdOrderStatusFlags = HouseholdOrderStatusFlags
   , _householdOrderIsComplete :: Bool
   } deriving (Eq, Show, Generic)
 
+newHouseholdOrder :: Order -> HouseholdInfo -> HouseholdOrder
 newHouseholdOrder order household = HouseholdOrder (_orderInfo order) (_orderStatusFlags order) household (HouseholdOrderStatusFlags False False) []
 
 householdOrderHouseholdId :: HouseholdOrder -> HouseholdId
@@ -349,7 +349,7 @@ householdOrderIsAbandoned = _householdOrderIsAbandoned . _householdOrderStatusFl
 
 householdOrderIsComplete :: HouseholdOrder -> Bool
 householdOrderIsComplete = _householdOrderIsComplete . _householdOrderStatusFlags
-
+ 
 householdOrderOrderIsAbandoned :: HouseholdOrder -> Bool
 householdOrderOrderIsAbandoned = _orderIsAbandoned . _householdOrderOrderStatusFlags
 
@@ -511,7 +511,7 @@ adjustItemQuantity date quantity i@OrderItem { _itemAdjustment = Just a } =
                              , _itemAdjDate = date 
                              }
    }
-adjustItemQuantiity date quantity i = 
+adjustItemQuantity date quantity i = 
   i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i)
                                                   quantity
                                                   False
@@ -528,7 +528,7 @@ discontinueProduct date i@OrderItem { _itemAdjustment = Just a } =
 discontinueProduct date i = i{ _itemAdjustment = Just $ OrderItemAdjustment (itemProductPrice i) 0 True date }
 
 removeItemAdjustment :: OrderItem -> OrderItem
-removeItemAdjustment i@OrderItem { _itemAdjustment = Just a } = i{ _itemAdjustment = Nothing }
+removeItemAdjustment i@OrderItem { _itemAdjustment = Just _ } = i{ _itemAdjustment = Nothing }
 removeItemAdjustment i = i
 
 {- Product -}
@@ -664,7 +664,7 @@ parseCatalogue vatRates date file =
     . lines 
     $ file
   where
-    parse [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
+    parse [cat,brand,code,desc,text,size,price,vat,_,b,f,g,o,s,v,_] = 
       let code' = ProductCode $ trim code
           vatRateType = case trim vat of
             "1" -> Standard
@@ -714,6 +714,7 @@ productName e = unwords
 
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn ch list = f list [[]] where
+  f _ [] = []
   f [] ws = map reverse $ reverse ws
   f (x:xs) ws | x == ch = f xs ([]:ws)
   f (x:xs) (w:ws) = f xs ((x:w):ws)

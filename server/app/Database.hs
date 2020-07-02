@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
                 , createOrder, closeOrder
@@ -871,7 +872,7 @@ reconcileOrderItem connectionString groupId orderId productId details = do
         inner join vat_rate v on v.code = p.vat_rate
         where phoi.order_id = phoi2.order_id and phoi.household_id = phoi2.household_id and phoi.product_id = phoi2.product_id and phoi.order_group_id = phoi2.order_group_id
       |] (price, quantity, orderId, householdId, productId, groupId)
-    close conn
+  close conn
 
 reconcileHouseholdOrderItems :: ByteString -> Int -> Int -> Int -> [ReconcileHouseholdOrderItemDetails] -> IO ()
 reconcileHouseholdOrderItems connectionString groupId orderId householdId details = do

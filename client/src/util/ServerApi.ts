@@ -153,8 +153,8 @@ const command = {
 
   reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: {householdId: number, itemQuantity: number}[]): Promise<{}> {
     return Http.post(groupUrl(`/command/reconcile-order-item/${orderId}/${productId}`), 
-      { roidProductPriceExcVat: productPriceExcVat
-      , roidHouseholdQuantities: householdQuantities.map(h => ({ householdId: h.householdId, itemQuantity: h.itemQuantity }))
+      { productPriceExcVat: productPriceExcVat
+      , householdQuantities: householdQuantities.map(h => ({ householdId: h.householdId, itemQuantity: h.itemQuantity }))
       })
   },
 

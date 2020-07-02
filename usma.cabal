@@ -18,6 +18,7 @@ library
                      , server/src/v2
   exposed-modules:     Types
                      , DomainV2
+  ghc-options:         -Wall -Werror -fwarn-incomplete-patterns -fwarn-incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , extra
@@ -32,7 +33,7 @@ executable usma
                      , server/app/v2
                      , server/app/v2/RepositoryV2
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-incomplete-patterns -fwarn-incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans
   other-modules:       Api
                      , AppApi
                      , AppServer
