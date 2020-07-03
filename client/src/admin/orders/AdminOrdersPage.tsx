@@ -167,7 +167,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
               <div className={classNames("border-t bg-household-lightest", {"shadow-inner-top": this.state.uploadingOrderId != order.id})}>
                 <OrderMessages order={order} />
                 <div className="flex justify-end mt-4 mr-2">
-                  <button className="flex-no-grow flex-no-shrink" onClick={() => document.location.href = ServerApi.url("query/household-orders-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                  <button className="flex-no-grow flex-no-shrink" onClick={() => document.location.href = ServerApi.url.householdOrdersDownload(order)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                 </div>
                 <HouseholdOrders order={order}
                                  {...this.props} />
@@ -176,7 +176,7 @@ export class AdminOrdersPage extends React.Component<AdminOrdersPageProps, Admin
               <div className={classNames("border-t bg-white", {"shadow-inner-top": this.state.uploadingOrderId != order.id})}>
                 <OrderMessages order={order} />
                 <div className="flex justify-end mr-2 mt-4 mb-2">
-                  <button className="flex-no-grow flex-no-shrink" onClick={() => document.location.href = ServerApi.url("query/collective-order-download/")}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
+                  <button className="flex-no-grow flex-no-shrink" onClick={() => document.location.href = ServerApi.url.collectiveOrderDownload(order)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                 </div>
                 <OrderItems order={order} />
               </div>

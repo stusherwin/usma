@@ -65,7 +65,7 @@ export const OrderItem = ({ item
   return <React.Fragment>
     <tr>
       <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={editProductPrice? 4 : 3}>
-        <img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${item.productCode}`)} />
+        <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(item.productCode)} />
       </td>
       <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
         {checkedOff && <span className="text-red">{'\u2713 '} </span>}{item.productCode}

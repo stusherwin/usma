@@ -59,7 +59,7 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
               {this.state.products.map((p, i) => 
                 [
                 <tr key={p.code + '-1'}>
-                  <td className={classNames('w-20 h-20 align-top', {'pt-8': i > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={ServerApi.url(`query/product-image/${p.code}`)} /></td>
+                  <td className={classNames('w-20 h-20 align-top', {'pt-8': i > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(p.code)} /></td>
                   <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': i > 0})} colSpan={3}>{p.code}</td>
                   <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': i > 0})}><Money amount={p.priceExcVat} /></td>
                 </tr>

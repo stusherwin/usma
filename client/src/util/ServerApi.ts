@@ -167,6 +167,24 @@ const command = {
   },
 }
 
+const url = {
+  householdOrdersDownload(order: CollectiveOrder): string {
+    return order.orderIsAbandoned || order.orderIsPlaced 
+      ? groupUrl(`/query/past-household-orders-download/${order.id}`) 
+      : groupUrl("/query/household-orders-download/")
+  },
+
+  collectiveOrderDownload(order: CollectiveOrder): string {
+    return order.orderIsAbandoned || order.orderIsPlaced 
+      ? groupUrl(`/query/past-collective-order-download/${order.id}`)
+      : groupUrl("/query/collective-order-download/")
+  },
+
+  productImage(productCode: string): string {
+    return groupUrl(`/query/product-image/${productCode}`)
+  }
+}
+
 const groupUrl = (url: string) => {
   const groupKey = window.location.href.split('/').filter(l => l.length).slice(3, 4).join('/')
   return `/api/${groupKey}/v1${url}`
@@ -175,7 +193,7 @@ const groupUrl = (url: string) => {
 export const ServerApi = {
   query,
   command,
-  url: (url: string) => groupUrl(`/${url}`),
+  url,
   verifyGroup(groupKey: string | null): Promise<boolean> {
     return Http.post(`/api/${groupKey}/verify`, {})
   }
