@@ -1,10 +1,10 @@
 module ProductImage where
 
 import Text.HTML.TagSoup
-import Control.Exception (handle, SomeException(..))
+import Control.Exception (handle)
 import qualified Data.ByteString.Lazy.Char8 as C (unpack)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, unpack, writeFile, readFile)
+import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, readFile)
 import Network.HTTP.Conduit
 
 import qualified Database as D

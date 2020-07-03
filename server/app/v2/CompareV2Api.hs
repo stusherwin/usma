@@ -12,27 +12,22 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as B (pack, unpack, null, empty)
 import qualified Data.ByteString.Lazy as BL (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStrLn, length, take, putStr, writeFile)
-import           Data.ByteString.Builder (toLazyByteString, string8, lazyByteString)
+import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStr, writeFile)
+import           Data.ByteString.Builder (toLazyByteString)
 import           Data.CaseInsensitive  (foldedCase)
 import           Data.IORef (newIORef, modifyIORef', readIORef)
 import           Data.List (intercalate, isInfixOf)
 import           Data.Monoid ((<>))
-import           Data.UUID (UUID, toString)
+import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
 import           Control.Exception (SomeException(..), catch, displayException)
-import           Control.Monad.Except (ExceptT(..))  
 import           Control.Monad.IO.Class (liftIO)
-import           Data.Text (Text)
-import qualified Data.Text as T (unpack, pack, concat, intercalate)
+import qualified Data.Text as T (unpack, intercalate)
 import           Network.HTTP.Types (statusMessage, statusCode)
-import           Network.Wai (Application, Middleware, Request(..), Response, StreamingBody, responseFile, responseStatus, responseToStream)
-import           Network.Wai.Handler.Warp (run)
-import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
-import           Network.Wai.Middleware.Static (staticPolicy, addBase)
+import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream)
 import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensity(..), SGR(..), setSGRCode)
 import           System.Command (readProcessWithExitCode)
-import           System.Directory (createDirectoryIfMissing, removeFile)
+import           System.Directory (createDirectoryIfMissing)
 
 type ResponseInfo = (String, String, IO BL.ByteString)
 
@@ -149,6 +144,13 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
       setColor Red
       putStrLn ""
       putStrLn $ "** V1/V2 Body mismatch ** -- " ++ path
+      putStr "-->"
+      BL.putStr bodyV1
+      putStrLn "<--"
+      putStr "-->"
+      BL.putStr bodyV2
+      putStrLn "<--"
+
       resetColor
       showDiff bodyV1 bodyV2
       putStrLn ""
@@ -163,15 +165,19 @@ showDiff v1 v2 = do
   case diffId of
     Nothing -> return ()
     Just diffId -> do
-      let objV1 = decode v1 :: Maybe Object
-      let objV2 = decode v2 :: Maybe Object
       let diffDir = "server/data/diffs/"
       liftIO $ createDirectoryIfMissing True diffDir
       let v1File = diffDir ++ diffId ++ "-v1.txt"
       let v2File = diffDir ++ diffId ++ "-v2.txt"
-      BL.writeFile v1File $ encodePretty objV1
-      BL.writeFile v2File $ encodePretty objV2
-      (exit, out, err) <- readProcessWithExitCode "git" 
+      let objV1 = decode v1 :: Maybe Object
+      BL.writeFile v1File $ case objV1 of
+        Just obj -> encodePretty obj
+        _ -> v1
+      let objV2 = decode v2 :: Maybe Object
+      BL.writeFile v2File $ case objV2 of
+        Just obj -> encodePretty obj
+        _ -> v2
+      (_, out, _) <- readProcessWithExitCode "git" 
         [ "diff"
         , "--no-index"
         , "--word-diff=color"
@@ -181,8 +187,8 @@ showDiff v1 v2 = do
         , v2File
         ] ""
       putStrLn out
-      removeFile v1File
-      removeFile v2File
+      -- removeFile v1File
+      -- removeFile v2File
 
 setColor :: Color -> IO ()
 setColor color = BL.putStr $ BL.pack $ setSGRCode [SetColor Foreground Dull color]

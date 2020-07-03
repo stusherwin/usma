@@ -10,10 +10,10 @@ module Main where
 import qualified Data.ByteString as B (ByteString)
 import           Control.Monad.IO.Class (liftIO)
 import           Data.Text (Text)
-import qualified Data.Text as T (unpack, pack, concat, intercalate)
-import           GHC.IO.Encoding (getLocaleEncoding, setLocaleEncoding, utf8)
+import qualified Data.Text as T (unpack)
+import           GHC.IO.Encoding (setLocaleEncoding, utf8)
 import           Network.HTTP.Types (hContentType, status200)
-import           Network.Wai (Application, Middleware, responseFile)
+import           Network.Wai (Application, responseFile)
 import           Network.Wai.Handler.Warp (run)
 import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Network.Wai.Middleware.Static (staticPolicy, addBase)
@@ -22,7 +22,6 @@ import           Servant
 import Api
 import qualified Database as D
 import Config
-import ProductImage
 import AppServer
 import AppServerV2
 import CompareV2Api (compareApiV1WithApiV2)
@@ -48,7 +47,7 @@ serveGroupPage :: Text -> Server Raw
 serveGroupPage _ = Tagged (staticPolicy (addBase "client/static") indexPage)
   where
     indexPage :: Application
-    indexPage req respond = respond $ 
+    indexPage _ respond = respond $ 
       responseFile status200
                    [(hContentType, "text/html")]
                    "client/static/index.html"

@@ -2,14 +2,10 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module ReconcileHouseholdOrderFile where
-  import Control.Monad (forM_)
   import Data.ByteString (ByteString)
   import Data.Char (isSpace, isNumber, isPunctuation)
   import Data.List (intercalate)
-  import Data.Maybe (catMaybes, listToMaybe)
-  import Data.Text (Text)
-  import Data.Text.Encoding
-  import Data.Time.Clock (UTCTime)
+  import Data.Maybe (catMaybes)
   import Safe (atMay)
   import Text.HTML.TagSoup
   import Text.Read (readMaybe)
@@ -25,7 +21,7 @@ module ReconcileHouseholdOrderFile where
         totals = parseOrderTotal tags
         toRow (c, d, s, q, p, t) = UploadedOrderFileRow c d s p q t
     in case (rows, totals) of
-      (r:_, Just (totalExcVat, totalIncVat)) -> Just $ UploadedOrderFile fileId
+      (_:_, Just (totalExcVat, totalIncVat)) -> Just $ UploadedOrderFile fileId
                                                                          description
                                                                          totalExcVat
                                                                          totalIncVat
@@ -77,6 +73,7 @@ module ReconcileHouseholdOrderFile where
     justIfAll (Just c, Just d, Just s, Just q, Just p, Just t) = Just (c, d, s, q, p, t)
     justIfAll _ = Nothing
 
+  parseOptionalString :: a -> Maybe a
   parseOptionalString = Just
 
   parseRequiredString :: String -> Maybe String

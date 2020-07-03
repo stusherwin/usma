@@ -7,26 +7,22 @@
 
 module AppServer (appServer) where
 
-import Control.Exception (handle)  
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as B (unpack, pack)
-import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
-import qualified Data.ByteString.Lazy.Char8 as BL (unpack, pack)
-import Data.Csv (encode, ToNamedRecord(..), (.=), namedRecord, encodeByName)
+import qualified Data.ByteString.Lazy as BL (ByteString)
+import Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import Data.List (find)
 import Data.Text (Text)
 import qualified Data.Text as T (unpack)
-import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
+import Data.Time.Clock (getCurrentTime, utctDay)
 import Data.Time.Format (formatTime, defaultTimeLocale)
 import qualified Data.Vector as V (fromList)
-import Network.HTTP.Conduit (HttpException, simpleHttp)
-import Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 import Servant
 import Servant.Multipart
-import System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
-import Data.UUID (UUID, toString)
+import System.Directory (copyFile, createDirectoryIfMissing)
+import Data.UUID (toString)
 import Data.UUID.V1 (nextUUID)
 
 import Types
@@ -76,7 +72,7 @@ queryServer config groupKey =
     return $ ApiData collectiveOrder pastCollectiveOrders householdOrders pastHouseholdOrders households householdPayments groupSettings
 
   productCatalogueData :: Handler ProductCatalogueApiData
-  productCatalogueData = findGroupOr404 conn groupKey $ \groupId -> do
+  productCatalogueData = findGroupOr404 conn groupKey $ \_ -> do
     productCatalogue <- liftIO $ D.getProductCatalogue conn
     categories <- liftIO $ D.getProductCatalogueCategories conn
     brands <- liftIO $ D.getProductCatalogueBrands conn

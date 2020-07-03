@@ -2,27 +2,17 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module ProductCatalogueImport where
-  import Data.Aeson
-  import GHC.Generics
-  import Config
   import Text.Read (readMaybe)
-  import Control.Monad.IO.Class (liftIO)
-  import Data.Text (Text)
-  import qualified Data.Text as T (pack, unpack, strip)
-  import System.Directory (getCurrentDirectory)
   import Data.Maybe (catMaybes, fromMaybe)
-  import Data.Char (toLower)
-  import Data.Time.Calendar (Day)
-  import Data.Time.Format (formatTime, defaultTimeLocale)
-  import Data.Time.Clock (getCurrentTime, utctDay, UTCTime)
+  import Data.Time.Clock (UTCTime)
   import Data.ByteString (ByteString)
-  import System.Directory (copyFile)
 
   import Types (ProductCatalogueData(..), VatRate(..))
   import Database (replaceProductCatalogue)
 
   splitOn :: Eq a => a -> [a] -> [[a]]
   splitOn ch list = f list [[]] where
+    f _ [] = []
     f [] ws = map reverse $ reverse ws
     f (x:xs) ws | x == ch = f xs ([]:ws)
     f (x:xs) (w:ws) = f xs ((x:w):ws)
@@ -31,7 +21,7 @@ module ProductCatalogueImport where
   loadProductCatalogue date filePath = do 
     file <- readFile filePath
     return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
-      parse i [cat,brand,code,desc,text,size,price,vat,rrp,b,f,g,o,s,v,priceChange] = 
+      parse _ [cat,brand,code,desc,text,size,price,vat,_,b,f,g,o,s,v,_] = 
         let price' = fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
             vat' = case vat of
                      "1" -> Standard

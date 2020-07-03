@@ -19,23 +19,12 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 , getUploadedOrderFile, saveUploadedOrderFile, deleteUploadedOrderFile
                 ) where
 
-import Control.Exception (handle, SomeException)
-import Control.Monad (mzero, when, void, forM_)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad (void, forM_)
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.ToField
-import Database.PostgreSQL.Simple.ToRow
-import Database.PostgreSQL.Simple.FromField (FromField(..))
 import Database.PostgreSQL.Simple.FromRow
-import Database.PostgreSQL.Simple.Time (Unbounded(..))
 import Database.PostgreSQL.Simple.SqlQQ
 import Data.ByteString (ByteString)
-import Data.Maybe (listToMaybe, fromJust, fromMaybe)
-import Data.Map.Lazy (fromListWith, assocs)
-import qualified Data.Text as T
-import Data.Text.Encoding (encodeUtf8)
-import qualified Data.IntMap.Strict as IM (IntMap(..), fromList, elems, lookup, insert, size)
-import Data.Time.Calendar (Day, showGregorian)
+import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Time.Clock (UTCTime)
 import Types
 import DatabaseTypes  
@@ -411,22 +400,22 @@ createOrder connectionString groupId date householdId = do
 closeOrder :: ByteString -> Int -> Bool -> Int -> IO ()
 closeOrder connectionString groupId cancelled orderId = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
-    execute conn [sql|
+  void $ withTransaction conn $ do
+    void $ execute conn [sql|
       insert into past_order (order_group_id, id, created_date, created_by_id, created_by_name, cancelled)
       select o.order_group_id, o.id, o.created_date, h.id, h.name, ?
       from "order" o
       left join household h on h.id = o.created_by_id
       where o.id = ? and o.order_group_id = ?
     |] (cancelled, orderId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled)
       select ho.order_group_id, ho.order_id, h.id, h.name, ?
       from household_order ho
       inner join household h on h.id = ho.household_id
       where ho.order_id = ? and ho.order_group_id = ?
     |] (cancelled, orderId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       insert into past_household_order_item (order_group_id, order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, item_total_exc_vat, item_total_inc_vat, product_biodynamic, product_fair_trade, product_gluten_free, product_organic, product_added_sugar, product_vegan)
       select hoi.order_group_id, hoi.order_id, hoi.household_id, hoi.product_id, p.code, p.name, hoi.product_price_exc_Vat, hoi.product_price_inc_vat, p.vat_rate, hoi.quantity, hoi.item_total_exc_vat, hoi.item_total_inc_vat, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
       from household_order_item hoi
@@ -434,13 +423,13 @@ closeOrder connectionString groupId cancelled orderId = do
       inner join vat_rate v on v.code = p.vat_rate
       where hoi.order_id = ? and hoi.order_group_id = ?
     |] (orderId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       delete from household_order_item where order_id = ? and order_group_id = ?
     |] (orderId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       delete from household_order where order_id = ? and order_group_id = ?
     |] (orderId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       delete from "order" where id = ? and order_group_id = ?
     |] (orderId, groupId)
   close conn
@@ -448,8 +437,8 @@ closeOrder connectionString groupId cancelled orderId = do
 cancelHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
 cancelHouseholdOrder connectionString groupId orderId householdId = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
-    execute conn [sql|
+  void $ withTransaction conn $ do
+    void $ execute conn [sql|
       update household_order set cancelled = true where order_id = ? and household_id = ? and order_group_id = ?
     |] (orderId, householdId, groupId)
   close conn
@@ -457,7 +446,7 @@ cancelHouseholdOrder connectionString groupId orderId householdId = do
 completeHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
 completeHouseholdOrder connectionString groupId orderId householdId = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     update household_order set complete = true where order_id = ? and household_id = ? and order_group_id = ?
   |] (orderId, householdId, groupId)
   close conn
@@ -465,7 +454,7 @@ completeHouseholdOrder connectionString groupId orderId householdId = do
 reopenHouseholdOrder :: ByteString -> Int -> Int -> Int -> IO ()
 reopenHouseholdOrder connectionString groupId orderId householdId = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     update household_order set cancelled = false, complete = false where order_id = ? and household_id = ? and order_group_id = ?
   |] (orderId, householdId, groupId)
   close conn
@@ -474,7 +463,7 @@ ensureHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> String -> UTCTime
 ensureHouseholdOrderItem connectionString groupId orderId householdId productCode date details = do
   let quantity = hoidetQuantity details
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
+  void $ withTransaction conn $ do
     maybeProductId <- do
       ids <- query conn [sql|
         select id from product where code = ?
@@ -513,7 +502,7 @@ ensureHouseholdOrderItem connectionString groupId orderId householdId productCod
           select household_id from household_order where order_id = ? and household_id = ? and order_group_id = ?
         |] (orderId, householdId, groupId)
         case (householdOrderExists :: [Only Int]) of 
-          ((Only existingQuantity):_) -> return ()
+          ((Only _):_) -> return ()
           _ -> do
             void $ execute conn [sql|
               insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
@@ -543,8 +532,8 @@ ensureHouseholdOrderItem connectionString groupId orderId householdId productCod
 ensureAllItemsFromPastHouseholdOrder :: ByteString -> Int -> Int -> Int -> Int -> UTCTime -> IO ()
 ensureAllItemsFromPastHouseholdOrder connectionString groupId orderId householdId pastOrderId date = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
-    execute conn [sql|
+  void $ withTransaction conn $ do
+    void $ execute conn [sql|
       insert into product ("code", "name", price, vat_rate, discontinued, updated, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan) 
       select ce.code
            , concat_ws(' ', nullif(btrim(ce.brand), '')
@@ -569,12 +558,12 @@ ensureAllItemsFromPastHouseholdOrder connectionString groupId orderId householdI
       select household_id from household_order where order_id = ? and household_id = ? and order_group_id = ?
     |] (orderId, householdId, groupId)
     case (householdOrderExists :: [Only Int]) of 
-      ((Only existingQuantity):_) -> return ()
+      ((Only _):_) -> return ()
       _ -> do
         void $ execute conn [sql|
           insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
         |] (groupId, orderId, householdId, date)
-    execute conn [sql|
+    void $ execute conn [sql|
       insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
       select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, 1, p.price as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) as item_total_inc_vat
       from past_household_order_item phoi
@@ -587,7 +576,7 @@ ensureAllItemsFromPastHouseholdOrder connectionString groupId orderId householdI
 removeHouseholdOrderItem :: ByteString -> Int -> Int -> Int -> Int -> IO ()
 removeHouseholdOrderItem connectionString groupId orderId householdId productId = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     delete from household_order_item where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
   |] (orderId, householdId, productId, groupId)
   close conn
@@ -604,7 +593,7 @@ createHousehold connectionString groupId details = do
 updateHousehold :: ByteString -> Int -> Int -> HouseholdDetails -> IO ()
 updateHousehold connectionString groupId householdId details = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     update household set 
       name = ?, contact_name = ?, contact_email = ?, contact_phone = ? 
     where id = ? and order_group_id = ?
@@ -614,7 +603,7 @@ updateHousehold connectionString groupId householdId details = do
 archiveHousehold :: ByteString -> Int -> Int -> IO ()
 archiveHousehold connectionString groupId householdId = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     update household set archived = true where id = ? and order_group_id = ?
   |] (householdId, groupId)
   close conn
@@ -635,7 +624,7 @@ updateHouseholdPayment connectionString groupId paymentId details = do
   let date = hpdetDate details
   let amount = hpdetAmount details
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     update household_payment set "date" = ?, amount = ? where id = ? and order_group_id = ?
   |] (date, amount, paymentId, groupId)
   close conn
@@ -643,7 +632,7 @@ updateHouseholdPayment connectionString groupId paymentId details = do
 archiveHouseholdPayment :: ByteString -> Int -> Int -> IO ()
 archiveHouseholdPayment connectionString groupId id = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     update household_payment set archived = true where id = ? and order_group_id = ?
   |] (id, groupId)
   close conn
@@ -678,15 +667,15 @@ getProductCatalogue connectionString = do
 replaceProductCatalogue :: ByteString -> UTCTime -> [ProductCatalogueData] -> IO ()
 replaceProductCatalogue connectionString date entries = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
-    execute_ conn [sql|
+  void $ withTransaction conn $ do
+    void $ execute_ conn [sql|
       truncate table catalogue_entry
     |]
     void $ executeMany conn [sql|
       insert into catalogue_entry (code, category, brand, "description", "text", size, price, vat_rate, rrp, biodynamic, fair_trade, gluten_free, organic, added_sugar, vegan, updated)
       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     |] entries
-    execute conn [sql|
+    void $ execute conn [sql|
       update product
       set "name" = case when ce.code is null then p."name" else concat_ws(' ', nullif(btrim(ce.brand), '')
                                                                              , nullif(btrim(ce."description"), '')
@@ -711,12 +700,12 @@ replaceProductCatalogue connectionString date entries = do
 acceptCatalogueUpdates :: ByteString -> Int -> UTCTime -> Int -> Int -> IO ()
 acceptCatalogueUpdates connectionString groupId date orderId householdId = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
-    execute conn [sql|
+  void $ withTransaction conn $ do
+    void $ execute conn [sql|
       update household_order set updated = ?
       where order_id = ? and household_id = ? and order_group_id = ?
     |] (date, orderId, householdId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       update household_order_item hoi set
         product_price_exc_vat = p.price, 
         product_price_inc_vat = cast(round(p.price * v.multiplier) as int),
@@ -728,7 +717,7 @@ acceptCatalogueUpdates connectionString groupId date orderId householdId = do
       where hoi.order_id = hoi2.order_id and hoi.household_id = hoi2.household_id and hoi.product_id = hoi2.product_id
         and hoi.order_id = ? and hoi.household_id = ? and hoi.order_group_id = ?
     |] (orderId, householdId, groupId)
-    execute conn [sql|
+    void $ execute conn [sql|
       delete from household_order_item
       where order_id = ? and household_id = ? and order_group_id = ? and product_id in (
         select id from product where discontinued = true
@@ -783,7 +772,7 @@ getProductImage connectionString code = do
 saveProductImage :: ByteString -> String -> ByteString -> IO ()
 saveProductImage connectionString code image = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     insert into product_image (code, image)
     values (?, ?)
     ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
@@ -804,7 +793,7 @@ getUploadedOrderFile connectionString fileId = do
 saveUploadedOrderFile :: ByteString -> String -> ByteString -> IO ()
 saveUploadedOrderFile connectionString fileId fileContents = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     insert into order_file_upload (id, contents)
     values (?, ?)
     ON CONFLICT (id) DO UPDATE SET contents = EXCLUDED.contents;
@@ -814,7 +803,7 @@ saveUploadedOrderFile connectionString fileId fileContents = do
 deleteUploadedOrderFile :: ByteString -> String -> IO ()
 deleteUploadedOrderFile connectionString fileId = do
   conn <- connectPostgreSQL connectionString
-  execute conn [sql|
+  void $ execute conn [sql|
     delete from order_file_upload
     where id = ?
   |] (Only fileId)
@@ -823,13 +812,13 @@ deleteUploadedOrderFile connectionString fileId = do
 reconcileOrderItem :: ByteString -> Int -> Int -> Int -> ReconcileOrderItemDetails -> IO ()
 reconcileOrderItem connectionString groupId orderId productId details = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
+  void $ withTransaction conn $ do
     forM_ (roidetHouseholdQuantities details) $ \h -> do
       let price = roidetProductPriceExcVat details
       let quantity = hqdetItemQuantity h
       let householdId = hqdetHouseholdId h
 
-      execute conn [sql|
+      void $ execute conn [sql|
         insert into order_item_adjustment (
             order_id
           , household_id
@@ -856,7 +845,7 @@ reconcileOrderItem connectionString groupId orderId productId details = do
         ON CONFLICT (order_id, household_id, product_id) DO NOTHING;
       |] (orderId, householdId, productId, groupId)
 
-      execute conn [sql|
+      void $ execute conn [sql|
         with new_values as (
           select ? as price, ? as quantity, ? as order_id, ? as household_id, ? as product_id, ? as order_group_id 
         )
@@ -877,13 +866,13 @@ reconcileOrderItem connectionString groupId orderId productId details = do
 reconcileHouseholdOrderItems :: ByteString -> Int -> Int -> Int -> [ReconcileHouseholdOrderItemDetails] -> IO ()
 reconcileHouseholdOrderItems connectionString groupId orderId householdId details = do
   conn <- connectPostgreSQL connectionString
-  withTransaction conn $ do
+  void $ withTransaction conn $ do
     forM_ details $ \d -> do
       let code = rhoidProductCode d
       let price = rhoidProductPriceExcVat d
       let quantity = rhoidQuantity d
 
-      execute conn [sql|
+      void $ execute conn [sql|
         insert into order_item_adjustment (
             order_id
           , household_id
@@ -910,7 +899,7 @@ reconcileHouseholdOrderItems connectionString groupId orderId householdId detail
         ON CONFLICT (order_id, household_id, product_id) DO NOTHING;
       |] (groupId, orderId, householdId, code)
 
-      execute conn [sql|
+      void $ execute conn [sql|
         with new_values as (
           select ? as order_group_id 
                , ? as order_id
@@ -946,7 +935,7 @@ reconcileHouseholdOrderItems connectionString groupId orderId householdId detail
     |] (groupId, orderId, householdId, In codes)
 
     forM_ (map fromOnly (missingProductIds :: [(Only Int)])) $ \productId -> do
-      execute conn [sql|
+      void $ execute conn [sql|
         insert into order_item_adjustment (
             order_id
           , household_id
@@ -973,7 +962,7 @@ reconcileHouseholdOrderItems connectionString groupId orderId householdId detail
         ON CONFLICT (order_id, household_id, product_id) DO NOTHING;
       |] (groupId, orderId, householdId, productId)
 
-      execute conn [sql|
+      void $ execute conn [sql|
         update past_household_order_item phoi
         set quantity           = 0
           , item_total_exc_vat = 0
