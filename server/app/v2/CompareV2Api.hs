@@ -144,13 +144,6 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
       setColor Red
       putStrLn ""
       putStrLn $ "** V1/V2 Body mismatch ** -- " ++ path
-      putStr "-->"
-      BL.putStr bodyV1
-      putStrLn "<--"
-      putStr "-->"
-      BL.putStr bodyV2
-      putStrLn "<--"
-
       resetColor
       showDiff bodyV1 bodyV2
       putStrLn ""

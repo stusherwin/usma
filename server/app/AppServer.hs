@@ -122,6 +122,14 @@ queryServer config groupKey =
     where
     toCsvItem (OrderItem { oiProductName = name
                          , oiProductCode = code
+                         , oiAdjustment = Just (OrderItemAdjustment { 
+                            oiaOldProductPriceExcVat = price
+                            , oiaOldItemQuantity = qty
+                            , oiaOldItemTotalExcVat = total
+                           })
+                         }) = CsvItem name code price qty total ""
+    toCsvItem (OrderItem { oiProductName = name
+                         , oiProductCode = code
                          , oiProductPriceExcVat = price
                          , oiItemQuantity = qty
                          , oiItemTotalExcVat = total
@@ -139,6 +147,14 @@ queryServer config groupKey =
     where
     forOrder o = filter ((== coId o) . hoOrderId)
     withHouseholdName = map (\(HouseholdOrder { hoHouseholdName = n, hoItems = is }) -> map (n,) is)
+    toCsvItem (householdName,OrderItem { oiProductName = name
+                                       , oiProductCode = code
+                                       , oiAdjustment = Just (OrderItemAdjustment { 
+                                          oiaOldProductPriceExcVat = price
+                                          , oiaOldItemQuantity = qty
+                                          , oiaOldItemTotalExcVat = total
+                                         })
+                                       }) = CsvItem name code price qty total householdName
     toCsvItem (householdName, OrderItem { oiProductName = name
                                         , oiProductCode = code
                                         , oiProductPriceExcVat = price
@@ -157,6 +173,14 @@ queryServer config groupKey =
     where
     toCsvItem (OrderItem { oiProductName = name
                          , oiProductCode = code
+                         , oiAdjustment = Just (OrderItemAdjustment { 
+                            oiaOldProductPriceExcVat = price
+                            , oiaOldItemQuantity = qty
+                            , oiaOldItemTotalExcVat = total
+                           })
+                         }) = CsvItem name code price qty total ""
+    toCsvItem (OrderItem { oiProductName = name
+                         , oiProductCode = code
                          , oiProductPriceExcVat = price
                          , oiItemQuantity = qty
                          , oiItemTotalExcVat = total
@@ -170,6 +194,14 @@ queryServer config groupKey =
     where
     forOrder = filter ((== orderId) . phoOrderId)
     withHouseholdName = map (\(PastHouseholdOrder { phoHouseholdName = n, phoItems = is }) -> map (n,) is)
+    toCsvItem (householdName,OrderItem { oiProductName = name
+                                       , oiProductCode = code
+                                       , oiAdjustment = Just (OrderItemAdjustment { 
+                                          oiaOldProductPriceExcVat = price
+                                          , oiaOldItemQuantity = qty
+                                          , oiaOldItemTotalExcVat = total
+                                         })
+                                       }) = CsvItem name code price qty total householdName
     toCsvItem (householdName, OrderItem { oiProductName = name
                                         , oiProductCode = code
                                         , oiProductPriceExcVat = price

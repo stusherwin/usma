@@ -6,7 +6,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Main where
-
+ 
 import qualified Data.ByteString as B (ByteString)
 import           Control.Monad.IO.Class (liftIO)
 import           Data.Text (Text)
@@ -17,6 +17,8 @@ import           Network.Wai (Application, responseFile)
 import           Network.Wai.Handler.Warp (run)
 import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Network.Wai.Middleware.Static (staticPolicy, addBase)
+import           Servant.Multipart (MultipartOptions, generalOptions, defaultMultipartOptions)
+import           Network.Wai.Parse (clearMaxHeaderLines, clearMaxHeaderLineLength, defaultParseRequestBodyOptions)
 import           Servant
 
 import Api
@@ -33,9 +35,15 @@ main = do
   run (Config.port config) $ app config
 
 app :: Config -> Application
-app config = logStdoutDev
-           $ compareApiV1WithApiV2
-           $ serve fullApi (server config)
+app config = logStdoutDev $
+             compareApiV1WithApiV2 $
+             serveWithContext fullApi ctxt (server config)
+  where ctxt = multipartOpts :. EmptyContext
+        multipartOpts = defaultMultipartOptions
+          { generalOptions = clearMaxHeaderLines $
+                             clearMaxHeaderLineLength $
+                             defaultParseRequestBodyOptions 
+          }
          
 server :: Config -> Server FullApi
 server config = 
