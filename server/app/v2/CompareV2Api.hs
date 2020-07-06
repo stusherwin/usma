@@ -27,7 +27,7 @@ import           Network.HTTP.Types (statusMessage, statusCode)
 import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream)
 import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensity(..), SGR(..), setSGRCode)
 import           System.Command (readProcessWithExitCode)
-import           System.Directory (createDirectoryIfMissing)
+import           System.Directory (createDirectoryIfMissing, removeFile)
 
 type ResponseInfo = (String, String, IO BL.ByteString)
 
@@ -180,8 +180,8 @@ showDiff v1 v2 = do
         , v2File
         ] ""
       putStrLn out
-      -- removeFile v1File
-      -- removeFile v2File
+      removeFile v1File
+      removeFile v2File
 
 setColor :: Color -> IO ()
 setColor color = BL.putStr $ BL.pack $ setSGRCode [SetColor Foreground Dull color]

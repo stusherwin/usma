@@ -17,7 +17,7 @@ import           Network.Wai (Application, responseFile)
 import           Network.Wai.Handler.Warp (run)
 import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Network.Wai.Middleware.Static (staticPolicy, addBase)
-import           Servant.Multipart (MultipartOptions, generalOptions, defaultMultipartOptions)
+import           Servant.Multipart (generalOptions, defaultMultipartOptions)
 import           Network.Wai.Parse (clearMaxHeaderLines, clearMaxHeaderLineLength, defaultParseRequestBodyOptions)
 import           Servant
 

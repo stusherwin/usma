@@ -72,7 +72,7 @@ selectCatalogueEntries conn whereParams =
            , ce.vegan
            , ce.updated
       from v2.catalogue_entry ce
-      left join v2.vat_rate v on v.code = ce.vat_rate
+      join v2.vat_rate v on v.code = ce.vat_rate
       left join v2.order_item oi on oi.product_code = ce.code
       left join v2."order" o on oi.order_id = o.id
       where 1 = 1 |] <> whereClause <> [sql|
@@ -884,7 +884,8 @@ instance ToRow ProductCatalogueEntry where
             , toField $ _catalogueEntryDescription e
             , toField $ _catalogueEntryText e
             , toField $ _catalogueEntrySize e
-            , toField $ _catalogueEntryPrice $ e
+            , toField $ _vatRateType . _priceVatRate . _catalogueEntryPrice $ e
+            , toField $ _moneyExcVat . _priceAmount . _catalogueEntryPrice $ e
             , toField $ _catalogueEntryRrp e
             , toField $ _catalogueEntryBiodynamic e
             , toField $ _catalogueEntryFairTrade e

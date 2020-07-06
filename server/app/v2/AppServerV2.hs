@@ -326,9 +326,10 @@ commandServerV2 config  =
     uploadProductCatalogue multipartData = withRepository config $ \(repo, _) -> do
       date <- liftIO getCurrentTime
       filePath <- uploadSingleFile multipartData
+      contents <- liftIO $ readFile filePath
       vatRates <- liftIO $ getVatRates repo
       orders <- liftIO $ getCurrentOrders repo Nothing
-      let catalogue = parseCatalogue vatRates date filePath
+      let catalogue = parseCatalogue vatRates date contents
       let orders' = map (applyCatalogueUpdate catalogue) orders
       liftIO $ setProductCatalogue repo catalogue
       liftIO $ setOrders repo (orders, orders')
