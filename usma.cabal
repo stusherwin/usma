@@ -16,42 +16,37 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      server/src
                      , server/src/v2
-  exposed-modules:     Types
+  exposed-modules:     App
+                     , Config
+                     , System.Command
+                     , Types
                      , DomainV2
-  ghc-options:         -Wall -Werror -fwarn-incomplete-patterns -fwarn-incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
-  build-depends:       base >= 4.7 && < 5
-                     , aeson
-                     , extra
-                     , hashable
-                     , time
-                     , text
-                     , unordered-containers
-  default-language:    Haskell2010
-
-executable usma
-  hs-source-dirs:      server/app
-                     , server/app/v2
-                     , server/app/v2/RepositoryV2
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror -fwarn-incomplete-patterns -fwarn-incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
-  other-modules:       Api
+                     , AppApiV2
+                     , CompareV2Api
+                     , AppServerV2
+                     , Api
                      , AppApi
                      , AppServer
                      , Database
                      , DatabaseTypes
-                     , Config
                      , ProductCatalogueImport
                      , ReconcileHouseholdOrderFile
                      , ProductImage
-                     , AppApiV2
-                     , AppServerV2
                      , RepositoryV2
                      , RepositoryV2.SQL
                      , CsvExport
                      , SumaCatalogue
                      , ReconcileSumaOrderFile
-                     , CompareV2Api
-  build-depends:       aeson
+  other-modules:     
+  ghc-options:         -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns
+  build-depends:       base
+                     , aeson                     
+                     , extra
+                     , hashable
+                     , time
+                     , text
+                     , unordered-containers
+                     , aeson
                      , aeson-pretty
                      , base
                      , bytestring
@@ -77,7 +72,6 @@ executable usma
                      , time
                      , text
                      , transformers
-                     , usma
                      , uuid
                      , vector
                      , wai
@@ -87,31 +81,47 @@ executable usma
                      , warp
                      , safe
                      , ansi-terminal
-                     , system-command
+                     , process
+  default-language:    Haskell2010
+
+executable usma
+  hs-source-dirs:      server/app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns
+  build-depends:       usma
+                     , base
+                     , warp
   default-language:    Haskell2010
 
 executable usma-upgradedb
-  hs-source-dirs:      server/app
+  hs-source-dirs:      server/database
   main-is:             UpgradeDB.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  other-modules:       Config
-  build-depends:       base
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns
+  build-depends:       usma
+                     , base
                      , containers
-                     , usma
                      , postgresql-simple
-                     , bytestring
-                     , text
                      , directory
-                     , system-command
+                     , bytestring
   default-language:    Haskell2010
 
 test-suite usma-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      server/test
   main-is:             Spec.hs
-  build-depends:       base
-                     , usma
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns
+  build-depends:       usma
+                     , base
+                     , servant-client
+                     , servant-quickcheck
+                     , base-compat-batteries
+                     , http-client
+                     , http-types
+                     , wai
+                     , warp
+                     , servant-server
+                     , hspec
+                     , hspec-wai
   default-language:    Haskell2010
 
 source-repository head

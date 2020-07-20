@@ -10,13 +10,14 @@ module CompareV2Api where
 import           Data.Aeson (Object, decode)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Char8 as B (pack, unpack, null, empty)
+import qualified Data.ByteString.Char8 as B (pack, unpack, null, empty, writeFile, concat)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStr, writeFile)
 import           Data.ByteString.Builder (toLazyByteString)
 import           Data.CaseInsensitive  (foldedCase)
+import           Data.Char (isDigit)
 import           Data.IORef (newIORef, modifyIORef', readIORef)
-import           Data.List (intercalate, isInfixOf)
+import           Data.List (intercalate, isInfixOf, foldl')
 import           Data.Monoid ((<>))
 import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
@@ -27,9 +28,46 @@ import           Network.HTTP.Types (statusMessage, statusCode)
 import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream)
 import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensity(..), SGR(..), setSGRCode)
 import           System.Command (readProcessWithExitCode)
-import           System.Directory (createDirectoryIfMissing, removeFile)
+import           System.Directory (createDirectoryIfMissing, removeFile, listDirectory)
 
 type ResponseInfo = (String, String, IO BL.ByteString)
+
+readInt :: String -> Int
+readInt = read
+
+recordApiV1Responses :: Middleware
+recordApiV1Responses app req sendResponse = do
+  if isApiV1 req
+    then do
+      let recordingsDir = "server/data/recordings/"
+      liftIO $ createDirectoryIfMissing True recordingsDir
+      index <- show . (+ 1) . foldl' max 0 . map (readInt . takeWhile isDigit) <$> listDirectory recordingsDir
+      chunks <- getRequestBodyChunks req
+      B.writeFile (recordingsDir ++ index ++ "-req") $ B.concat [requestMethod req, B.pack " ", rawPathInfo req, rawQueryString req]
+      -- let req2 = Request (requestMethod req)
+      --                    (httpVersion req) 
+      --                    (rawPathInfo req)
+      --                    (rawQueryString req)
+      --                    (requestHeaders req)
+      --                    (isSecure req)
+      --                    (remoteHost req)
+      --                    (pathInfo req)
+      --                    (queryString req)
+      --                    (requestBody req)
+      --                    (vault req)
+      --                    (requestBodyLength req)
+      --                    (requestHeaderHost req)
+      --                    (requestHeaderRange req)
+      --                    (requestHeaderReferer req)
+      --                    (requestHeaderUserAgent req)
+      req' <- withRequestBodyChunks chunks req
+      app req' $ \resp -> do
+        (status, _, _) <- getResponseInfo resp
+        BL.writeFile (recordingsDir ++ index ++ "-resp") $ BL.pack $ status
+        -- body <- getBody
+        -- BL.writeFile (recordingsDir ++ index) body
+        sendResponse resp
+    else app req sendResponse
 
 compareApiV1WithApiV2 :: Middleware
 compareApiV1WithApiV2 app req sendResponse = do

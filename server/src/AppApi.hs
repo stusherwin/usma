@@ -60,10 +60,10 @@ type CommandApi =
   :<|> "create-household-payment" :> Capture "householdId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] Int
   :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] HouseholdPaymentDetails :> Post '[JSON] ()
   :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
-  :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
+  :<|> "upload-product-catalogue" :> MultipartForm Mem (MultipartData Mem) :> Post '[JSON] ()
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] ReconcileOrderItemDetails :> Post '[JSON] ()
-  :<|> "upload-order-file" :> MultipartForm MultipartData :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
+  :<|> "upload-order-file" :> MultipartForm Mem (MultipartData Mem) :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
   :<|> "reconcile-household-order-from-file" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "uuid" String :> Post '[JSON] ()
 
 data Jpeg

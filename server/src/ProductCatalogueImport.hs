@@ -18,9 +18,8 @@ module ProductCatalogueImport where
     f (x:xs) (w:ws) = f xs ((x:w):ws)
 
   loadProductCatalogue :: UTCTime -> String -> IO [ProductCatalogueData]
-  loadProductCatalogue date filePath = do 
-    file <- readFile filePath
-    return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines file where
+  loadProductCatalogue date fileContents = do 
+    return $ catMaybes $ zipWith parse [0..] $ map (splitOn ',') $ drop 1 $ lines fileContents where
       parse _ [cat,brand,code,desc,text,size,price,vat,_,b,f,g,o,s,v,_] = 
         let price' = fromMaybe 0 $ round . (* 100) <$> (readMaybe price :: Maybe Float)
             vat' = case vat of
@@ -38,6 +37,6 @@ module ProductCatalogueImport where
       parse _ _ = Nothing
 
   importProductCatalogue :: ByteString -> UTCTime -> String -> IO ()
-  importProductCatalogue connectionString date filePath = do
-    catalogue <- loadProductCatalogue date filePath
+  importProductCatalogue connectionString date fileContents = do
+    catalogue <- loadProductCatalogue date fileContents
     replaceProductCatalogue connectionString date catalogue

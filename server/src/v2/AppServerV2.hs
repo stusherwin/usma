@@ -8,6 +8,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString.Char8 as B (pack, unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as BL (unpack, toStrict)
 import           Data.Maybe (fromMaybe, isJust)
 import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
@@ -17,7 +18,7 @@ import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
 import           Safe (headMay)
 import           Servant
-import           Servant.Multipart (MultipartData(..), FileData(..))
+import           Servant.Multipart (MultipartData(..), FileData(..), Mem)
 import           System.Directory (copyFile, createDirectoryIfMissing)
 
 import           AppApiV2 as Api
@@ -322,14 +323,13 @@ commandServerV2 config  =
     archiveHouseholdPayment paymentId = withRepository config $ \(repo, groupId) ->
       liftIO $ removePayment repo groupId (PaymentId paymentId)
 
-    uploadProductCatalogue :: MultipartData -> Handler ()
+    uploadProductCatalogue :: MultipartData Mem -> Handler ()
     uploadProductCatalogue multipartData = withRepository config $ \(repo, _) -> do
       date <- liftIO getCurrentTime
-      filePath <- uploadSingleFile multipartData
-      contents <- liftIO $ readFile filePath
+      fileContents <- uploadSingleFile multipartData
       vatRates <- liftIO $ getVatRates repo
       orders <- liftIO $ getCurrentOrders repo Nothing
-      let catalogue = parseCatalogue vatRates date contents
+      let catalogue = parseCatalogue vatRates date $ BL.unpack fileContents
       let orders' = map (applyCatalogueUpdate catalogue) orders
       liftIO $ setProductCatalogue repo catalogue
       liftIO $ setOrders repo (orders, orders')
@@ -355,14 +355,13 @@ commandServerV2 config  =
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
-    uploadOrderFile :: MultipartData -> Handler (Headers '[Header "Cache-Control" String] (Maybe Api.UploadedOrderFile))
+    uploadOrderFile :: MultipartData Mem -> Handler (Headers '[Header "Cache-Control" String] (Maybe Api.UploadedOrderFile))
     uploadOrderFile multipartData = withRepository config $ \(repo, groupId) -> do
-      filePath <- uploadSingleFile multipartData
-      fileContents <- liftIO $ readFile filePath
+      fileContents <- uploadSingleFile multipartData
       uuid <- MaybeT $ liftIO nextUUID
       let fileId = toString uuid
-      liftIO $ setFileUpload repo groupId fileId $ B.pack fileContents
-      let orderFile = parseOrderFileDetails fileId fileContents
+      liftIO $ setFileUpload repo groupId fileId $ BL.toStrict fileContents
+      let orderFile = parseOrderFileDetails fileId $ BL.unpack fileContents
       return $ addHeader "no-cache" orderFile
 
     reconcileHouseholdOrderFromFile :: Int -> Int -> String -> Handler ()
@@ -376,14 +375,10 @@ commandServerV2 config  =
       liftIO $ setOrders repo ([order], [order'])
       liftIO $ removeFileUpload repo groupId fileId
 
-uploadSingleFile :: MultipartData -> MaybeT IO FilePath
+uploadSingleFile :: MultipartData Mem -> MaybeT IO BL.ByteString
 uploadSingleFile multipartData = do
   file <- MaybeT $ return $ headMay $ files multipartData
-  liftIO $ createDirectoryIfMissing True "server/data/uploads/"
-  day <- liftIO $ utctDay <$> getCurrentTime
-  let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
-  liftIO $ copyFile (fdFilePath file) destFilePath
-  return destFilePath
+  return $ fdPayload file
 
 fileDownload :: String -> BL.ByteString -> FileDownload
 fileDownload fileName file = addHeader header file

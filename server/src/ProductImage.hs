@@ -38,15 +38,17 @@ fetchProductImage conn code = handle handleException $ do
   case image of
     Just i -> return $ Just $ L.fromStrict i
     _ -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          imageData <- simpleHttp (imageUrl r)
-          D.saveProductImage conn code $ L.toStrict imageData
-          return $ Just $ imageData
-        _ -> do
-          img <- L.readFile "client/static/img/404.jpg"
-          return $ Just $ img
+      img <- L.readFile "client/static/img/404.jpg"
+      return $ Just $ img
+      -- productData <- fetchProductData code
+      -- case productData of
+      --   Just r -> do
+      --     imageData <- simpleHttp (imageUrl r)
+      --     D.saveProductImage conn code $ L.toStrict imageData
+      --     return $ Just $ imageData
+      --   _ -> do
+      --     img <- L.readFile "client/static/img/404.jpg"
+      --     return $ Just $ img
   where
   handleException :: HttpException -> IO (Maybe L.ByteString)
   handleException _ = do

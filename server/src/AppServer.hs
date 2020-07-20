@@ -12,6 +12,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as B (unpack, pack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as BL (unpack, toStrict)
 import Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import Data.List (find)
 import Data.Text (Text)
@@ -316,17 +317,13 @@ commandServer config groupKey =
   archiveHouseholdPayment groupKey householdPaymentId = findGroupOr404 conn groupKey $ \groupId ->
     liftIO $ D.archiveHouseholdPayment conn groupId householdPaymentId
 
-  uploadProductCatalogue :: MultipartData -> Handler ()
+  uploadProductCatalogue :: MultipartData Mem -> Handler ()
   uploadProductCatalogue multipartData = do
     when (length (files multipartData) /= 1) $
       throwError err400
     let file = (files multipartData) !! 0
-    liftIO $ createDirectoryIfMissing True "server/data/uploads/"
     date <- liftIO $ getCurrentTime
-    let day = utctDay date
-    let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
-    liftIO $copyFile (fdFilePath file) destFilePath
-    liftIO $ importProductCatalogue conn date destFilePath
+    liftIO $ importProductCatalogue conn date $ BL.unpack $ fdPayload file
 
   acceptCatalogueUpdates :: Text -> Int -> Int -> Handler ()
   acceptCatalogueUpdates groupKey orderId householdId = findGroupOr404 conn groupKey $ \groupId -> do
@@ -337,7 +334,7 @@ commandServer config groupKey =
   reconcileOrderItem groupKey orderId productId details = findGroupOr404 conn groupKey $ \groupId -> do
     liftIO $ D.reconcileOrderItem conn groupId orderId productId details
 
-  uploadOrderFile :: MultipartData -> Handler (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
+  uploadOrderFile :: MultipartData Mem -> Handler (Headers '[Header "Cache-Control" String] (Maybe UploadedOrderFile))
   uploadOrderFile multipartData = do
     when (length (files multipartData) /= 1) $
       throwError err400
@@ -345,20 +342,15 @@ commandServer config groupKey =
     orderFileDetails <- liftIO $ uploadOrderFile' file
     return $ addHeader "no-cache" orderFileDetails
 
-  uploadOrderFile' :: FileData -> IO (Maybe UploadedOrderFile)
+  uploadOrderFile' :: FileData Mem -> IO (Maybe UploadedOrderFile)
   uploadOrderFile' file = do
-    liftIO $ createDirectoryIfMissing True "server/data/uploads/"
-    date <- getCurrentTime
-    let day = utctDay date
-    let destFilePath = "server/data/uploads/" ++ (formatTime defaultTimeLocale "%F" day) ++ "-" ++ (T.unpack $ fdFileName file)
-    copyFile (fdFilePath file) destFilePath
-    fileContents <- readFile destFilePath
+    let fileContents = fdPayload file
     uuid <- liftIO nextUUID
     case uuid of
       Just id -> do
         let fileId = toString id
-        D.saveUploadedOrderFile conn fileId $ B.pack fileContents
-        return $ getHouseholdOrderFileDetails fileId fileContents
+        D.saveUploadedOrderFile conn fileId $ BL.toStrict fileContents
+        return $ getHouseholdOrderFileDetails fileId $ BL.unpack fileContents
       _ -> return Nothing
 
   reconcileHouseholdOrderFromFile :: Text -> Int -> Int -> String -> Handler ()

@@ -19,7 +19,7 @@ import           Data.Time.Clock (UTCTime)
 import           GHC.Generics
 import           Network.HTTP.Media ((//))
 import           Servant
-import           Servant.Multipart (MultipartData, MultipartForm)
+import           Servant.Multipart (MultipartData, MultipartForm, Mem)
 import qualified Types as Api
 
 type AppApiV2 = 
@@ -63,10 +63,10 @@ type CommandApiV2 =
   :<|> "create-household-payment" :> Capture "householdId" Int :> ReqBody '[JSON] Api.HouseholdPaymentDetails :> Post '[JSON] Int
   :<|> "update-household-payment" :> Capture "householdPaymentId" Int :> ReqBody '[JSON] Api.HouseholdPaymentDetails :> Post '[JSON] ()
   :<|> "archive-household-payment" :> Capture "householdPaymentId" Int :> Post '[JSON] ()
-  :<|> "upload-product-catalogue" :> MultipartForm MultipartData :> Post '[JSON] ()
+  :<|> "upload-product-catalogue" :> MultipartForm Mem (MultipartData Mem) :> Post '[JSON] ()
   :<|> "accept-catalogue-updates" :> Capture "orderId" Int :> Capture "householdId" Int :> Post '[JSON] ()
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] Api.ReconcileOrderItemDetails :> Post '[JSON] ()
-  :<|> "upload-order-file" :> MultipartForm MultipartData :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe Api.UploadedOrderFile))
+  :<|> "upload-order-file" :> MultipartForm Mem (MultipartData Mem) :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe Api.UploadedOrderFile))
   :<|> "reconcile-household-order-from-file" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "uuid" String :> Post '[JSON] ()
 
 type FileDownload = Headers '[Header "Content-Disposition" Text] BL.ByteString

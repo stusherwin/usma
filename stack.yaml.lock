@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: servant-multipart-0.10.0.1@sha256:e3a46258122b664f04022c483726c7cf7ad1b9ed184c6c6d988ac009c84820d2,1703
+    hackage: servant-multipart-0.11.6@sha256:1863862e507dd6f672b4c9d2c6d87d4faec19686ced3d828d712ada07536cddb,2655
     pantry-tree:
-      size: 281
-      sha256: cedbda4d49c071a121415542ce875e8b9ba5857dd2ed572f0c462f1d5ead5a80
+      size: 386
+      sha256: 3d45dc52822a30de2ee524358bf91ad77c041c4385ab75d636effa17e02e351e
   original:
-    hackage: servant-multipart-0.10.0.1
+    hackage: servant-multipart-0.11.6
 - completed:
     hackage: servant-options-0.1.0.0@sha256:39f50166a68006250e79370372f553ca476f14d06d93fa0c401050253aeba803,914
     pantry-tree:
@@ -19,15 +19,57 @@ packages:
   original:
     hackage: servant-options-0.1.0.0
 - completed:
-    hackage: system-command-0.0.10@sha256:6aa90067dfea9886769ad981eef8b9d909b43ed0d4915052cbc77028a7ebb5f3,1894
+    hackage: servant-quickcheck-0.0.9.0@sha256:53931b276ed3683665336c0e5ced3f53ac037acf499460c4808094e089c7c922,3754
     pantry-tree:
-      size: 347
-      sha256: 3602cfd63b2c696c9216f7749720105172b5fb5b85eafdeaadb7f2deb220a459
+      size: 976
+      sha256: 310d31c150e07d2c3ba8bd5d11875dffb39c2d389d3d4e8ecd5d7c8e477a214c
   original:
-    hackage: system-command-0.0.10
+    hackage: servant-quickcheck-0.0.9.0
+- completed:
+    hackage: servant-0.17@sha256:e78734cb6b75c5d1e52e8f5e16bc3f557154a580bbde4932a7e1a6a90da7eb04,5029
+    pantry-tree:
+      size: 2392
+      sha256: 36561a606c35393386aa48b7cc2407fa4013aba62a19d69f004ec9c2010209aa
+  original:
+    hackage: servant-0.17
+- completed:
+    hackage: servant-client-0.17@sha256:433be65dd541b9a387eaaced22715a028ea846d72d141419c40ddf6fd5e3409b,4573
+    pantry-tree:
+      size: 1299
+      sha256: 1f8f57c6ce96ed4f1316460aaab48f3765b2addbf1e2cd363c72bbc41fdcf907
+  original:
+    hackage: servant-client-0.17
+- completed:
+    hackage: servant-client-core-0.17@sha256:d64622d68d8a6934abc821171582d601a99ef0277f3d8b8ba9b483c2617e3df6,3577
+    pantry-tree:
+      size: 1444
+      sha256: 89461980a2562d9943f4bb84077d8c4a8c5bac76c8c16577c9344e404b2e9fb1
+  original:
+    hackage: servant-client-core-0.17
+- completed:
+    hackage: servant-docs-0.11.5@sha256:2c78eaa6f6bf7d2832de6fb4843ec526669e68c7d002c201353c08547ed781f0,3284
+    pantry-tree:
+      size: 702
+      sha256: 23ea4145b94acf5878744a4d9af40873c4753ca54811f90dc0eb5a1752759f7c
+  original:
+    hackage: servant-docs-0.11.5
+- completed:
+    hackage: servant-foreign-0.15.1@sha256:d911fe4a547e2afc356e35135d3359c3f080d693d00d58e01093cdd59ed8f5f0,2768
+    pantry-tree:
+      size: 590
+      sha256: 88bf81ae968f263b8f1ba30b1288971732a2679dd284b2a17c3cc58bd741ac2f
+  original:
+    hackage: servant-foreign-0.15.1
+- completed:
+    hackage: servant-server-0.17@sha256:1a5adf564f0b703535eb733f249b282ef2ca7b587a303c357b549fb88e7a6dcd,5388
+    pantry-tree:
+      size: 2460
+      sha256: ea65ba54acb4362efedbfa7db616a51023579a6c83f18ab6d2ea6a84dea56021
+  original:
+    hackage: servant-server-0.17
 snapshots:
 - completed:
-    size: 536352
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/9/14.yaml
-    sha256: 9e880f85f76b7f35a2b6edd1af333ce7f7845d47e897c3509ddd18eaa2763779
-  original: lts-9.14
+    size: 531707
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/5.yaml
+    sha256: 9751e25e0af5713a53ddcfcc79564b082c71b1b357fadef0d85672a5b5ba3703
+  original: lts-16.5
