@@ -10,7 +10,7 @@ import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup, elems)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
 import           Data.Semigroup (Semigroup(..), sconcat)
-import           Data.List (groupBy, maximumBy, find, lookup, partition, sortBy)
+import           Data.List (groupBy, maximumBy, find, partition, sortBy)
 import           Data.List.Extra (trim, lower)
 import           Data.Maybe (isJust, fromMaybe, catMaybes)
 import           Data.Ord (comparing)
@@ -709,7 +709,7 @@ productName e = unwords
                   else "(" ++ (lower . _catalogueEntrySize $ e) ++ ")"
               , _catalogueEntryText $ e
               ]
-
+ 
 {- Utils -}
 
 splitOn :: Eq a => a -> [a] -> [[a]]

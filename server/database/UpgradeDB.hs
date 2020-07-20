@@ -8,12 +8,13 @@
 module Main where
   import System.Directory (getCurrentDirectory, listDirectory)
   import qualified Data.ByteString.Char8 as BC (unpack)
-  import System.Command (readProcessWithExitCode, proc)
+  import System.Process (readProcessWithExitCode)
   import Control.Monad (forM_)
   import Data.List(sort)
 
   import Config
 
+  upgradeDir :: String
   upgradeDir = "/server/database/upgrade"
 
   main :: IO ()
@@ -24,7 +25,7 @@ module Main where
     forM_ (sort scripts) $ \s -> do
       putStrLn ""
       putStrLn $ "psql -a -f " ++ dir ++ upgradeDir ++ "/" ++ s ++ " " ++ (BC.unpack $ connectionString config)
-      (exit, out, err) <- readProcessWithExitCode "psql" [
+      (exit, _, _) <- readProcessWithExitCode "psql" [
                               "-a", 
                               "-f", 
                               dir ++ upgradeDir ++ "/" ++ s, 

@@ -2,7 +2,7 @@
 
 module DatabaseTypes where
   
-import Control.Monad (mzero, when, void, forM_)
+import Control.Monad (mzero)
 import qualified Data.Text as T
 import Data.Maybe (isJust)
 import Data.Time.Clock (UTCTime(..))

@@ -9,14 +9,8 @@
 
 module AppApiV2 where
 
-import           Data.Aeson
-import           Data.Aeson.Types (Options(..))
 import qualified Data.ByteString.Lazy as BL (ByteString)
-import           Data.Char (toLower, isLower, toUpper)
 import           Data.Text (Text)
-import           Data.Time.Calendar (Day)
-import           Data.Time.Clock (UTCTime)
-import           GHC.Generics
 import           Network.HTTP.Media ((//))
 import           Servant
 import           Servant.Multipart (MultipartData, MultipartForm, Mem)

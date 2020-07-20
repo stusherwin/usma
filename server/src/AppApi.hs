@@ -8,10 +8,7 @@
 
 module AppApi where
 
-import Data.Aeson
 import Data.Text (Text)
-import Data.Time.Calendar (Day)
-import GHC.Generics
 import Servant
 import Servant.Multipart
 import qualified Data.ByteString.Lazy as L

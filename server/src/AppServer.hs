@@ -10,19 +10,17 @@ module AppServer (appServer) where
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Char8 as B (unpack, pack)
+import qualified Data.ByteString.Char8 as B (unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (unpack, toStrict)
 import Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import Data.List (find)
 import Data.Text (Text)
 import qualified Data.Text as T (unpack)
-import Data.Time.Clock (getCurrentTime, utctDay)
-import Data.Time.Format (formatTime, defaultTimeLocale)
+import Data.Time.Clock (getCurrentTime)
 import qualified Data.Vector as V (fromList)
 import Servant
 import Servant.Multipart
-import System.Directory (copyFile, createDirectoryIfMissing)
 import Data.UUID (toString)
 import Data.UUID.V1 (nextUUID)
 

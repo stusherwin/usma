@@ -18,16 +18,15 @@ import           Data.CaseInsensitive  (foldedCase)
 import           Data.Char (isDigit)
 import           Data.IORef (newIORef, modifyIORef', readIORef)
 import           Data.List (intercalate, isInfixOf, foldl')
-import           Data.Monoid ((<>))
 import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
 import           Control.Exception (SomeException(..), catch, displayException)
 import           Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T (unpack, intercalate)
 import           Network.HTTP.Types (statusMessage, statusCode)
-import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream)
+import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream, getRequestBodyChunk)
 import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensity(..), SGR(..), setSGRCode)
-import           System.Command (readProcessWithExitCode)
+import           System.Process (readProcessWithExitCode)
 import           System.Directory (createDirectoryIfMissing, removeFile, listDirectory)
 
 type ResponseInfo = (String, String, IO BL.ByteString)
@@ -107,7 +106,7 @@ getRequestBodyChunks req = do
     readIORef chunksRef
   where
     nextChunk chunksRef = do
-      chunk <- requestBody req
+      chunk <- getRequestBodyChunk req
       if (not . B.null) chunk 
         then do
           modifyIORef' chunksRef (chunk :)
@@ -210,7 +209,7 @@ showDiff v1 v2 = do
         _ -> v2
       (_, out, _) <- readProcessWithExitCode "git" 
         [ "diff"
-        , "--no-index"
+        , "--no-index" 
         , "--word-diff=color"
         -- , "--inter-hunk-context=999"
         -- , "--function-context" 

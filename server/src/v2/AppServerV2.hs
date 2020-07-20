@@ -6,20 +6,18 @@ module AppServerV2 where
 
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import qualified Data.ByteString.Char8 as B (pack, unpack)
+import qualified Data.ByteString.Char8 as B (unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (unpack, toStrict)
 import           Data.Maybe (fromMaybe, isJust)
 import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
-import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDay, secondsToDiffTime)
-import           Data.Time.Format (formatTime, defaultTimeLocale)
+import           Data.Time.Clock (UTCTime(..), getCurrentTime, secondsToDiffTime)
 import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
 import           Safe (headMay)
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..), Mem)
-import           System.Directory (copyFile, createDirectoryIfMissing)
 
 import           AppApiV2 as Api
 import           Types as Api

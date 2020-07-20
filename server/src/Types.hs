@@ -5,7 +5,6 @@
 module Types where
 
 import Data.Aeson
-import Data.Aeson.Types (Options(..))
 import GHC.Generics
 import Data.Char (toLower, isLower)
 import Data.Time.Clock (UTCTime)
@@ -116,7 +115,7 @@ data OrderItemAdjustment = OrderItemAdjustment { oiaOldProductPriceExcVat :: Int
                                                } deriving (Eq, Show, Generic)
 instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
-
+ 
 data OrderAdjustment = OrderAdjustment { oaOldTotalExcVat :: Int
                                        , oaOldTotalIncVat :: Int 
                                        } deriving (Eq, Show, Generic)
@@ -264,6 +263,7 @@ data ProductCatalogueApiData = ProductCatalogueApiData
   } deriving (Eq, Show, Generic)
 instance ToJSON ProductCatalogueApiData
 
+dropFieldPrefixOptions :: Options
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where
   dropFieldPrefix = (first toLower) . (dropWhile isLower)
   first f (c:cs) = (f c):cs
