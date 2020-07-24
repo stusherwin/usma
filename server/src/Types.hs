@@ -26,7 +26,8 @@ data CollectiveOrder = CollectiveOrder { coId :: Int
                                        } deriving (Eq, Show, Generic)
 instance ToJSON CollectiveOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
-
+instance FromJSON CollectiveOrder where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data Household = Household { hId :: Int
                            , hName :: String
@@ -39,12 +40,16 @@ data Household = Household { hId :: Int
                            } deriving (Eq, Show, Generic)
 instance ToJSON Household where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON Household where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
                                                                  
 data HouseholdDetails = HouseholdDetails { hdetName :: String
                                          , hdetContactName :: Maybe String
                                          , hdetContactEmail :: Maybe String
                                          , hdetContactPhone :: Maybe String
                                          } deriving (Eq, Show, Generic)
+instance ToJSON HouseholdDetails where
+  toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON HouseholdDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
@@ -66,9 +71,13 @@ data HouseholdOrder = HouseholdOrder { hoOrderId :: Int
                                      } deriving (Eq, Show, Generic)
 instance ToJSON HouseholdOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON HouseholdOrder where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data HouseholdOrderItemDetails = HouseholdOrderItemDetails { hoidetQuantity :: Maybe Int
                                                            } deriving (Eq, Show, Generic)
+instance ToJSON HouseholdOrderItemDetails where
+  toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON HouseholdOrderItemDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
@@ -79,10 +88,14 @@ data HouseholdPayment = HouseholdPayment { hpId :: Int
                                          } deriving (Eq, Show, Generic)
 instance ToJSON HouseholdPayment where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON HouseholdPayment where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data HouseholdPaymentDetails = HouseholdPaymentDetails { hpdetDate :: Day
                                                        , hpdetAmount :: Int
                                                        } deriving (Eq, Show, Generic)
+instance ToJSON HouseholdPaymentDetails where
+  toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON HouseholdPaymentDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
@@ -105,6 +118,8 @@ data OrderItem = OrderItem { oiProductId :: Int
                            } deriving (Eq, Show, Generic)
 instance ToJSON OrderItem where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON OrderItem where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data OrderItemAdjustment = OrderItemAdjustment { oiaOldProductPriceExcVat :: Int
                                                , oiaOldProductPriceIncVat :: Int
@@ -115,22 +130,30 @@ data OrderItemAdjustment = OrderItemAdjustment { oiaOldProductPriceExcVat :: Int
                                                } deriving (Eq, Show, Generic)
 instance ToJSON OrderItemAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON OrderItemAdjustment where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
  
 data OrderAdjustment = OrderAdjustment { oaOldTotalExcVat :: Int
                                        , oaOldTotalIncVat :: Int 
                                        } deriving (Eq, Show, Generic)
 instance ToJSON OrderAdjustment where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON OrderAdjustment where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data HouseholdQuantityDetails = HouseholdQuantityDetails { hqdetHouseholdId :: Int
                                                          , hqdetItemQuantity :: Int
                                                          } deriving (Eq, Show, Generic)
+instance ToJSON HouseholdQuantityDetails where
+  toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON HouseholdQuantityDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data ReconcileOrderItemDetails = ReconcileOrderItemDetails { roidetProductPriceExcVat :: Int
                                                            , roidetHouseholdQuantities :: [HouseholdQuantityDetails]
                                                            } deriving (Eq, Show, Generic)
+instance ToJSON ReconcileOrderItemDetails where
+  toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON ReconcileOrderItemDetails where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
@@ -151,6 +174,8 @@ data PastCollectiveOrder = PastCollectiveOrder { pcoId :: Int
                                                } deriving (Eq, Show, Generic)
 instance ToJSON PastCollectiveOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON PastCollectiveOrder where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
                                              , phoOrderCreatedDate :: UTCTime
@@ -171,9 +196,12 @@ data PastHouseholdOrder = PastHouseholdOrder { phoOrderId :: Int
                                              } deriving (Eq, Show, Generic)
 instance ToJSON PastHouseholdOrder where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON PastHouseholdOrder where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data VatRate = Zero | Standard | Reduced deriving (Eq, Show, Generic)
 instance ToJSON VatRate
+instance FromJSON VatRate
 
 data ProductCatalogueData = ProductCatalogueData { pcdCode :: String
                                                  , pcdCategory :: String
@@ -194,6 +222,8 @@ data ProductCatalogueData = ProductCatalogueData { pcdCode :: String
                                                  } deriving (Eq, Show, Generic)
 instance ToJSON ProductCatalogueData where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON ProductCatalogueData where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data ProductCatalogueEntry = ProductCatalogueEntry { pceCode :: String
                                                    , pceName :: String
@@ -211,11 +241,15 @@ data ProductCatalogueEntry = ProductCatalogueEntry { pceCode :: String
                                                    } deriving (Eq, Show, Generic)
 instance ToJSON ProductCatalogueEntry where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON ProductCatalogueEntry where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data GroupSettings = GroupSettings { gsEnablePayments :: Bool
                                    } deriving (Eq, Show, Generic)
 instance ToJSON GroupSettings where
   toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON GroupSettings where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data ReconcileHouseholdOrderItemDetails = ReconcileHouseholdOrderItemDetails { rhoidProductCode :: String
                                                                              , rhoidProductPriceExcVat :: Int
@@ -255,6 +289,7 @@ data ApiData = ApiData
   , groupSettings ::  GroupSettings
   } deriving (Eq, Show, Generic)
 instance ToJSON ApiData
+instance FromJSON ApiData
 
 data ProductCatalogueApiData = ProductCatalogueApiData 
   { productCatalogue :: [ProductCatalogueEntry]
@@ -262,6 +297,7 @@ data ProductCatalogueApiData = ProductCatalogueApiData
   , brands :: [String]
   } deriving (Eq, Show, Generic)
 instance ToJSON ProductCatalogueApiData
+instance FromJSON ProductCatalogueApiData
 
 dropFieldPrefixOptions :: Options
 dropFieldPrefixOptions = defaultOptions { fieldLabelModifier = dropFieldPrefix } where

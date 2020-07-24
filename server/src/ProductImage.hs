@@ -4,7 +4,7 @@ import Text.HTML.TagSoup
 import Control.Exception (handle)
 import qualified Data.ByteString.Lazy.Char8 as C (unpack)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Lazy as L (ByteString, fromStrict, toStrict, readFile)
+import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
 import Network.HTTP.Conduit
 
 import qualified Database as D
@@ -32,25 +32,25 @@ fetchProductData code = handle handleException $ do
   handleException :: HttpException -> IO (Maybe ProductData)
   handleException _ = return Nothing
 
-fetchProductImage :: B.ByteString -> String -> IO (Maybe L.ByteString)
+fetchProductImage :: B.ByteString -> String -> IO (Maybe BL.ByteString)
 fetchProductImage conn code = handle handleException $ do 
   image <- D.getProductImage conn code
   case image of
-    Just i -> return $ Just $ L.fromStrict i
+    Just i -> return $ Just $ BL.fromStrict i
     _ -> do
-      img <- L.readFile "client/static/img/404.jpg"
+      img <- BL.readFile "client/static/img/404.jpg"
       return $ Just $ img
       -- productData <- fetchProductData code
       -- case productData of
       --   Just r -> do
       --     imageData <- simpleHttp (imageUrl r)
-      --     D.saveProductImage conn code $ L.toStrict imageData
+      --     D.saveProductImage conn code $ BL.toStrict imageData
       --     return $ Just $ imageData
       --   _ -> do
-      --     img <- L.readFile "client/static/img/404.jpg"
+      --     img <- BL.readFile "client/static/img/404.jpg"
       --     return $ Just $ img
   where
-  handleException :: HttpException -> IO (Maybe L.ByteString)
+  handleException :: HttpException -> IO (Maybe BL.ByteString)
   handleException _ = do
-    img <- L.readFile "client/static/img/404.jpg"
+    img <- BL.readFile "client/static/img/404.jpg"
     return $ Just $ img

@@ -11,7 +11,7 @@ module AppApi where
 import Data.Text (Text)
 import Servant
 import Servant.Multipart
-import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Lazy as BL
 import Network.HTTP.Media ((//))
 
 import Types
@@ -31,11 +31,11 @@ type QueryApi =
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-catalogue" :> Get '[JSON] [ProductCatalogueEntry]
-  :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] L.ByteString
-  :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
-  :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] L.ByteString)
+  :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
+  :<|> "collective-order-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] BL.ByteString)
+  :<|> "household-orders-download" :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] BL.ByteString)
+  :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] BL.ByteString)
+  :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] (Headers '[Header "Content-Disposition" Text] BL.ByteString)
   :<|> "product-catalogue-categories" :> Get '[JSON] [String]
   :<|> "product-catalogue-brands" :> Get '[JSON] [String]
   :<|> "group-settings" :> Get '[JSON] GroupSettings
@@ -66,11 +66,15 @@ type CommandApi =
 data Jpeg
 instance Accept Jpeg where
   contentType _ = "image" // "jpeg"
-instance MimeRender Jpeg (L.ByteString) where
+instance MimeRender Jpeg (BL.ByteString) where
   mimeRender _ = Prelude.id
+instance MimeUnrender Jpeg (BL.ByteString) where
+  mimeUnrender _ = Prelude.id <$> Right
 
 data Csv
 instance Accept Csv where
   contentType _ = "text" // "csv"
-instance MimeRender Csv (L.ByteString) where
+instance MimeRender Csv (BL.ByteString) where
   mimeRender _ = Prelude.id
+instance MimeUnrender Csv (BL.ByteString) where
+  mimeUnrender _ = Prelude.id <$> Right

@@ -29,9 +29,6 @@ begin
   , "key"  text   not null
   );
 
-  insert into order_group ("name", "key") values ('South Brum Co-ops', 'ABC') returning id into og1Id;
-  insert into order_group ("name", "key") values ('Rachel''s Friends', 'DEF') returning id into og2Id;
-
   ---
 
   create table household
@@ -45,11 +42,6 @@ begin
   , foreign key (order_group_id) references order_group (id)
   );
 
-  insert into household (order_group_id, "name", archived) values (og1Id, '123 Front Road',  false) returning id into h1Id;
-  insert into household (order_group_id, "name", archived) values (og1Id, '1 Main Terrace',  false) returning id into h2Id;
-  insert into household (order_group_id, "name", archived) values (og1Id, '24 The Street',   false) returning id into h3Id;
-  insert into household (order_group_id, "name", archived) values (og1Id, '3 Bowling Alley', false) returning id into h4Id;
-
   ---
 
   create table "order"
@@ -60,8 +52,6 @@ begin
   );
 
   alter sequence order_id_seq restart with 4;
-
-  insert into "order" (order_group_id, created_date, created_by_id) values (og1Id, '2018-01-04', h1Id) returning id into o4Id;
 
   ---
 
@@ -87,11 +77,6 @@ begin
   , updated      timestamptz not null
   , foreign key (vat_rate) references vat_rate (code)
   );
-
-  insert into product (code, "name", price, vat_rate, discontinued, updated) values ('FX109', 'Jam',     1240, 'Z', false, current_date) returning id into p1Id;
-  insert into product (code, "name", price, vat_rate, discontinued, updated) values ('CV308', 'Butter',  9523, 'S', false, current_date) returning id into p2Id;
-  insert into product (code, "name", price, vat_rate, discontinued, updated) values ('M0043', 'Milk',    5210, 'R', false, current_date) returning id into p3Id;
-  insert into product (code, "name", price, vat_rate, discontinued, updated) values ('BN995', 'Bananas', 1200, 'Z', false, current_date) returning id into p4Id;
 
   ---
 
@@ -139,11 +124,6 @@ begin
   , foreign key (household_id) references household (id)
   , foreign key (order_group_id) references order_group (id)
   );
-
-  insert into household_payment (order_group_id, household_id, "date", amount, archived) values (og1Id, 1, '2018-01-01', 10000, false) returning id into hp1Id;
-  insert into household_payment (order_group_id, household_id, "date", amount, archived) values (og1Id, 1, '2018-01-02', 20000, false) returning id into hp2Id;
-  insert into household_payment (order_group_id, household_id, "date", amount, archived) values (og1Id, 3, '2018-01-01', 30000, false) returning id into hp3Id;
-  insert into household_payment (order_group_id, household_id, "date", amount, archived) values (og1Id, 4, '2018-01-01', 40000, false) returning id into hp4Id;
 
   ---
 
@@ -207,21 +187,5 @@ begin
   , foreign key (order_id, household_id) references past_household_order (order_id, household_id)
   , foreign key (order_group_id) references order_group (id)
   );
-
-  insert into past_order (order_group_id, id, created_date, created_by_id, created_by_name, cancelled) values (og1Id, 1, '2018-01-01', h1Id, '123 Front Road', false);
-  insert into past_order (order_group_id, id, created_date, created_by_id, created_by_name, cancelled) values (og1Id, 2, '2018-01-02', h1Id, '123 Front Road', true);
-  insert into past_order (order_group_id, id, created_date, created_by_id, created_by_name, cancelled) values (og1Id, 3, '2018-01-03', h1Id, '123 Front Road', false);
-
-  insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled) values (og1Id, 1, h1Id, '123 Front Road',  false);
-  insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled) values (og1Id, 1, h2Id, '1 Main Terrace',  false);
-  insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled) values (og1Id, 2, h3Id, '24 The Street',   true);
-  insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled) values (og1Id, 2, h4Id, '3 Bowling Alley', true);
-  insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled) values (og1Id, 3, h1Id, '123 Front Road',  false);
-  insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled) values (og1Id, 3, h4Id, '3 Bowling Alley', false);
-
-  insert into past_household_order_item (order_group_id, order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, item_total_exc_vat, item_total_inc_vat) values (og1Id, 1, h1Id, p1Id, 'FX109p', 'Jam p',     100, 120, 'Z', 1, 100,  120);
-  insert into past_household_order_item (order_group_id, order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, item_total_exc_vat, item_total_inc_vat) values (og1Id, 1, h2Id, p2Id, 'CV308p', 'Butter p',  200, 240, 'S', 2, 400,  480);
-  insert into past_household_order_item (order_group_id, order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, item_total_exc_vat, item_total_inc_vat) values (og1Id, 2, h3Id, p3Id, 'M0043p', 'Milk p',    300, 315, 'R', 1, 300,  315);
-  insert into past_household_order_item (order_group_id, order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, item_total_exc_vat, item_total_inc_vat) values (og1Id, 2, h4Id, p4Id, 'BN995p', 'Bananas p', 400, 400, 'Z', 5, 2000, 2000);
 end $$ language plpgsql;
 commit;

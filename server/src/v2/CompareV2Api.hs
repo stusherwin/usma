@@ -16,15 +16,15 @@ import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStr, writeFile)
 import           Data.ByteString.Builder (toLazyByteString)
 import           Data.CaseInsensitive  (foldedCase)
 import           Data.Char (isDigit)
-import           Data.IORef (newIORef, modifyIORef', readIORef)
+import           Data.IORef (newIORef, modifyIORef', readIORef, atomicModifyIORef')
 import           Data.List (intercalate, isInfixOf, foldl')
 import           Data.UUID (toString)
 import           Data.UUID.V1 (nextUUID)
 import           Control.Exception (SomeException(..), catch, displayException)
 import           Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T (unpack, intercalate)
-import           Network.HTTP.Types (statusMessage, statusCode)
-import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream, getRequestBodyChunk)
+import           Network.HTTP.Types (Method, RequestHeaders, ResponseHeaders, statusMessage, statusCode)
+import           Network.Wai (Middleware, Request(..), Response, StreamingBody, responseToStream, getRequestBodyChunk, responseStatus, responseHeaders)
 import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensity(..), SGR(..), setSGRCode)
 import           System.Process (readProcessWithExitCode)
 import           System.Directory (createDirectoryIfMissing, removeFile, listDirectory)
@@ -34,39 +34,52 @@ type ResponseInfo = (String, String, IO BL.ByteString)
 readInt :: String -> Int
 readInt = read
 
-recordApiV1Responses :: Middleware
-recordApiV1Responses app req sendResponse = do
-  if isApiV1 req
-    then do
-      let recordingsDir = "server/data/recordings/"
-      liftIO $ createDirectoryIfMissing True recordingsDir
-      index <- show . (+ 1) . foldl' max 0 . map (readInt . takeWhile isDigit) <$> listDirectory recordingsDir
-      chunks <- getRequestBodyChunks req
-      B.writeFile (recordingsDir ++ index ++ "-req") $ B.concat [requestMethod req, B.pack " ", rawPathInfo req, rawQueryString req]
-      -- let req2 = Request (requestMethod req)
-      --                    (httpVersion req) 
-      --                    (rawPathInfo req)
-      --                    (rawQueryString req)
-      --                    (requestHeaders req)
-      --                    (isSecure req)
-      --                    (remoteHost req)
-      --                    (pathInfo req)
-      --                    (queryString req)
-      --                    (requestBody req)
-      --                    (vault req)
-      --                    (requestBodyLength req)
-      --                    (requestHeaderHost req)
-      --                    (requestHeaderRange req)
-      --                    (requestHeaderReferer req)
-      --                    (requestHeaderUserAgent req)
-      req' <- withRequestBodyChunks chunks req
-      app req' $ \resp -> do
-        (status, _, _) <- getResponseInfo resp
-        BL.writeFile (recordingsDir ++ index ++ "-resp") $ BL.pack $ status
-        -- body <- getBody
-        -- BL.writeFile (recordingsDir ++ index) body
-        sendResponse resp
-    else app req sendResponse
+data RecordedRequest = RecordedRequest 
+  { reqMethod :: Method
+  , reqHeaders :: RequestHeaders
+  , reqPath :: B.ByteString
+  , reqBody :: B.ByteString
+  } deriving (Show, Read)
+
+data RecordedResponse = RecordedResponse 
+  { respStatus :: Int
+  , respHeaders :: ResponseHeaders
+  , respBody :: BL.ByteString
+  } deriving (Show, Read)
+
+recordApiV1Responses :: String -> IO Middleware
+recordApiV1Responses recordingsDir = do
+  liftIO $ createDirectoryIfMissing True recordingsDir
+  index <- (+ 1) . foldl' max 0 . map (readInt . takeWhile isDigit) <$> listDirectory recordingsDir
+  _index <- newIORef index
+  return $ \app req sendResponse -> do
+    if isApiV1 req
+      then do
+        i <- atomicModifyIORef' _index (\i -> (i + 1, i))
+        let reqFile = recordingsDir ++ (show i) ++ "-req.txt"
+        putStrLn reqFile
+        chunks <- getRequestBodyChunks req
+        writeFile reqFile $ show $ RecordedRequest
+          { reqMethod = requestMethod req
+          , reqHeaders = requestHeaders req
+          , reqPath = B.concat [rawPathInfo req, rawQueryString req]
+          , reqBody = B.concat chunks
+          }
+        req' <- withRequestBodyChunks chunks req
+        app req' $ \resp -> do
+          let status = responseStatus resp
+          let headers = responseHeaders resp
+          (_, _, getBody) <- getResponseInfo resp
+          body <- getBody
+          let respFile = recordingsDir ++ (show i) ++ "-resp.txt"
+          putStrLn respFile
+          writeFile respFile $ show $ RecordedResponse
+            { respStatus = statusCode status
+            , respHeaders = headers
+            , respBody = body
+            }
+          sendResponse resp
+      else app req sendResponse
 
 compareApiV1WithApiV2 :: Middleware
 compareApiV1WithApiV2 app req sendResponse = do
@@ -136,13 +149,8 @@ getResponseInfo resp = do
     let (status, headers, body) = responseToStream resp
         statusStr = showStatus status
         headersStr = showHeaders headers
-    return (statusStr, headersStr, 
-      if isImage headersStr
-        then return . BL.pack $ "{image data}"
-        else getResponseBody body
-      )
+    return (statusStr, headersStr, getResponseBody body)
   where
-    isImage = isInfixOf "content-type: image/jpeg"
     showStatus status = (show . statusCode $ status) ++ " " ++ (B.unpack . statusMessage $ status)
     showHeaders headers = intercalate "," . map showHeader $ headers
     showHeader (header, value) = (B.unpack . foldedCase $ header) ++ ": " ++ (B.unpack value)
@@ -175,8 +183,8 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
     putStrLn ""
     resetColor
   else do
-    bodyV1 <- getBodyV1
-    bodyV2 <- getBodyV2
+    bodyV1 <- if isImage headersV1 then return . BL.pack $ "{image data}" else getBodyV1
+    bodyV2 <- if isImage headersV2 then return . BL.pack $ "{image data}" else getBodyV2
     if bodyV1 /= bodyV2 then do
       setColor Red
       putStrLn ""
@@ -188,6 +196,7 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
       setColor Green
       putStrLn $ "V1/V2 OK -- " ++ path
       resetColor
+  where isImage = isInfixOf "content-type: image/jpeg"
 
 showDiff :: BL.ByteString -> BL.ByteString -> IO ()
 showDiff v1 v2 = do

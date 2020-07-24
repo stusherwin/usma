@@ -70,9 +70,13 @@ instance Accept Csv where
   contentType _ = "text" // "csv"
 instance MimeRender Csv (BL.ByteString) where
   mimeRender _ = Prelude.id
+instance MimeUnrender Csv (BL.ByteString) where
+  mimeUnrender _ = Prelude.id <$> Right
 
 data Jpeg
 instance Accept Jpeg where
   contentType _ = "image" // "jpeg"
 instance MimeRender Jpeg (BL.ByteString) where
   mimeRender _ = Prelude.id
+instance MimeUnrender Jpeg (BL.ByteString) where
+  mimeUnrender _ = Prelude.id <$> Right

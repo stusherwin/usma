@@ -13,7 +13,6 @@ import           Data.Text (Text)
 import qualified Data.Text as T (unpack)
 import           Network.HTTP.Types (hContentType, status200)
 import           Network.Wai (responseFile)
-import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Network.Wai.Middleware.Static (staticPolicy, addBase)
 import           Servant.Multipart (generalOptions, defaultMultipartOptions, Mem)
 import           Network.Wai.Parse (clearMaxHeaderLines, clearMaxHeaderLineLength, defaultParseRequestBodyOptions)
@@ -24,13 +23,9 @@ import qualified Database as D
 import Config
 import AppServer
 import AppServerV2
-import CompareV2Api (compareApiV1WithApiV2, recordApiV1Responses)
 
 app :: Config -> Application
-app config = logStdoutDev $
-            --  compareApiV1WithApiV2 $
-            --  recordApiV1Responses $ 
-             serveWithContext fullApi ctxt (server config)
+app config = serveWithContext fullApi ctxt (server config)
   where ctxt = multipartOpts :. EmptyContext
         multipartOpts = (defaultMultipartOptions (Proxy :: Proxy Mem))
           { generalOptions = clearMaxHeaderLines $
