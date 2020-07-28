@@ -51,8 +51,6 @@ begin
   , created_by_id  int         not null
   );
 
-  alter sequence order_id_seq restart with 4;
-
   ---
 
   create table vat_rate

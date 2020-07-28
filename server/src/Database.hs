@@ -387,12 +387,12 @@ createOrder connectionString groupId date householdId = do
     [Only id] <- query conn [sql|
       insert into "order" (order_group_id, created_date, created_by_id) values (?, ?, ?) returning id
     |] (groupId, date, householdId)
-    case householdId of
-      (Just householdId) -> do
-        void $ execute conn [sql|
-          insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
-        |] (groupId, id, householdId, date)
-      _ -> return ()
+    -- case householdId of
+    --   (Just householdId) -> do
+    --     void $ execute conn [sql|
+    --       insert into household_order (order_group_id, order_id, household_id, updated, complete, cancelled) values (?, ?, ?, ?, false, false)
+    --     |] (groupId, id, householdId, date)
+    --   _ -> return ()
     return id
   close conn
   return id

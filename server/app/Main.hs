@@ -22,6 +22,6 @@ main = do
   record <- recordApiV1Responses "server/test/requests/"
   run (Config.port config) $
     logStdoutDev $
-    --  compareApiV1WithApiV2 $
+    compareApiV1WithApiV2 $
     record $ 
     app config

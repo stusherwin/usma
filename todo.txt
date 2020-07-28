@@ -1,3 +1,7 @@
+BUGS:
+* VAT calculation off (rounding up to nearest 10p?)
+* Abandoned household order gets unabandoned when group order placed
+
 Refactor
 * OrderId needed on API calls if only ever one order per group?
   - Inconsistency on query/command API - query has no orderId parameter
