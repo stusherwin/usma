@@ -236,11 +236,22 @@ getPastOrderItemData conn groupId = do
            hoi.product_organic,
            hoi.product_added_sugar,
            hoi.product_vegan,
-           max(adj.old_product_price_exc_vat) as old_product_price_exc_vat,
-           max(adj.old_product_price_inc_vat) as old_product_price_inc_vat,
-           sum(adj.old_quantity) as old_quantity,
-           sum(adj.old_item_total_exc_vat) as old_item_total_exc_vat,
-           sum(adj.old_item_total_inc_vat) as old_item_total_inc_vat
+           case 
+             when bool_or(adj.old_product_price_exc_vat is not null) then max(coalesce(adj.old_product_price_exc_vat, hoi.product_price_exc_vat)) 
+             else null
+           end as old_product_price_exc_vat,
+           case 
+             when bool_or(adj.old_product_price_inc_vat is not null) then max(coalesce(adj.old_product_price_inc_vat, hoi.product_price_inc_vat)) 
+           end as old_product_price_inc_vat,
+           case 
+             when bool_or(adj.old_quantity is not null) then sum(coalesce(adj.old_quantity, hoi.quantity)) 
+           end as old_quantity,
+           case 
+             when bool_or(adj.old_item_total_exc_vat is not null) then sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) 
+           end as old_item_total_exc_vat,
+           case 
+             when bool_or(adj.old_item_total_inc_vat is not null) then sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat))
+           end as old_item_total_inc_vat
     from past_household_order_item hoi
     left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
     where hoi.order_group_id = ?

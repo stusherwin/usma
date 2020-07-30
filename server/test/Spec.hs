@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 import           Prelude ()
 import           Prelude.Compat
+import           Control.Arrow ((&&&))
 import           Control.Monad (forM_)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as BC (pack, unpack, breakSubstring, dropWhile, putStrLn, drop, concat, length, takeWhile, null)
@@ -8,6 +9,7 @@ import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict)
 import           Data.Char (isDigit)
 import           Data.Function (on)
 import           Data.List (isSuffixOf, sortBy, intercalate)
+import           Data.Time.Clock (UTCTime(..), getCurrentTime)
 import qualified Network.Wai.Handler.Warp as Warp
 import           Test.Hspec
 import           Test.Hspec.Wai
@@ -20,6 +22,7 @@ import Config
 import App
 import CompareV2Api
 import UpgradeDB
+import DomainV2
 
 main :: IO ()
 main = hspec spec
@@ -28,7 +31,135 @@ spec :: Spec
 spec = do
   apiRegressionSpec
   ignoreFieldSpec
+  domainSpec
   -- generateTestsSpec  
+
+domainSpec :: Spec
+domainSpec = 
+  describe "reconcile order" $ do
+    date <- runIO getCurrentTime
+    
+    it "should adjust household order items" $ do
+      let order = makeOrder date [ (HouseholdId 1, [OrderItemSpec (ProductCode "A123") 100 1])
+                                 , (HouseholdId 2, [OrderItemSpec (ProductCode "A123") 100 2])
+                                 ]
+      householdOrderItemValues order `shouldBe` [ (HouseholdId 1, [("A123", 100, 1, 100, Nothing, Nothing, Nothing)])
+                                                , (HouseholdId 2, [("A123", 100, 2, 200, Nothing, Nothing, Nothing)])
+                                                ]
+      
+      let order' = reconcileOrderItems date [(HouseholdId 1, OrderItemSpec (ProductCode "A123") 100 2)] order
+      householdOrderItemValues order' `shouldBe` [ (HouseholdId 1, [("A123", 100, 1, 100, Just 100, Just 2, Just 200)])
+                                                 , (HouseholdId 2, [("A123", 100, 2, 200, Nothing, Nothing, Nothing)])
+                                                 ]
+
+      date' <- liftIO getCurrentTime
+      let order'' = reconcileOrderItems date' [(HouseholdId 2, OrderItemSpec (ProductCode "A123") 200 2)] order'
+      householdOrderItemValues order'' `shouldBe` [ (HouseholdId 1, [("A123", 100, 1, 100, Just 100, Just 2, Just 200)])
+                                                  , (HouseholdId 2, [("A123", 100, 2, 200, Just 200, Just 2, Just 400)])
+                                                  ]
+
+    it "should adjust order items" $ do
+      let order = makeOrder date [ (HouseholdId 1, [OrderItemSpec (ProductCode "A123") 100 1])
+                                 , (HouseholdId 2, [OrderItemSpec (ProductCode "A123") 100 2])
+                                 ]
+      orderItemValues order `shouldBe` [("A123", 100, 3, 300, Nothing, Nothing, Nothing)]
+      
+      let order' = reconcileOrderItems date [(HouseholdId 1, OrderItemSpec (ProductCode "A123") 100 2)] order
+      orderItemValues order' `shouldBe` [("A123", 100, 3, 300, Just 100, Just 4, Just 400)]
+
+      date' <- liftIO getCurrentTime
+      let order'' = reconcileOrderItems date' [(HouseholdId 2, OrderItemSpec (ProductCode "A123") 200 2)] order'
+      orderItemValues order'' `shouldBe` [("A123", 100, 3, 300, Just 200, Just 4, Just 800)]
+
+    it "should adjust order total" $ do
+      let order = makeOrder date [ (HouseholdId 1, [OrderItemSpec (ProductCode "A123") 100 1])
+                                 , (HouseholdId 2, [OrderItemSpec (ProductCode "A123") 100 2])
+                                 ]
+      orderTotal order `shouldBe` 300
+      orderAdjustment order `shouldBe` Nothing
+      
+      let order' = reconcileOrderItems date [(HouseholdId 1, OrderItemSpec (ProductCode "A123") 100 2)] order
+      
+      orderTotal order' `shouldBe` 300
+      orderAdjustment order' `shouldBe` Just (OrderAdjustment 400)
+
+      date' <- liftIO getCurrentTime
+      let order'' = reconcileOrderItems date' [(HouseholdId 2, OrderItemSpec (ProductCode "A123") 200 2)] order'
+      
+      orderTotal order'' `shouldBe` 300
+      orderAdjustment order'' `shouldBe` Just (OrderAdjustment 600)
+
+type OrderItemValues = (String, Money, Int, Money, Maybe Money, Maybe Int, Maybe Money)
+
+householdOrderItemValues :: Order -> [(HouseholdId, [OrderItemValues])]
+householdOrderItemValues = map (householdOrderHouseholdId &&& map itemValues . _householdOrderItems) . _orderHouseholdOrders
+
+orderItemValues :: Order -> [OrderItemValues]
+orderItemValues = map itemValues . orderItems
+
+itemValues :: OrderItem -> OrderItemValues
+itemValues i = ( fromProductCode . itemProductCode $ i
+               , _priceAmount . itemProductPrice $ i
+               , _itemQuantity i
+               , itemTotal i
+               , _priceAmount . _itemAdjNewPrice <$> (_itemAdjustment i)
+               , _itemAdjNewQuantity <$> (_itemAdjustment i)
+               , itemAdjNewTotal <$> (_itemAdjustment i)
+               )
+
+makeOrder :: UTCTime -> [(HouseholdId, [OrderItemSpec])] -> Order
+makeOrder date householdItems = Order 
+    { _orderInfo = orderInfo
+    , _orderStatusFlags = orderStatus
+    , _orderHouseholdOrders = makeHouseholdOrder orderInfo orderStatus <$> householdItems
+    }
+  where
+    orderInfo = OrderInfo
+      { _orderId = OrderId 1
+      , _orderGroupId = OrderGroupId 1
+      , _orderCreated = date
+      , _orderCreatedBy = Nothing
+      }
+    orderStatus = OrderStatusFlags
+      { _orderIsAbandoned = False
+      , _orderIsPlaced = True
+      }
+
+makeHouseholdOrder :: OrderInfo -> OrderStatusFlags -> (HouseholdId, [OrderItemSpec]) -> HouseholdOrder
+makeHouseholdOrder orderInfo orderStatus (householdId, items) = HouseholdOrder 
+  { _householdOrderOrderInfo = orderInfo
+  , _householdOrderOrderStatusFlags = orderStatus
+  , _householdOrderHouseholdInfo = HouseholdInfo 
+    { _householdId = householdId
+    , _householdName = "Household " ++ (show . fromHouseholdId $ householdId)
+    }
+  , _householdOrderStatusFlags = HouseholdOrderStatusFlags
+    { _householdOrderIsAbandoned = False
+    , _householdOrderIsComplete = True
+    }
+  , _householdOrderItems = makeOrderItem <$> items
+  }
+
+makeOrderItem :: OrderItemSpec -> OrderItem
+makeOrderItem (OrderItemSpec code price quantity) = OrderItem
+  { _itemProduct = Product 
+    { _productInfo = ProductInfo
+      { _productCode = code
+      , _productName = fromProductCode code
+      , _productPrice = atVatRate zeroRate price
+      }
+    , _productFlags = ProductFlags
+      { _productIsBiodynamic = False
+      , _productIsFairTrade = False
+      , _productIsGlutenFree = False
+      , _productIsOrganic = False
+      , _productIsAddedSugar = False
+      , _productIsVegan = False
+      }
+    }
+  , _itemQuantity = quantity
+  , _itemAdjustment = Nothing
+  }
 
 withApp :: (Warp.Port -> IO ()) -> IO ()
 withApp action =
@@ -475,7 +606,7 @@ apiRegressionSpec =
         request "GET" "/api/TEST/v1/query/data" [] ""
           `shouldRespondWith` 200
             { matchHeaders = [ "Content-Type" <:> "application/json;charset=utf-8" ]
-            , matchBody = bodyEquals' (ignoreField "orderCreatedDate") "{\"groupSettings\":{\"enablePayments\":true},\"pastHouseholdOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":28780,\"adjustment\":{\"oldTotalIncVat\":28780,\"oldTotalExcVat\":28780},\"isAbandoned\":false,\"totalIncVat\":28780,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":13370,\"oldItemTotalExcVat\":13370,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":13370,\"itemTotalIncVat\":13370,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":11560,\"oldItemTotalExcVat\":11560,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":11560,\"itemTotalIncVat\":11560,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":3850,\"oldItemTotalExcVat\":3850,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":3850,\"itemTotalIncVat\":3850,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":1,\"householdName\":\"Test Household 1\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":true,\"orderId\":1,\"isOpen\":false},{\"orderIsAbandoned\":false,\"totalExcVat\":2878,\"adjustment\":null,\"isAbandoned\":false,\"totalIncVat\":2878,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1337,\"itemTotalIncVat\":1337,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1156,\"itemTotalIncVat\":1156,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":385,\"itemTotalIncVat\":385,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":2,\"householdName\":\"Test Household 2\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":false,\"orderId\":1,\"isOpen\":false}],\"households\":[{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":28780,\"totalPayments\":0,\"balance\":-28780,\"name\":\"Test Household 1\",\"contactName\":null,\"id\":1},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":2878,\"totalPayments\":0,\"balance\":-2878,\"name\":\"Test Household 2\",\"contactName\":null,\"id\":2},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":0,\"totalPayments\":0,\"balance\":0,\"name\":\"Test Household 3\",\"contactName\":null,\"id\":3}],\"householdOrders\":[],\"pastCollectiveOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":31658,\"adjustment\":{\"oldTotalIncVat\":31658,\"oldTotalExcVat\":31658},\"isAbandoned\":false,\"totalIncVat\":31658,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":13370,\"oldItemTotalExcVat\":13370,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":14707,\"itemTotalIncVat\":14707,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":11560,\"oldItemTotalExcVat\":11560,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":12716,\"itemTotalIncVat\":12716,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":3850,\"oldItemTotalExcVat\":3850,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":4235,\"itemTotalIncVat\":4235,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"id\":1,\"isReconciled\":false,\"allHouseholdsUpToDate\":true}],\"householdPayments\":[],\"collectiveOrder\":null}"
+            , matchBody = bodyEquals' (ignoreField "orderCreatedDate") "{\"groupSettings\":{\"enablePayments\":true},\"pastHouseholdOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":28780,\"adjustment\":{\"oldTotalIncVat\":28780,\"oldTotalExcVat\":28780},\"isAbandoned\":false,\"totalIncVat\":28780,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":13370,\"oldItemTotalExcVat\":13370,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":13370,\"itemTotalIncVat\":13370,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":11560,\"oldItemTotalExcVat\":11560,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":11560,\"itemTotalIncVat\":11560,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":3850,\"oldItemTotalExcVat\":3850,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":3850,\"itemTotalIncVat\":3850,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":1,\"householdName\":\"Test Household 1\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":true,\"orderId\":1,\"isOpen\":false},{\"orderIsAbandoned\":false,\"totalExcVat\":2878,\"adjustment\":null,\"isAbandoned\":false,\"totalIncVat\":2878,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1337,\"itemTotalIncVat\":1337,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1156,\"itemTotalIncVat\":1156,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":385,\"itemTotalIncVat\":385,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":2,\"householdName\":\"Test Household 2\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":false,\"orderId\":1,\"isOpen\":false}],\"households\":[{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":28780,\"totalPayments\":0,\"balance\":-28780,\"name\":\"Test Household 1\",\"contactName\":null,\"id\":1},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":2878,\"totalPayments\":0,\"balance\":-2878,\"name\":\"Test Household 2\",\"contactName\":null,\"id\":2},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":0,\"totalPayments\":0,\"balance\":0,\"name\":\"Test Household 3\",\"contactName\":null,\"id\":3}],\"householdOrders\":[],\"pastCollectiveOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":31658,\"adjustment\":{\"oldTotalIncVat\":31658,\"oldTotalExcVat\":31658},\"isAbandoned\":false,\"totalIncVat\":31658,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":14707,\"oldItemTotalExcVat\":14707,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":11},\"addedSugar\":false,\"itemTotalExcVat\":14707,\"itemTotalIncVat\":14707,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":12716,\"oldItemTotalExcVat\":12716,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":11},\"addedSugar\":false,\"itemTotalExcVat\":12716,\"itemTotalIncVat\":12716,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":4235,\"oldItemTotalExcVat\":4235,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":11},\"addedSugar\":false,\"itemTotalExcVat\":4235,\"itemTotalIncVat\":4235,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"id\":1,\"isReconciled\":false,\"allHouseholdsUpToDate\":true}],\"householdPayments\":[],\"collectiveOrder\":null}"
             }
 
       it "reconcile order from file v2" $ do
@@ -496,7 +627,7 @@ apiRegressionSpec =
         request "GET" "/api/TEST/v2/query/data" [] ""
           `shouldRespondWith` 200
             { matchHeaders = [ "Content-Type" <:> "application/json;charset=utf-8" ]
-            , matchBody = bodyEquals' (ignoreField "orderCreatedDate") "{\"groupSettings\":{\"enablePayments\":true},\"pastHouseholdOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":28780,\"adjustment\":{\"oldTotalIncVat\":28780,\"oldTotalExcVat\":28780},\"isAbandoned\":false,\"totalIncVat\":28780,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":13370,\"oldItemTotalExcVat\":13370,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":13370,\"itemTotalIncVat\":13370,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":11560,\"oldItemTotalExcVat\":11560,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":11560,\"itemTotalIncVat\":11560,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":3850,\"oldItemTotalExcVat\":3850,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":3850,\"itemTotalIncVat\":3850,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":1,\"householdName\":\"Test Household 1\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":true,\"orderId\":1,\"isOpen\":false},{\"orderIsAbandoned\":false,\"totalExcVat\":2878,\"adjustment\":null,\"isAbandoned\":false,\"totalIncVat\":2878,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1337,\"itemTotalIncVat\":1337,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1156,\"itemTotalIncVat\":1156,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":385,\"itemTotalIncVat\":385,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":2,\"householdName\":\"Test Household 2\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":false,\"orderId\":1,\"isOpen\":false}],\"households\":[{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":28780,\"totalPayments\":0,\"balance\":-28780,\"name\":\"Test Household 1\",\"contactName\":null,\"id\":1},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":2878,\"totalPayments\":0,\"balance\":-2878,\"name\":\"Test Household 2\",\"contactName\":null,\"id\":2},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":0,\"totalPayments\":0,\"balance\":0,\"name\":\"Test Household 3\",\"contactName\":null,\"id\":3}],\"householdOrders\":[],\"pastCollectiveOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":31658,\"adjustment\":{\"oldTotalIncVat\":31658,\"oldTotalExcVat\":31658},\"isAbandoned\":false,\"totalIncVat\":31658,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":13370,\"oldItemTotalExcVat\":13370,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":14707,\"itemTotalIncVat\":14707,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":11560,\"oldItemTotalExcVat\":11560,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":12716,\"itemTotalIncVat\":12716,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":3850,\"oldItemTotalExcVat\":3850,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":4235,\"itemTotalIncVat\":4235,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"id\":1,\"isReconciled\":false,\"allHouseholdsUpToDate\":true}],\"householdPayments\":[],\"collectiveOrder\":null}"
+            , matchBody = bodyEquals' (ignoreField "orderCreatedDate") "{\"groupSettings\":{\"enablePayments\":true},\"pastHouseholdOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":28780,\"adjustment\":{\"oldTotalIncVat\":28780,\"oldTotalExcVat\":28780},\"isAbandoned\":false,\"totalIncVat\":28780,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":13370,\"oldItemTotalExcVat\":13370,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":13370,\"itemTotalIncVat\":13370,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":11560,\"oldItemTotalExcVat\":11560,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":11560,\"itemTotalIncVat\":11560,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":3850,\"oldItemTotalExcVat\":3850,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":10},\"addedSugar\":false,\"itemTotalExcVat\":3850,\"itemTotalIncVat\":3850,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":10,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":1,\"householdName\":\"Test Household 1\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":true,\"orderId\":1,\"isOpen\":false},{\"orderIsAbandoned\":false,\"totalExcVat\":2878,\"adjustment\":null,\"isAbandoned\":false,\"totalIncVat\":2878,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1337,\"itemTotalIncVat\":1337,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":1156,\"itemTotalIncVat\":1156,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":null,\"addedSugar\":false,\"itemTotalExcVat\":385,\"itemTotalIncVat\":385,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":1,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"householdId\":2,\"householdName\":\"Test Household 2\",\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"isReconciled\":false,\"orderId\":1,\"isOpen\":false}],\"households\":[{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":28780,\"totalPayments\":0,\"balance\":-28780,\"name\":\"Test Household 1\",\"contactName\":null,\"id\":1},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":2878,\"totalPayments\":0,\"balance\":-2878,\"name\":\"Test Household 2\",\"contactName\":null,\"id\":2},{\"contactPhone\":null,\"contactEmail\":null,\"totalOrders\":0,\"totalPayments\":0,\"balance\":0,\"name\":\"Test Household 3\",\"contactName\":null,\"id\":3}],\"householdOrders\":[],\"pastCollectiveOrders\":[{\"orderIsAbandoned\":false,\"totalExcVat\":31658,\"adjustment\":{\"oldTotalIncVat\":31658,\"oldTotalExcVat\":31658},\"isAbandoned\":false,\"totalIncVat\":31658,\"orderCreatedBy\":1,\"isComplete\":true,\"orderIsPlaced\":true,\"items\":[{\"productName\":\"SCHNITZER GLUTEN FREE Ciabatta Olive Bread GF (4 x 360g) Average 2-3 months shelf life\",\"adjustment\":{\"oldProductPriceExcVat\":1337,\"productDiscontinued\":false,\"oldItemTotalIncVat\":14707,\"oldItemTotalExcVat\":14707,\"oldProductPriceIncVat\":1337,\"oldItemQuantity\":11},\"addedSugar\":false,\"itemTotalExcVat\":14707,\"itemTotalIncVat\":14707,\"vegan\":true,\"productPriceExcVat\":1337,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1337,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":true,\"productId\":1,\"productCode\":\"BT470\"},{\"productName\":\"TIDEFORD ORGANIC VEGAN FOODS Spinach & Split Pea Soup (6 x 600g) with Nutmeg\",\"adjustment\":{\"oldProductPriceExcVat\":1156,\"productDiscontinued\":false,\"oldItemTotalIncVat\":12716,\"oldItemTotalExcVat\":12716,\"oldProductPriceIncVat\":1156,\"oldItemQuantity\":11},\"addedSugar\":false,\"itemTotalExcVat\":12716,\"itemTotalIncVat\":12716,\"vegan\":true,\"productPriceExcVat\":1156,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":1156,\"organic\":true,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":2,\"productCode\":\"CV364\"},{\"productName\":\"SUMA BAGGED DOWN Dates - Chopped (1 kg)\",\"adjustment\":{\"oldProductPriceExcVat\":385,\"productDiscontinued\":false,\"oldItemTotalIncVat\":4235,\"oldItemTotalExcVat\":4235,\"oldProductPriceIncVat\":385,\"oldItemQuantity\":11},\"addedSugar\":false,\"itemTotalExcVat\":4235,\"itemTotalIncVat\":4235,\"vegan\":true,\"productPriceExcVat\":385,\"itemQuantity\":11,\"biodynamic\":false,\"productPriceIncVat\":385,\"organic\":false,\"fairTrade\":false,\"productVatRate\":\"Zero\",\"glutenFree\":false,\"productId\":3,\"productCode\":\"DR227\"}],\"orderCreatedDate\":\"2020-07-24T19:33:16Z\",\"orderCreatedByName\":\"Test Household 1\",\"id\":1,\"isReconciled\":false,\"allHouseholdsUpToDate\":true}],\"householdPayments\":[],\"collectiveOrder\":null}"
             }
 
       it "reconcile order from file v1" $ do
@@ -690,13 +821,6 @@ toApiV2Path :: String -> String
 toApiV2Path path = case splitOn '/' path of 
   ("":"api":g:"v1":rest) -> intercalate "/" $ "":"api":g:"v2":rest
   _ -> path
-
-splitOn :: Eq a => a -> [a] -> [[a]]
-splitOn ch list = f list [[]] where
-  f _ [] = []
-  f [] ws = map reverse $ reverse ws
-  f (x:xs) ws | x == ch = f xs ([]:ws)
-  f (x:xs) (w:ws) = f xs ((x:w):ws)
 
 shouldMatch :: SResponse -> ResponseMatcher -> WaiExpectation st
 shouldMatch r matcher = forM_ (match r matcher) (liftIO . expectationFailure) 

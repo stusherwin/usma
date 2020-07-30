@@ -119,6 +119,7 @@ test-suite usma-test
                      , bytestring
                      , process
                      , wai-extra
+                     , time
   default-language:    Haskell2010
 
 source-repository head

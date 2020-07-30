@@ -9,15 +9,18 @@ import           Data.Function (on)
 import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup, elems)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
-import           Data.Semigroup (Semigroup(..), sconcat)
-import           Data.List (groupBy, maximumBy, find, partition, sortBy)
+import           Data.List (maximumBy, find, partition, sortBy)
 import           Data.List.Extra (trim, lower)
 import           Data.Maybe (isJust, fromMaybe, catMaybes)
 import           Data.Ord (comparing)
-import qualified Data.List.NonEmpty as NE (fromList)
+import           Data.Semigroup (sconcat)
+import           Data.List.NonEmpty (NonEmpty(..))
+import qualified Data.List.NonEmpty as NE (groupBy, nonEmpty, toList)
 import           GHC.Generics
 import           Prelude hiding (product)
 import           Text.Read (readMaybe)
+
+import Debug.Trace(trace)
 
 {- Household -}
 
@@ -152,10 +155,10 @@ orderId :: Order -> OrderId
 orderId = _orderId . _orderInfo
 
 orderTotal :: Order -> Money
-orderTotal = sum . map householdOrderTotal . householdOrdersToPlace
+orderTotal = sum . map itemTotal . orderItems
 
 abandonedOrderTotal :: Order -> Money
-abandonedOrderTotal = sum . map householdOrderTotal . abandonedHouseholdOrders
+abandonedOrderTotal = sum . map itemTotal . abandonedOrderItems
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
@@ -176,18 +179,18 @@ abandonedOrderAdjustment o =
     adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
 
 orderItems :: Order -> [OrderItem]
-orderItems = map (sconcat . NE.fromList) 
-           . groupBy ((==) `on` itemProductCode)
+orderItems = map sconcat -- mergeItems 
+           . NE.groupBy ((==) `on` itemProductCode)
            . sortBy (compare `on` fromProductCode . itemProductCode)
            . concatMap _householdOrderItems
            . householdOrdersToPlace
 
 abandonedOrderItems :: Order -> [OrderItem]
-abandonedOrderItems = map (sconcat . NE.fromList) 
-           . groupBy ((==) `on` itemProductCode)
-           . sortBy (compare `on` fromProductCode . itemProductCode)
-           . concatMap _householdOrderItems
-           . abandonedHouseholdOrders
+abandonedOrderItems = map sconcat -- mergeItems
+                    . NE.groupBy ((==) `on` itemProductCode)
+                    . sortBy (compare `on` fromProductCode . itemProductCode)
+                    . concatMap _householdOrderItems
+                    . abandonedHouseholdOrders
 
 householdOrdersToPlace :: Order -> [HouseholdOrder]
 householdOrdersToPlace = remove householdOrderIsAbandoned . _orderHouseholdOrders
@@ -463,10 +466,43 @@ updateItemPrice :: Price -> OrderItem -> OrderItem
 updateItemPrice price i@OrderItem { _itemProduct = p@Product { _productInfo = pi } } = 
   i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } } }
 
+mergeItems :: NonEmpty OrderItem -> OrderItem
+mergeItems items@(first :| _) = 
+  OrderItem (_itemProduct first)
+            (sum . fmap _itemQuantity $ items)
+            (mergeAdjustments items)
+
+mergeAdjustments :: NonEmpty OrderItem -> Maybe OrderItemAdjustment
+mergeAdjustments items = case NE.nonEmpty . catMaybes . map _itemAdjustment . NE.toList $ items of
+    Just adjs -> let discontinued     = any _itemAdjIsDiscontinued adjs
+                     totalQuantity    = if discontinued
+                                          then 0 
+                                          else sum . fmap (\i -> maybe (_itemQuantity i) _itemAdjNewQuantity . _itemAdjustment $ i) $ items
+                     latest           = maximumBy (comparing _itemAdjDate) adjs
+                     latestPrice      = _itemAdjNewPrice latest
+                     latestDate       = _itemAdjDate latest
+                 in  Just $ OrderItemAdjustment latestPrice
+                                                totalQuantity
+                                                discontinued
+                                                latestDate
+    _ -> Nothing
+
 instance Semigroup OrderItem where
-  i1 <> i2 = OrderItem (_itemProduct    i1)
-                       (_itemQuantity   i1 +  _itemQuantity   i2)
-                       (_itemAdjustment i1 <> _itemAdjustment i2)
+  i1 <> i2 = 
+    OrderItem (_itemProduct    i1)
+              (_itemQuantity   i1 +  _itemQuantity   i2)
+              (merge (_itemAdjustment i1) (_itemAdjustment i2))
+    where 
+      merge (Just a1) (Just a2) = Just (a1 <> a2)
+      merge (Just a1) _ = Just (a1 <> fromItem i2 a1)
+      merge _ (Just a2) = Just (fromItem i1 a2 <> a2)
+      merge _ _ = Nothing
+      fromItem i a = OrderItemAdjustment (_itemAdjNewPrice a) 
+                                         (if _itemAdjIsDiscontinued a 
+                                            then 0 
+                                            else _itemQuantity i)
+                                         (_itemAdjIsDiscontinued a)
+                                         (_itemAdjDate a)
 
 data OrderItemAdjustment = OrderItemAdjustment 
   { _itemAdjNewPrice :: Price
