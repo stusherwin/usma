@@ -105,6 +105,10 @@ test-suite usma-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      server/test
   main-is:             Spec.hs
+  other-modules:       DomainSpec
+                     , TestHelpers
+                     , GenerateTestsSpec
+                     , ApiRegressionSpec
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
   build-depends:       usma
                      , base

@@ -20,8 +20,6 @@ import           GHC.Generics
 import           Prelude hiding (product)
 import           Text.Read (readMaybe)
 
-import Debug.Trace(trace)
-
 {- Household -}
 
 data Household = Household 
