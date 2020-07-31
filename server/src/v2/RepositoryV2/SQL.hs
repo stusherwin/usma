@@ -151,8 +151,8 @@ insertProductImage conn code image =
 selectProducts :: Connection -> [WhereParam] -> IO [(ProductCode, ProductId)]
 selectProducts conn whereParams = 
     query conn ([sql|
-      select p.code
-           , p.id
+      select distinct p.code
+                    , p.id
       from v2.product p 
       join v2.order_item oi on oi.product_code = p.code
       join v2."order" o on oi.order_id = o.id

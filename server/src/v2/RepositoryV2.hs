@@ -22,6 +22,8 @@ import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgr
 import DomainV2
 import RepositoryV2.SQL
 
+import Debug.Trace (trace)
+
 data RepositoryConfig = RepositoryConfig 
   { repoConnectionString :: ByteString
   , repoGroupKey :: String 
@@ -312,6 +314,7 @@ getPastHouseholdOrders repo groupId = do
 setHouseholdOrders :: Repository -> ([HouseholdOrder], [HouseholdOrder]) -> IO ()
 setHouseholdOrders repo orders = do
     let conn = connection repo
+    products <- map fst <$> selectProducts conn []
 
     let orderKey o = let groupId = _orderGroupId . _householdOrderOrderInfo $ o
                          orderId = _orderId . _householdOrderOrderInfo $ o
@@ -323,7 +326,7 @@ setHouseholdOrders repo orders = do
     let keyedAdjustment (k, i) = (k, ) <$> _itemAdjustment i
 
     let items = join (***) (concatMap keyedItems) $ orders
-    let products = join (***) (nub . map (itemProductCode . snd)) $ items
+    let products' = (products, nub . map (itemProductCode . snd) . snd $ items) --join (***) (nub . map (itemProductCode . snd)) $ items
     let adjustments = join (***) (catMaybes . map keyedAdjustment) $ items
 
     -- TODO?
@@ -339,11 +342,11 @@ setHouseholdOrders repo orders = do
     let updatedAdjustments = updatedByComparing fst snd adjustments
     let removedAdjustments = removedBy fst adjustments
 
-    let addedProducts = addedBy id products
+    let addedProducts = addedBy id $ trace (show . join (***) (map fromProductCode) $ products') products'
 
     insertHouseholdOrders conn $ addedOrders
     updateHouseholdOrders conn $ updatedOrders
-    insertProducts conn $ addedProducts
+    insertProducts conn $ trace (show addedProducts) addedProducts
     insertOrderItems conn $ addedItems
     insertOrderItemAdjustments conn $ addedAdjustments
     deleteOrderItemAdjustments conn $ removedAdjustments

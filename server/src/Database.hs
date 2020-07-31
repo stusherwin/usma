@@ -268,14 +268,12 @@ getHouseholdOrderItemData conn groupId =
          , p.id
          , p.code
          , p.name
-         , case when p.discontinued then 0 
-                else p.price 
-           end as product_price_exc_vat
-         , case when p.discontinued then 0 
-                else cast(round(p.price * v.multiplier) as int) 
-           end as product_price_inc_vat
+         , p.price as product_price_exc_vat
+         , cast(round(p.price * v.multiplier) as int) as product_price_inc_vat
          , p.vat_rate
-         , hoi.quantity
+         , case when p.discontinued then 0
+                else hoi.quantity
+           end as quantity
          , case when p.discontinued then 0 
                 else p.price * hoi.quantity
            end as item_total_exc_vat
@@ -290,6 +288,7 @@ getHouseholdOrderItemData conn groupId =
          , p.vegan
          , hoi.product_price_exc_vat as old_product_price_exc_vat         
          , hoi.product_price_inc_vat as old_product_price_inc_vat
+         , hoi.quantity as old_quantity
          , hoi.item_total_exc_vat as old_item_total_exc_vat
          , hoi.item_total_inc_vat as old_item_total_inc_vat
          , p.discontinued

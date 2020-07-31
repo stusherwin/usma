@@ -193,6 +193,7 @@ data HouseholdOrderItemData = HouseholdOrderItemData {
   hoidVegan :: Bool,
   hoidOldPriceExcVat :: Int,
   hoidOldPriceIncVat :: Int,
+  hoidOldQuantity :: Int,
   hoidOldItemTotalExcVat :: Int,
   hoidOldItemTotalIncVat :: Int,
   hoidProductDiscontinued :: Bool,
@@ -201,7 +202,7 @@ data HouseholdOrderItemData = HouseholdOrderItemData {
 }
 
 instance FromRow HouseholdOrderItemData where
-  fromRow = HouseholdOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = HouseholdOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
              
 data ProductCatalogueEntryData = ProductCatalogueEntryData {
   pcedCode :: String,
@@ -435,7 +436,7 @@ fromHouseholdOrderItemData d
               $ if (hoidUpdated d) 
                 then Just $ OrderItemAdjustment (hoidOldPriceExcVat d)
                                                 (hoidOldPriceIncVat d)
-                                                (hoidQuantity d)
+                                                (hoidOldQuantity d)
                                                 (hoidOldItemTotalExcVat d)
                                                 (hoidOldItemTotalIncVat d)
                                                 (hoidProductDiscontinued d)
