@@ -140,11 +140,18 @@ data CollectiveOrderItemData = CollectiveOrderItemData {
   oidGlutenFree :: Bool,
   oidOrganic :: Bool,
   oidAddedSugar :: Bool,
-  oidVegan :: Bool
+  oidVegan :: Bool,
+  oidOldPriceExcVat :: Int,
+  oidOldPriceIncVat :: Int,
+  oidOldQuantity :: Int,
+  oidOldItemTotalExcVat :: Int,
+  oidOldItemTotalIncVat :: Int,
+  oidProductDiscontinued :: Bool,
+  oidUpdated :: Bool
 }
 
 instance FromRow CollectiveOrderItemData where
-  fromRow = CollectiveOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = CollectiveOrderItemData <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 data PastOrderItemData = PastOrderItemData {
   poidProductId :: Int,
@@ -367,7 +374,14 @@ fromCollectiveOrderItemData d
               (oidOrganic d)
               (oidAddedSugar d)
               (oidVegan d)
-              Nothing
+              $ if (oidUpdated d) 
+                then Just $ OrderItemAdjustment (oidOldPriceExcVat d)
+                                                (oidOldPriceIncVat d)
+                                                (oidOldQuantity d)
+                                                (oidOldItemTotalExcVat d)
+                                                (oidOldItemTotalIncVat d)
+                                                (oidProductDiscontinued d)
+                else Nothing
 
 fromPastOrderItemData :: PastOrderItemData -> OrderItem
 fromPastOrderItemData (d@PastOrderItemData { poidOldPriceExcVat = Just oldProductPriceExcVat

@@ -326,7 +326,7 @@ setHouseholdOrders repo orders = do
     let keyedAdjustment (k, i) = (k, ) <$> _itemAdjustment i
 
     let items = join (***) (concatMap keyedItems) $ orders
-    let products' = (products, nub . map (itemProductCode . snd) . snd $ items) --join (***) (nub . map (itemProductCode . snd)) $ items
+    let products' = (products, nub . map (itemProductCode . snd) . snd $ items)
     let adjustments = join (***) (catMaybes . map keyedAdjustment) $ items
 
     -- TODO?
@@ -342,11 +342,11 @@ setHouseholdOrders repo orders = do
     let updatedAdjustments = updatedByComparing fst snd adjustments
     let removedAdjustments = removedBy fst adjustments
 
-    let addedProducts = addedBy id $ trace (show . join (***) (map fromProductCode) $ products') products'
+    let addedProducts = addedBy id products'
 
     insertHouseholdOrders conn $ addedOrders
     updateHouseholdOrders conn $ updatedOrders
-    insertProducts conn $ trace (show addedProducts) addedProducts
+    insertProducts conn $ addedProducts
     insertOrderItems conn $ addedItems
     insertOrderItemAdjustments conn $ addedAdjustments
     deleteOrderItemAdjustments conn $ removedAdjustments

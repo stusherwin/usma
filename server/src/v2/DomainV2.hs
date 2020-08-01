@@ -20,6 +20,7 @@ import           GHC.Generics
 import           Prelude hiding (product)
 import           Text.Read (readMaybe)
 
+import Debug.Trace(trace)
 {- Household -}
 
 data Household = Household 
@@ -250,7 +251,7 @@ reopenHouseholdOrder :: ProductCatalogue -> HouseholdId -> Order -> Order
 reopenHouseholdOrder catalogue householdId = 
     (overHouseholdOrders' $ \o -> map $ updateOrderStatusFlags (_orderStatusFlags o))
   . updateOrderAbandonedStatus 
-  . (overHouseholdOrders $ update (whereHouseholdId householdId) $ reopen . applyUpdate catalogue)
+  . (overHouseholdOrders $ update (whereHouseholdId householdId) $ acceptUpdate . applyUpdate catalogue . reopen)
 
 updateOrderAbandonedStatus :: Order -> Order
 updateOrderAbandonedStatus o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = all householdOrderIsAbandoned $ _orderHouseholdOrders o
@@ -297,10 +298,10 @@ acceptCatalogueUpdate householdId =
   $ acceptUpdate
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, OrderItemSpec)] -> Order -> Order
-reconcileOrderItems date updates = 
+reconcileOrderItems date specs = 
     overHouseholdOrders (map reconcile)
   where
-    reconcile ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ updates
+    reconcile ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ specs
                    in  reconcileItems date updatesForHousehold ho
 
 whereHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
@@ -388,19 +389,16 @@ reopen ho =
      }
 
 addOrUpdateItems :: ProductCatalogue -> [(ProductCode, Maybe Int)] -> HouseholdOrder -> HouseholdOrder
-addOrUpdateItems catalogue = 
-    overHouseholdOrderItems
-  . addOrUpdate ((==) `on` itemProductCode) (updateItemQuantity . Just . _itemQuantity)
-  . catMaybes 
-  . map toOrderItem
-  where 
-    toOrderItem (code, quantity) = let orderItem e = OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing
-                                   in  orderItem <$> findEntry code catalogue
+addOrUpdateItems catalogue = overHouseholdOrderItems
+                           . addOrUpdate ((==) `on` itemProductCode) (updateItemQuantity . Just . _itemQuantity)
+                           . catMaybes 
+                           . map toOrderItem
+  where
+    toOrderItem (code, quantity) = findEntry code catalogue <&> \e ->
+      OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing
 
 removeItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
-removeItem productCode = 
-    overHouseholdOrderItems 
-  $ remove ((== productCode) . itemProductCode)
+removeItem productCode = overHouseholdOrderItems $ remove ((== productCode) . itemProductCode)
 
 applyUpdate :: ProductCatalogue -> HouseholdOrder -> HouseholdOrder
 applyUpdate catalogue = overHouseholdOrderItems $ map apply
@@ -412,18 +410,23 @@ applyUpdate catalogue = overHouseholdOrderItems $ map apply
     date = getDate catalogue
 
 acceptUpdate :: HouseholdOrder -> HouseholdOrder
-acceptUpdate = overHouseholdOrderItems $ 
-      remove (fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
-    . map accept
+acceptUpdate = overHouseholdOrderItems $ map removeItemAdjustment
+                                       . removeDiscontinued
+                                       . map accept
   where
-    accept item@OrderItem { _itemAdjustment = Just (OrderItemAdjustment { _itemAdjNewPrice = price, _itemAdjNewQuantity = quantity })} = 
-      updateItemPrice price . updateItemQuantity (Just quantity) . removeItemAdjustment $ item
+    removeDiscontinued = remove (fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
+    accept item@OrderItem 
+        { _itemAdjustment = Just (OrderItemAdjustment 
+          { _itemAdjNewPrice = price
+          , _itemAdjNewQuantity = quantity })
+        } = 
+      updateItemPrice price . updateItemQuantity (Just quantity) $ item
     accept item = item
 
 reconcileItems :: UTCTime -> [OrderItemSpec] -> HouseholdOrder -> HouseholdOrder
-reconcileItems date updates = overHouseholdOrderItems $ map update
+reconcileItems date specs = overHouseholdOrderItems $ map reconcile
   where
-    update item = case find ((== itemProductCode item) . _itemSpecProductCode) updates of
+    reconcile item = case find ((== itemProductCode item) . _itemSpecProductCode) specs of
       Just spec -> adjustItemPrice date (reprice (_itemSpecProductPrice spec) (itemProductPrice item))
                  $ adjustItemQuantity date (_itemSpecQuantity spec) item
       _ -> item

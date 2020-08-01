@@ -197,23 +197,38 @@ getCollectiveOrderItemData conn groupId =
          , p.code
          , p.name
          , p.vat_rate
-         , sum(hoi.quantity) as quantity
+         , case when p.discontinued then 0
+                else sum(hoi.quantity)
+           end as quantity
          , p.price as product_price_exc_vat
          , cast(round(p.price * v.multiplier) as int) as product_price_inc_vat
-         , sum(p.price * hoi.quantity) as item_total_exc_vat
-         , sum(cast(round(p.price * v.multiplier) as int) * hoi.quantity) as item_total_inc_vat
+         , case when p.discontinued then 0 
+                else sum(p.price * hoi.quantity)
+           end as item_total_exc_vat
+         , case when p.discontinued then 0 
+                else sum(cast(round(p.price * v.multiplier) as int) * hoi.quantity)
+           end as item_total_inc_vat
          , p.biodynamic
          , p.fair_trade
          , p.gluten_free
          , p.organic
          , p.added_sugar
          , p.vegan
+         , hoi.product_price_exc_vat as old_product_price_exc_vat         
+         , hoi.product_price_inc_vat as old_product_price_inc_vat
+         , sum(hoi.quantity) as old_quantity
+         , sum(hoi.item_total_exc_vat) as old_item_total_exc_vat
+         , sum(hoi.item_total_inc_vat) as old_item_total_inc_vat
+         , p.discontinued
+         
+         , p.updated > max(ho.updated) as updated
+
     from household_order_item hoi
     inner join household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
     inner join product p on p.id = hoi.product_id
     inner join vat_rate v on v.code = p.vat_rate
     where ho.order_group_id = ? and not ho.cancelled
-    group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan
+    group by hoi.order_id, p.id, p.code, p.name, p.vat_rate, p.price, v.multiplier, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan, hoi.product_price_exc_vat, hoi.product_price_inc_vat
     order by p.code
   |] (Only groupId)
 
