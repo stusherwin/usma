@@ -251,7 +251,7 @@ reopenHouseholdOrder :: ProductCatalogue -> HouseholdId -> Order -> Order
 reopenHouseholdOrder catalogue householdId = 
     (overHouseholdOrders' $ \o -> map $ updateOrderStatusFlags (_orderStatusFlags o))
   . updateOrderAbandonedStatus 
-  . (overHouseholdOrders $ update (whereHouseholdId householdId) $ acceptUpdate . applyUpdate catalogue . reopen)
+  . (overHouseholdOrders $ update (whereHouseholdId householdId) $ applyUpdate catalogue . reopen)
 
 updateOrderAbandonedStatus :: Order -> Order
 updateOrderAbandonedStatus o = o{ _orderStatusFlags = OrderStatusFlags { _orderIsAbandoned = all householdOrderIsAbandoned $ _orderHouseholdOrders o
@@ -490,10 +490,14 @@ mergeAdjustments items = case NE.nonEmpty . catMaybes . map _itemAdjustment . NE
 
 instance Semigroup OrderItem where
   i1 <> i2 = 
-    OrderItem (_itemProduct    i1)
+    OrderItem (product (_itemProduct i1) (_itemAdjustment i1) (_itemProduct i2) (_itemAdjustment i2))
               (_itemQuantity   i1 +  _itemQuantity   i2)
               (merge (_itemAdjustment i1) (_itemAdjustment i2))
     where 
+      product   p1 (Just _) _ (Just _) = p1
+      product p1 (Just _) _ _ = p1
+      product _ _ p2 (Just _) = p2
+      product p1 _ _ _ = p1
       merge (Just a1) (Just a2) = Just (a1 <> a2)
       merge (Just a1) _ = Just (a1 <> fromItem i2 a1)
       merge _ (Just a2) = Just (fromItem i1 a2 <> a2)
