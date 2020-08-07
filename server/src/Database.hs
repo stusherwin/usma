@@ -268,8 +268,9 @@ getPastOrderItemData conn groupId = do
              when bool_or(adj.old_item_total_inc_vat is not null) then sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat))
            end as old_item_total_inc_vat
     from past_household_order_item hoi
+    inner join past_household_order ho on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
     left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
-    where hoi.order_group_id = ?
+    where hoi.order_group_id = ? and not ho.cancelled
     group by hoi.order_id, hoi.product_id, hoi.product_code, hoi.product_name, hoi.product_price_exc_vat, hoi.product_price_inc_vat, hoi.product_vat_rate, hoi.product_biodynamic, hoi.product_fair_trade, hoi.product_gluten_free, hoi.product_organic, hoi.product_added_sugar, hoi.product_vegan
     order by hoi.product_code
   |] (Only groupId)
@@ -435,11 +436,11 @@ closeOrder connectionString groupId cancelled orderId = do
     |] (cancelled, orderId, groupId)
     void $ execute conn [sql|
       insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled)
-      select ho.order_group_id, ho.order_id, h.id, h.name, ?
+      select ho.order_group_id, ho.order_id, h.id, h.name, ho.cancelled
       from household_order ho
       inner join household h on h.id = ho.household_id
       where ho.order_id = ? and ho.order_group_id = ?
-    |] (cancelled, orderId, groupId)
+    |] (orderId, groupId)
     void $ execute conn [sql|
       insert into past_household_order_item (order_group_id, order_id, household_id, product_id, product_code, product_name, product_price_exc_vat, product_price_inc_vat, product_vat_rate, quantity, item_total_exc_vat, item_total_inc_vat, product_biodynamic, product_fair_trade, product_gluten_free, product_organic, product_added_sugar, product_vegan)
       select hoi.order_group_id, hoi.order_id, hoi.household_id, hoi.product_id, p.code, p.name, hoi.product_price_exc_Vat, hoi.product_price_inc_vat, p.vat_rate, hoi.quantity, hoi.item_total_exc_vat, hoi.item_total_inc_vat, p.biodynamic, p.fair_trade, p.gluten_free, p.organic, p.added_sugar, p.vegan

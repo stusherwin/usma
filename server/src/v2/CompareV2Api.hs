@@ -29,6 +29,8 @@ import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensit
 import           System.Process (readProcessWithExitCode)
 import           System.Directory (createDirectoryIfMissing, removeFile, listDirectory)
 
+import DomainV2 (splitOn)
+
 type ResponseInfo = (String, String, IO BL.ByteString)
 
 readInt :: String -> Int
@@ -56,7 +58,8 @@ recordApiV1Responses recordingsDir = do
     if isApiV1 req
       then do
         i <- atomicModifyIORef' _index (\i -> (i + 1, i))
-        let reqFile = recordingsDir ++ (show i) ++ "-req.txt"
+        let fileName = recordingsDir ++ (show i) ++ (pathToFilename $ rawPathInfo req)
+        let reqFile = fileName ++ "-req.txt"
         putStrLn reqFile
         chunks <- getRequestBodyChunks req
         writeFile reqFile $ show $ RecordedRequest
@@ -71,7 +74,7 @@ recordApiV1Responses recordingsDir = do
           let headers = responseHeaders resp
           (_, _, getBody) <- getResponseInfo resp
           body <- getBody
-          let respFile = recordingsDir ++ (show i) ++ "-resp.txt"
+          let respFile = fileName ++ "-resp.txt"
           putStrLn respFile
           writeFile respFile $ show $ RecordedResponse
             { respStatus = statusCode status
@@ -80,6 +83,9 @@ recordApiV1Responses recordingsDir = do
             }
           sendResponse resp
       else app req sendResponse
+
+pathToFilename :: B.ByteString -> String
+pathToFilename = intercalate "-" . splitOn '/' . B.unpack
 
 compareApiV1WithApiV2 :: Middleware
 compareApiV1WithApiV2 app req sendResponse = do
