@@ -451,15 +451,9 @@ apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
     adjustedTotal = case adjustment of
                       Just a -> _orderAdjNewTotal a
                       _      -> total
-    total = if orderIsAbandoned o 
-              then abandonedOrderTotal o 
-              else orderTotal o
-    adjustment = if orderIsAbandoned o 
-                   then abandonedOrderAdjustment o
-                   else orderAdjustment o
-    items = if orderIsAbandoned o 
-              then abandonedOrderItems o 
-              else orderItems o
+    total = orderTotal o
+    adjustment = orderAdjustment o
+    items = orderItems o
 
 apiOrderAdjustment :: Money -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment total (Just _) = Just $ Api.OrderAdjustment

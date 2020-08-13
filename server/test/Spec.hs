@@ -15,4 +15,4 @@ spec = do
   apiRegressionSpec
   ignoreFieldSpec
   domainSpec
-  -- generateTestsSpec
+  -- generateTestsSpec 

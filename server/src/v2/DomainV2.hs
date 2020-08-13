@@ -156,25 +156,13 @@ orderId = _orderId . _orderInfo
 orderTotal :: Order -> Money
 orderTotal = sum . map itemTotal . orderItems
 
-abandonedOrderTotal :: Order -> Money
-abandonedOrderTotal = sum . map itemTotal . abandonedOrderItems
-
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
-    if any (isJust . householdOrderAdjustment) (householdOrdersToPlace $ o)
+    if any (isJust . householdOrderAdjustment) (householdOrders $ o)
       then Just $ OrderAdjustment adjTotal
       else Nothing
   where
-    adjTotal = sum . map adjHouseholdOrderTotal . householdOrdersToPlace $ o
-    adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
-
-abandonedOrderAdjustment :: Order -> Maybe OrderAdjustment
-abandonedOrderAdjustment o = 
-    if any (isJust . householdOrderAdjustment) (abandonedHouseholdOrders $ o)
-      then Just $ OrderAdjustment adjTotal
-      else Nothing
-  where
-    adjTotal = sum . map adjHouseholdOrderTotal . abandonedHouseholdOrders $ o
+    adjTotal = sum . map adjHouseholdOrderTotal . householdOrders $ o
     adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
 
 orderItems :: Order -> [OrderItem]
@@ -182,20 +170,10 @@ orderItems = map sconcat -- mergeItems
            . NE.groupBy ((==) `on` itemProductCode)
            . sortBy (compare `on` fromProductCode . itemProductCode)
            . concatMap _householdOrderItems
-           . householdOrdersToPlace
+           . householdOrders
 
-abandonedOrderItems :: Order -> [OrderItem]
-abandonedOrderItems = map sconcat -- mergeItems
-                    . NE.groupBy ((==) `on` itemProductCode)
-                    . sortBy (compare `on` fromProductCode . itemProductCode)
-                    . concatMap _householdOrderItems
-                    . abandonedHouseholdOrders
-
-householdOrdersToPlace :: Order -> [HouseholdOrder]
-householdOrdersToPlace = remove householdOrderIsAbandoned . _orderHouseholdOrders
-
-abandonedHouseholdOrders :: Order -> [HouseholdOrder]
-abandonedHouseholdOrders = filter householdOrderIsAbandoned . _orderHouseholdOrders
+householdOrders :: Order -> [HouseholdOrder]
+householdOrders = remove householdOrderIsAbandoned . _orderHouseholdOrders
 
 orderIsAbandoned :: Order -> Bool
 orderIsAbandoned = _orderIsAbandoned . _orderStatusFlags
@@ -205,14 +183,14 @@ orderIsPlaced = _orderIsPlaced . _orderStatusFlags
 
 orderIsComplete :: Order -> Bool
 orderIsComplete = not . orderIsAbandoned 
-             .&&. (not . null) . householdOrdersToPlace
-             .&&. all householdOrderIsComplete . householdOrdersToPlace 
+             .&&. (not . null) . householdOrders
+             .&&. all householdOrderIsComplete . householdOrders
 
 orderIsReconciled :: Order -> Bool
-orderIsReconciled = orderIsPlaced .&&. all householdOrderIsReconciled . householdOrdersToPlace
+orderIsReconciled = orderIsPlaced .&&. all householdOrderIsReconciled . householdOrders
 
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
-orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . householdOrdersToPlace
+orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . householdOrders
 
 overHouseholdOrders :: ([HouseholdOrder] -> [HouseholdOrder]) -> Order -> Order
 overHouseholdOrders fn o = o{ _orderHouseholdOrders = fn $ _orderHouseholdOrders $ o }
@@ -222,7 +200,7 @@ overHouseholdOrders' fn o = o{ _orderHouseholdOrders = fn o $ _orderHouseholdOrd
 
 abandonOrder :: Order -> Order
 abandonOrder o = 
-    overHouseholdOrders (map $ updateOrderStatusFlags abandonedStatus) o{ _orderStatusFlags = abandonedStatus }
+    overHouseholdOrders (map $ abandonIfNotComplete . updateOrderStatusFlags abandonedStatus) o{ _orderStatusFlags = abandonedStatus }
   where 
     abandonedStatus = OrderStatusFlags { _orderIsAbandoned = True
                                        , _orderIsPlaced = False
@@ -384,6 +362,14 @@ complete ho =
 reopen :: HouseholdOrder -> HouseholdOrder
 reopen ho =
   ho { _householdOrderStatusFlags = HouseholdOrderStatusFlags { _householdOrderIsAbandoned = False
+                                                              , _householdOrderIsComplete = False
+                                                              } 
+     }
+
+abandonIfNotComplete :: HouseholdOrder -> HouseholdOrder
+abandonIfNotComplete ho | householdOrderIsComplete ho = ho 
+                       | otherwise =
+  ho { _householdOrderStatusFlags = HouseholdOrderStatusFlags { _householdOrderIsAbandoned = True
                                                               , _householdOrderIsComplete = False
                                                               } 
      }

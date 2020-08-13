@@ -301,7 +301,7 @@ updatePayments conn groupId payments = do
                                 )
   void $ executeMany conn [sql|
     update v2.payment p
-    set "date" = u."date"
+    set "date" = cast(u."date" as timestamptz)
       , amount = u.amount
     from (values (?, ?, ?, ?)) as u
     ( "date"

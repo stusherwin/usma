@@ -1,15 +1,37 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, LambdaCase, ViewPatterns #-}
 
 module TestHelpers where
 
-import           Control.Monad (forM_)
+-- import           Control.Monad (forM_)
 import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Char8 as BC (breakSubstring, dropWhile, drop, concat, length, takeWhile)
 import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict)
 import           Test.Hspec
 import           Test.Hspec.Wai
 import           Test.Hspec.Wai.Matcher
-import           Network.Wai.Test (SResponse)
+-- import           Network.Wai.Test (SResponse)
+import           Data.Aeson (Object, decode)
+import           Data.Aeson.Encode.Pretty (encodePretty)
+import           Prelude ()
+import           Prelude.Compat
+
+import           Control.Monad
+import           Data.Maybe
+import           Data.String
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy as LB
+import           Network.HTTP.Types
+import           Network.Wai.Test
+import           Data.List
+import           Data.Word
+import           Data.Char hiding (ord)
+import qualified Data.Char as Char
+
+-- import           Test.Hspec.Wai.Util
+
+-- type Body = LB.ByteString
 
 ignoreFieldSpec :: Spec
 ignoreFieldSpec =

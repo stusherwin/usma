@@ -25,7 +25,7 @@ import Database.PostgreSQL.Simple.FromRow
 import Database.PostgreSQL.Simple.SqlQQ
 import Data.ByteString (ByteString)
 import Data.Maybe (listToMaybe, fromMaybe)
-import Data.Time.Clock (UTCTime)
+import Data.Time.Clock (UTCTime(..), secondsToDiffTime)
 import Types
 import DatabaseTypes  
 
@@ -129,7 +129,7 @@ getPastCollectiveOrderData conn groupId =
       sum(coalesce(adj.old_item_total_exc_vat, hoi.item_total_exc_vat)) as old_total_exc_vat,
       sum(coalesce(adj.old_item_total_inc_vat, hoi.item_total_inc_vat)) as old_total_inc_vat
     from past_order o
-    left join past_household_order ho on ho.order_id = o.id and (o.cancelled or ho.cancelled = false)
+    left join past_household_order ho on ho.order_id = o.id and ho.cancelled = false
     left join past_household_order_item hoi on hoi.order_id = ho.order_id and hoi.household_id = ho.household_id
     left join order_item_adjustment adj on hoi.order_id = adj.order_id and hoi.household_id = adj.household_id and hoi.product_id = adj.product_id
     where o.order_group_id = ?
@@ -373,7 +373,8 @@ getHouseholds connectionString groupId = do
             (select h.id, coalesce(sum(hoi.item_total_inc_vat), 0) as total
             from household h
             left join past_household_order ho on ho.household_id = h.id and ho.cancelled = false
-            left join past_household_order_item hoi on hoi.household_id = ho.household_id and hoi.order_id = ho.order_id
+            left join past_order o on ho.order_id = o.id and o.cancelled = false
+            left join past_household_order_item hoi on hoi.household_id = ho.household_id and hoi.order_id = o.id
             group by h.id)
           ) as h
           group by id
@@ -436,7 +437,7 @@ closeOrder connectionString groupId cancelled orderId = do
     |] (cancelled, orderId, groupId)
     void $ execute conn [sql|
       insert into past_household_order (order_group_id, order_id, household_id, household_name, cancelled)
-      select ho.order_group_id, ho.order_id, h.id, h.name, ho.cancelled
+      select ho.order_group_id, ho.order_id, h.id, h.name, not ho.complete
       from household_order ho
       inner join household h on h.id = ho.household_id
       where ho.order_id = ? and ho.order_group_id = ?
@@ -636,7 +637,7 @@ archiveHousehold connectionString groupId householdId = do
 
 createHouseholdPayment :: ByteString -> Int -> Int -> HouseholdPaymentDetails -> IO Int
 createHouseholdPayment connectionString groupId householdId details = do
-  let date = hpdetDate details
+  let date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
   let amount = hpdetAmount details
   conn <- connectPostgreSQL connectionString
   [Only id] <- query conn [sql|
@@ -647,7 +648,7 @@ createHouseholdPayment connectionString groupId householdId details = do
 
 updateHouseholdPayment :: ByteString -> Int -> Int -> HouseholdPaymentDetails -> IO ()
 updateHouseholdPayment connectionString groupId paymentId details = do
-  let date = hpdetDate details
+  let date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
   let amount = hpdetAmount details
   conn <- connectPostgreSQL connectionString
   void $ execute conn [sql|
