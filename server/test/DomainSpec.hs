@@ -10,13 +10,32 @@ import           Test.Hspec.Wai
 import DomainV2
 
 domainSpec :: Spec
-domainSpec = 
+domainSpec = do
+  date <- runIO getCurrentTime
+
+  describe "orderTotal" $ do
+    it "should calculate vat for single item to nearest penny" $ do
+      let order = makeOrder date [(HouseholdId 1, [("A123", (atVatRate standardRate 101), 1)])]
+      
+      orderTotal order `shouldBe` (Money 101 121)
+
+    it "should calculate vat of multiple items total to nearest penny" $ do
+      let order = makeOrder date [(HouseholdId 1, [("A123", (atVatRate standardRate 101), 10)])]
+      
+      orderTotal order `shouldBe` (Money 1010 1212)
+
+    it "should calculate vat of multiple items total to nearest penny per order line not across whole order" $ do
+      let order = makeOrder date [(HouseholdId 1, [ ("DY009", (atVatRate standardRate 1944), 1) -- 1944  2333
+                                                  , ("DY026", (atVatRate standardRate 2500), 1) -- 2500  3000
+                                                  , ("ZX435", (atVatRate standardRate 1646), 3) -- 4938  5926
+                                                  ])]                                           -- ==== =====
+                                                                                                -- 9382 11259
+      orderTotal order `shouldBe` (Money 9382 11259) -- not 9382 11258 (9382 * 1.2 = 11258.4)
+
   describe "reconcile order" $ do
-    date <- runIO getCurrentTime
-    
     it "should adjust household order items" $ do
-      let order = makeOrder date [ (HouseholdId 1, [OrderItemSpec (ProductCode "A123") 100 1])
-                                 , (HouseholdId 2, [OrderItemSpec (ProductCode "A123") 100 2])
+      let order = makeOrder date [ (HouseholdId 1, [("A123", (atVatRate zeroRate 100), 1)])
+                                 , (HouseholdId 2, [("A123", (atVatRate zeroRate 100), 2)])
                                  ]
       householdOrderItemValues order `shouldBe` [ (HouseholdId 1, [("A123", 100, 1, 100, Nothing, Nothing, Nothing)])
                                                 , (HouseholdId 2, [("A123", 100, 2, 200, Nothing, Nothing, Nothing)])
@@ -34,8 +53,8 @@ domainSpec =
                                                   ]
 
     it "should adjust order items" $ do
-      let order = makeOrder date [ (HouseholdId 1, [OrderItemSpec (ProductCode "A123") 100 1])
-                                 , (HouseholdId 2, [OrderItemSpec (ProductCode "A123") 100 2])
+      let order = makeOrder date [ (HouseholdId 1, [("A123", (atVatRate zeroRate 100), 1)])
+                                 , (HouseholdId 2, [("A123", (atVatRate zeroRate 100), 2)])
                                  ]
       orderItemValues order `shouldBe` [("A123", 100, 3, 300, Nothing, Nothing, Nothing)]
       
@@ -47,8 +66,8 @@ domainSpec =
       orderItemValues order'' `shouldBe` [("A123", 100, 3, 300, Just 200, Just 4, Just 800)]
 
     it "should adjust order total" $ do
-      let order = makeOrder date [ (HouseholdId 1, [OrderItemSpec (ProductCode "A123") 100 1])
-                                 , (HouseholdId 2, [OrderItemSpec (ProductCode "A123") 100 2])
+      let order = makeOrder date [ (HouseholdId 1, [("A123", (atVatRate zeroRate 100), 1)])
+                                 , (HouseholdId 2, [("A123", (atVatRate zeroRate 100), 2)])
                                  ]
       orderTotal order `shouldBe` 300
       orderAdjustment order `shouldBe` Nothing
@@ -82,7 +101,7 @@ itemValues i = ( fromProductCode . itemProductCode $ i
                , itemAdjNewTotal <$> (_itemAdjustment i)
                )
 
-makeOrder :: UTCTime -> [(HouseholdId, [OrderItemSpec])] -> Order
+makeOrder :: UTCTime -> [(HouseholdId, [(String, Price, Int)])] -> Order
 makeOrder date householdItems = Order 
     { _orderInfo = orderInfo
     , _orderStatusFlags = orderStatus
@@ -100,7 +119,7 @@ makeOrder date householdItems = Order
       , _orderIsPlaced = True
       }
 
-makeHouseholdOrder :: OrderInfo -> OrderStatusFlags -> (HouseholdId, [OrderItemSpec]) -> HouseholdOrder
+makeHouseholdOrder :: OrderInfo -> OrderStatusFlags -> (HouseholdId, [(String, Price, Int)]) -> HouseholdOrder
 makeHouseholdOrder orderInfo orderStatus (householdId, items) = HouseholdOrder 
   { _householdOrderOrderInfo = orderInfo
   , _householdOrderOrderStatusFlags = orderStatus
@@ -115,23 +134,26 @@ makeHouseholdOrder orderInfo orderStatus (householdId, items) = HouseholdOrder
   , _householdOrderItems = makeOrderItem <$> items
   }
 
-makeOrderItem :: OrderItemSpec -> OrderItem
-makeOrderItem (OrderItemSpec code price quantity) = OrderItem
-  { _itemProduct = Product 
-    { _productInfo = ProductInfo
-      { _productCode = code
-      , _productName = fromProductCode code
-      , _productPrice = atVatRate zeroRate price
-      }
-    , _productFlags = ProductFlags
-      { _productIsBiodynamic = False
-      , _productIsFairTrade = False
-      , _productIsGlutenFree = False
-      , _productIsOrganic = False
-      , _productIsAddedSugar = False
-      , _productIsVegan = False
-      }
-    }
+makeOrderItem :: (String, Price, Int) -> OrderItem
+makeOrderItem (code, price, quantity) = OrderItem
+  { _itemProduct = makeProduct (code, price)
   , _itemQuantity = quantity
   , _itemAdjustment = Nothing
+  }
+
+makeProduct :: (String, Price) -> Product
+makeProduct (code, price) = Product 
+  { _productInfo = ProductInfo
+    { _productCode = ProductCode code
+    , _productName = code
+    , _productPrice = price
+    }
+  , _productFlags = ProductFlags
+    { _productIsBiodynamic = False
+    , _productIsFairTrade = False
+    , _productIsGlutenFree = False
+    , _productIsOrganic = False
+    , _productIsAddedSugar = False
+    , _productIsVegan = False
+    }
   }

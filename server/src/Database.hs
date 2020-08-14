@@ -97,7 +97,7 @@ getCollectiveOrderData conn groupId =
                           else p.price * hoi.quantity
                      end), 0) as total_exc_vat,
         coalesce(sum(case when p.discontinued then 0 
-                          else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+                          else cast(round(p.price * hoi.quantity * v.multiplier) as int)
                      end), 0) as total_inc_vat
       from household_order ho
       inner join household_order_item hoi on hoi.household_id = ho.household_id
@@ -154,7 +154,7 @@ getHouseholdOrderData conn groupId =
                              else p.price * hoi.quantity
                         end), 0) as total_exc_vat
          , coalesce(sum(case when p.discontinued then 0 
-                             else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+                             else cast(round(p.price * hoi.quantity * v.multiplier) as int) 
                         end), 0) as total_inc_vat
          , max(p.updated) is not null and max(p.updated) > ho.updated as updated
     from household_order ho
@@ -206,7 +206,7 @@ getCollectiveOrderItemData conn groupId =
                 else sum(p.price * hoi.quantity)
            end as item_total_exc_vat
          , case when p.discontinued then 0 
-                else sum(cast(round(p.price * v.multiplier) as int) * hoi.quantity)
+                else sum(cast(round(p.price * hoi.quantity * v.multiplier) as int))
            end as item_total_inc_vat
          , p.biodynamic
          , p.fair_trade
@@ -294,7 +294,7 @@ getHouseholdOrderItemData conn groupId =
                 else p.price * hoi.quantity
            end as item_total_exc_vat
          , case when p.discontinued then 0 
-                else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+                else cast(round(p.price * hoi.quantity * v.multiplier) as int)
            end as item_total_inc_vat
          , p.biodynamic
          , p.fair_trade
@@ -361,7 +361,7 @@ getHouseholds connectionString groupId = do
           from (
             (select h.id
                   , coalesce(sum(case when p.discontinued then 0 
-                                 else cast(round(p.price * v.multiplier) as int) * hoi.quantity
+                                 else cast(round(p.price * hoi.quantity * v.multiplier) as int)
                             end), 0) as total
             from household h
             left join household_order ho on ho.household_id = h.id and ho.cancelled = false
@@ -543,13 +543,20 @@ ensureHouseholdOrderItem connectionString groupId orderId householdId productCod
               update household_order_item hoi set 
                 quantity = ?, 
                 item_total_exc_vat = hoi.product_price_exc_vat * ?,
-                item_total_inc_vat = hoi.product_price_inc_vat * ?
-              where order_id = ? and household_id = ? and product_id = ? and order_group_id = ?
+                item_total_inc_vat = cast(round(p.price * ? * v.multiplier) as int)
+              from household_order_item hoi2
+              inner join product p on hoi2.product_id = p.id
+              inner join vat_rate v on v.code = p.vat_rate
+              where hoi.order_id = ? and hoi.household_id = ? and hoi.product_id = ? and hoi.order_group_id = ?
+                and hoi2.order_id = hoi.order_id
+                and hoi2.household_id = hoi.household_id
+                and hoi2.product_id = hoi.product_id
+                and hoi2.order_group_id = hoi.order_group_id
             |] (maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, maybe existingQuantity Prelude.id quantity, orderId, householdId, productId, groupId)  
           _ -> do
             void $ execute conn [sql|
               insert into household_order_item (order_group_id, order_id, household_id, product_id, product_price_exc_vat, product_price_inc_vat, quantity, item_total_exc_vat, item_total_inc_vat)
-              select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, ?, p.price * ? as item_total_exc_vat, cast(round(p.price * v.multiplier) as int) * ? as item_total_inc_vat
+              select ?, ?, ?, p.id, p.price as price_exc_Vat, cast(round(p.price * v.multiplier) as int) as price_inc_vat, ?, p.price * ? as item_total_exc_vat, cast(round(p.price * ? * v.multiplier) as int) as item_total_inc_vat
               from product p
               inner join vat_rate v on v.code = p.vat_rate
               where p.id = ?
@@ -737,7 +744,7 @@ acceptCatalogueUpdates connectionString groupId date orderId householdId = do
         product_price_exc_vat = p.price, 
         product_price_inc_vat = cast(round(p.price * v.multiplier) as int),
         item_total_exc_vat = p.price * hoi.quantity,
-        item_total_inc_vat = cast(round(p.price * v.multiplier) as int) * hoi.quantity
+        item_total_inc_vat = cast(round(p.price * hoi.quantity * v.multiplier) as int)
       from household_order_item hoi2
       inner join product p on p.id = hoi2.product_id
       inner join vat_rate v on v.code = p.vat_rate
@@ -881,7 +888,7 @@ reconcileOrderItem connectionString groupId orderId productId details = do
           , product_price_inc_vat = cast(round(nv.price * v.multiplier) as int)
           , quantity = nv.quantity
           , item_total_exc_vat = nv.price * nv.quantity
-          , item_total_inc_vat = cast(round(nv.price * v.multiplier) as int) * nv.quantity
+          , item_total_inc_vat = cast(round(nv.price * nv.quantity * v.multiplier) as int)
         from past_household_order_item phoi2
         inner join new_values nv on phoi2.order_id = nv.order_id and phoi2.household_id = nv.household_id and phoi2.product_id = nv.product_id and phoi2.order_group_id = nv.order_group_id
         inner join product p on p.id = phoi2.product_id
@@ -940,7 +947,7 @@ reconcileHouseholdOrderItems connectionString groupId orderId householdId detail
           , product_price_inc_vat = cast(round(nv.price * v.multiplier) as int)
           , quantity = nv.quantity
           , item_total_exc_vat = nv.price * nv.quantity
-          , item_total_inc_vat = cast(round(nv.price * v.multiplier) as int) * nv.quantity
+          , item_total_inc_vat = cast(round(nv.price * nv.quantity * v.multiplier) as int)
         from past_household_order_item phoi2
         inner join new_values nv on phoi2.order_group_id = nv.order_group_id
                                  and phoi2.order_id      = nv.order_id 

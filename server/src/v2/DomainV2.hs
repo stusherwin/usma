@@ -441,10 +441,7 @@ itemProductPrice :: OrderItem -> Price
 itemProductPrice = _productPrice . _productInfo . _itemProduct
 
 itemTotal :: OrderItem -> Money
-itemTotal item = price * quantity
-  where
-    price = _priceAmount . itemProductPrice $ item
-    quantity = fromIntegral $ _itemQuantity item
+itemTotal item = atQuantity (_itemQuantity item) (itemProductPrice item)
 
 updateItemQuantity :: Maybe Int -> OrderItem -> OrderItem
 updateItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
@@ -604,11 +601,15 @@ data Price = Price
   } deriving (Eq, Show, Generic)
 
 atVatRate :: VatRate -> Int -> Price
-atVatRate vatRate amountExcVat = Price vatRate $
-  Money amountExcVat $ round $ fromIntegral amountExcVat * (_vatRateMultiplier  vatRate)
+atVatRate vatRate amountExcVat = Price vatRate (Money amountExcVat amountIncVat)
+  where
+    amountIncVat = round $ fromIntegral amountExcVat * (_vatRateMultiplier vatRate)
 
 atQuantity :: Int -> Price -> Money
-atQuantity quantity price = (_priceAmount price * fromIntegral quantity)
+atQuantity quantity price = _priceAmount $ atVatRate vatRate (amountExcVat * fromIntegral quantity)
+  where
+    vatRate = _priceVatRate price
+    amountExcVat = _moneyExcVat . _priceAmount $ price
 
 reprice :: Int -> Price -> Price
 reprice newAmountExcVat (Price vatRate _) = atVatRate vatRate newAmountExcVat
@@ -643,8 +644,14 @@ data VatRate = VatRate
 zeroRate :: VatRate
 zeroRate = VatRate Zero 1
 
+standardRate :: VatRate
+standardRate = VatRate Standard 1.2
+
+reducedRate :: VatRate
+reducedRate = VatRate Reduced 1.05
+
 getVatRate :: VatRateType -> [VatRate] -> VatRate
-getVatRate t vs =fromMaybe zeroRate $ lookup t $ map (_vatRateType &&& id) $ vs
+getVatRate t vs = fromMaybe zeroRate $ lookup t $ map (_vatRateType &&& id) $ vs
 
 {- ProductCatalogue -}
 
