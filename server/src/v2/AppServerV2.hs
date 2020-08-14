@@ -486,16 +486,16 @@ apiHouseholdOrder productIds ho = Api.HouseholdOrder
     }
 
 apiOrderIsAbandoned :: DomainV2.HouseholdOrder -> Bool
-apiOrderIsAbandoned = _orderIsAbandoned . _householdOrderOrderStatusFlags
+apiOrderIsAbandoned = (== OrderAbandoned) . _householdOrderOrderStatus
 
 apiOrderIsPlaced :: DomainV2.HouseholdOrder -> Bool
-apiOrderIsPlaced = _orderIsPlaced . _householdOrderOrderStatusFlags
+apiOrderIsPlaced = (== OrderPlaced) . _householdOrderOrderStatus
 
 apiHouseholdOrderIsAbandoned :: DomainV2.HouseholdOrder -> Bool
-apiHouseholdOrderIsAbandoned = _householdOrderIsAbandoned . _householdOrderStatusFlags
+apiHouseholdOrderIsAbandoned = (== HouseholdOrderAbandoned) . _householdOrderStatus
 
 apiHouseholdOrderIsComplete :: DomainV2.HouseholdOrder -> Bool
-apiHouseholdOrderIsComplete = _householdOrderIsComplete . _householdOrderStatusFlags
+apiHouseholdOrderIsComplete = (== HouseholdOrderComplete) . _householdOrderStatus
 
 apiHouseholdOrderIsOpen :: DomainV2.HouseholdOrder -> Bool
 apiHouseholdOrderIsOpen ho = (not (apiHouseholdOrderIsComplete ho) && not (apiHouseholdOrderIsAbandoned ho) && not (apiOrderIsAbandoned ho) && not (apiOrderIsPlaced ho))

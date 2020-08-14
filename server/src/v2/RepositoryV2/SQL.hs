@@ -737,11 +737,11 @@ instance ToField HouseholdId where
 
 data OrderRow = OrderRow
   { orderRow_orderInfo :: OrderInfo
-  , orderRow_statusFlags :: OrderStatusFlags 
+  , orderRow_status :: OrderStatus
   }
 
 instance FromRow OrderRow where
-  fromRow = OrderRow <$> orderInfoField <*> orderStatusFlagsField
+  fromRow = OrderRow <$> orderInfoField <*> orderStatusField
 
 orderInfoField :: RowParser OrderInfo
 orderInfoField = do
@@ -755,8 +755,14 @@ orderInfoField = do
     createdBy (Just id) (Just name) = Just $ HouseholdInfo id name
     createdBy _ _                   = Nothing
 
-orderStatusFlagsField :: RowParser OrderStatusFlags
-orderStatusFlagsField = OrderStatusFlags <$> field <*> field
+orderStatusField :: RowParser OrderStatus
+orderStatusField = do
+  abandoned <- field
+  placed <- field 
+  return $ case (abandoned, placed) of
+    (True, _) -> OrderAbandoned
+    (_, True) -> OrderPlaced
+    _ -> OrderOpen
 
 instance FromField OrderId where
   fromField f char = OrderId <$> fromField f char
@@ -766,16 +772,22 @@ instance ToField OrderId where
 
 data HouseholdOrderRow = HouseholdOrderRow
   { householdOrderRow_orderInfo :: OrderInfo
-  , householdOrderRow_orderStatusFlags :: OrderStatusFlags
+  , householdOrderRow_orderStatus :: OrderStatus
   , householdOrderRow_householdInfo :: HouseholdInfo
-  , householdOrderRow_statusFlags :: HouseholdOrderStatusFlags
+  , householdOrderRow_status :: HouseholdOrderStatus
   }
 
 instance FromRow HouseholdOrderRow where
-  fromRow = HouseholdOrderRow <$> orderInfoField <*> orderStatusFlagsField <*> householdInfoField <*> householdOrderStatusFlagsField
+  fromRow = HouseholdOrderRow <$> orderInfoField <*> orderStatusField <*> householdInfoField <*> householdOrderStatusField
 
-householdOrderStatusFlagsField :: RowParser HouseholdOrderStatusFlags
-householdOrderStatusFlagsField = HouseholdOrderStatusFlags <$> field <*> field
+householdOrderStatusField :: RowParser HouseholdOrderStatus
+householdOrderStatusField = do
+  abandoned <- field
+  complete <- field 
+  return $ case (abandoned, complete) of
+    (True, _) -> HouseholdOrderAbandoned
+    (_, True) -> HouseholdOrderComplete
+    _ -> HouseholdOrderOpen
 
 data OrderItemRow = OrderItemRow 
   { orderItemRow_product :: Product

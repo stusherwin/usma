@@ -269,7 +269,7 @@ setOrders :: Repository -> ([Order], [Order]) -> IO ()
 setOrders repo orders = do
     let conn = connection repo
 
-    updateOrders conn $ updatedByComparing orderKey _orderStatusFlags orders
+    updateOrders conn $ updatedByComparing orderKey _orderStatus orders
 
     let householdOrders = join (***) (concatMap _orderHouseholdOrders) $ orders
     setHouseholdOrders repo householdOrders
@@ -332,7 +332,7 @@ setHouseholdOrders repo orders = do
     -- TODO?
     -- let removedOrders  = removedBy orderKey orders
     let addedOrders = addedBy orderKey orders
-    let updatedOrders = updatedByComparing orderKey _householdOrderStatusFlags orders
+    let updatedOrders = updatedByComparing orderKey _householdOrderStatus orders
 
     let addedItems = addedBy fst items
     let updatedItems = updatedByComparing fst snd items
@@ -392,7 +392,7 @@ toHousehold rHouseholdOrders rOrderItems rPayments h =
 toOrder :: [HouseholdOrderRow] -> [(OrderId, HouseholdId) :. OrderItemRow] -> OrderRow -> Order
 toOrder rHouseholdOrders rOrderItems o = 
   Order orderInfo
-        (orderRow_statusFlags o)
+        (orderRow_status o)
         householdOrders
   where
   orderInfo = orderRow_orderInfo o
@@ -403,13 +403,13 @@ toOrder rHouseholdOrders rOrderItems o =
 toHouseholdOrder :: [(OrderId, HouseholdId) :. OrderItemRow] -> HouseholdOrderRow -> HouseholdOrder
 toHouseholdOrder rOrderItems ho = 
   HouseholdOrder orderInfo
-                 orderStatusFlags
+                 orderStatus
                  householdInfo
-                 (householdOrderRow_statusFlags ho)
+                 (householdOrderRow_status ho)
                  orderItems
   where
   orderInfo = householdOrderRow_orderInfo ho
-  orderStatusFlags = householdOrderRow_orderStatusFlags ho
+  orderStatus = householdOrderRow_orderStatus ho
   householdInfo = householdOrderRow_householdInfo ho
   orderItems = map toOrderItem 
              . filter (\((oId, hId) :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)

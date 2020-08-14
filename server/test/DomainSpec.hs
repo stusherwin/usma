@@ -15,28 +15,28 @@ domainSpec = do
 
   describe "orderTotal" $ do
     it "should calculate vat for single item to nearest penny" $ do
-      let order = makeOrder date [(HouseholdId 1, [("A123", (atVatRate standardRate 101), 1)])]
+      let order = makeOrder date OrderOpen [(HouseholdId 1, HouseholdOrderOpen, [("A123", (atVatRate standardRate 101), 1)])]
       
       orderTotal order `shouldBe` (Money 101 121)
 
     it "should calculate vat of multiple items total to nearest penny" $ do
-      let order = makeOrder date [(HouseholdId 1, [("A123", (atVatRate standardRate 101), 10)])]
+      let order = makeOrder date OrderOpen [(HouseholdId 1, HouseholdOrderOpen, [("A123", (atVatRate standardRate 101), 10)])]
       
       orderTotal order `shouldBe` (Money 1010 1212)
 
     it "should calculate vat of multiple items total to nearest penny per order line not across whole order" $ do
-      let order = makeOrder date [(HouseholdId 1, [ ("DY009", (atVatRate standardRate 1944), 1) -- 1944  2333
-                                                  , ("DY026", (atVatRate standardRate 2500), 1) -- 2500  3000
-                                                  , ("ZX435", (atVatRate standardRate 1646), 3) -- 4938  5926
-                                                  ])]                                           -- ==== =====
-                                                                                                -- 9382 11259
+      let order = makeOrder date OrderOpen [(HouseholdId 1, HouseholdOrderOpen, [ ("DY009", (atVatRate standardRate 1944), 1) -- 1944  2333
+                                                                                , ("DY026", (atVatRate standardRate 2500), 1) -- 2500  3000
+                                                                                , ("ZX435", (atVatRate standardRate 1646), 3) -- 4938  5926
+                                                                                ])]                                           -- ==== =====
+                                                                                                                              -- 9382 11259
       orderTotal order `shouldBe` (Money 9382 11259) -- not 9382 11258 (9382 * 1.2 = 11258.4)
 
   describe "reconcile order" $ do
     it "should adjust household order items" $ do
-      let order = makeOrder date [ (HouseholdId 1, [("A123", (atVatRate zeroRate 100), 1)])
-                                 , (HouseholdId 2, [("A123", (atVatRate zeroRate 100), 2)])
-                                 ]
+      let order = makeOrder date OrderPlaced [ (HouseholdId 1, HouseholdOrderComplete, [("A123", (atVatRate zeroRate 100), 1)])
+                                             , (HouseholdId 2, HouseholdOrderComplete, [("A123", (atVatRate zeroRate 100), 2)])
+                                             ]
       householdOrderItemValues order `shouldBe` [ (HouseholdId 1, [("A123", 100, 1, 100, Nothing, Nothing, Nothing)])
                                                 , (HouseholdId 2, [("A123", 100, 2, 200, Nothing, Nothing, Nothing)])
                                                 ]
@@ -53,9 +53,9 @@ domainSpec = do
                                                   ]
 
     it "should adjust order items" $ do
-      let order = makeOrder date [ (HouseholdId 1, [("A123", (atVatRate zeroRate 100), 1)])
-                                 , (HouseholdId 2, [("A123", (atVatRate zeroRate 100), 2)])
-                                 ]
+      let order = makeOrder date OrderPlaced [ (HouseholdId 1, HouseholdOrderComplete, [("A123", (atVatRate zeroRate 100), 1)])
+                                             , (HouseholdId 2, HouseholdOrderComplete, [("A123", (atVatRate zeroRate 100), 2)])
+                                             ]
       orderItemValues order `shouldBe` [("A123", 100, 3, 300, Nothing, Nothing, Nothing)]
       
       let order' = reconcileOrderItems date [(HouseholdId 1, OrderItemSpec (ProductCode "A123") 100 2)] order
@@ -66,9 +66,9 @@ domainSpec = do
       orderItemValues order'' `shouldBe` [("A123", 100, 3, 300, Just 200, Just 4, Just 800)]
 
     it "should adjust order total" $ do
-      let order = makeOrder date [ (HouseholdId 1, [("A123", (atVatRate zeroRate 100), 1)])
-                                 , (HouseholdId 2, [("A123", (atVatRate zeroRate 100), 2)])
-                                 ]
+      let order = makeOrder date OrderPlaced [ (HouseholdId 1, HouseholdOrderComplete, [("A123", (atVatRate zeroRate 100), 1)])
+                                             , (HouseholdId 2, HouseholdOrderComplete, [("A123", (atVatRate zeroRate 100), 2)])
+                                             ]
       orderTotal order `shouldBe` 300
       orderAdjustment order `shouldBe` Nothing
       
@@ -101,11 +101,11 @@ itemValues i = ( fromProductCode . itemProductCode $ i
                , itemAdjNewTotal <$> (_itemAdjustment i)
                )
 
-makeOrder :: UTCTime -> [(HouseholdId, [(String, Price, Int)])] -> Order
-makeOrder date householdItems = Order 
+makeOrder :: UTCTime -> OrderStatus -> [(HouseholdId, HouseholdOrderStatus, [(String, Price, Int)])] -> Order
+makeOrder date status householdItems = Order 
     { _orderInfo = orderInfo
-    , _orderStatusFlags = orderStatus
-    , _orderHouseholdOrders = makeHouseholdOrder orderInfo orderStatus <$> householdItems
+    , _orderStatus = status
+    , _orderHouseholdOrders = makeHouseholdOrder orderInfo status <$> householdItems
     }
   where
     orderInfo = OrderInfo
@@ -114,23 +114,16 @@ makeOrder date householdItems = Order
       , _orderCreated = date
       , _orderCreatedBy = Nothing
       }
-    orderStatus = OrderStatusFlags
-      { _orderIsAbandoned = False
-      , _orderIsPlaced = True
-      }
 
-makeHouseholdOrder :: OrderInfo -> OrderStatusFlags -> (HouseholdId, [(String, Price, Int)]) -> HouseholdOrder
-makeHouseholdOrder orderInfo orderStatus (householdId, items) = HouseholdOrder 
+makeHouseholdOrder :: OrderInfo -> OrderStatus -> (HouseholdId, HouseholdOrderStatus, [(String, Price, Int)]) -> HouseholdOrder
+makeHouseholdOrder orderInfo orderStatus (householdId, status, items) = HouseholdOrder 
   { _householdOrderOrderInfo = orderInfo
-  , _householdOrderOrderStatusFlags = orderStatus
+  , _householdOrderOrderStatus = orderStatus
   , _householdOrderHouseholdInfo = HouseholdInfo 
     { _householdId = householdId
     , _householdName = "Household " ++ (show . fromHouseholdId $ householdId)
     }
-  , _householdOrderStatusFlags = HouseholdOrderStatusFlags
-    { _householdOrderIsAbandoned = False
-    , _householdOrderIsComplete = True
-    }
+  , _householdOrderStatus = status
   , _householdOrderItems = makeOrderItem <$> items
   }
 
