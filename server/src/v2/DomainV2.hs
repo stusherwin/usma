@@ -44,7 +44,7 @@ data HouseholdSpec = HouseholdSpec
 
 newtype HouseholdId = HouseholdId 
   { fromHouseholdId :: Int 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 data HouseholdInfo = HouseholdInfo 
   { _householdId :: HouseholdId
@@ -54,7 +54,7 @@ data HouseholdInfo = HouseholdInfo
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat
                      . (sum . map (\ho -> fromMaybe (householdOrderTotal ho) (fmap _orderAdjNewTotal . householdOrderAdjustment $ ho)))
-                     . remove (householdOrderIsAbandoned .||. householdOrderOrderIsAbandoned)
+                     . filter ((/= HouseholdOrderAbandoned) . _householdOrderStatus .&&. (/= OrderAbandoned) . _householdOrderOrderStatus)
                      . _householdOrders
 
 householdTotalPayments :: Household -> Int
@@ -87,7 +87,7 @@ data PaymentSpec = PaymentSpec
 
 newtype PaymentId = PaymentId 
   { fromPaymentId :: Int 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 updatePayment :: UTCTime -> Int -> Payment -> Payment
 updatePayment date amount p = p{ _paymentDate = date
@@ -109,7 +109,7 @@ data OrderGroupSettings = OrderGroupSettings
 
 newtype OrderGroupId = OrderGroupId 
   { fromOrderGroupId :: Int 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 {-- Order --}
 
@@ -126,7 +126,7 @@ data Order = Order
 
 newtype OrderId = OrderId 
   { fromOrderId :: Int 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 data OrderInfo = OrderInfo
   { _orderId :: OrderId
@@ -160,28 +160,23 @@ orderAdjustment o =
     adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
 
 orderItems :: Order -> [OrderItem]
-orderItems = map sconcat -- mergeItems 
+orderItems = map sconcat
            . NE.groupBy ((==) `on` itemProductCode)
-           . sortBy (compare `on` fromProductCode . itemProductCode)
+           . sortBy (compare `on` itemProductCode)
            . concatMap _householdOrderItems
            . householdOrders
 
 householdOrders :: Order -> [HouseholdOrder]
-householdOrders = remove householdOrderIsAbandoned . _orderHouseholdOrders
-
-orderIsAbandoned :: Order -> Bool
-orderIsAbandoned = (== OrderAbandoned) . _orderStatus
-
-orderIsPlaced :: Order -> Bool
-orderIsPlaced = (== OrderPlaced) . _orderStatus
+householdOrders = filter ((/= HouseholdOrderAbandoned) . _householdOrderStatus) . _orderHouseholdOrders
 
 orderIsComplete :: Order -> Bool
-orderIsComplete = not . orderIsAbandoned 
+orderIsComplete = (/= OrderAbandoned) . _orderStatus 
              .&&. (not . null) . householdOrders
-             .&&. all householdOrderIsComplete . householdOrders
+             .&&. all ((== HouseholdOrderComplete) . _householdOrderStatus) . householdOrders
 
 orderIsReconciled :: Order -> Bool
-orderIsReconciled = orderIsPlaced .&&. all householdOrderIsReconciled . householdOrders
+orderIsReconciled = (== OrderPlaced) . _orderStatus 
+               .&&. all householdOrderIsReconciled . householdOrders
 
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
 orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . householdOrders
@@ -216,7 +211,7 @@ reopenHouseholdOrder catalogue householdId =
   . (overHouseholdOrders $ update (whereHouseholdId householdId) $ applyUpdate catalogue . reopen)
 
 updateOrderAbandonedStatus :: Order -> Order
-updateOrderAbandonedStatus o = o{ _orderStatus = if all householdOrderIsAbandoned $ _orderHouseholdOrders o
+updateOrderAbandonedStatus o = o{ _orderStatus = if all ((== HouseholdOrderAbandoned) . _householdOrderStatus) $ _orderHouseholdOrders o
                                                    then OrderAbandoned
                                                    else OrderOpen
                                 }
@@ -250,7 +245,7 @@ removeHouseholdOrderItem householdId productCode =
 applyCatalogueUpdate :: ProductCatalogue -> Order -> Order
 applyCatalogueUpdate catalogue = 
     overHouseholdOrders 
-  $ update (not . householdOrderIsAbandoned)
+  $ update ((/= HouseholdOrderAbandoned) . _householdOrderStatus)
   $ applyUpdate catalogue
 
 acceptCatalogueUpdate :: HouseholdId -> Order -> Order
@@ -308,15 +303,6 @@ householdOrderAdjustment ho =
     adjTotal = sum . map adjItemTotal . _householdOrderItems $ ho
     adjItemTotal i = fromMaybe (itemTotal i) $ fmap itemAdjNewTotal $ _itemAdjustment i
 
-householdOrderIsAbandoned :: HouseholdOrder -> Bool
-householdOrderIsAbandoned = (== HouseholdOrderAbandoned) . _householdOrderStatus
-
-householdOrderIsComplete :: HouseholdOrder -> Bool
-householdOrderIsComplete = (== HouseholdOrderComplete) . _householdOrderStatus
- 
-householdOrderOrderIsAbandoned :: HouseholdOrder -> Bool
-householdOrderOrderIsAbandoned = (== OrderAbandoned) . _householdOrderOrderStatus
-
 householdOrderIsReconciled :: HouseholdOrder -> Bool
 householdOrderIsReconciled = all (isJust . _itemAdjustment) . _householdOrderItems
 
@@ -339,7 +325,7 @@ reopen :: HouseholdOrder -> HouseholdOrder
 reopen ho = ho { _householdOrderStatus = HouseholdOrderOpen }
 
 abandonIfNotComplete :: HouseholdOrder -> HouseholdOrder
-abandonIfNotComplete ho | householdOrderIsComplete ho = ho 
+abandonIfNotComplete ho | (== HouseholdOrderComplete) . _householdOrderStatus $ ho = ho 
                         | otherwise = abandon ho
 
 addOrUpdateItems :: ProductCatalogue -> [(ProductCode, Maybe Int)] -> HouseholdOrder -> HouseholdOrder
@@ -418,47 +404,21 @@ updateItemPrice :: Price -> OrderItem -> OrderItem
 updateItemPrice price i@OrderItem { _itemProduct = p@Product { _productInfo = pi } } = 
   i{ _itemProduct = p{ _productInfo = pi{ _productPrice = price } } }
 
-mergeItems :: NonEmpty OrderItem -> OrderItem
-mergeItems items@(first :| _) = 
-  OrderItem (_itemProduct first)
-            (sum . fmap _itemQuantity $ items)
-            (mergeAdjustments items)
-
-mergeAdjustments :: NonEmpty OrderItem -> Maybe OrderItemAdjustment
-mergeAdjustments items = case NE.nonEmpty . catMaybes . map _itemAdjustment . NE.toList $ items of
-    Just adjs -> let discontinued     = any _itemAdjIsDiscontinued adjs
-                     totalQuantity    = if discontinued
-                                          then 0 
-                                          else sum . fmap (\i -> maybe (_itemQuantity i) _itemAdjNewQuantity . _itemAdjustment $ i) $ items
-                     latest           = maximumBy (comparing _itemAdjDate) adjs
-                     latestPrice      = _itemAdjNewPrice latest
-                     latestDate       = _itemAdjDate latest
-                 in  Just $ OrderItemAdjustment latestPrice
-                                                totalQuantity
-                                                discontinued
-                                                latestDate
-    _ -> Nothing
-
 instance Semigroup OrderItem where
-  i1 <> i2 = 
-    OrderItem (product (_itemProduct i1) (_itemAdjustment i1) (_itemProduct i2) (_itemAdjustment i2))
-              (_itemQuantity   i1 +  _itemQuantity   i2)
-              (merge (_itemAdjustment i1) (_itemAdjustment i2))
-    where 
-      product   p1 (Just _) _ (Just _) = p1
-      product p1 (Just _) _ _ = p1
-      product _ _ p2 (Just _) = p2
-      product p1 _ _ _ = p1
-      merge (Just a1) (Just a2) = Just (a1 <> a2)
-      merge (Just a1) _ = Just (a1 <> fromItem i2 a1)
-      merge _ (Just a2) = Just (fromItem i1 a2 <> a2)
-      merge _ _ = Nothing
-      fromItem i a = OrderItemAdjustment (_itemAdjNewPrice a) 
-                                         (if _itemAdjIsDiscontinued a 
-                                            then 0 
-                                            else _itemQuantity i)
-                                         (_itemAdjIsDiscontinued a)
-                                         (_itemAdjDate a)
+  i1 <> i2 = OrderItem p (q1 + q2) (a1 <> a2)
+    where
+      p        = product (_itemProduct i1) (_itemAdjustment i1) (_itemProduct i2) (_itemAdjustment i2)
+      (a1, a2) = adjustments (_itemAdjustment i1) (_itemAdjustment i2)
+      (q1, q2) = (_itemQuantity i1, _itemQuantity i2)
+
+      product _  Nothing p2 (Just _) = p2
+      product p1 _       _  _        = p1
+
+      adjustments (Just a1) Nothing   = (Just a1, Just $ withNewQuantity i2 a1)
+      adjustments Nothing   (Just a2) = (Just $ withNewQuantity i1 a2, Just a2)
+      adjustments a1        a2        = (a1, a2)
+
+      withNewQuantity i a = a { _itemAdjNewQuantity = if _itemAdjIsDiscontinued a then 0 else _itemQuantity i }
 
 data OrderItemAdjustment = OrderItemAdjustment 
   { _itemAdjNewPrice :: Price
@@ -468,18 +428,15 @@ data OrderItemAdjustment = OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
 instance Semigroup OrderItemAdjustment where
-  a1 <> a2 = OrderItemAdjustment latestPrice
-                                 totalQuantity
-                                 discontinued
-                                 latestDate
+  a1 <> a2 = OrderItemAdjustment latestPrice totalQuantity discontinued latestDate
     where 
-    discontinued     = _itemAdjIsDiscontinued a1 || _itemAdjIsDiscontinued a2
-    totalQuantity    = if discontinued
-                         then 0 
-                         else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
-    latest           = maximumBy (comparing _itemAdjDate) [a1, a2]
-    latestPrice      = _itemAdjNewPrice latest
-    latestDate       = _itemAdjDate latest
+      discontinued  = _itemAdjIsDiscontinued a1 || _itemAdjIsDiscontinued a2
+      totalQuantity = if discontinued
+                        then 0 
+                        else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
+      latest        = maximumBy (comparing _itemAdjDate) [a1, a2]
+      latestPrice   = _itemAdjNewPrice latest
+      latestDate    = _itemAdjDate latest
 
 itemAdjNewTotal :: OrderItemAdjustment -> Money
 itemAdjNewTotal adj = atQuantity (_itemAdjNewQuantity adj) (_itemAdjNewPrice adj)
@@ -527,11 +484,11 @@ removeItemAdjustment i = i
 
 newtype ProductId = ProductId
   { fromProductId :: Int 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 newtype ProductCode = ProductCode
   { fromProductCode :: String 
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Ord, Show, Generic)
 
 instance Hashable ProductCode
 
@@ -650,7 +607,7 @@ findEntry :: ProductCode -> ProductCatalogue -> Maybe ProductCatalogueEntry
 findEntry code = H.lookup code . fromProductCatalogue
 
 getEntries :: ProductCatalogue -> [ProductCatalogueEntry]
-getEntries = sortBy (compare `on` fromProductCode . _catalogueEntryCode) . H.elems . fromProductCatalogue
+getEntries = sortBy (compare `on` _catalogueEntryCode) . H.elems . fromProductCatalogue
 
 --TODO: Safe version? If catalogue empty
 getDate :: ProductCatalogue -> UTCTime
@@ -746,7 +703,7 @@ remove eq = filter (not . eq)
 update :: (a -> Bool) -> (a -> a) -> [a] -> [a]
 update _ _ [] = []
 update cond fn (x:xs) | cond x = fn x : update cond fn xs
-                           | otherwise = x : update cond fn xs
+                      | otherwise = x : update cond fn xs
 
 (<&>) :: Functor f => f a -> (a -> b) -> f b
 (<&>) = flip (<$>)

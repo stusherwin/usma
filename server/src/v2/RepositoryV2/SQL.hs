@@ -360,8 +360,8 @@ updateOrders :: Connection -> [Order] -> IO ()
 updateOrders conn orders = do
   let rows = orders <&> \o -> let groupId = _orderGroupId . _orderInfo $ o
                                   orderId = _orderId . _orderInfo $ o
-                                  abandoned = orderIsAbandoned o
-                                  placed = orderIsPlaced o
+                                  abandoned = (== OrderAbandoned) . _orderStatus $ o
+                                  placed = (== OrderPlaced) . _orderStatus $ o
                                   --complete?
                               in (abandoned, placed, {- complete?, -} groupId, orderId)
   void $ executeMany conn [sql|
@@ -416,8 +416,8 @@ insertHouseholdOrders conn orders = do
   let rows = orders <&> \o -> let groupId = _orderGroupId . _householdOrderOrderInfo $ o
                                   orderId = _orderId . _householdOrderOrderInfo $ o
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
-                                  abandoned = householdOrderIsAbandoned o
-                                  complete = householdOrderIsComplete o
+                                  abandoned = (== HouseholdOrderAbandoned) . _householdOrderStatus $ o
+                                  complete = (== HouseholdOrderComplete) . _householdOrderStatus $ o
                               in (abandoned, complete, groupId, orderId, householdId)
   void $ executeMany conn [sql|
     insert into v2.household_order (is_abandoned, is_complete, order_group_id, order_id, household_id) 
@@ -429,8 +429,8 @@ updateHouseholdOrders conn orders = do
   let rows = orders <&> \o -> let groupId = _orderGroupId . _householdOrderOrderInfo $ o
                                   orderId = _orderId . _householdOrderOrderInfo $ o
                                   householdId = _householdId . _householdOrderHouseholdInfo $ o
-                                  abandoned = householdOrderIsAbandoned o
-                                  complete = householdOrderIsComplete o
+                                  abandoned = (== HouseholdOrderAbandoned) . _householdOrderStatus $ o
+                                  complete = (== HouseholdOrderComplete) . _householdOrderStatus $ o
                               in (abandoned, complete, groupId, orderId, householdId)
   void $ executeMany conn [sql|
     update v2.household_order ho
