@@ -53,7 +53,7 @@ data HouseholdInfo = HouseholdInfo
 
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat
-                     . (sum . map (\ho -> fromMaybe (householdOrderTotal ho) (fmap _orderAdjNewTotal . householdOrderAdjustment $ ho)))
+                     . (sum . map householdOrderAdjTotal)
                      . filter ((/= HouseholdOrderAbandoned) . _householdOrderStatus .&&. (/= OrderAbandoned) . _householdOrderOrderStatus)
                      . _householdOrders
 
@@ -152,12 +152,11 @@ orderTotal = sum . map itemTotal . orderItems
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
-    if any (isJust . householdOrderAdjustment) (householdOrders $ o)
+    if any (isJust . householdOrderAdjustment) $ householdOrders o
       then Just $ OrderAdjustment adjTotal
       else Nothing
   where
-    adjTotal = sum . map adjHouseholdOrderTotal . householdOrders $ o
-    adjHouseholdOrderTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal $ householdOrderAdjustment ho
+    adjTotal = sum . map householdOrderAdjTotal . householdOrders $ o
 
 orderItems :: Order -> [OrderItem]
 orderItems = map sconcat
@@ -294,6 +293,9 @@ householdOrderHouseholdName = _householdName . _householdOrderHouseholdInfo
 householdOrderTotal :: HouseholdOrder -> Money
 householdOrderTotal = sum . map itemTotal . _householdOrderItems
 
+householdOrderAdjTotal :: HouseholdOrder -> Money
+householdOrderAdjTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal . householdOrderAdjustment $ ho
+
 householdOrderAdjustment :: HouseholdOrder -> Maybe OrderAdjustment
 householdOrderAdjustment ho =
     if any (isJust . _itemAdjustment) (_householdOrderItems ho)
@@ -338,7 +340,7 @@ addOrUpdateItems catalogue = overHouseholdOrderItems
       OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing
 
 removeItem :: ProductCode -> HouseholdOrder -> HouseholdOrder
-removeItem productCode = overHouseholdOrderItems $ remove ((== productCode) . itemProductCode)
+removeItem productCode = overHouseholdOrderItems $ filter ((/= productCode) . itemProductCode)
 
 applyUpdate :: ProductCatalogue -> HouseholdOrder -> HouseholdOrder
 applyUpdate catalogue = overHouseholdOrderItems $ map apply
@@ -354,7 +356,7 @@ acceptUpdate = overHouseholdOrderItems $ map removeItemAdjustment
                                        . removeDiscontinued
                                        . map accept
   where
-    removeDiscontinued = remove (fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
+    removeDiscontinued = filter (not . fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
     accept item@OrderItem 
         { _itemAdjustment = Just (OrderItemAdjustment 
           { _itemAdjNewPrice = price
@@ -396,6 +398,9 @@ itemProductPrice = _productPrice . _productInfo . _itemProduct
 
 itemTotal :: OrderItem -> Money
 itemTotal item = atQuantity (_itemQuantity item) (itemProductPrice item)
+
+itemAdjTotal :: OrderItem -> Money
+itemAdjTotal i = fromMaybe (itemTotal i) $ fmap itemAdjNewTotal $ _itemAdjustment i
 
 updateItemQuantity :: Maybe Int -> OrderItem -> OrderItem
 updateItemQuantity quantity i = i{ _itemQuantity = fromMaybe (_itemQuantity i) quantity }
@@ -696,9 +701,6 @@ ensure = ensure' False
     ensure' found eq new (x : xs)
       | eq x      = x : ensure' True  eq new xs
       | otherwise = x : ensure' found eq new xs
-
-remove :: (a -> Bool) -> [a] -> [a]
-remove eq = filter (not . eq)
 
 update :: (a -> Bool) -> (a -> a) -> [a] -> [a]
 update _ _ [] = []
