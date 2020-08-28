@@ -559,7 +559,7 @@ apiOrderItemAdjustment _ _ = Nothing
 apiProductCatalogueEntry :: DomainV2.ProductCatalogueEntry -> Api.ProductCatalogueEntry
 apiProductCatalogueEntry e = Api.ProductCatalogueEntry
   { pceCode = fromProductCode . _catalogueEntryCode $ e
-  , pceName = productName e
+  , pceName = buildProductName e
   , pcePriceExcVat = _moneyExcVat . _priceAmount . _catalogueEntryPrice $ e
   , pcePriceIncVat = _moneyIncVat . _priceAmount . _catalogueEntryPrice $ e
   , pceVatRate = apiVatRate . _vatRateType . _priceVatRate . _catalogueEntryPrice $ e

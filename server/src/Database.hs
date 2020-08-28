@@ -20,6 +20,7 @@ module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrder
                 ) where
 
 import Control.Monad (void, forM_)
+import Data.Functor ((<&>))
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow
 import Database.PostgreSQL.Simple.SqlQQ

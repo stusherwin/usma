@@ -20,6 +20,16 @@ library
                      , Config
                      , Types
                      , DomainV2
+                     , DomainV2.Adjustments 
+                     , DomainV2.Catalogue 
+                     , DomainV2.HouseholdOrders
+                     , DomainV2.Households 
+                     , DomainV2.OrderItems 
+                     , DomainV2.Orders 
+                     , DomainV2.Payments 
+                     , DomainV2.Prices 
+                     , DomainV2.Types 
+                     , DomainV2.Utils                     
                      , AppApiV2
                      , CompareV2Api
                      , AppServerV2
@@ -81,6 +91,7 @@ library
                      , safe
                      , ansi-terminal
                      , process
+                     , lens
   default-language:    Haskell2010
 
 executable usma

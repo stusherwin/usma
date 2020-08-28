@@ -12,6 +12,7 @@ module RepositoryV2.SQL where
 import Control.Monad (mzero, void)
 import Data.ByteString (ByteString)
 import Data.Char (isSpace)
+import Data.Functor ((<&>))
 import Data.List (foldl')
 import qualified Data.Text as T (pack)
 import Data.Text.Encoding (encodeUtf8)

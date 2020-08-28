@@ -456,13 +456,13 @@ fromHouseholdOrderItemData d
                                                 (hoidProductDiscontinued d)
                 else Nothing
 
-(<&>) :: Functor f => f a -> (a -> b) -> f b
-(<&>) = flip (<$>)
-infixl 4 <&>
+-- (<&>) :: Functor f => f a -> (a -> b) -> f b
+-- (<&>) = flip (<$>)
+-- infixl 4 <&>
 
-(&) :: a -> (a -> b) -> b
-(&) = flip ($)
-infixr 0 &
+-- (&) :: a -> (a -> b) -> b
+-- (&) = flip ($)
+-- infixr 0 &
 
 toNearestSecond :: UTCTime -> UTCTime
 toNearestSecond (UTCTime day time) = UTCTime day (fromIntegral . floor . realToFrac $ time)

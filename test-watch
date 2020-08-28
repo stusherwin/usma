@@ -1,0 +1,1 @@
+stack test --file-watch --fast --test-arguments "--color"
