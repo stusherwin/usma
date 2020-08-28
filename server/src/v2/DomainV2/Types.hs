@@ -145,6 +145,22 @@ data OrderItem = OrderItem
   , _itemAdjustment :: Maybe OrderItemAdjustment
   } deriving (Eq, Show, Generic)
 
+instance Semigroup OrderItem where
+  i1 <> i2 = OrderItem p (q1 + q2) (a1 <> a2)
+    where
+      p        = product (_itemProduct i1) (_itemAdjustment i1) (_itemProduct i2) (_itemAdjustment i2)
+      (a1, a2) = adjustments (_itemAdjustment i1) (_itemAdjustment i2)
+      (q1, q2) = (_itemQuantity i1, _itemQuantity i2)
+
+      product _  Nothing p2 (Just _) = p2
+      product p1 _       _  _        = p1
+
+      adjustments (Just a1) Nothing   = (Just a1, Just $ withNewQuantity i2 a1)
+      adjustments Nothing   (Just a2) = (Just $ withNewQuantity i1 a2, Just a2)
+      adjustments a1        a2        = (a1, a2)
+
+      withNewQuantity i a = a { _itemAdjNewQuantity = if _itemAdjIsDiscontinued a then 0 else _itemQuantity i }
+
 data OrderItemSpec = OrderItemSpec
   { _itemSpecProductCode :: ProductCode
   , _itemSpecProductPrice :: Int
@@ -158,6 +174,17 @@ data OrderItemAdjustment = OrderItemAdjustment
   , _itemAdjDate :: UTCTime
   } deriving (Eq, Show, Generic)
 
+instance Semigroup OrderItemAdjustment where
+  a1 <> a2 = OrderItemAdjustment latestPrice totalQuantity discontinued latestDate
+    where 
+      discontinued  = _itemAdjIsDiscontinued a1 || _itemAdjIsDiscontinued a2
+      totalQuantity = if discontinued
+                        then 0 
+                        else _itemAdjNewQuantity a1 + _itemAdjNewQuantity a2
+      latest        = maximumBy (comparing _itemAdjDate) [a1, a2]
+      latestPrice   = _itemAdjNewPrice latest
+      latestDate    = _itemAdjDate latest
+
 {- Product -}
 
 newtype ProductId = ProductId
@@ -167,6 +194,8 @@ newtype ProductId = ProductId
 newtype ProductCode = ProductCode
   { fromProductCode :: String 
   } deriving (Eq, Ord, Show, Generic)
+
+instance Hashable ProductCode
 
 data ProductInfo = ProductInfo
   { _productCode :: ProductCode

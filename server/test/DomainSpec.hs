@@ -89,7 +89,7 @@ householdOrderItemValues :: Order -> [(HouseholdId, [OrderItemValues])]
 householdOrderItemValues = map (householdOrderHouseholdId &&& map itemValues . _householdOrderItems) . _orderHouseholdOrders
 
 orderItemValues :: Order -> [OrderItemValues]
-orderItemValues = map itemValues . orderItems
+orderItemValues = map itemValues . orderItemsToPlace
 
 itemValues :: OrderItem -> OrderItemValues
 itemValues i = ( fromProductCode . itemProductCode $ i

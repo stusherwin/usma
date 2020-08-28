@@ -22,8 +22,6 @@ import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgr
 import DomainV2
 import RepositoryV2.SQL
 
-import Debug.Trace (trace)
-
 data RepositoryConfig = RepositoryConfig 
   { repoConnectionString :: ByteString
   , repoGroupKey :: String 
@@ -406,14 +404,14 @@ toHouseholdOrder rOrderItems ho =
                  orderStatus
                  householdInfo
                  (householdOrderRow_status ho)
-                 orderItems
+                 items
   where
   orderInfo = householdOrderRow_orderInfo ho
   orderStatus = householdOrderRow_orderStatus ho
   householdInfo = householdOrderRow_householdInfo ho
-  orderItems = map toOrderItem 
-             . filter (\((oId, hId) :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)
-             $ rOrderItems
+  items = map toOrderItem 
+        . filter (\((oId, hId) :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)
+        $ rOrderItems
 
 toOrderItem :: ((OrderId, HouseholdId) :. OrderItemRow) -> OrderItem
 toOrderItem (_ :. i) = OrderItem (orderItemRow_product i)

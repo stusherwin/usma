@@ -43,7 +43,7 @@ exportOrderItems :: Order -> BL.ByteString
 exportOrderItems order = encodeByName columns rows
   where
     columns = V.fromList ["Code", "Product", "Price", "Quantity", "Total"]
-    rows = map toRow $ orderItems order
+    rows = map toRow $ orderItemsToPlace order
     toRow i = CsvRow
       { csvName = itemProductName i
       , csvCode = fromProductCode . itemProductCode $ i

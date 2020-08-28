@@ -9,7 +9,7 @@ import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString.Char8 as B (unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (unpack, toStrict)
-import           Data.Maybe (fromMaybe, isJust)
+import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, secondsToDiffTime)
@@ -242,7 +242,7 @@ commandServerV2 config  =
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId orderId)
-      let order' = DomainV2.reopenHouseholdOrder catalogue (HouseholdId householdId) order
+      let order' = applyCatalogueUpdate catalogue . DomainV2.reopenHouseholdOrder (HouseholdId householdId) $ order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -251,7 +251,7 @@ commandServerV2 config  =
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
       catalogue <- liftIO $ getProductCatalogueForCode repo (ProductCode productCode)
-      let order' = addOrUpdateHouseholdOrderItems catalogue household [(ProductCode productCode, hoidetQuantity details)] order
+      let order' = addOrUpdateOrderItems catalogue household [(ProductCode productCode, hoidetQuantity details)] order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -261,7 +261,7 @@ commandServerV2 config  =
       pastOrder <- MaybeT $ getOrder repo groupId (OrderId pastOrderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
       catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId pastOrderId)
-      let order' = addItemsFromPastOrder catalogue household pastOrder order
+      let order' = addOrderItemsFromPastOrder catalogue household pastOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -271,7 +271,7 @@ commandServerV2 config  =
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
       productCode <- MaybeT $ getProductCode repo (ProductId productId)
-      let order' = DomainV2.removeHouseholdOrderItem (HouseholdId householdId) productCode order
+      let order' = DomainV2.removeOrderItem (HouseholdId householdId) productCode order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -427,7 +427,7 @@ apiCollectiveOrder productIds o = Api.CollectiveOrder
                                                  Just a -> _orderAdjNewTotal a
                                                  _      -> orderTotal $ o
     , coAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
-    , coItems = apiOrderItem productIds <$> orderItems o
+    , coItems = apiOrderItem productIds <$> orderItemsToPlace o
     }
 
 apiPastCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.PastCollectiveOrder
@@ -453,7 +453,7 @@ apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
                       _      -> total
     total = orderTotal o
     adjustment = orderAdjustment o
-    items = orderItems o
+    items = orderItemsToPlace o
 
 apiOrderAdjustment :: Money -> Maybe DomainV2.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment total (Just _) = Just $ Api.OrderAdjustment

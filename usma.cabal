@@ -22,9 +22,7 @@ library
                      , DomainV2
                      , DomainV2.Adjustments 
                      , DomainV2.Catalogue 
-                     , DomainV2.HouseholdOrders
                      , DomainV2.Households 
-                     , DomainV2.OrderItems 
                      , DomainV2.Orders 
                      , DomainV2.Payments 
                      , DomainV2.Prices 

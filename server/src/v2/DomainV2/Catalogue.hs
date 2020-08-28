@@ -29,8 +29,6 @@ import DomainV2.Types
 import DomainV2.Utils
 import DomainV2.Prices
 
-instance Hashable ProductCode
-
 productCatalogue :: [ProductCatalogueEntry] -> ProductCatalogue
 productCatalogue = ProductCatalogue . H.fromList . map (_catalogueEntryCode &&& id)
 
