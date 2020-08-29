@@ -20,7 +20,7 @@ import qualified Data.List.NonEmpty as NE (groupBy, nonEmpty, toList)
 import           GHC.Generics
 import           Prelude hiding (product)
 import           Text.Read (readMaybe)
-import           Control.Lens (makeLenses)
+import           Control.Lens
 
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn ch list = f list [[]] where
@@ -48,10 +48,13 @@ ensure = ensure' False
       | eq x      = x : ensure' True  eq new xs
       | otherwise = x : ensure' found eq new xs
 
-update :: (a -> Bool) -> (a -> a) -> [a] -> [a]
-update _ _ [] = []
-update cond fn (x:xs) | cond x = fn x : update cond fn xs
-                      | otherwise = x : update cond fn xs
+-- update :: (a -> Bool) -> (a -> a) -> [a] -> [a]
+-- update _ _ [] = []
+-- update cond fn (x:xs) | cond x = fn x : update cond fn xs
+--                       | otherwise = x : update cond fn xs
+
+updateWhere :: (a -> Bool) -> (([a] -> Identity [a]) -> b -> Identity b) -> (a -> a) -> b -> b
+updateWhere pred lens = over (lens . each . filtered pred)
 
 (.&&.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
 f1 .&&. f2 = \x -> f1 x && f2 x

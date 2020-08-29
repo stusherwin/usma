@@ -23,89 +23,100 @@ orderTotal :: Order -> Money
 orderTotal = sum . map itemTotal . orderItemsToPlace
 
 orderItemsToPlace :: Order -> [OrderItem]
-orderItemsToPlace = map sconcat  
-                  . NE.groupBy ((==) `on` itemProductCode)
-                  . sortBy (compare `on` itemProductCode)
-                  . concatMap _householdOrderItems
-                  . orderHouseholdOrdersToPlace
+orderItemsToPlace = 
+    map sconcat  
+  . NE.groupBy ((==) `on` itemProductCode)
+  . sortBy (compare `on` itemProductCode)
+  . concatMap _householdOrderItems
+  . orderHouseholdOrdersToPlace
 
 orderHouseholdOrdersToPlace :: Order -> [HouseholdOrder]
-orderHouseholdOrdersToPlace = filter ((/= HouseholdOrderAbandoned) . _householdOrderStatus) . _orderHouseholdOrders
+orderHouseholdOrdersToPlace = 
+    filter ((/= HouseholdOrderAbandoned) . _householdOrderStatus) 
+  . _orderHouseholdOrders
 
 orderIsComplete :: Order -> Bool
-orderIsComplete = (/= OrderAbandoned) . _orderStatus 
-             .&&. (not . null) . orderHouseholdOrdersToPlace
-             .&&. all ((== HouseholdOrderComplete) . _householdOrderStatus) . orderHouseholdOrdersToPlace
+orderIsComplete = 
+       (/= OrderAbandoned) . _orderStatus 
+  .&&. (not . null) . orderHouseholdOrdersToPlace
+  .&&. all ((== HouseholdOrderComplete) . _householdOrderStatus) . orderHouseholdOrdersToPlace
 
 abandonOrder :: Order -> Order
-abandonOrder = over (orderHouseholdOrders . traverse) (abandonIfNotComplete . set householdOrderOrderStatus OrderAbandoned)
-             . set orderStatus OrderAbandoned
+abandonOrder = 
+    (over (orderHouseholdOrders . traverse) $
+      abandonIfNotComplete . set householdOrderOrderStatus OrderAbandoned)
+  . set orderStatus OrderAbandoned
   where
     abandonIfNotComplete ho | (== HouseholdOrderComplete) . _householdOrderStatus $ ho = ho 
                             | otherwise = set householdOrderStatus HouseholdOrderAbandoned ho
                  
 placeOrder :: Order -> Order
-placeOrder = over (orderHouseholdOrders . traverse) (set householdOrderOrderStatus OrderPlaced)
-           . set orderStatus OrderPlaced
+placeOrder = 
+    (over (orderHouseholdOrders . traverse) $
+      set householdOrderOrderStatus OrderPlaced)
+  . set orderStatus OrderPlaced
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdId -> Order -> Order
 abandonHouseholdOrder householdId o = 
-    over (orderHouseholdOrders . traverse) (set householdOrderOrderStatus (_orderStatus o))
-  . updateOrderAbandonedStatus 
-  . over orderHouseholdOrders (update (whereHouseholdId householdId) $ set householdOrderStatus HouseholdOrderAbandoned)
+    (over (orderHouseholdOrders . traverse) $
+      set householdOrderOrderStatus (_orderStatus o))
+  . updateOrderAbandonedStatus
+  . updateWhere (hasHouseholdId householdId) orderHouseholdOrders (set householdOrderStatus HouseholdOrderAbandoned)
   $ o
 
 reopenHouseholdOrder :: HouseholdId -> Order -> Order
 reopenHouseholdOrder householdId o = 
-    over (orderHouseholdOrders . traverse) (set householdOrderOrderStatus (_orderStatus o))
+    (over (orderHouseholdOrders . traverse) $
+      set householdOrderOrderStatus (_orderStatus o))
   . updateOrderAbandonedStatus 
-  . over orderHouseholdOrders (update (whereHouseholdId householdId) $ set householdOrderStatus HouseholdOrderOpen)
+  . updateWhere (hasHouseholdId householdId) orderHouseholdOrders (set householdOrderStatus HouseholdOrderOpen)
   $ o
 
 updateOrderAbandonedStatus :: Order -> Order
-updateOrderAbandonedStatus o = o{ _orderStatus = if all ((== HouseholdOrderAbandoned) . _householdOrderStatus) $ _orderHouseholdOrders o
-                                                   then OrderAbandoned
-                                                   else OrderOpen
-                                }
+updateOrderAbandonedStatus o = o & orderStatus .~ status
+  where 
+    status = if all ((== HouseholdOrderAbandoned) . _householdOrderStatus) $ _orderHouseholdOrders o
+               then OrderAbandoned
+               else OrderOpen
 
 completeHouseholdOrder :: HouseholdId -> Order -> Order
 completeHouseholdOrder householdId = 
-    over orderHouseholdOrders $ update (whereHouseholdId householdId) (set householdOrderStatus HouseholdOrderComplete)
+    updateWhere (hasHouseholdId householdId) orderHouseholdOrders $
+      set householdOrderStatus HouseholdOrderComplete
 
 addOrUpdateOrderItems :: ProductCatalogue -> HouseholdInfo  -> [(ProductCode, Maybe Int)] -> Order -> Order
 addOrUpdateOrderItems catalogue household itemQuantities =
-    (over orderHouseholdOrders $ update (whereHousehold household) $ addOrUpdateHouseholdOrderItems catalogue itemQuantities)
+    (updateWhere (hasHouseholdId $ _householdId household) orderHouseholdOrders $
+      addOrUpdateHouseholdOrderItems catalogue itemQuantities)
   . ensureHouseholdOrder household
 
 addOrderItemsFromPastOrder :: ProductCatalogue -> HouseholdInfo -> Order -> Order -> Order
 addOrderItemsFromPastOrder catalogue household pastOrder = 
-    (over orderHouseholdOrders $ update (whereHousehold household) $ addOrUpdateHouseholdOrderItems catalogue pastItemQuantities)
+    (updateWhere (hasHouseholdId $ _householdId household) orderHouseholdOrders $
+       addOrUpdateHouseholdOrderItems catalogue pastItemQuantities)
   . ensureHouseholdOrder household
   where
     pastItemQuantities = map (itemProductCode &&& Just . (const 1)) -- TODO: Should be . _itemQuantity)
                        . concatMap _householdOrderItems
-                       . filter (whereHousehold household)
+                       . filter (hasHouseholdId $ _householdId household)
                        . _orderHouseholdOrders 
                        $ pastOrder
 
 ensureHouseholdOrder :: HouseholdInfo -> Order -> Order
 ensureHouseholdOrder household o = 
-    (over orderHouseholdOrders $ ensure (whereHousehold household) $ newHouseholdOrder) o
+    (over orderHouseholdOrders $ 
+      ensure (hasHouseholdId $ _householdId household) $ newHouseholdOrder) o
   where
     newHouseholdOrder = HouseholdOrder (_orderInfo o) (_orderStatus o) household HouseholdOrderOpen []
 
 removeOrderItem :: HouseholdId -> ProductCode -> Order -> Order
 removeOrderItem householdId productCode = 
-    over orderHouseholdOrders 
-  $ update (whereHouseholdId householdId)
-  $ over householdOrderItems $ filter ((/= productCode) . itemProductCode)
+    updateWhere (hasHouseholdId householdId) orderHouseholdOrders $
+      over householdOrderItems $ filter ((/= productCode) . itemProductCode)
 
-whereHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
-whereHouseholdId householdId = (== householdId) . householdOrderHouseholdId
-
-whereHousehold :: HouseholdInfo -> HouseholdOrder -> Bool
-whereHousehold household = (== _householdId household) . householdOrderHouseholdId
+hasHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
+hasHouseholdId householdId = (== householdId) . householdOrderHouseholdId
 
 householdOrderHouseholdId :: HouseholdOrder -> HouseholdId
 householdOrderHouseholdId = _householdId . _householdOrderHouseholdInfo

@@ -26,33 +26,36 @@ orderAdjustment o =
     adjTotal = sum . map householdOrderAdjTotal . orderHouseholdOrdersToPlace $ o
 
 orderIsReconciled :: Order -> Bool
-orderIsReconciled = (== OrderPlaced) . _orderStatus 
-               .&&. all householdOrderIsReconciled . orderHouseholdOrdersToPlace
+orderIsReconciled = 
+       (== OrderPlaced) . _orderStatus 
+  .&&. all householdOrderIsReconciled . orderHouseholdOrdersToPlace
 
 orderIsAwaitingCatalogueUpdateConfirm :: Order -> Bool
-orderIsAwaitingCatalogueUpdateConfirm = any householdOrderIsAwaitingCatalogueUpdateConfirm . orderHouseholdOrdersToPlace
+orderIsAwaitingCatalogueUpdateConfirm = 
+    any householdOrderIsAwaitingCatalogueUpdateConfirm
+  . orderHouseholdOrdersToPlace
 
 applyCatalogueUpdate :: ProductCatalogue -> Order -> Order
 applyCatalogueUpdate catalogue = 
-    over orderHouseholdOrders 
-  $ update ((/= HouseholdOrderAbandoned) . _householdOrderStatus)
-  $ applyUpdate catalogue
+    updateWhere ((/= HouseholdOrderAbandoned) . _householdOrderStatus) orderHouseholdOrders $
+      applyUpdate catalogue
 
 acceptCatalogueUpdate :: HouseholdId -> Order -> Order
 acceptCatalogueUpdate householdId =
-    over orderHouseholdOrders
-  $ update (whereHouseholdId householdId)
-  $ acceptUpdate
+    updateWhere (hasHouseholdId householdId) orderHouseholdOrders $
+      acceptUpdate
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, OrderItemSpec)] -> Order -> Order
 reconcileOrderItems date specs = 
-    over orderHouseholdOrders (map reconcile)
+    over (orderHouseholdOrders . traverse) $ 
+      reconcile
   where
-    reconcile ho = let updatesForHousehold = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ specs
-                   in  reconcileItems date updatesForHousehold ho
+    reconcile ho = reconcileItems date (updatesForHousehold ho) ho
+    updatesForHousehold ho = map snd . filter (((==) (householdOrderHouseholdId ho)) . fst) $ specs
 
 householdOrderAdjTotal :: HouseholdOrder -> Money
-householdOrderAdjTotal ho = fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal . householdOrderAdjustment $ ho
+householdOrderAdjTotal ho = 
+  fromMaybe (householdOrderTotal ho) $ fmap _orderAdjNewTotal . householdOrderAdjustment $ ho
 
 householdOrderAdjustment :: HouseholdOrder -> Maybe OrderAdjustment
 householdOrderAdjustment ho =
@@ -73,11 +76,13 @@ applyUpdate :: ProductCatalogue -> HouseholdOrder -> HouseholdOrder
 applyUpdate catalogue = over householdOrderItems $ map (applyItemUpdate catalogue)
 
 acceptUpdate :: HouseholdOrder -> HouseholdOrder
-acceptUpdate = over householdOrderItems $ map removeItemAdjustment
-                                        . removeDiscontinued
-                                        . map acceptItemUpdate
+acceptUpdate = over householdOrderItems $ 
+      map clearAdjustment
+    . deleteDiscontinuedItems
+    . map acceptItemUpdate
   where
-    removeDiscontinued = filter (not . fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
+    clearAdjustment = itemAdjustment .~ Nothing
+    deleteDiscontinuedItems = filter (not . fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
 
 reconcileItems :: UTCTime -> [OrderItemSpec] -> HouseholdOrder -> HouseholdOrder
 reconcileItems date specs = over (householdOrderItems . traverse) reconcile
@@ -128,9 +133,6 @@ discontinueProduct date i@OrderItem { _itemAdjustment = Just _ } =
     & itemAdjustment . _Just . itemAdjDate .~ date 
 discontinueProduct date i =
   i & itemAdjustment ?~ OrderItemAdjustment (itemProductPrice i) 0 True date
-
-removeItemAdjustment :: OrderItem -> OrderItem
-removeItemAdjustment = itemAdjustment .~ Nothing
 
 applyItemUpdate :: ProductCatalogue -> OrderItem -> OrderItem
 applyItemUpdate catalogue item = case findEntry (itemProductCode item) catalogue of
