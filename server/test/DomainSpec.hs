@@ -3,6 +3,7 @@
 module DomainSpec where
 
 import           Control.Arrow ((&&&))
+import qualified Data.Map as M (elems, fromList)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime)
 import           Test.Hspec
 import           Test.Hspec.Wai
@@ -86,10 +87,10 @@ domainSpec = do
 type OrderItemValues = (String, Money, Int, Money, Maybe Money, Maybe Int, Maybe Money)
 
 householdOrderItemValues :: Order -> [(HouseholdId, [OrderItemValues])]
-householdOrderItemValues = map (householdOrderHouseholdId &&& map itemValues . _householdOrderItems) . _orderHouseholdOrders
+householdOrderItemValues = map (householdOrderHouseholdId &&& map itemValues . M.elems . _householdOrderItems) . _orderHouseholdOrders
 
 orderItemValues :: Order -> [OrderItemValues]
-orderItemValues = map itemValues . orderItemsToPlace
+orderItemValues = map itemValues . M.elems . orderItemsToPlace
 
 itemValues :: OrderItem -> OrderItemValues
 itemValues i = ( fromProductCode . itemProductCode $ i
@@ -124,7 +125,7 @@ makeHouseholdOrder orderInfo orderStatus (householdId, status, items) = Househol
     , _householdName = "Household " ++ (show . fromHouseholdId $ householdId)
     }
   , _householdOrderStatus = status
-  , _householdOrderItems = makeOrderItem <$> items
+  , _householdOrderItems = M.fromList $ (itemProductCode &&& id) . makeOrderItem <$> items
   }
 
 makeOrderItem :: (String, Price, Int) -> OrderItem

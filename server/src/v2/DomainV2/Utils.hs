@@ -19,13 +19,6 @@ splitOn ch list = f list [[]] where
 justWhen :: a -> Bool -> Maybe a
 justWhen a condition = if condition then Just a else Nothing
 
-addOrUpdate :: (a -> a -> Bool) -> (a -> a -> a) -> [a] -> [a] -> [a]
-addOrUpdate _ _ [] ys = ys
-addOrUpdate eq update (x : xs) ys = 
-  case partition (eq x) ys of
-    (y : _, ys') -> (update x y) : addOrUpdate eq update xs ys' 
-    _ -> x : addOrUpdate eq update xs ys
-
 ensure :: (a -> Bool) -> a -> [a] -> [a]
 ensure = ensure' False
   where

@@ -124,6 +124,7 @@ test-suite usma-test
                      , aeson-pretty
                      , base
                      , base-compat-batteries
+                     , containers
                      , http-client
                      , http-types
                      , wai

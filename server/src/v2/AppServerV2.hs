@@ -9,6 +9,7 @@ import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import qualified Data.ByteString.Char8 as B (unpack)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (unpack, toStrict)
+import qualified Data.Map as M (elems)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (Text)
 import qualified Data.Text as T (unpack, pack)
@@ -427,7 +428,7 @@ apiCollectiveOrder productIds o = Api.CollectiveOrder
                                                  Just a -> _orderAdjNewTotal a
                                                  _      -> orderTotal $ o
     , coAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
-    , coItems = apiOrderItem productIds <$> orderItemsToPlace o
+    , coItems = M.elems $ apiOrderItem productIds <$> orderItemsToPlace o
     }
 
 apiPastCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.PastCollectiveOrder
@@ -445,7 +446,7 @@ apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
     , pcoTotalExcVat           = _moneyExcVat adjustedTotal
     , pcoTotalIncVat           = _moneyIncVat adjustedTotal
     , pcoAdjustment            = apiOrderAdjustment total $ adjustment
-    , pcoItems = apiOrderItem productIds <$> items
+    , pcoItems = M.elems $ apiOrderItem productIds <$> items
     }
   where 
     adjustedTotal = case adjustment of
@@ -482,7 +483,7 @@ apiHouseholdOrder productIds ho = Api.HouseholdOrder
                                               Just a -> _orderAdjNewTotal a
                                               _      -> householdOrderTotal ho
     , hoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
-    , hoItems = apiOrderItem productIds <$> _householdOrderItems ho
+    , hoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
     }
 
 apiHouseholdOrderIsOpen :: DomainV2.HouseholdOrder -> Bool
@@ -512,7 +513,7 @@ apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
                                               Just a -> _orderAdjNewTotal a
                                               _      -> householdOrderTotal ho
     , phoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
-    , phoItems = apiOrderItem productIds <$> _householdOrderItems ho
+    , phoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
     }
 
 apiOrderItem :: [(ProductCode, ProductId)] -> DomainV2.OrderItem -> Api.OrderItem

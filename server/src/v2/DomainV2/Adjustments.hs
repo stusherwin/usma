@@ -7,6 +7,7 @@ module DomainV2.Adjustments where
 
 import           Data.Time.Clock (UTCTime)
 import           Data.List (find)
+import qualified Data.Map as M (map, filter)
 import           Data.Maybe (isJust, fromMaybe)
 import           Prelude hiding (product)
 import           Control.Lens
@@ -63,7 +64,7 @@ householdOrderAdjustment ho =
       then Just $ OrderAdjustment adjTotal
       else Nothing
   where
-    adjTotal = sum . map adjItemTotal . _householdOrderItems $ ho
+    adjTotal = sum . M.map adjItemTotal . _householdOrderItems $ ho
     adjItemTotal i = fromMaybe (itemTotal i) $ fmap itemAdjNewTotal $ _itemAdjustment i
 
 householdOrderIsReconciled :: HouseholdOrder -> Bool
@@ -77,12 +78,12 @@ applyUpdate catalogue = over (householdOrderItems . traverse) $ applyItemUpdate 
 
 acceptUpdate :: HouseholdOrder -> HouseholdOrder
 acceptUpdate = over householdOrderItems $ 
-      map clearAdjustment
+      M.map clearAdjustment
     . deleteDiscontinuedItems
-    . map acceptItemUpdate
+    . M.map acceptItemUpdate
   where
     clearAdjustment = itemAdjustment .~ Nothing
-    deleteDiscontinuedItems = filter (not . fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
+    deleteDiscontinuedItems = M.filter (not . fromMaybe False . fmap _itemAdjIsDiscontinued . _itemAdjustment)
 
 reconcileItems :: UTCTime -> [OrderItemSpec] -> HouseholdOrder -> HouseholdOrder
 reconcileItems date specs = over (householdOrderItems . traverse) reconcile

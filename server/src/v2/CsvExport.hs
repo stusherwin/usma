@@ -3,8 +3,9 @@
 
 module CsvExport where
 
-import           Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
 import qualified Data.ByteString.Lazy as BL (ByteString)
+import           Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
+import qualified Data.Map as M (elems)
 import qualified Data.Vector as V (fromList)
 
 import           DomainV2
@@ -43,7 +44,7 @@ exportOrderItems :: Order -> BL.ByteString
 exportOrderItems order = encodeByName columns rows
   where
     columns = V.fromList ["Code", "Product", "Price", "Quantity", "Total"]
-    rows = map toRow $ orderItemsToPlace order
+    rows = map toRow . M.elems . orderItemsToPlace $ order
     toRow i = CsvRow
       { csvName = itemProductName i
       , csvCode = fromProductCode . itemProductCode $ i
@@ -57,7 +58,8 @@ exportOrderItemsByHousehold :: Order -> BL.ByteString
 exportOrderItemsByHousehold order = encodeByName columns rows
   where
     columns = V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]
-    rows = map toRow . concatMap (\ho -> map (householdOrderHouseholdName ho,) $ _householdOrderItems ho) . _orderHouseholdOrders $ order
+    rows = map toRow . concatMap withName . _orderHouseholdOrders $ order
+    withName ho = map (householdOrderHouseholdName ho,) $ M.elems $ _householdOrderItems ho
     toRow (householdName, i) = CsvRow
       { csvName = itemProductName i
       , csvCode = fromProductCode . itemProductCode $ i

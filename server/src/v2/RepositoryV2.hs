@@ -9,13 +9,14 @@
 
 module RepositoryV2 where 
 
-import Control.Arrow ((***))
+import Control.Arrow ((***), (&&&))
 import Control.Monad (when, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Data.ByteString (ByteString)
 import Data.Function (on)
 import Data.List (deleteFirstsBy, intersectBy, nub)
+import qualified Data.Map as M (fromList, elems)
 import Data.Maybe (listToMaybe, maybeToList, catMaybes)
 import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgreSQL, close, withTransaction)
 
@@ -320,7 +321,7 @@ setHouseholdOrders repo orders = do
                      in (groupId, orderId, householdId)
 
     let itemKey ((groupId, orderId, householdId), i) = ((groupId, orderId, householdId, itemProductCode i), i)
-    let keyedItems o = map itemKey . map (orderKey o, ) $ _householdOrderItems o
+    let keyedItems o = map itemKey . map (orderKey o, ) . M.elems . _householdOrderItems $ o
     let keyedAdjustment (k, i) = (k, ) <$> _itemAdjustment i
 
     let items = join (***) (concatMap keyedItems) $ orders
@@ -409,7 +410,9 @@ toHouseholdOrder rOrderItems ho =
   orderInfo = householdOrderRow_orderInfo ho
   orderStatus = householdOrderRow_orderStatus ho
   householdInfo = householdOrderRow_householdInfo ho
-  items = map toOrderItem 
+  items = M.fromList
+        . map (itemProductCode &&& id)
+        . map toOrderItem 
         . filter (\((oId, hId) :. _) -> oId == _orderId orderInfo && hId == _householdId householdInfo)
         $ rOrderItems
 

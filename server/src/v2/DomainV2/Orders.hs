@@ -6,12 +6,8 @@
 module DomainV2.Orders where
 
 import           Control.Arrow ((&&&))
-import           Data.Function (on)
-import           Data.List (sortBy)
+import qualified Data.Map.Strict as M (Map, delete, elems, empty, fromList, map, unionWith, unionsWith)
 import           Data.Maybe (fromMaybe, catMaybes)
-import           Data.Semigroup (sconcat)
-import qualified Data.List.NonEmpty as NE (groupBy)
-import           Prelude hiding (product)
 import           Control.Lens
 
 import DomainV2.Types
@@ -20,14 +16,12 @@ import DomainV2.Catalogue
 import DomainV2.Prices
 
 orderTotal :: Order -> Money
-orderTotal = sum . map itemTotal . orderItemsToPlace
+orderTotal = sum . M.map itemTotal . orderItemsToPlace
 
-orderItemsToPlace :: Order -> [OrderItem]
+orderItemsToPlace :: Order -> M.Map ProductCode OrderItem
 orderItemsToPlace = 
-    map sconcat  
-  . NE.groupBy ((==) `on` itemProductCode)
-  . sortBy (compare `on` itemProductCode)
-  . concatMap _householdOrderItems
+    M.unionsWith (<>)
+  . map _householdOrderItems
   . orderHouseholdOrdersToPlace
 
 orderHouseholdOrdersToPlace :: Order -> [HouseholdOrder]
@@ -96,7 +90,9 @@ addOrderItemsFromPastOrder catalogue household pastOrder =
   . ensureHouseholdOrder household
   where
     pastItemQuantities = map (itemProductCode &&& Just . (const 1)) -- TODO: Should be . _itemQuantity)
-                       . concatMap _householdOrderItems
+                       . M.elems
+                       . M.unionsWith (<>) 
+                       . map _householdOrderItems
                        . filter (hasHouseholdId $ _householdId household)
                        . _orderHouseholdOrders 
                        $ pastOrder
@@ -106,12 +102,12 @@ ensureHouseholdOrder household o =
     (over orderHouseholdOrders $ 
       ensure (hasHouseholdId $ _householdId household) $ newHouseholdOrder) o
   where
-    newHouseholdOrder = HouseholdOrder (_orderInfo o) (_orderStatus o) household HouseholdOrderOpen []
+    newHouseholdOrder = HouseholdOrder (_orderInfo o) (_orderStatus o) household HouseholdOrderOpen M.empty
 
 removeOrderItem :: HouseholdId -> ProductCode -> Order -> Order
 removeOrderItem householdId productCode = 
     over (orderHouseholdOrdersWhere $ hasHouseholdId $ householdId) $ 
-      over householdOrderItems $ filter ((/= productCode) . itemProductCode)
+      over householdOrderItems $ M.delete productCode
 
 hasHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
 hasHouseholdId householdId = (== householdId) . householdOrderHouseholdId
@@ -126,12 +122,14 @@ householdOrderHouseholdName :: HouseholdOrder -> String
 householdOrderHouseholdName = _householdName . _householdOrderHouseholdInfo
 
 householdOrderTotal :: HouseholdOrder -> Money
-householdOrderTotal = sum . map itemTotal . _householdOrderItems
+householdOrderTotal = sum . M.map itemTotal . _householdOrderItems
 
 addOrUpdateHouseholdOrderItems :: ProductCatalogue -> [(ProductCode, Maybe Int)] -> HouseholdOrder -> HouseholdOrder
 addOrUpdateHouseholdOrderItems catalogue = 
       over householdOrderItems
-    . addOrUpdate ((==) `on` itemProductCode) (updateItemQuantity . Just . _itemQuantity)
+    . M.unionWith (updateItemQuantity . Just . _itemQuantity)
+    . M.fromList
+    . map (itemProductCode &&& id)
     . catMaybes 
     . map toOrderItem
   where

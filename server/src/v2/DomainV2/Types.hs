@@ -9,6 +9,7 @@ import qualified Data.HashMap.Lazy as H (HashMap)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
 import           Data.List (maximumBy)
+import           Data.Map.Strict (Map)
 import           Data.Ord (comparing)
 import           GHC.Generics
 import           Prelude hiding (product)
@@ -119,7 +120,7 @@ data HouseholdOrder = HouseholdOrder
   , _householdOrderOrderStatus :: OrderStatus
   , _householdOrderHouseholdInfo :: HouseholdInfo
   , _householdOrderStatus :: HouseholdOrderStatus
-  , _householdOrderItems :: [OrderItem]
+  , _householdOrderItems :: Map ProductCode OrderItem
   } deriving (Eq, Show, Generic)
 
 data HouseholdOrderStatus = HouseholdOrderOpen
