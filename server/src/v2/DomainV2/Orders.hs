@@ -58,23 +58,21 @@ placeOrder =
 
 -- TODO: guard state eg. complete order can't be abandoned, placed order can't be abandoned etc
 abandonHouseholdOrder :: HouseholdId -> Order -> Order
-abandonHouseholdOrder householdId o = 
-    (over (orderHouseholdOrders . traverse) $
-      set householdOrderOrderStatus (_orderStatus o))
-  . updateOrderAbandonedStatus
-  . updateWhere (hasHouseholdId householdId) orderHouseholdOrders (set householdOrderStatus HouseholdOrderAbandoned)
-  $ o
+abandonHouseholdOrder householdId = 
+    updateOrderAbandonedStatus
+  . (over (orderHouseholdOrdersWhere $ hasHouseholdId householdId) $ 
+      set householdOrderStatus HouseholdOrderAbandoned)
 
 reopenHouseholdOrder :: HouseholdId -> Order -> Order
-reopenHouseholdOrder householdId o = 
-    (over (orderHouseholdOrders . traverse) $
-      set householdOrderOrderStatus (_orderStatus o))
-  . updateOrderAbandonedStatus 
-  . updateWhere (hasHouseholdId householdId) orderHouseholdOrders (set householdOrderStatus HouseholdOrderOpen)
-  $ o
+reopenHouseholdOrder householdId = 
+    updateOrderAbandonedStatus 
+  . (over (orderHouseholdOrdersWhere $ hasHouseholdId householdId) $ 
+      set householdOrderStatus HouseholdOrderOpen)
 
 updateOrderAbandonedStatus :: Order -> Order
-updateOrderAbandonedStatus o = o & orderStatus .~ status
+updateOrderAbandonedStatus o = 
+    o & orderStatus .~ status
+      & orderHouseholdOrders . traverse . householdOrderOrderStatus .~ status
   where 
     status = if all ((== HouseholdOrderAbandoned) . _householdOrderStatus) $ _orderHouseholdOrders o
                then OrderAbandoned
@@ -82,18 +80,18 @@ updateOrderAbandonedStatus o = o & orderStatus .~ status
 
 completeHouseholdOrder :: HouseholdId -> Order -> Order
 completeHouseholdOrder householdId = 
-    updateWhere (hasHouseholdId householdId) orderHouseholdOrders $
+    over (orderHouseholdOrdersWhere $ hasHouseholdId householdId) $ 
       set householdOrderStatus HouseholdOrderComplete
 
 addOrUpdateOrderItems :: ProductCatalogue -> HouseholdInfo  -> [(ProductCode, Maybe Int)] -> Order -> Order
 addOrUpdateOrderItems catalogue household itemQuantities =
-    (updateWhere (hasHouseholdId $ _householdId household) orderHouseholdOrders $
+    (over (orderHouseholdOrdersWhere $ hasHouseholdId $ _householdId household) $ 
       addOrUpdateHouseholdOrderItems catalogue itemQuantities)
   . ensureHouseholdOrder household
 
 addOrderItemsFromPastOrder :: ProductCatalogue -> HouseholdInfo -> Order -> Order -> Order
 addOrderItemsFromPastOrder catalogue household pastOrder = 
-    (updateWhere (hasHouseholdId $ _householdId household) orderHouseholdOrders $
+    (over (orderHouseholdOrdersWhere $ hasHouseholdId $ _householdId household) $ 
        addOrUpdateHouseholdOrderItems catalogue pastItemQuantities)
   . ensureHouseholdOrder household
   where
@@ -112,11 +110,14 @@ ensureHouseholdOrder household o =
 
 removeOrderItem :: HouseholdId -> ProductCode -> Order -> Order
 removeOrderItem householdId productCode = 
-    updateWhere (hasHouseholdId householdId) orderHouseholdOrders $
+    over (orderHouseholdOrdersWhere $ hasHouseholdId $ householdId) $ 
       over householdOrderItems $ filter ((/= productCode) . itemProductCode)
 
 hasHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
 hasHouseholdId householdId = (== householdId) . householdOrderHouseholdId
+
+orderHouseholdOrdersWhere :: (HouseholdOrder -> Bool) -> (HouseholdOrder -> Identity HouseholdOrder) -> Order -> Identity Order
+orderHouseholdOrdersWhere pred = orderHouseholdOrders . each . (filtered pred)
 
 householdOrderHouseholdId :: HouseholdOrder -> HouseholdId
 householdOrderHouseholdId = _householdId . _householdOrderHouseholdInfo

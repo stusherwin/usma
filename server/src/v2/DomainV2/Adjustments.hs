@@ -19,7 +19,7 @@ import DomainV2.Catalogue
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 
-    if any (isJust . householdOrderAdjustment) $ orderHouseholdOrdersToPlace o
+    if any (isJust . householdOrderAdjustment) . orderHouseholdOrdersToPlace $ o
       then Just $ OrderAdjustment adjTotal
       else Nothing
   where
@@ -37,12 +37,12 @@ orderIsAwaitingCatalogueUpdateConfirm =
 
 applyCatalogueUpdate :: ProductCatalogue -> Order -> Order
 applyCatalogueUpdate catalogue = 
-    updateWhere ((/= HouseholdOrderAbandoned) . _householdOrderStatus) orderHouseholdOrders $
+    over (orderHouseholdOrdersWhere $ (/= HouseholdOrderAbandoned) . _householdOrderStatus) $
       applyUpdate catalogue
 
 acceptCatalogueUpdate :: HouseholdId -> Order -> Order
 acceptCatalogueUpdate householdId =
-    updateWhere (hasHouseholdId householdId) orderHouseholdOrders $
+    over (orderHouseholdOrdersWhere $ hasHouseholdId householdId) $
       acceptUpdate
 
 reconcileOrderItems :: UTCTime -> [(HouseholdId, OrderItemSpec)] -> Order -> Order
@@ -73,7 +73,7 @@ householdOrderIsAwaitingCatalogueUpdateConfirm :: HouseholdOrder -> Bool
 householdOrderIsAwaitingCatalogueUpdateConfirm = any (isJust . _itemAdjustment) .  _householdOrderItems
 
 applyUpdate :: ProductCatalogue -> HouseholdOrder -> HouseholdOrder
-applyUpdate catalogue = over householdOrderItems $ map (applyItemUpdate catalogue)
+applyUpdate catalogue = over (householdOrderItems . traverse) $ applyItemUpdate catalogue
 
 acceptUpdate :: HouseholdOrder -> HouseholdOrder
 acceptUpdate = over householdOrderItems $ 

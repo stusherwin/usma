@@ -5,24 +5,14 @@
 
 module DomainV2.Types where
 
-import           Control.Arrow ((&&&))
-import           Data.Function (on)
-import qualified Data.HashMap.Lazy as H (HashMap, fromList, lookup, elems)
+import qualified Data.HashMap.Lazy as H (HashMap)
 import           Data.Hashable (Hashable)
 import           Data.Time.Clock (UTCTime)
-import           Data.List (maximumBy, find, partition, sortBy)
-import           Data.List.Extra (trim, lower)
-import           Data.Maybe (isJust, fromMaybe, catMaybes)
+import           Data.List (maximumBy)
 import           Data.Ord (comparing)
-import           Data.Semigroup (sconcat)
-import           Data.List.NonEmpty (NonEmpty(..))
-import qualified Data.List.NonEmpty as NE (groupBy, nonEmpty, toList)
 import           GHC.Generics
 import           Prelude hiding (product)
-import           Text.Read (readMaybe)
-import           Control.Lens (makeLenses)
-
-import Debug.Trace(trace)
+import           Control.Lens
 
 {- Household -}
 
