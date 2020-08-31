@@ -6,6 +6,7 @@
 module DomainV2.Households where
 
 import           Prelude hiding (product)
+import           Control.Lens
 
 import DomainV2.Types
 import DomainV2.Utils
@@ -14,7 +15,7 @@ import DomainV2.Adjustments
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat
                      . (sum . map householdOrderAdjTotal)
-                     . filter ((/= HouseholdOrderAbandoned) . _householdOrderStatus .&&. (/= OrderAbandoned) . _householdOrderOrderStatus)
+                     . (filter $ (/= HouseholdOrderAbandoned) . _householdOrderStatus .&&. (/= OrderAbandoned) . _householdOrderOrderStatus)
                      . _householdOrders
 
 householdTotalPayments :: Household -> Int
@@ -25,7 +26,5 @@ householdBalance :: Household -> Int
 householdBalance h = householdTotalPayments h - householdTotalOrders h
 
 updateHousehold :: String -> Contact -> Household -> Household
-updateHousehold name contact h = let i = _householdInfo h
-                                 in  h{ _householdInfo = i{ _householdName = name }
-                                      , _householdContact = contact 
-                                      }
+updateHousehold name contact h = h & householdInfo . householdName .~ name
+                                   & householdContact .~ contact
