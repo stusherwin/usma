@@ -4,5 +4,5 @@ module Main where
 
   main :: IO ()
   main = do
-    config <- getConfig
+    config <- getConfig"main.config"
     upgradeDB config

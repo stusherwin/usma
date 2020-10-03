@@ -3,6 +3,11 @@ do $$
 begin
   perform upgrade_to_version(9);
 
+  delete from public."order" where id in (1,2,3);
+  delete from public.past_household_order_item where order_id in (1,2,3);
+  delete from public.past_household_order where order_id in (1,2,3);
+  delete from public.past_order where id in (1,2,3);
+
   drop schema if exists v2 cascade;
   create schema v2;
 

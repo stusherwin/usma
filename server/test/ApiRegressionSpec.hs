@@ -4,7 +4,6 @@ module ApiRegressionSpec where
 
 import qualified Data.ByteString.Char8 as BC (concat)
 import qualified Data.ByteString.Lazy as BL (toStrict)
-import qualified Network.Wai.Handler.Warp as Warp
 import           Test.Hspec
 import           Test.Hspec.Wai
 import           Test.Hspec.Wai.Matcher
@@ -17,18 +16,9 @@ import UpgradeDB
 
 import TestHelpers
 
-withApp :: (Warp.Port -> IO ()) -> IO ()
-withApp action =
-  Warp.testWithApplication (pure (app config)) action
-
-config :: Config
-config = Config { port = 8083
-                , connectionString = "postgres://postgres:Archim3de5post@localhost:5432/col_ord_test"
-                , connectionStringV2 = "postgres://postgres:Archim3de5post@localhost:5432/col_ord_test"
-                }
-
 apiRegressionSpec :: Spec
-apiRegressionSpec =
+apiRegressionSpec = do
+  config <- runIO $ getConfig "test.config"
   with (pure $ app config) $ do
     dir <- runIO $ getCurrentDirectory
     runIO $ runScript (connectionString config) $ dir ++ "/server/test/delete-db.sql"

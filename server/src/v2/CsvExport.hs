@@ -4,7 +4,7 @@
 module CsvExport where
 
 import qualified Data.ByteString.Lazy as BL (ByteString)
-import           Data.Csv (ToNamedRecord(..), (.=), namedRecord, encodeByName)
+import           Data.Csv (ToNamedRecord(..), EncodeOptions(..), Header, Quoting(..), (.=), namedRecord, encodeByNameWith, defaultEncodeOptions)
 import qualified Data.Map as M (elems)
 import qualified Data.Vector as V (fromList)
 
@@ -41,7 +41,7 @@ instance ToNamedRecord CsvRow where
     total' = ((fromIntegral tot) :: Double) / 100.0
 
 exportOrderItems :: Order -> BL.ByteString
-exportOrderItems order = encodeByName columns rows
+exportOrderItems order = encode columns rows
   where
     columns = V.fromList ["Code", "Product", "Price", "Quantity", "Total"]
     rows = map toRow . M.elems . orderItemsToPlace $ order
@@ -55,7 +55,7 @@ exportOrderItems order = encodeByName columns rows
       }
 
 exportOrderItemsByHousehold :: Order -> BL.ByteString
-exportOrderItemsByHousehold order = encodeByName columns rows
+exportOrderItemsByHousehold order = encode columns rows
   where
     columns = V.fromList ["Code", "Product", "Price", "Quantity", "Total", "Reference"]
     rows = map toRow . concatMap withName . _orderHouseholdOrders $ order
@@ -68,3 +68,6 @@ exportOrderItemsByHousehold order = encodeByName columns rows
       , csvTotal = _moneyExcVat . itemTotal $ i
       , csvReference = householdName
       }
+
+encode :: ToNamedRecord a => Header -> [a] -> BL.ByteString
+encode = encodeByNameWith (defaultEncodeOptions { encQuoting = QuoteAll })

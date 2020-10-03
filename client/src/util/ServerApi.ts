@@ -187,7 +187,7 @@ const url = {
 
 const groupUrl = (url: string) => {
   const groupKey = window.location.href.split('/').filter(l => l.length).slice(3, 4).join('/')
-  return `/api/${groupKey}/v1${url}`
+  return `/api/${groupKey}/v2${url}`
 }
 
 export const ServerApi = {

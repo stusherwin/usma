@@ -43,15 +43,15 @@ fetchProductImage repo code = handle handleException $ do
     _ -> do
       img <- BL.readFile "client/static/img/404.jpg"
       return $ Just $ img
-      -- productData <- fetchDataFromWebsite code
-      -- case productData of
-      --   Just r -> do
-      --     imageData <- simpleHttp (imageUrl r)
-      --     setProductImage repo (ProductCode code) $ BL.toStrict imageData
-      --     return $ Just $ imageData
-      --   _ -> do
-      --     img <- BL.readFile "client/static/img/404.jpg"
-      --     return $ Just $ img
+      productData <- fetchDataFromWebsite code
+      case productData of
+        Just r -> do
+          imageData <- simpleHttp (imageUrl r)
+          setProductImage repo (ProductCode code) $ BL.toStrict imageData
+          return $ Just $ imageData
+        _ -> do
+          img <- BL.readFile "client/static/img/404.jpg"
+          return $ Just $ img
   where
   handleException (SomeException ex) = do
     putStrLn $ show ex

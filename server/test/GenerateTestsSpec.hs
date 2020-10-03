@@ -23,14 +23,9 @@ import TestHelpers
 recordingsDir :: String
 recordingsDir = "server/test/requests/"
 
-config :: Config
-config = Config { port = 8083
-                , connectionString = "postgres://postgres:Archim3de5post@localhost:5432/col_ord_test"
-                , connectionStringV2 = "postgres://postgres:Archim3de5post@localhost:5432/col_ord_test"
-                }
-
 generateTestsSpec :: Spec
-generateTestsSpec =
+generateTestsSpec = do
+  config <- runIO $ getConfig "test.config"
   with (pure $ app config) $ do
     dir <- runIO $ getCurrentDirectory
     runIO $ runScript (connectionString config) $ dir ++ "/server/test/delete-db.sql"
