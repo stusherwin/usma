@@ -26,18 +26,18 @@ import           Config (Config(..))
 import           CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           DomainV2
 import           RepositoryV2 as R
-import           SumaCatalogue (fetchProductImage)
+import           SumaCatalogue (FetchProductImage)
 import           ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
 
-appServerV2 :: Config -> Text -> Server Api.AppApiV2
-appServerV2 config groupKey =
-         queryServerV2 repoConfig
+appServerV2 :: FetchProductImage -> Config -> Text -> Server Api.AppApiV2
+appServerV2 fetchProductImage config groupKey =
+         queryServerV2 fetchProductImage repoConfig
     :<|> commandServerV2 repoConfig
   where
     repoConfig = RepositoryConfig (connectionStringV2 config) (T.unpack groupKey)
 
-queryServerV2 :: RepositoryConfig -> Server Api.QueryApiV2
-queryServerV2 config = 
+queryServerV2 :: FetchProductImage -> RepositoryConfig -> Server Api.QueryApiV2
+queryServerV2 fetchProductImage config = 
          allData
     :<|> productCatalogueData     
     :<|> collectiveOrder

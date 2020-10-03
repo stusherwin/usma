@@ -18,7 +18,7 @@ data WebsiteProductData = ProductData
   }
 
 fetchDataFromWebsite :: String -> IO (Maybe WebsiteProductData)
-fetchDataFromWebsite code = handle handleException $ do
+fetchDataFromWebsite code = do
   html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
   case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ BL.unpack html of
     [] -> return Nothing
@@ -30,19 +30,15 @@ fetchDataFromWebsite code = handle handleException $ do
                                   , imageUrl = fromAttrib "src" img
                                   , size = read $ fromAttrib "height" img
                                   }
-  where
-  handleException (SomeException ex) = do
-    putStrLn $ show ex
-    return Nothing
 
-fetchProductImage :: Repository -> String -> IO (Maybe BL.ByteString)
+type FetchProductImage = Repository -> String -> IO (Maybe BL.ByteString)
+
+fetchProductImage :: FetchProductImage
 fetchProductImage repo code = handle handleException $ do 
   image <- getProductImage repo (ProductCode code)
   case image of
     Just i -> return $ Just $ BL.fromStrict i
     _ -> do
-      img <- BL.readFile "client/static/img/404.jpg"
-      return $ Just $ img
       productData <- fetchDataFromWebsite code
       case productData of
         Just r -> do
@@ -51,6 +47,7 @@ fetchProductImage repo code = handle handleException $ do
           return $ Just $ imageData
         _ -> do
           img <- BL.readFile "client/static/img/404.jpg"
+          setProductImage repo (ProductCode code) $ BL.toStrict img
           return $ Just $ img
   where
   handleException (SomeException ex) = do

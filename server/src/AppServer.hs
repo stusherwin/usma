@@ -30,15 +30,15 @@ import qualified Database as D
 import Config
 import ProductCatalogueImport
 import ReconcileHouseholdOrderFile
-import ProductImage (fetchProductImage)
+import ProductImage (FetchProductImage)
 
-appServer :: Config -> Text -> Server AppApi
-appServer config groupKey = 
-       queryServer config groupKey
+appServer :: FetchProductImage -> Config -> Text -> Server AppApi
+appServer fetchProductImage config groupKey = 
+       queryServer fetchProductImage config groupKey
   :<|> commandServer config groupKey
 
-queryServer :: Config -> Text -> Server QueryApi
-queryServer config groupKey = 
+queryServer :: FetchProductImage -> Config -> Text -> Server QueryApi
+queryServer fetchProductImage config groupKey = 
        allData
   :<|> productCatalogueData
   :<|> collectiveOrder

@@ -17,6 +17,9 @@ import CompareV2Api (compareApiV1WithApiV2, recordApiV1Responses)
 import UpgradeDB
 import System.IO (hFlush, stdout)
 
+import qualified ProductImage as V1 (fetchProductImage)
+import qualified SumaCatalogue as V2 (fetchProductImage)
+
 main :: IO ()
 main = do
   config <- getConfig "main.config"
@@ -32,4 +35,4 @@ main = do
     logStdoutDev $
     compareApiV1WithApiV2 $
     record $ 
-    app config
+    app V1.fetchProductImage V2.fetchProductImage config

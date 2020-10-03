@@ -12,10 +12,9 @@ import           Test.Hspec
 import           Test.Hspec.Wai
 import           System.Directory (listDirectory, getCurrentDirectory)
 
-import Config
+import Config (getConfig)
 import App
 import CompareV2Api
-import UpgradeDB
 import DomainV2
 
 import TestHelpers
@@ -26,13 +25,9 @@ recordingsDir = "server/test/requests/"
 generateTestsSpec :: Spec
 generateTestsSpec = do
   config <- runIO $ getConfig "test.config"
-  with (pure $ app config) $ do
-    dir <- runIO $ getCurrentDirectory
-    runIO $ runScript (connectionString config) $ dir ++ "/server/test/delete-db.sql"
-    runIO $ runScript (connectionString config) $ dir ++ "/server/database/database_setup.sql"
-    runIO $ upgradeDB config
-    runIO $ runScript (connectionString config) $ dir ++ "/server/test/create-groups.sql"
-    
+  runIO $ recreateDatabase config
+
+  with (pure $ app mockFetchProductImageV1 mockFetchProductImageV2 config) $ do
     describe "Generated tests" $ do
       files <- runIO $ sortBy (compare `on` (readInt . takeWhile isDigit)) <$> listDirectory recordingsDir
       let requests = filter (isSuffixOf "req.txt") files `zip` filter (isSuffixOf "resp.txt") files

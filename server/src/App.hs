@@ -23,9 +23,11 @@ import qualified Database as D
 import Config
 import AppServer
 import AppServerV2
+import qualified ProductImage as V1 (FetchProductImage)
+import qualified SumaCatalogue as V2 (FetchProductImage)
 
-app :: Config -> Application
-app config = serveWithContext fullApi ctxt (server config)
+app :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Application
+app fetchProductImageV1 fetchProductImageV2 config = serveWithContext fullApi ctxt (server fetchProductImageV1 fetchProductImageV2 config)
   where ctxt = multipartOpts :. EmptyContext
         multipartOpts = (defaultMultipartOptions (Proxy :: Proxy Mem))
           { generalOptions = clearMaxHeaderLines $
@@ -33,9 +35,9 @@ app config = serveWithContext fullApi ctxt (server config)
                              defaultParseRequestBodyOptions 
           }
          
-server :: Config -> Server FullApi
-server config = 
-       groupServer config
+server :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server FullApi
+server fetchProductImageV1 fetchProductImageV2 config = 
+       groupServer fetchProductImageV1 fetchProductImageV2 config
   :<|> serveGroupPage
   :<|> serveDirectoryWebApp "client/static"
 
@@ -49,11 +51,11 @@ serveGroupPage _ = Tagged (staticPolicy (addBase "client/static") indexPage)
                    "client/static/index.html"
                Nothing
 
-groupServer :: Config -> Server GroupApi
-groupServer config groupKey = 
+groupServer :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server GroupApi
+groupServer fetchProductImageV1 fetchProductImageV2 config groupKey = 
        verifyServer config groupKey
-  :<|> appServerV2 config groupKey
-  :<|> appServer config groupKey
+  :<|> appServerV2 fetchProductImageV2 config groupKey
+  :<|> appServer fetchProductImageV1 config groupKey
 
 verifyServer :: Config -> Text -> Server VerifyApi
 verifyServer config groupKey = do
