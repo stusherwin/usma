@@ -1,14 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module ProductCatalogueImport where
+module V1.ProductCatalogueImport where
   import Text.Read (readMaybe)
   import Data.Maybe (catMaybes, fromMaybe)
   import Data.Time.Clock (UTCTime)
   import Data.ByteString (ByteString)
 
-  import Types (ProductCatalogueData(..), VatRate(..))
-  import Database (replaceProductCatalogue)
+  import V1.Types (ProductCatalogueData(..), VatRate(..))
+  import V1.Database (replaceProductCatalogue)
 
   splitOn :: Eq a => a -> [a] -> [[a]]
   splitOn ch list = f list [[]] where

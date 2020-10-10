@@ -3,7 +3,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module DomainV2.Types where
+module V2.Domain.Types where
 
 import qualified Data.HashMap.Lazy as H (HashMap)
 import           Data.Hashable (Hashable)

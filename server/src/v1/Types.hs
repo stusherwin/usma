@@ -2,7 +2,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Types where
+module V1.Types where
 
 import Data.Aeson
 import GHC.Generics

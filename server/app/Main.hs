@@ -17,8 +17,8 @@ import CompareV2Api (compareApiV1WithApiV2, recordApiV1Responses)
 import UpgradeDB
 import System.IO (hFlush, stdout)
 
-import qualified ProductImage as V1 (fetchProductImage)
-import qualified SumaCatalogue as V2 (fetchProductImage)
+import qualified V1.ProductImage as V1 (fetchProductImage)
+import qualified V2.SumaCatalogue as V2 (fetchProductImage)
 
 main :: IO ()
 main = do

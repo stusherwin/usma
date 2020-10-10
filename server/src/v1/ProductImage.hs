@@ -1,4 +1,4 @@
-module ProductImage where
+module V1.ProductImage where
 
 import Text.HTML.TagSoup
 import Control.Exception (SomeException(..), handle)
@@ -7,7 +7,7 @@ import qualified Data.ByteString as B (ByteString)
 import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
 import Network.HTTP.Conduit
 
-import qualified Database as D
+import qualified V1.Database as D
 
 data ProductData = ProductData { url :: String
                                , title :: String

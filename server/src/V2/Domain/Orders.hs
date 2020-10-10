@@ -3,17 +3,17 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module DomainV2.Orders where
+module V2.Domain.Orders where
 
 import           Control.Arrow ((&&&))
 import qualified Data.Map.Strict as M (Map, delete, elems, empty, fromList, map, unionWith, unionsWith)
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Control.Lens
 
-import DomainV2.Types
-import DomainV2.Utils
-import DomainV2.Catalogue
-import DomainV2.Prices
+import V2.Domain.Types
+import V2.Domain.Utils
+import V2.Domain.Catalogue
+import V2.Domain.Prices
 
 orderTotal :: Order -> Money
 orderTotal = sum . M.map itemTotal . orderItemsToPlace

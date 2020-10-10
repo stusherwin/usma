@@ -15,7 +15,7 @@ import           System.Directory (listDirectory)
 import Config (getConfig)
 import App
 import CompareV2Api
-import DomainV2
+import V2.Domain
 
 import TestHelpers
 

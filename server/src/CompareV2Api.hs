@@ -29,7 +29,7 @@ import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensit
 import           System.Process (readProcessWithExitCode)
 import           System.Directory (createDirectoryIfMissing, removeFile, listDirectory)
 
-import DomainV2 (splitOn)
+import V2.Domain (splitOn)
 
 type ResponseInfo = (String, String, IO BL.ByteString)
 

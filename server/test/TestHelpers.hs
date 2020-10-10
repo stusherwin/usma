@@ -19,7 +19,7 @@ import           System.Directory (getCurrentDirectory)
 import           Config (Config(..))
 import           UpgradeDB (upgradeDB, runScript)
 import qualified ProductImage as V1 (FetchProductImage)
-import qualified SumaCatalogue as V2 (FetchProductImage)
+import qualified V2.SumaCatalogue as V2 (FetchProductImage)
 
 ignoreFieldSpec :: Spec
 ignoreFieldSpec =

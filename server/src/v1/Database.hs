@@ -5,19 +5,19 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
-                , createOrder, closeOrder
-                , cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
-                , ensureHouseholdOrderItem, ensureAllItemsFromPastHouseholdOrder, removeHouseholdOrderItem
-                , createHousehold, updateHousehold, archiveHousehold
-                , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
-                , replaceProductCatalogue, acceptCatalogueUpdates
-                , getProductCatalogueCategories, getProductCatalogueBrands, getProductImage, saveProductImage
-                , getGroup
-                , reconcileOrderItem, reconcileHouseholdOrderItems
-                , getGroupSettings
-                , getUploadedOrderFile, saveUploadedOrderFile, deleteUploadedOrderFile
-                ) where
+module V1.Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
+                   , createOrder, closeOrder
+                   , cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
+                   , ensureHouseholdOrderItem, ensureAllItemsFromPastHouseholdOrder, removeHouseholdOrderItem
+                   , createHousehold, updateHousehold, archiveHousehold
+                   , createHouseholdPayment, updateHouseholdPayment, archiveHouseholdPayment
+                   , replaceProductCatalogue, acceptCatalogueUpdates
+                   , getProductCatalogueCategories, getProductCatalogueBrands, getProductImage, saveProductImage
+                   , getGroup
+                   , reconcileOrderItem, reconcileHouseholdOrderItems
+                   , getGroupSettings
+                   , getUploadedOrderFile, saveUploadedOrderFile, deleteUploadedOrderFile
+                   ) where
 
 import Control.Monad (void, forM_)
 import Data.Functor ((<&>))
@@ -27,8 +27,8 @@ import Database.PostgreSQL.Simple.SqlQQ
 import Data.ByteString (ByteString)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Time.Clock (UTCTime(..), secondsToDiffTime)
-import Types
-import DatabaseTypes  
+import V1.Types
+import V1.DatabaseTypes  
 
 instance FromRow GroupSettings where
   fromRow = GroupSettings <$> field

@@ -19,12 +19,12 @@ import           Network.Wai.Parse (clearMaxHeaderLines, clearMaxHeaderLineLengt
 import           Servant
 
 import Api
-import qualified Database as D
+import qualified V1.Database as D
 import Config
-import AppServer
-import AppServerV2
-import qualified ProductImage as V1 (FetchProductImage)
-import qualified SumaCatalogue as V2 (FetchProductImage)
+import qualified V1.Server as V1 (server)
+import qualified V2.Server as V2 (server)
+import qualified V1.ProductImage as V1 (FetchProductImage)
+import qualified V2.SumaCatalogue as V2 (FetchProductImage)
 
 app :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Application
 app fetchProductImageV1 fetchProductImageV2 config = serveWithContext fullApi ctxt (server fetchProductImageV1 fetchProductImageV2 config)
@@ -35,7 +35,7 @@ app fetchProductImageV1 fetchProductImageV2 config = serveWithContext fullApi ct
                              defaultParseRequestBodyOptions 
           }
          
-server :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server FullApi
+server :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server Api
 server fetchProductImageV1 fetchProductImageV2 config = 
        groupServer fetchProductImageV1 fetchProductImageV2 config
   :<|> serveGroupPage
@@ -54,8 +54,8 @@ serveGroupPage _ = Tagged (staticPolicy (addBase "client/static") indexPage)
 groupServer :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server GroupApi
 groupServer fetchProductImageV1 fetchProductImageV2 config groupKey = 
        verifyServer config groupKey
-  :<|> appServerV2 fetchProductImageV2 config groupKey
-  :<|> appServer fetchProductImageV1 config groupKey
+  :<|> V2.server fetchProductImageV2 config groupKey
+  :<|> V1.server fetchProductImageV1 config groupKey
 
 verifyServer :: Config -> Text -> Server VerifyApi
 verifyServer config groupKey = do

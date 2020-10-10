@@ -3,13 +3,13 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module DomainV2.Prices where
+module V2.Domain.Prices where
 
 import           Control.Arrow ((&&&))
 import           Data.Maybe (fromMaybe)
 import           Prelude hiding (product)
 
-import DomainV2.Types
+import V2.Domain.Types
 
 instance Num Money where
   Money exc1 inc1 + Money exc2 inc2 = Money (exc1 + exc2) (inc1 + inc2)

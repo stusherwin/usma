@@ -7,21 +7,21 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module AppApiV2 where
+module V2.Api where
 
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import           Data.Text (Text)
 import           Network.HTTP.Media ((//))
 import           Servant
 import           Servant.Multipart (MultipartData, MultipartForm, Mem)
-import qualified Types as Api
+import qualified V1.Types as Api
 
-type AppApiV2 = 
-  "v2" :> (    "query" :> QueryApiV2
-          :<|> "command" :> CommandApiV2
+type Api = 
+  "v2" :> (    "query" :> QueryApi
+          :<|> "command" :> CommandApi
           )
 
-type QueryApiV2 =
+type QueryApi =
        "data" :> Get '[JSON] Api.ApiData
   :<|> "product-catalogue-data" :> Get '[JSON] Api.ProductCatalogueApiData
   :<|> "collective-order" :> Get '[JSON] (Maybe Api.CollectiveOrder)
@@ -40,7 +40,7 @@ type QueryApiV2 =
   :<|> "product-catalogue-brands" :> Get '[JSON] [String]
   :<|> "group-settings" :> Get '[JSON] Api.GroupSettings
 
-type CommandApiV2 =
+type CommandApi =
        "create-order" :> Capture "householdId" Int :> Post '[JSON] Int
   :<|> "create-order" :> Post '[JSON] Int
   :<|> "place-order"  :> Capture "orderId" Int :> Post '[JSON] ()

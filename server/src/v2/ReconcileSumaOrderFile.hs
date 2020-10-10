@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module ReconcileSumaOrderFile where
+module V2.ReconcileSumaOrderFile where
   import Data.Char (isSpace, isNumber, isPunctuation)
   import Data.List (intercalate)
   import Data.Maybe (catMaybes)
@@ -9,8 +9,8 @@ module ReconcileSumaOrderFile where
   import Text.HTML.TagSoup (Tag, parseTags, partitions, innerText, fromTagText, isTagText, (~==))
   import Text.Read (readMaybe)
 
-  import Types as Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
-  import DomainV2
+  import V1.Types as Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
+  import V2.Domain
 
   parseOrderFileDetails :: String -> String -> Maybe UploadedOrderFile
   parseOrderFileDetails fileId html =

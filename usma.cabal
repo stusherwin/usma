@@ -15,37 +15,35 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
-                     , server/src/v1
-                     , server/src/v2
   exposed-modules:     App
-                     , Config
-                     , Types
-                     , DomainV2
-                     , DomainV2.Adjustments 
-                     , DomainV2.Catalogue 
-                     , DomainV2.Households 
-                     , DomainV2.Orders 
-                     , DomainV2.Payments 
-                     , DomainV2.Prices 
-                     , DomainV2.Types 
-                     , DomainV2.Utils                     
-                     , AppApiV2
-                     , AppServerV2
                      , Api
-                     , AppApi
-                     , AppServer
-                     , Database
-                     , DatabaseTypes
-                     , ProductCatalogueImport
-                     , ReconcileHouseholdOrderFile
-                     , ProductImage
-                     , RepositoryV2
-                     , RepositoryV2.SQL
-                     , CsvExport
-                     , SumaCatalogue
-                     , ReconcileSumaOrderFile
-                     , UpgradeDB 
+                     , Config
                      , CompareV2Api
+                     , UpgradeDB 
+                     , V1.Api
+                     , V1.Database
+                     , V1.DatabaseTypes
+                     , V1.ProductCatalogueImport
+                     , V1.ProductImage
+                     , V1.ReconcileHouseholdOrderFile
+                     , V1.Server
+                     , V1.Types
+                     , V2.Api
+                     , V2.CsvExport
+                     , V2.Domain
+                     , V2.Domain.Adjustments 
+                     , V2.Domain.Catalogue 
+                     , V2.Domain.Households 
+                     , V2.Domain.Orders 
+                     , V2.Domain.Payments 
+                     , V2.Domain.Prices 
+                     , V2.Domain.Types 
+                     , V2.Domain.Utils                     
+                     , V2.ReconcileSumaOrderFile
+                     , V2.Repository
+                     , V2.Repository.SQL
+                     , V2.Server
+                     , V2.SumaCatalogue
   other-modules:     
   ghc-options:         -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
   build-depends:       aeson

@@ -3,7 +3,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module DomainV2.Utils where
+module V2.Domain.Utils where
 
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn ch list = f list [[]] where

@@ -11,22 +11,22 @@ module Api where
 import Data.Text (Text)
 import Servant
 
-import AppApi (AppApi)
-import AppApiV2 (AppApiV2)
+import qualified V1.Api as V1 (Api)
+import qualified V2.Api as V2 (Api)
 
-type FullApi =
+type Api =
        "api" :> GroupApi
   :<|> "g" :> Capture "groupKey" Text :> Raw
   :<|> Raw
 
 type GroupApi = 
   Capture "groupKey" Text :> (    VerifyApi
-                             :<|> AppApiV2 
-                             :<|> AppApi
+                             :<|> V2.Api 
+                             :<|> V1.Api
                              )
 
 type VerifyApi =
   "verify" :> Post '[JSON] Bool
 
-fullApi :: Proxy FullApi
+fullApi :: Proxy Api
 fullApi = Proxy

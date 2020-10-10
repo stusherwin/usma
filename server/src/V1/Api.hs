@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module AppApi where
+module V1.Api where
 
 import Data.Text (Text)
 import Servant
@@ -14,9 +14,9 @@ import Servant.Multipart
 import qualified Data.ByteString.Lazy as BL
 import Network.HTTP.Media ((//))
 
-import Types
+import V1.Types
 
-type AppApi = 
+type Api = 
   "v1" :> (    "query" :> QueryApi
           :<|> "command" :> CommandApi
           )

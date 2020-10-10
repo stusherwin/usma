@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module AppServer (appServer) where
+module V1.Server (server) where
 
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
@@ -24,16 +24,16 @@ import Servant.Multipart
 import Data.UUID (toString)
 import Data.UUID.V1 (nextUUID)
 
-import Types
-import AppApi
-import qualified Database as D
+import V1.Types
+import V1.Api
+import qualified V1.Database as D
 import Config
-import ProductCatalogueImport
-import ReconcileHouseholdOrderFile
-import ProductImage (FetchProductImage)
+import V1.ProductCatalogueImport
+import V1.ReconcileHouseholdOrderFile
+import V1.ProductImage (FetchProductImage)
 
-appServer :: FetchProductImage -> Config -> Text -> Server AppApi
-appServer fetchProductImage config groupKey = 
+server :: FetchProductImage -> Config -> Text -> Server Api
+server fetchProductImage config groupKey = 
        queryServer fetchProductImage config groupKey
   :<|> commandServer config groupKey
 

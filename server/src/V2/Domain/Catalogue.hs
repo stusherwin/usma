@@ -3,7 +3,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module DomainV2.Catalogue where
+module V2.Domain.Catalogue where
 
 import           Control.Arrow ((&&&))
 import           Data.Function (on)
@@ -14,9 +14,9 @@ import           Data.List.Extra (trim, lower)
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Text.Read (readMaybe)
 
-import DomainV2.Types
-import DomainV2.Utils
-import DomainV2.Prices
+import V2.Domain.Types
+import V2.Domain.Utils
+import V2.Domain.Prices
 
 productCatalogue :: [ProductCatalogueEntry] -> ProductCatalogue
 productCatalogue = ProductCatalogue . H.fromList . map (_catalogueEntryCode &&& id)

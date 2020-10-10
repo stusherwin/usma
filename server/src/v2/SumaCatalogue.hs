@@ -1,4 +1,4 @@
-module SumaCatalogue where
+module V2.SumaCatalogue where
 
 import           Control.Exception (SomeException(..), handle)  
 import qualified Data.ByteString.Lazy as BL (ByteString, fromStrict, toStrict, readFile)
@@ -7,8 +7,8 @@ import           Network.HTTP.Conduit (simpleHttp)
 import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 
 --TODO: Extract catalogue stuff out of repository and domain
-import           RepositoryV2 (Repository, getProductImage, setProductImage)
-import           DomainV2 (ProductCode(..))
+import           V2.Repository (Repository, getProductImage, setProductImage)
+import           V2.Domain (ProductCode(..))
 
 data WebsiteProductData = ProductData 
   { url :: String
