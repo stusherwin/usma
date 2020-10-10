@@ -8,7 +8,6 @@ module DomainV2.Prices where
 import           Control.Arrow ((&&&))
 import           Data.Maybe (fromMaybe)
 import           Prelude hiding (product)
-import           Control.Lens
 
 import DomainV2.Types
 

@@ -48,6 +48,6 @@ fetchProductImage conn code = handle handleException $ do
           D.saveProductImage conn code $ BL.toStrict img
           return $ Just $ img
   where
-  handleException (SomeException ex) = do
+  handleException (SomeException _) = do
     img <- BL.readFile "client/static/img/404.jpg"
     return $ Just $ img

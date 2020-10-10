@@ -9,24 +9,11 @@ import qualified Data.ByteString.Lazy.Char8 as BL (pack)
 import           Test.Hspec
 import           Test.Hspec.Wai
 import           Test.Hspec.Wai.Matcher
-import           Data.Aeson (Object, decode)
-import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Prelude ()
 import           Prelude.Compat
 
 import           Control.Monad
-import           Data.Maybe
-import           Data.String
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString.Lazy as LB
-import           Network.HTTP.Types
 import           Network.Wai.Test
-import           Data.List
-import           Data.Word
-import           Data.Char hiding (ord)
-import qualified Data.Char as Char
 import           System.Directory (getCurrentDirectory)
 
 import           Config (Config(..))

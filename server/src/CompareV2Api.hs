@@ -10,7 +10,7 @@ module CompareV2Api where
 import           Data.Aeson (Object, decode)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString as B (ByteString)
-import qualified Data.ByteString.Char8 as B (pack, unpack, null, empty, writeFile, concat)
+import qualified Data.ByteString.Char8 as B (pack, unpack, null, empty, concat)
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL (pack, putStr, writeFile)
 import           Data.ByteString.Builder (toLazyByteString)

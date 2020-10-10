@@ -5,10 +5,6 @@
 
 module DomainV2.Utils where
 
-import           Data.List (partition)
-import           Prelude hiding (product)
-import           Control.Lens
-
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn ch list = f list [[]] where
   f _ [] = []

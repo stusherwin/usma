@@ -10,7 +10,7 @@ import           Data.Function (on)
 import           Data.List (isSuffixOf, sortBy, intercalate)
 import           Test.Hspec
 import           Test.Hspec.Wai
-import           System.Directory (listDirectory, getCurrentDirectory)
+import           System.Directory (listDirectory)
 
 import Config (getConfig)
 import App

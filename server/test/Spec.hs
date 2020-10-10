@@ -4,7 +4,7 @@ import           Test.Hspec
 
 import ApiRegressionSpec (apiRegressionSpec)
 import DomainSpec (domainSpec)
-import GenerateTestsSpec (generateTestsSpec)
+--import GenerateTestsSpec (generateTestsSpec)
 import TestHelpers (ignoreFieldSpec)
 
 main :: IO ()

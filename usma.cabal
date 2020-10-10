@@ -15,6 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      server/src
+                     , server/src/v1
                      , server/src/v2
   exposed-modules:     App
                      , Config
@@ -29,7 +30,6 @@ library
                      , DomainV2.Types 
                      , DomainV2.Utils                     
                      , AppApiV2
-                     , CompareV2Api
                      , AppServerV2
                      , Api
                      , AppApi
@@ -44,52 +44,40 @@ library
                      , CsvExport
                      , SumaCatalogue
                      , ReconcileSumaOrderFile
-                     , UpgradeDB
+                     , UpgradeDB 
+                     , CompareV2Api
   other-modules:     
   ghc-options:         -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
-  build-depends:       base
-                     , aeson                     
-                     , extra
-                     , hashable
-                     , time
-                     , text
-                     , unordered-containers
-                     , aeson
+  build-depends:       aeson
                      , aeson-pretty
+                     , ansi-terminal
                      , base
                      , bytestring
                      , case-insensitive
                      , cassava
                      , containers
-                     , cookie
                      , directory
-                     , filepath
-                     , http-api-data
+                     , extra
+                     , hashable
                      , http-conduit
                      , http-media
                      , http-types
-                     , mtl
+                     , lens
                      , postgresql-simple
+                     , process
                      , safe
-                     , servant
                      , servant-server
-                     , servant-options
-                     , servant-purescript
                      , servant-multipart
                      , tagsoup
-                     , time
                      , text
+                     , time
                      , transformers
+                     , unordered-containers
                      , uuid
                      , vector
                      , wai
-                     , wai-cors
                      , wai-extra
                      , wai-middleware-static
-                     , safe
-                     , ansi-terminal
-                     , process
-                     , lens
   default-language:    Haskell2010
 
 executable usma
@@ -97,7 +85,13 @@ executable usma
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
   build-depends:       usma
+                     , aeson                     
                      , base
+                     , bytestring
+                     , http-types
+                     , uuid
+                     , text
+                     , wai
                      , warp
                      , wai-extra
   default-language:    Haskell2010
@@ -112,23 +106,15 @@ test-suite usma-test
                      , ApiRegressionSpec
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
   build-depends:       usma
-                     , aeson
-                     , aeson-pretty
                      , base
                      , base-compat-batteries
+                     , bytestring
                      , containers
-                     , http-client
-                     , http-types
-                     , wai
-                     , warp
+                     , directory
                      , hspec
                      , hspec-wai
-                     , directory
-                     , bytestring
-                     , process
-                     , wai-extra
                      , time
-                     , text
+                     , wai-extra
   default-language:    Haskell2010
 
 source-repository head
