@@ -7,7 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module V2.Repository where 
+module V2_.Repository where 
 
 import Control.Arrow ((***), (&&&))
 import Control.Monad (when, join, liftM)
@@ -20,8 +20,8 @@ import qualified Data.Map as M (fromList, elems)
 import Data.Maybe (listToMaybe, maybeToList, catMaybes)
 import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgreSQL, close, withTransaction)
 
-import V2.Domain
-import V2.Repository.SQL
+import V2_.Domain
+import V2_.Repository.SQL
 
 data RepositoryConfig = RepositoryConfig 
   { repoConnectionString :: ByteString

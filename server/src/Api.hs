@@ -11,8 +11,8 @@ module Api where
 import Data.Text (Text)
 import Servant
 
-import qualified V1.Api as V1 (Api)
-import qualified V2.Api as V2 (Api)
+import qualified V1_.Api as V1_ (Api)
+import qualified V2_.Api as V2_ (Api)
 
 type Api =
        "api" :> GroupApi
@@ -21,8 +21,8 @@ type Api =
 
 type GroupApi = 
   Capture "groupKey" Text :> (    VerifyApi
-                             :<|> V2.Api 
-                             :<|> V1.Api
+                             :<|> V2_.Api 
+                             :<|> V1_.Api
                              )
 
 type VerifyApi =

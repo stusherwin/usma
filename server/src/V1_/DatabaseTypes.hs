@@ -1,6 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-module V1.DatabaseTypes where
+module V1_.DatabaseTypes where
   
 import Control.Monad (mzero)
 import qualified Data.Text as T
@@ -13,7 +13,7 @@ import Database.PostgreSQL.Simple.ToRow
 import Database.PostgreSQL.Simple.FromField (FromField(..))
 import Database.PostgreSQL.Simple.FromRow
 
-import V1.Types
+import V1_.Types
 
 toDatabaseChar :: Char -> Action
 toDatabaseChar c = Escape $ encodeUtf8 $ T.pack [c]

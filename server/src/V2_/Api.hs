@@ -7,14 +7,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module V2.Api where
+module V2_.Api where
 
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import           Data.Text (Text)
 import           Network.HTTP.Media ((//))
 import           Servant
 import           Servant.Multipart (MultipartData, MultipartForm, Mem)
-import qualified V1.Types as Api
+import qualified V1_.Types as Api
 
 type Api = 
   "v2" :> (    "query" :> QueryApi

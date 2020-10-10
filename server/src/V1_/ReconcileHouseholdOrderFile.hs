@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module V1.ReconcileHouseholdOrderFile where
+module V1_.ReconcileHouseholdOrderFile where
   import Data.ByteString (ByteString)
   import Data.Char (isSpace, isNumber, isPunctuation)
   import Data.List (intercalate)
@@ -10,8 +10,8 @@ module V1.ReconcileHouseholdOrderFile where
   import Text.HTML.TagSoup
   import Text.Read (readMaybe)
 
-  import V1.Types
-  import V1.Database
+  import V1_.Types
+  import V1_.Database
 
   getHouseholdOrderFileDetails :: String -> String -> Maybe UploadedOrderFile
   getHouseholdOrderFileDetails fileId html =

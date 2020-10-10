@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module V2.CsvExport where
+module V2_.CsvExport where
 
 import qualified Data.ByteString.Lazy as BL (ByteString)
 import           Data.Csv (ToNamedRecord(..), EncodeOptions(..), Header, Quoting(..), (.=), namedRecord, encodeByNameWith, defaultEncodeOptions)
 import qualified Data.Map as M (elems)
 import qualified Data.Vector as V (fromList)
 
-import           V2.Domain
+import           V2_.Domain
 
 data CsvRow = CsvRow
   { csvName :: String

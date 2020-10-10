@@ -7,7 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module V2.Repository.SQL where 
+module V2_.Repository.SQL where 
 
 import Control.Monad (mzero, void)
 import Data.ByteString (ByteString)
@@ -23,7 +23,7 @@ import Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
 import Database.PostgreSQL.Simple.ToRow (ToRow(..))
 import Database.PostgreSQL.Simple.SqlQQ (sql)
 
-import V2.Domain
+import V2_.Domain
 
 selectOrderGroupId :: Connection -> String -> IO [Only OrderGroupId]
 selectOrderGroupId conn groupKey = do

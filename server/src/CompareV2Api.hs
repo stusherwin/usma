@@ -29,7 +29,7 @@ import           System.Console.ANSI (Color(..), ConsoleLayer(..), ColorIntensit
 import           System.Process (readProcessWithExitCode)
 import           System.Directory (createDirectoryIfMissing, removeFile, listDirectory)
 
-import V2.Domain (splitOn)
+import V2_.Domain (splitOn)
 
 type ResponseInfo = (String, String, IO BL.ByteString)
 
@@ -175,17 +175,17 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
   if statusV1 /= statusV2 then do
     setColor Red
     putStrLn ""
-    putStrLn $ "** V1/V2 Status mismatch ** -- " ++ path
-    putStrLn $ "V1: " ++ statusV1
-    putStrLn $ "V2: " ++ statusV2
+    putStrLn $ "** V1_/V2_ Status mismatch ** -- " ++ path
+    putStrLn $ "V1_: " ++ statusV1
+    putStrLn $ "V2_: " ++ statusV2
     putStrLn ""
     resetColor
   else if headersV1 /= headersV2 then do
     setColor Red
     putStrLn ""
-    putStrLn $ "** V1/V2 Header mismatch ** -- " ++ path
-    putStrLn $ "V1: " ++ headersV1
-    putStrLn $ "V2: " ++ headersV2
+    putStrLn $ "** V1_/V2_ Header mismatch ** -- " ++ path
+    putStrLn $ "V1_: " ++ headersV1
+    putStrLn $ "V2_: " ++ headersV2
     putStrLn ""
     resetColor
   else do
@@ -194,13 +194,13 @@ compareResponses path (statusV1, headersV1, getBodyV1) (statusV2, headersV2, get
     if bodyV1 /= bodyV2 then do
       setColor Red
       putStrLn ""
-      putStrLn $ "** V1/V2 Body mismatch ** -- " ++ path
+      putStrLn $ "** V1_/V2_ Body mismatch ** -- " ++ path
       resetColor
       showDiff bodyV1 bodyV2
       putStrLn ""
     else do
       setColor Green
-      putStrLn $ "V1/V2 OK -- " ++ path
+      putStrLn $ "V1_/V2_ OK -- " ++ path
       resetColor
   where isImage = isInfixOf "content-type: image/jpeg"
 
