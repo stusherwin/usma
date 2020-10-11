@@ -8,7 +8,7 @@ import           Data.Time.Clock (UTCTime(..), getCurrentTime)
 import           Test.Hspec
 import           Test.Hspec.Wai
 
-import DomainV2
+import V2.Domain
 
 domainSpec :: Spec
 domainSpec = do

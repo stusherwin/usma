@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module V2_.Server (server) where
+module V2.Server (server) where
 
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
@@ -20,14 +20,14 @@ import           Safe (headMay)
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..), Mem)
 
-import           V2_.Api as Api
-import           V1_.Types as Api
+import           V2.Api as Api
+import           V1.Types as Api
 import           Config (Config(..))
-import           V2_.CsvExport (exportOrderItems, exportOrderItemsByHousehold)
-import           V2_.Domain
-import           V2_.Repository as R
-import           V2_.SumaCatalogue (FetchProductImage)
-import           V2_.ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
+import           V2.CsvExport (exportOrderItems, exportOrderItemsByHousehold)
+import           V2.Domain
+import           V2.Repository as R
+import           V2.SumaCatalogue (FetchProductImage)
+import           V2.ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
 
 server :: FetchProductImage -> Config -> Text -> Server Api.Api
 server fetchProductImage config groupKey =
@@ -214,28 +214,28 @@ commandServer config  =
     abandonOrder :: Int -> Handler ()
     abandonOrder orderId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = V2_.Domain.abandonOrder order
+      let order' = V2.Domain.abandonOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
     placeOrder :: Int -> Handler ()
     placeOrder orderId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = V2_.Domain.placeOrder order
+      let order' = V2.Domain.placeOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
     abandonHouseholdOrder :: Int -> Int -> Handler ()
     abandonHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = V2_.Domain.abandonHouseholdOrder (HouseholdId householdId) order
+      let order' = V2.Domain.abandonHouseholdOrder (HouseholdId householdId) order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
     completeHouseholdOrder :: Int -> Int -> Handler ()
     completeHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = V2_.Domain.completeHouseholdOrder (HouseholdId householdId) order
+      let order' = V2.Domain.completeHouseholdOrder (HouseholdId householdId) order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -243,7 +243,7 @@ commandServer config  =
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId orderId)
-      let order' = applyCatalogueUpdate catalogue . V2_.Domain.reopenHouseholdOrder (HouseholdId householdId) $ order
+      let order' = applyCatalogueUpdate catalogue . V2.Domain.reopenHouseholdOrder (HouseholdId householdId) $ order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -272,7 +272,7 @@ commandServer config  =
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
       productCode <- MaybeT $ getProductCode repo (ProductId productId)
-      let order' = V2_.Domain.removeOrderItem (HouseholdId householdId) productCode order
+      let order' = V2.Domain.removeOrderItem (HouseholdId householdId) productCode order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -289,7 +289,7 @@ commandServer config  =
     updateHousehold :: Int -> HouseholdDetails -> Handler ()
     updateHousehold householdId details = withRepository config $ \(repo, groupId) -> do
         household <- MaybeT $ getHousehold repo groupId (HouseholdId householdId)
-        let household' = V2_.Domain.updateHousehold name contact household
+        let household' = V2.Domain.updateHousehold name contact household
         liftIO $ setHousehold repo groupId (household, household')
       where
         name = hdetName details
@@ -337,7 +337,7 @@ commandServer config  =
     acceptCatalogueUpdates :: Int -> Int -> Handler ()
     acceptCatalogueUpdates orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      let order' = V2_.Domain.acceptCatalogueUpdate (HouseholdId householdId) order
+      let order' = V2.Domain.acceptCatalogueUpdate (HouseholdId householdId) order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -391,7 +391,7 @@ withRepository config query = do
     Just r -> return r
     _ -> throwError err404
 
-apiHousehold :: V2_.Domain.Household -> Api.Household 
+apiHousehold :: V2.Domain.Household -> Api.Household 
 apiHousehold h = Api.Household
   { hId            = fromHouseholdId . _householdId . _householdInfo $ h
   , hName          = _householdName                 . _householdInfo $ h
@@ -456,14 +456,14 @@ apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
     adjustment = orderAdjustment o
     items = orderItemsToPlace o
 
-apiOrderAdjustment :: Money -> Maybe V2_.Domain.OrderAdjustment -> Maybe Api.OrderAdjustment
+apiOrderAdjustment :: Money -> Maybe V2.Domain.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment total (Just _) = Just $ Api.OrderAdjustment
   { oaOldTotalExcVat = _moneyExcVat total
   , oaOldTotalIncVat = _moneyIncVat total
   }
 apiOrderAdjustment _ _ = Nothing
 
-apiHouseholdOrder :: [(ProductCode, ProductId)] -> V2_.Domain.HouseholdOrder -> Api.HouseholdOrder
+apiHouseholdOrder :: [(ProductCode, ProductId)] -> V2.Domain.HouseholdOrder -> Api.HouseholdOrder
 apiHouseholdOrder productIds ho = Api.HouseholdOrder
     { hoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
     , hoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
@@ -486,13 +486,13 @@ apiHouseholdOrder productIds ho = Api.HouseholdOrder
     , hoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
     }
 
-apiHouseholdOrderIsOpen :: V2_.Domain.HouseholdOrder -> Bool
+apiHouseholdOrderIsOpen :: V2.Domain.HouseholdOrder -> Bool
 apiHouseholdOrderIsOpen = (/= HouseholdOrderComplete) . _householdOrderStatus
                      .&&. (/= HouseholdOrderAbandoned) . _householdOrderStatus
                      .&&. (/= OrderAbandoned) . _householdOrderOrderStatus
                      .&&. (/= OrderPlaced) . _householdOrderOrderStatus
 
-apiPastHouseholdOrder :: [(ProductCode, ProductId)] -> V2_.Domain.HouseholdOrder -> Api.PastHouseholdOrder
+apiPastHouseholdOrder :: [(ProductCode, ProductId)] -> V2.Domain.HouseholdOrder -> Api.PastHouseholdOrder
 apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
     { phoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
     , phoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
@@ -516,7 +516,7 @@ apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
     , phoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
     }
 
-apiOrderItem :: [(ProductCode, ProductId)] -> V2_.Domain.OrderItem -> Api.OrderItem
+apiOrderItem :: [(ProductCode, ProductId)] -> V2.Domain.OrderItem -> Api.OrderItem
 apiOrderItem productIds i = Api.OrderItem
   { oiProductId          = fromMaybe 0 $ fromProductId <$> lookup (itemProductCode i) productIds
   , oiProductCode        = fromProductCode . itemProductCode $ i
@@ -546,7 +546,7 @@ apiOrderItem productIds i = Api.OrderItem
   , oiAdjustment         = apiOrderItemAdjustment i $ _itemAdjustment i
   }
 
-apiOrderItemAdjustment :: V2_.Domain.OrderItem -> Maybe V2_.Domain.OrderItemAdjustment -> Maybe Api.OrderItemAdjustment
+apiOrderItemAdjustment :: V2.Domain.OrderItem -> Maybe V2.Domain.OrderItemAdjustment -> Maybe Api.OrderItemAdjustment
 apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
   { oiaOldProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
   , oiaOldProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
@@ -557,7 +557,7 @@ apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
   }
 apiOrderItemAdjustment _ _ = Nothing
 
-apiProductCatalogueEntry :: V2_.Domain.ProductCatalogueEntry -> Api.ProductCatalogueEntry
+apiProductCatalogueEntry :: V2.Domain.ProductCatalogueEntry -> Api.ProductCatalogueEntry
 apiProductCatalogueEntry e = Api.ProductCatalogueEntry
   { pceCode = fromProductCode . _catalogueEntryCode $ e
   , pceName = buildProductName e
@@ -574,15 +574,15 @@ apiProductCatalogueEntry e = Api.ProductCatalogueEntry
   , pceBrand = _catalogueEntryBrand e
   }
 
-apiGroupSettings :: V2_.Domain.OrderGroup -> Api.GroupSettings
+apiGroupSettings :: V2.Domain.OrderGroup -> Api.GroupSettings
 apiGroupSettings g = Api.GroupSettings
   { gsEnablePayments = _groupSettingsPaymentsEnabled . _groupSettings $ g
   }
 
-apiVatRate :: V2_.Domain.VatRateType -> Api.VatRate
-apiVatRate V2_.Domain.Zero = Api.Zero
-apiVatRate V2_.Domain.Standard = Api.Standard
-apiVatRate V2_.Domain.Reduced = Api.Reduced
+apiVatRate :: V2.Domain.VatRateType -> Api.VatRate
+apiVatRate V2.Domain.Zero = Api.Zero
+apiVatRate V2.Domain.Standard = Api.Standard
+apiVatRate V2.Domain.Reduced = Api.Reduced
 
 apiToNearestSecond :: UTCTime -> UTCTime
 apiToNearestSecond (UTCTime day time) = UTCTime day (fromIntegral (floor (realToFrac time :: Double) :: Int))

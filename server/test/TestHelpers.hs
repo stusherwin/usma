@@ -15,10 +15,11 @@ import           Prelude.Compat
 import           Control.Monad
 import           Network.Wai.Test
 import           System.Directory (getCurrentDirectory)
+import           System.IO (hFlush, stdout)
 
 import           Config (Config(..))
 import           UpgradeDB (upgradeDB, runScript)
-import qualified ProductImage as V1 (FetchProductImage)
+import qualified V1.ProductImage as V1 (FetchProductImage)
 import qualified V2.SumaCatalogue as V2 (FetchProductImage)
 
 ignoreFieldSpec :: Spec
@@ -78,6 +79,10 @@ recreateDatabase :: Config -> IO ()
 recreateDatabase config = do
   dir <- getCurrentDirectory
   runScript (connectionString config) $ dir ++ "/server/test/delete-db.sql"
+  hFlush stdout
   runScript (connectionString config) $ dir ++ "/server/database/database_setup.sql"
+  hFlush stdout
   upgradeDB config
+  hFlush stdout
   runScript (connectionString config) $ dir ++ "/server/test/create-groups.sql"
+  hFlush stdout

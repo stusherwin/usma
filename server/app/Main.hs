@@ -17,8 +17,8 @@ import CompareV2Api (compareApiV1WithApiV2, recordApiV1Responses)
 import UpgradeDB
 import System.IO (hFlush, stdout)
 
-import qualified V1_.ProductImage as V1_ (fetchProductImage)
-import qualified V2_.SumaCatalogue as V2_ (fetchProductImage)
+import qualified V1.ProductImage as V1 (fetchProductImage)
+import qualified V2.SumaCatalogue as V2 (fetchProductImage)
 
 main :: IO ()
 main = do
@@ -35,4 +35,4 @@ main = do
     logStdoutDev $
     compareApiV1WithApiV2 $
     record $ 
-    app V1_.fetchProductImage V2_.fetchProductImage config
+    app V1.fetchProductImage V2.fetchProductImage config

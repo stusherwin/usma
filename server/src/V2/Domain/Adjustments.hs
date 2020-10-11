@@ -3,7 +3,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module V2_.Domain.Adjustments where
+module V2.Domain.Adjustments where
 
 import           Data.Time.Clock (UTCTime)
 import           Data.List (find)
@@ -12,11 +12,11 @@ import           Data.Maybe (isJust, fromMaybe)
 import           Prelude hiding (product)
 import           Control.Lens
 
-import V2_.Domain.Types
-import V2_.Domain.Utils
-import V2_.Domain.Orders
-import V2_.Domain.Prices
-import V2_.Domain.Catalogue
+import V2.Domain.Types
+import V2.Domain.Utils
+import V2.Domain.Orders
+import V2.Domain.Prices
+import V2.Domain.Catalogue
 
 orderAdjustment :: Order -> Maybe OrderAdjustment
 orderAdjustment o = 

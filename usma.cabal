@@ -20,30 +20,30 @@ library
                      , Config
                      , CompareV2Api
                      , UpgradeDB 
-                     , V1_.Api
-                     , V1_.Database
-                     , V1_.DatabaseTypes
-                     , V1_.ProductCatalogueImport
-                     , V1_.ProductImage
-                     , V1_.ReconcileHouseholdOrderFile
-                     , V1_.Server
-                     , V1_.Types
-                     , V2_.Api
-                     , V2_.CsvExport
-                     , V2_.Domain
-                     , V2_.Domain.Adjustments 
-                     , V2_.Domain.Catalogue 
-                     , V2_.Domain.Households 
-                     , V2_.Domain.Orders 
-                     , V2_.Domain.Payments 
-                     , V2_.Domain.Prices 
-                     , V2_.Domain.Types 
-                     , V2_.Domain.Utils                     
-                     , V2_.ReconcileSumaOrderFile
-                     , V2_.Repository
-                     , V2_.Repository.SQL
-                     , V2_.Server
-                     , V2_.SumaCatalogue
+                     , V1.Api
+                     , V1.Database
+                     , V1.DatabaseTypes
+                     , V1.ProductCatalogueImport
+                     , V1.ProductImage
+                     , V1.ReconcileHouseholdOrderFile
+                     , V1.Server
+                     , V1.Types
+                     , V2.Api
+                     , V2.CsvExport
+                     , V2.Domain
+                     , V2.Domain.Adjustments 
+                     , V2.Domain.Catalogue 
+                     , V2.Domain.Households 
+                     , V2.Domain.Orders 
+                     , V2.Domain.Payments 
+                     , V2.Domain.Prices 
+                     , V2.Domain.Types 
+                     , V2.Domain.Utils                     
+                     , V2.ReconcileSumaOrderFile
+                     , V2.Repository
+                     , V2.Repository.SQL
+                     , V2.Server
+                     , V2.SumaCatalogue
   other-modules:     
   ghc-options:         -Wall -Werror=incomplete-patterns -Werror=incomplete-uni-patterns -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-type-defaults
   build-depends:       aeson

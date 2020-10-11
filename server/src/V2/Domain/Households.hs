@@ -3,14 +3,14 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module V2_.Domain.Households where
+module V2.Domain.Households where
 
 import           Prelude hiding (product)
 import           Control.Lens
 
-import V2_.Domain.Types
-import V2_.Domain.Utils
-import V2_.Domain.Adjustments
+import V2.Domain.Types
+import V2.Domain.Utils
+import V2.Domain.Adjustments
 
 householdTotalOrders :: Household -> Int
 householdTotalOrders = _moneyIncVat

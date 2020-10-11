@@ -5,7 +5,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module V1_.Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
+module V1.Database ( getCollectiveOrder, getHouseholdOrders, getPastCollectiveOrders, getPastHouseholdOrders, getHouseholds, getHouseholdPayments, getProductCatalogue
                    , createOrder, closeOrder
                    , cancelHouseholdOrder, completeHouseholdOrder, reopenHouseholdOrder
                    , ensureHouseholdOrderItem, ensureAllItemsFromPastHouseholdOrder, removeHouseholdOrderItem
@@ -27,8 +27,8 @@ import Database.PostgreSQL.Simple.SqlQQ
 import Data.ByteString (ByteString)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Time.Clock (UTCTime(..), secondsToDiffTime)
-import V1_.Types
-import V1_.DatabaseTypes  
+import V1.Types
+import V1.DatabaseTypes  
 
 instance FromRow GroupSettings where
   fromRow = GroupSettings <$> field
