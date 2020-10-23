@@ -9,121 +9,137 @@ import { Money } from 'util/Money'
 
 import { ProductFlags } from 'product/ProductFlags'
 
-export interface OrderItemProps { item: Item
-                                  orderAbandoned?: boolean
-                                  minQuantity?: number
-                                  maxQuantity?: number
-                                  checkedOff?: boolean
-                                  past?: boolean
-                                  editItemQuantity?: (item: Item, quantity: number) => void
-                                  editProductPrice?: (item: Item, price: number) => void
-                                  removeItem?: (item: Item) => void
-                                  addToCurrentOrder?: (item: Item) => void
-                                  saveItem?: (item: Item) => void
-                                  editItem?: (item: Item) => void
-                                }
+export interface OrderItemProps {
+  item: Item
+  orderAbandoned?: boolean
+  minQuantity?: number
+  maxQuantity?: number
+  checkedOff?: boolean
+  past?: boolean
+  packing?: boolean
+  editItemQuantity?: (item: Item, quantity: number) => void
+  editProductPrice?: (item: Item, price: number) => void
+  removeItem?: (item: Item) => void
+  addToCurrentOrder?: (item: Item) => void
+  saveItem?: (item: Item) => void
+  editItem?: (item: Item) => void
+}
 
 export const OrderItem = ({ item
-                          , orderAbandoned
-                          , minQuantity
-                          , maxQuantity
-                          , checkedOff
-                          , past
-                          , editItemQuantity
-                          , editProductPrice
-                          , removeItem
-                          , addToCurrentOrder
-                          , saveItem
-                          , editItem
-                          }: OrderItemProps) => {
-  if(minQuantity === undefined) minQuantity = 1
-  if(maxQuantity === undefined) maxQuantity = 10
+  , orderAbandoned
+  , minQuantity
+  , maxQuantity
+  , checkedOff
+  , past
+  , packing
+  , editItemQuantity
+  , editProductPrice
+  , removeItem
+  , addToCurrentOrder
+  , saveItem
+  , editItem
+}: OrderItemProps) => {
+  if (minQuantity === undefined) minQuantity = 1
+  if (maxQuantity === undefined) maxQuantity = 10
 
   let quantities = []
-  for(let i = minQuantity; i <= maxQuantity; i++) {
+  for (let i = minQuantity; i <= maxQuantity; i++) {
     quantities.push(i)
   }
 
   const [priceStringValue, setPriceStringValue] = useState((item.productPriceExcVat / 100.0).toFixed(2))
   const [priceValid, setPriceValid] = useState(item.productPriceExcVat > 0)
+  const [packed, setPacked] = useState(false)
   const parsePrice = (stringValue: string) => Math.floor((parseFloat(stringValue) || 0) * 100)
   const updatePrice = (stringValue: string) => {
     setPriceStringValue(stringValue);
-    const price =  parsePrice(stringValue)
+    const price = parsePrice(stringValue)
     const valid = price > 0 && price <= 99900
     setPriceValid(valid)
 
-    if(editProductPrice) {
-      if(valid) {
+    if (editProductPrice) {
+      if (valid) {
         editProductPrice(item, price)
-      } else if(item.adjustment) {
+      } else if (item.adjustment) {
         editProductPrice(item, item.adjustment.oldProductPriceExcVat)
       }
     }
   }
 
+  const bgClass = {
+    'bg-list-lightest': !past && checkedOff,
+    'bg-list-lightest-sepia': past && (checkedOff || packed),
+    'bg-grey-light': !past && packed,
+    'cursor-pointer': packing
+  }
+
+  const checkmarkClass = {
+    'text-red': checkedOff,
+    'text-black': packed
+  }
+
   return <React.Fragment>
-    <tr>
-      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} rowSpan={editProductPrice? 4 : 3}>
+    <tr onClick={_ => packing && setPacked(!packed)}>
+      <td className={classNames('w-20 h-20 align-top pl-2 pt-4', bgClass)} rowSpan={editProductPrice ? 4 : 3}>
         <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(item.productCode)} />
       </td>
-      <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
-        {checkedOff && <span className="text-red">{'\u2713 '} </span>}{item.productCode}
+      <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', bgClass)}>
+        {(checkedOff || packed) && <span className={classNames(checkmarkClass)}>{'\u2713 '} </span>}{item.productCode}
       </td>
-      <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
+      <td className={classNames('pl-2 pb-2 align-baseline whitespace-no-wrap pt-4', bgClass)}>
         {!!editItemQuantity && !editProductPrice
-        ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
+          ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
             {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
           </select>
-        : <span>
-            {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity?
+          : <span>
+            {!!item.adjustment && item.adjustment.oldItemQuantity != item.itemQuantity ?
               <span className="inline-flex flex-col">
                 <span className="line-through text-black">x {item.adjustment.oldItemQuantity}</span>
                 <span className="text-red font-bold">x {item.itemQuantity}</span>
               </span>
-            : <span>x {item.itemQuantity}</span>
+              : <span>x {item.itemQuantity}</span>
             }
           </span>
         }
       </td>
-      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
+      <td className={classNames('pl-2 pr-2 pb-2 text-right align-baseline whitespace-no-wrap pt-4', bgClass)}>
         <div>
-          {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat?
+          {!!item.adjustment && item.adjustment.oldItemTotalExcVat != item.itemTotalExcVat ?
             <span className="inline-flex flex-col">
               <Money className="line-through text-black" amount={item.adjustment.oldItemTotalExcVat} />
-              {!item.adjustment.productDiscontinued && 
+              {!item.adjustment.productDiscontinued &&
                 <Money className="text-red font-bold" amount={item.itemTotalExcVat} />
               }
             </span>
-          : <Money className={classNames({"line-through text-black": orderAbandoned})} amount={item.itemTotalExcVat} />
+            : <Money className={classNames({ "line-through text-black": orderAbandoned })} amount={item.itemTotalExcVat} />
           }
         </div>
       </td>
     </tr>
-    {!!editProductPrice && 
-      <tr>
-        <td className="pb-2 pl-2 align-baseline text-right">
+    {!!editProductPrice &&
+      <tr onClick={_ => packing && setPacked(!packed)}>
+        <td className={classNames("pb-2 pl-2 align-baseline text-right", bgClass)}>
           <div className="flex justify-between items-baseline content-start">
             {editItemQuantity
-            ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
+              ? <select className="border" value={item.itemQuantity} onChange={e => editItemQuantity(item, parseInt(e.target.value))}>
                 {quantities.map(q => <option key={q} value={q}>x {q}</option>)}
               </select>
-            : <span></span>
+              : <span></span>
             }
             <span className="text-right -mr-1 whitespace-no-wrap">@ &pound;</span>
           </div>
         </td>
-        <td colSpan={2} className="pb-2 pl-2 align-baseline">
-          <input type="text" className={classNames("w-20 mr-2", {'border': priceValid, 'border-2 border-red': !priceValid})} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
+        <td colSpan={2} className={classNames("pb-2 pl-2 align-baseline", bgClass)}>
+          <input type="text" className={classNames("w-20 mr-2", { 'border': priceValid, 'border-2 border-red': !priceValid })} value={priceStringValue} onChange={e => updatePrice(e.target.value)} />
         </td>
       </tr>
     }
-    <tr>
-      <td className={classNames('pb-2 pl-2 align-top', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={removeItem || addToCurrentOrder || saveItem || editItem? 2 : 3}>
+    <tr onClick={_ => packing && setPacked(!packed)}>
+      <td className={classNames('pb-2 pl-2 align-top', bgClass)} colSpan={removeItem || addToCurrentOrder || saveItem || editItem ? 2 : 3}>
         {item.productName}
       </td>
       {(removeItem || addToCurrentOrder || saveItem || editItem) &&
-        <td className={classNames('pl-2 pr-2 align-top text-right', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})}>
+        <td className={classNames('pl-2 pr-2 align-top text-right', bgClass)}>
           {!!removeItem &&
             <button className="ml-4" onClick={() => removeItem(item)}><Icon type="delete" className="w-4 h-4 fill-current nudge-d-1" /></button>
           }
@@ -139,8 +155,8 @@ export const OrderItem = ({ item
         </td>
       }
     </tr>
-    <tr>
-      <td className={classNames('`pl-1 pr-1 pb-2`', {'bg-list-lightest': !past && checkedOff, 'bg-list-lightest-sepia': past && checkedOff})} colSpan={editProductPrice? 2 : 3}>
+    <tr onClick={_ => packing && setPacked(!packed)}>
+      <td className={classNames('`pl-1 pr-1 pb-2`', bgClass)} colSpan={editProductPrice ? 2 : 3}>
         <div className="flex flex-wrap justify-start">
           <span className="pl-1 pr-1 pb-2 whitespace-no-wrap">
             <ProductFlags p={item} />
