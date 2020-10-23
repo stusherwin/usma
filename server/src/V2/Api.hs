@@ -62,6 +62,7 @@ type CommandApi =
   :<|> "reconcile-order-item" :> Capture "orderId" Int :> Capture "productId" Int :> ReqBody '[JSON] Api.ReconcileOrderItemDetails :> Post '[JSON] ()
   :<|> "upload-order-file" :> MultipartForm Mem (MultipartData Mem) :> Post '[JSON] (Headers '[Header "Cache-Control" String] (Maybe Api.UploadedOrderFile))
   :<|> "reconcile-household-order-from-file" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "uuid" String :> Post '[JSON] ()
+  :<|> "toggle-item-packed" :> Capture "orderId" Int :> Capture "householdId" Int :> Capture "productCode" String :> Post '[JSON] ()
 
 type FileDownload = Headers '[Header "Content-Disposition" Text] BL.ByteString
 

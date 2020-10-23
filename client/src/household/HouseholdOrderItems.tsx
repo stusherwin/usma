@@ -34,6 +34,14 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
       .then(this.props.reload)
   }
 
+  togglePacked = (item: Item) => {
+    if (!this.props.householdOrder)
+      return
+
+    this.props.request(ServerApi.command.toggleItemPacked(this.props.householdOrder.orderId, this.props.householdOrder.householdId, item.productCode))
+      .then(this.props.reload)
+  }
+
   render() {
     const householdOrder = this.props.householdOrder
     const items = householdOrder.items.filter(i => !i.adjustment || !i.adjustment.productDiscontinued)
@@ -49,7 +57,8 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
             orderAbandoned={householdOrder.isAbandoned}
             packing={this.props.packing}
             editItemQuantity={!this.props.readOnly && householdOrder.isOpen && this.editQuantity || undefined}
-            removeItem={!this.props.readOnly && householdOrder.isOpen && this.removeItem || undefined} />
+            removeItem={!this.props.readOnly && householdOrder.isOpen && this.removeItem || undefined}
+            toggleItemPacked={this.props.readOnly && this.togglePacked || undefined} />
         )}
         <tr hidden={!discontinuedItems.length}>
           <td colSpan={4} className={classNames("text-red font-bold pb-2 px-2", { "pt-4": !items.length, "pt-8": items.length })}>

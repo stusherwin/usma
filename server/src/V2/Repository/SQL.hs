@@ -472,6 +472,7 @@ selectOrderItemRows conn whereParams =
            , adj.new_quantity
            , adj.is_discontinued
            , adj.date
+           , hoi.is_packed
       from v2.order_item hoi
       inner join v2.household_order ho 
         on ho.order_id = hoi.order_id and ho.household_id = hoi.household_id
@@ -513,6 +514,7 @@ insertOrderItems conn items = do
                                          orderId
                                          householdId
                                          productCode
+                                         (_itemIsPacked i)
   void $ executeMany conn [sql|
     insert into v2.order_item 
       ( quantity
@@ -530,8 +532,9 @@ insertOrderItems conn items = do
       , order_id
       , household_id
       , product_code
+      , is_packed
       )
-    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   |] rows
 
 updateOrderItems :: Connection -> [((OrderGroupId, OrderId, HouseholdId, ProductCode), OrderItem)] -> IO ()
@@ -552,6 +555,7 @@ updateOrderItems conn items = do
                                          orderId
                                          householdId
                                          productCode
+                                         (_itemIsPacked i)
   void $ executeMany conn [sql|
     update v2.order_item i
     set quantity = u.quantity
@@ -565,7 +569,8 @@ updateOrderItems conn items = do
       , product_is_organic = u.product_is_organic
       , product_is_added_sugar = u.product_is_added_sugar
       , product_is_vegan = u.product_is_vegan
-    from (values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) as u
+      , is_packed = u.is_packed
+    from (values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)) as u
     ( quantity
     , product_name
     , product_vat_rate
@@ -581,6 +586,7 @@ updateOrderItems conn items = do
     , order_id
     , household_id
     , product_code
+    , is_packed
     )
     where i.order_group_id = u.order_group_id
       and i.order_id = u.order_id
@@ -794,10 +800,11 @@ data OrderItemRow = OrderItemRow
   { orderItemRow_product :: Product
   , orderItemRow_quantity :: Int
   , orderItemRow_adjustment :: Maybe OrderItemAdjustment
+  , orderItemRow_packed :: Bool
   }
 
 instance FromRow OrderItemRow where
-  fromRow = OrderItemRow <$> productField <*> field <*> maybeOrderItemAdjustmentField
+  fromRow = OrderItemRow <$> productField <*> field <*> maybeOrderItemAdjustmentField <*> field
 
 instance FromRow Product where
   fromRow = Product <$> productInfoField <*> productFlagsField
@@ -927,6 +934,7 @@ data UpdateOrderItem = UpdateOrderItem
   , updateOrderItem_order_id :: OrderId
   , updateOrderItem_household_id :: HouseholdId
   , updateOrderItem_product_code :: ProductCode
+  , updateOrderItem_is_packed :: Bool
   } deriving (Show)
 
 instance ToRow UpdateOrderItem where
@@ -945,6 +953,7 @@ instance ToRow UpdateOrderItem where
             , toField $ updateOrderItem_order_id i
             , toField $ updateOrderItem_household_id i
             , toField $ updateOrderItem_product_code i
+            , toField $ updateOrderItem_is_packed i
             ]
 
 data WhereParam = ForOrderGroup OrderGroupId

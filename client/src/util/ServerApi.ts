@@ -1,36 +1,39 @@
 import { Household, CollectiveOrder, HouseholdOrder, HouseholdPayment, ProductCatalogueEntry, GroupSettings, UploadedOrderFile } from './Types'
 import { Util } from './Util'
 
-export interface Data { collectiveOrders: CollectiveOrder[]
-                      , households: Household[]
-                      , groupSettings: GroupSettings
-                      }
+export interface Data {
+  collectiveOrders: CollectiveOrder[]
+  , households: Household[]
+  , groupSettings: GroupSettings
+}
 
-export interface ApiData { collectiveOrder: CollectiveOrder | null
-                         , pastCollectiveOrders: CollectiveOrder[]
-                         , householdOrders: HouseholdOrder[]
-                         , pastHouseholdOrders: HouseholdOrder[]
-                         , households: Household[]
-                         , householdPayments: HouseholdPayment[]
-                         , groupSettings: GroupSettings
-                         }
+export interface ApiData {
+  collectiveOrder: CollectiveOrder | null
+  , pastCollectiveOrders: CollectiveOrder[]
+  , householdOrders: HouseholdOrder[]
+  , pastHouseholdOrders: HouseholdOrder[]
+  , households: Household[]
+  , householdPayments: HouseholdPayment[]
+  , groupSettings: GroupSettings
+}
 
-export interface CatalogueData { productCatalogue: ProductCatalogueEntry[]
-                               , categories: string[]
-                               , brands: string[]
-                               }
+export interface CatalogueData {
+  productCatalogue: ProductCatalogueEntry[]
+  , categories: string[]
+  , brands: string[]
+}
 function getData(): Promise<ApiData> {
   return Http.get<ApiData>(groupUrl('/query/data'))
-    .then(res => { 
-      if(res) {
-        if(res.collectiveOrder) {
+    .then(res => {
+      if (res) {
+        if (res.collectiveOrder) {
           res.collectiveOrder.orderCreatedDate = new Date(res.collectiveOrder.orderCreatedDate)
         }
         res.pastCollectiveOrders.forEach(o => o.orderCreatedDate = new Date(o.orderCreatedDate))
         res.householdOrders.forEach(ho => { ho.orderCreatedDate = new Date(ho.orderCreatedDate); })
         res.pastHouseholdOrders.forEach(ho => ho.orderCreatedDate = new Date(ho.orderCreatedDate))
         res.households.forEach(h => { })
-        res.householdPayments.forEach(hp => { hp.date = new Date(hp.date);})
+        res.householdPayments.forEach(hp => { hp.date = new Date(hp.date); })
       }
       return res;
     })
@@ -47,23 +50,23 @@ const query = {
 
   getData(): Promise<Data> {
     return getData()
-      .then(({collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, groupSettings}) => {
-        if(collectiveOrder) {
+      .then(({ collectiveOrder, pastCollectiveOrders, householdOrders, pastHouseholdOrders, households, householdPayments, groupSettings }) => {
+        if (collectiveOrder) {
           collectiveOrder.householdOrders = householdOrders.filter(ho => ho.orderId == collectiveOrder.id)
         }
 
-        for(let po of pastCollectiveOrders) {
+        for (let po of pastCollectiveOrders) {
           po.householdOrders = pastHouseholdOrders.filter(ho => ho.orderId == po.id)
         }
 
         let collectiveOrders = pastCollectiveOrders
-        if(collectiveOrder) {
+        if (collectiveOrder) {
           collectiveOrders.unshift(collectiveOrder)
         }
 
         let ho = householdOrders.concat(pastHouseholdOrders)
 
-        for(let h of households) {
+        for (let h of households) {
           h.currentHouseholdOrder = collectiveOrders[0] && (ho.filter(ho => ho.householdId == h.id && ho.orderId == collectiveOrders[0].id)[0])
           h.pastHouseholdOrders = pastHouseholdOrders.filter(pho => pho.householdId == h.id && (!h.currentHouseholdOrder || pho.orderId != h.currentHouseholdOrder.orderId))
           h.householdPayments = householdPayments.filter(p => p.householdId == h.id)
@@ -73,7 +76,7 @@ const query = {
           collectiveOrders,
           households,
           groupSettings
-        }                       
+        }
       })
   }
 }
@@ -128,15 +131,17 @@ const command = {
   },
 
   createHouseholdPayment(householdId: number, date: Date, amount: number): Promise<number> {
-    return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), { date: Util.dateString(date)
-                                                                                   , amount
-                                                                                   })
+    return Http.post(groupUrl(`/command/create-household-payment/${householdId}`), {
+      date: Util.dateString(date)
+      , amount
+    })
   },
 
   updateHouseholdPayment(id: number, date: Date, amount: number): Promise<number> {
-    return Http.post(groupUrl(`/command/update-household-payment/${id}`), { date: Util.dateString(date)
-                                                                          , amount
-                                                                          })
+    return Http.post(groupUrl(`/command/update-household-payment/${id}`), {
+      date: Util.dateString(date)
+      , amount
+    })
   },
 
   archiveHouseholdPayment(id: number): Promise<{}> {
@@ -151,10 +156,11 @@ const command = {
     return Http.post(groupUrl(`/command/accept-catalogue-updates/${orderId}/${householdId}`), {})
   },
 
-  reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: {householdId: number, itemQuantity: number}[]): Promise<{}> {
-    return Http.post(groupUrl(`/command/reconcile-order-item/${orderId}/${productId}`), 
-      { productPriceExcVat: productPriceExcVat
-      , householdQuantities: householdQuantities.map(h => ({ householdId: h.householdId, itemQuantity: h.itemQuantity }))
+  reconcileOrderItem(orderId: number, productId: number, productPriceExcVat: number, householdQuantities: { householdId: number, itemQuantity: number }[]): Promise<{}> {
+    return Http.post(groupUrl(`/command/reconcile-order-item/${orderId}/${productId}`),
+      {
+        productPriceExcVat: productPriceExcVat
+        , householdQuantities: householdQuantities.map(h => ({ householdId: h.householdId, itemQuantity: h.itemQuantity }))
       })
   },
 
@@ -165,17 +171,21 @@ const command = {
   reconcileHouseholdOrderFromFile(orderId: number, householdId: number, uuid: String): Promise<{}> {
     return Http.post(groupUrl(`/command/reconcile-household-order-from-file/${orderId}/${householdId}/${uuid}`), {})
   },
+
+  toggleItemPacked(orderId: number, householdId: number, productCode: string): Promise<{}> {
+    return Http.post(groupUrl(`/command/toggle-item-packed/${orderId}/${householdId}/${productCode}`), {})
+  }
 }
 
 const url = {
   householdOrdersDownload(order: CollectiveOrder): string {
-    return order.orderIsAbandoned || order.orderIsPlaced 
-      ? groupUrl(`/query/past-household-orders-download/${order.id}`) 
+    return order.orderIsAbandoned || order.orderIsPlaced
+      ? groupUrl(`/query/past-household-orders-download/${order.id}`)
       : groupUrl("/query/household-orders-download/")
   },
 
   collectiveOrderDownload(order: CollectiveOrder): string {
-    return order.orderIsAbandoned || order.orderIsPlaced 
+    return order.orderIsAbandoned || order.orderIsPlaced
       ? groupUrl(`/query/past-collective-order-download/${order.id}`)
       : groupUrl("/query/collective-order-download/")
   },
@@ -203,28 +213,30 @@ export class Http {
   static get<T>(url: string): Promise<T> {
     return this.fetchHttpRequest(new Request(url))
   }
-  
+
   static post<T>(url: string, body: {}): Promise<T> {
     return this.fetchHttpRequest(new Request(url,
-      { method: 'POST'
-      , headers: new Headers({'Content-Type' : 'application/json'})
-      , body: JSON.stringify(body)
+      {
+        method: 'POST'
+        , headers: new Headers({ 'Content-Type': 'application/json' })
+        , body: JSON.stringify(body)
       }))
   }
 
   static postFormData<T>(url: string, data: FormData): Promise<T> {
     return this.fetchHttpRequest(new Request(url,
-      { method: 'POST'
-      , body: data
+      {
+        method: 'POST'
+        , body: data
       }))
   }
 
   private static fetchHttpRequest<T>(req: Request): Promise<T> {
     try {
-      return fetch(req, {credentials: 'same-origin'})
+      return fetch(req, { credentials: 'same-origin' })
         .then(res => {
           console.log(res);
-          if(!res.ok) {
+          if (!res.ok) {
             return res.text().then(txt => { throw new ApiError(`${res.statusText} (${res.status})`, txt, res.status) })
           }
           const contentType = res.headers.get('content-type')
@@ -235,7 +247,7 @@ export class Http {
         })
         .then(res => res as T)
         .catch(err => Promise.reject(new ApiError('Error from the server', 'Received an unexpected response from the server: ' + err.error, err.status || null)))
-    } catch(TypeError) {
+    } catch (TypeError) {
       return Promise.reject(new ApiError('Can\'t connect to the server', 'The server seems to be down or busy, please wait a while and try again.', null))
     }
   }

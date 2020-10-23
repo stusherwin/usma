@@ -1,6 +1,6 @@
 export type VatRate = 'Zero' | 'Standard' | 'Reduced'
 
-export interface OrderItem { 
+export interface OrderItem {
   productId: number
   productCode: string
   productName: string
@@ -18,6 +18,7 @@ export interface OrderItem {
   vegan: boolean
   adjustment: OrderItemAdjustment | null
   reconciled: boolean
+  packed: boolean
 }
 
 export interface OrderItemAdjustment {
@@ -29,7 +30,7 @@ export interface OrderItemAdjustment {
   productDiscontinued: boolean
 }
 
-export interface Order { 
+export interface Order {
   items: OrderItem[]
   totalExcVat: number
   totalIncVat: number
@@ -50,7 +51,7 @@ export interface OrderAdjustment {
   oldTotalIncVat: number
 }
 
-export interface ProductCatalogueEntry { 
+export interface ProductCatalogueEntry {
   code: string
   name: string
   priceExcVat: number
@@ -66,7 +67,7 @@ export interface ProductCatalogueEntry {
   brand: string
 }
 
-export interface Household { 
+export interface Household {
   id: number
   name: string
   contactName: string | null
@@ -79,21 +80,21 @@ export interface Household {
   pastHouseholdOrders: HouseholdOrder[]
   householdPayments: HouseholdPayment[]
 }
-   
-export interface CollectiveOrder extends Order { 
+
+export interface CollectiveOrder extends Order {
   id: number
   allHouseholdsUpToDate: boolean
   householdOrders: HouseholdOrder[]
 }
 
-export interface HouseholdOrder extends Order { 
+export interface HouseholdOrder extends Order {
   orderId: number
   householdId: number
-  householdName: string 
+  householdName: string
 }
 
-export interface HouseholdPayment { 
-  id: number 
+export interface HouseholdPayment {
+  id: number
   householdId: number
   date: Date
   amount: number
@@ -103,8 +104,8 @@ export interface GroupSettings {
   enablePayments: boolean
 }
 
-export interface UploadedOrderFile { 
-  fileId: string 
+export interface UploadedOrderFile {
+  fileId: string
   orderDescription: string
   totalExcVat: number
   totalIncVat: number
@@ -112,7 +113,7 @@ export interface UploadedOrderFile {
 }
 
 export interface UploadedOrderFileRow {
-  code: string 
+  code: string
   productDescription: string
   productSize: string
   price: number

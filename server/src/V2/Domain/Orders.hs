@@ -6,7 +6,7 @@
 module V2.Domain.Orders where
 
 import           Control.Arrow ((&&&))
-import qualified Data.Map.Strict as M (Map, delete, elems, empty, fromList, map, unionWith, unionsWith)
+import qualified Data.Map.Strict as M (Map, delete, elems, empty, fromList, map, unionWith, unionsWith, adjust)
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Control.Lens
 
@@ -77,7 +77,7 @@ completeHouseholdOrder householdId =
     over (orderHouseholdOrdersWhere $ hasHouseholdId householdId) $ 
       set householdOrderStatus HouseholdOrderComplete
 
-addOrUpdateOrderItems :: ProductCatalogue -> HouseholdInfo  -> [(ProductCode, Maybe Int)] -> Order -> Order
+addOrUpdateOrderItems :: ProductCatalogue -> HouseholdInfo -> [(ProductCode, Maybe Int)] -> Order -> Order
 addOrUpdateOrderItems catalogue household itemQuantities =
     (over (orderHouseholdOrdersWhere $ hasHouseholdId $ _householdId household) $ 
       addOrUpdateHouseholdOrderItems catalogue itemQuantities)
@@ -109,6 +109,11 @@ removeOrderItem householdId productCode =
     over (orderHouseholdOrdersWhere $ hasHouseholdId $ householdId) $ 
       over householdOrderItems $ M.delete productCode
 
+updateOrderItem :: (OrderItem -> OrderItem) -> HouseholdId -> ProductCode -> Order -> Order
+updateOrderItem f householdId productCode = 
+    over (orderHouseholdOrdersWhere $ hasHouseholdId $ householdId) $ 
+      over householdOrderItems $ M.adjust f productCode
+
 hasHouseholdId :: HouseholdId -> HouseholdOrder -> Bool
 hasHouseholdId householdId = (== householdId) . householdOrderHouseholdId
 
@@ -134,7 +139,7 @@ addOrUpdateHouseholdOrderItems catalogue =
     . map toOrderItem
   where
     toOrderItem (code, quantity) = findEntry code catalogue <&> \e ->
-      OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing
+      OrderItem (fromCatalogueEntry e) (fromMaybe 1 quantity) Nothing False
 
 itemProductCode :: OrderItem -> ProductCode
 itemProductCode = _productCode . _productInfo . _itemProduct
@@ -153,3 +158,6 @@ updateItemPrice price = itemProduct . productInfo . productPrice .~ price
 
 updateItemQuantity :: Maybe Int -> OrderItem -> OrderItem
 updateItemQuantity quantity i = i & itemQuantity .~ fromMaybe (_itemQuantity i) quantity
+
+toggleItemIsPacked :: OrderItem -> OrderItem
+toggleItemIsPacked i = i & itemIsPacked %~ not

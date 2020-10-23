@@ -420,6 +420,7 @@ toOrderItem :: ((OrderId, HouseholdId) :. OrderItemRow) -> OrderItem
 toOrderItem (_ :. i) = OrderItem (orderItemRow_product i)
                                  (orderItemRow_quantity i)
                                  (orderItemRow_adjustment i)
+                                 (orderItemRow_packed i)
 
 addedBy :: Eq b => (a -> b) -> ([a], [a]) -> [a]
 addedBy   key (xs, xs') = deleteFirstsBy ((==) `on` key) xs' xs

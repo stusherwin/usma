@@ -198,6 +198,7 @@ commandServer config  =
     :<|> reconcileOrderItem
     :<|> uploadOrderFile
     :<|> reconcileHouseholdOrderFromFile
+    :<|> toggleItemPacked
   where
     createOrderForHousehold :: Int -> Handler Int
     createOrderForHousehold householdId = withRepository config $ \(repo, groupId) -> do
@@ -374,6 +375,14 @@ commandServer config  =
       liftIO $ setOrders repo ([order], [order'])
       liftIO $ removeFileUpload repo groupId fileId
 
+    toggleItemPacked :: Int -> Int -> String -> Handler ()
+    toggleItemPacked orderId householdId productCode = withRepository config $ \(repo, groupId) -> do
+      order <- MaybeT $ getOrder repo groupId (OrderId orderId)
+      let order' = V2.Domain.updateOrderItem (V2.Domain.toggleItemIsPacked) (HouseholdId householdId) (ProductCode productCode) order
+      liftIO $ setOrders repo ([order], [order'])
+      return ()
+
+
 uploadSingleFile :: MultipartData Mem -> MaybeT IO BL.ByteString
 uploadSingleFile multipartData = do
   file <- MaybeT $ return $ headMay $ files multipartData
@@ -543,6 +552,7 @@ apiOrderItem productIds i = Api.OrderItem
   , oiOrganic            = _productIsOrganic    . _productFlags . _itemProduct $ i
   , oiAddedSugar         = _productIsAddedSugar . _productFlags . _itemProduct $ i
   , oiVegan              = _productIsVegan      . _productFlags . _itemProduct $ i
+  , oiPacked             = _itemIsPacked $ i
   , oiAdjustment         = apiOrderItemAdjustment i $ _itemAdjustment i
   }
 

@@ -134,14 +134,16 @@ data OrderItem = OrderItem
   { _itemProduct :: Product
   , _itemQuantity :: Int
   , _itemAdjustment :: Maybe OrderItemAdjustment
+  , _itemIsPacked :: Bool
   } deriving (Eq, Show, Generic)
 
 instance Semigroup OrderItem where
-  i1 <> i2 = OrderItem p (q1 + q2) (a1 <> a2)
+  i1 <> i2 = OrderItem p (q1 + q2) (a1 <> a2) (pck1 && pck2)
     where
       p        = product (_itemProduct i1) (_itemAdjustment i1) (_itemProduct i2) (_itemAdjustment i2)
       (a1, a2) = adjustments (_itemAdjustment i1) (_itemAdjustment i2)
       (q1, q2) = (_itemQuantity i1, _itemQuantity i2)
+      (pck1, pck2) = (_itemIsPacked i1, _itemIsPacked i2)
 
       product _  Nothing p2 (Just _) = p2
       product p1 _       _  _        = p1

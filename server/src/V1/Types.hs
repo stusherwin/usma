@@ -114,6 +114,7 @@ data OrderItem = OrderItem { oiProductId :: Int
                            , oiOrganic :: Bool
                            , oiAddedSugar :: Bool
                            , oiVegan :: Bool
+                           , oiPacked :: Bool
                            , oiAdjustment :: Maybe OrderItemAdjustment
                            } deriving (Eq, Show, Generic)
 instance ToJSON OrderItem where

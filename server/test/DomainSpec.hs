@@ -133,6 +133,7 @@ makeOrderItem (code, price, quantity) = OrderItem
   { _itemProduct = makeProduct (code, price)
   , _itemQuantity = quantity
   , _itemAdjustment = Nothing
+  , _itemIsPacked = False
   }
 
 makeProduct :: (String, Price) -> Product

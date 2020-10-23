@@ -28,6 +28,7 @@ interface ReconcilingOrderItem {
   vegan: boolean
   adjustment: OrderItemAdjustment
   reconciled: boolean
+  packed: boolean
   householdQuantities: HouseholdQuantity[]
   initialItemQuantity: number
 }
@@ -103,6 +104,7 @@ export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconciling
         addedSugar: i.addedSugar,
         vegan: i.vegan,
         reconciled: !!i.adjustment,
+        packed: i.packed,
         adjustment: {
           oldProductPriceExcVat: i.adjustment ? i.adjustment.oldProductPriceExcVat : i.productPriceExcVat,
           oldProductPriceIncVat: i.adjustment ? i.adjustment.oldProductPriceIncVat : i.productPriceIncVat,

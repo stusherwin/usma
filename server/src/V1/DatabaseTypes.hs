@@ -374,6 +374,7 @@ fromCollectiveOrderItemData d
               (oidOrganic d)
               (oidAddedSugar d)
               (oidVegan d)
+              False
               $ if (oidUpdated d) 
                 then Just $ OrderItemAdjustment (oidOldPriceExcVat d)
                                                 (oidOldPriceIncVat d)
@@ -405,6 +406,7 @@ fromPastOrderItemData (d@PastOrderItemData { poidOldPriceExcVat = Just oldProduc
               (poidOrganic d)
               (poidAddedSugar d)
               (poidVegan d)
+              False
               $ Just $ OrderItemAdjustment oldProductPriceExcVat 
                                            oldProductPriceIncVat 
                                            oldQuantity 
@@ -428,6 +430,7 @@ fromPastOrderItemData d
               (poidOrganic d)
               (poidAddedSugar d)
               (poidVegan d)
+              False
               Nothing
 
 fromHouseholdOrderItemData :: HouseholdOrderItemData -> OrderItem
@@ -447,6 +450,7 @@ fromHouseholdOrderItemData d
               (hoidOrganic d)
               (hoidAddedSugar d)
               (hoidVegan d)
+              False
               $ if (hoidUpdated d) 
                 then Just $ OrderItemAdjustment (hoidOldPriceExcVat d)
                                                 (hoidOldPriceIncVat d)
