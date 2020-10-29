@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as classNames from 'classnames'
 
 import { ProductCatalogueEntry } from 'util/Types'
-import { ServerApi} from 'util/ServerApi'
+import { ServerApi } from 'util/ServerApi'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
 import { LoadMore } from 'util/LoadMore'
@@ -11,15 +11,18 @@ import { ProductFlags } from './ProductFlags'
 
 const pageSize = 10
 
-export interface ProductListProps { products: ProductCatalogueEntry[]
-                                  , cataloguePopulated: boolean
-                                  , addProduct?: (p: ProductCatalogueEntry) => void
-                                  }
+export interface ProductListProps {
+  products: ProductCatalogueEntry[]
+  cataloguePopulated: boolean
+  addProduct?: (p: ProductCatalogueEntry) => void
+  showProductImage: (productCode: string) => void
+}
 
-export interface ProductListState { products: ProductCatalogueEntry[]
-                                  , nextStartIndex: number
-                                  , showLoadMore: boolean
-                                  }
+export interface ProductListState {
+  products: ProductCatalogueEntry[]
+  nextStartIndex: number
+  showLoadMore: boolean
+}
 
 export class ProductList extends React.Component<ProductListProps, ProductListState> {
   constructor(props: ProductListProps) {
@@ -29,7 +32,7 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
   }
 
   componentDidUpdate(prevProps: ProductListProps) {
-    if(prevProps == this.props) return
+    if (prevProps == this.props) return
 
     this.setState(this.getPageState(0, []))
   }
@@ -41,10 +44,11 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
   getPageState = (start: number, prevProducts: ProductCatalogueEntry[]) => {
     const end = start + pageSize
 
-    return { products: [...prevProducts, ...this.props.products.slice(start, end)]
-           , nextStartIndex: end
-           , showLoadMore: this.props.products.slice(end + 1, end  + 1 + pageSize).length > 0
-           }
+    return {
+      products: [...prevProducts, ...this.props.products.slice(start, end)]
+      , nextStartIndex: end
+      , showLoadMore: this.props.products.slice(end + 1, end + 1 + pageSize).length > 0
+    }
   }
 
   render() {
@@ -52,43 +56,47 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
       <div>
         <div className="py-4 px-2 shadow-inner-top bg-white">
           {!this.props.products.length
-          ? <div className="text-black"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />
+            ? <div className="text-black"><Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />
               {this.props.cataloguePopulated ? 'No matching products found' : 'Product catalogue is empty'}
             </div>
-          : <table className="border-collapse w-full">
-              {this.state.products.map((p, i) => 
+            : <table className="border-collapse w-full">
+              {this.state.products.map((p, i) =>
                 [
-                <tr key={p.code + '-1'}>
-                  <td className={classNames('w-20 h-20 align-top', {'pt-8': i > 0})} rowSpan={3}><img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(p.code)} /></td>
-                  <td className={classNames('pb-2 font-bold align-baseline', {'pt-8': i > 0})} colSpan={3}>{p.code}</td>
-                  <td className={classNames('pl-2 pb-2 text-right align-baseline', {'pt-8': i > 0})}><Money amount={p.priceExcVat} /></td>
-                </tr>
-                ,
-                <tr key={p.code + '-2'}>
-                  <td className={classNames('pb-2 align-top')} colSpan={this.props.addProduct? 2: 4}>{p.name}</td>
-                  {this.props.addProduct && 
-                    <td className={classNames('pl-2 align-top text-right whitespace-no-wrap')} colSpan={2}>
-                      <button className="ml-2" onClick={_ => this.props.addProduct && this.props.addProduct(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                  <tr key={p.code + '-1'}>
+                    <td className={classNames('w-20 h-20 align-top', { 'pt-8': i > 0 })} rowSpan={3}>
+                      <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.props.showProductImage(p.code); }}>
+                        <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(p.code)} />
+                      </a>
                     </td>
-                  }
-                </tr>
-                ,
-                <tr key={p.code + '-3'}>
-                  <td className="pr-1 pb-2" colSpan={4}>
-                    <div className="flex flex-wrap justify-start">
-                      <span className="pr-1 pb-2 whitespace-no-wrap">
-                        <ProductFlags p={p} />
-                      </span>
-                      <span className="pr-1 pb-2 text-grey-dark whitespace-no-wrap">VAT: {p.vatRate} rate</span>
-                    </div>
-                  </td>
-                </tr>
+                    <td className={classNames('pb-2 font-bold align-baseline', { 'pt-8': i > 0 })} colSpan={3}>{p.code}</td>
+                    <td className={classNames('pl-2 pb-2 text-right align-baseline', { 'pt-8': i > 0 })}><Money amount={p.priceExcVat} /></td>
+                  </tr>
+                  ,
+                  <tr key={p.code + '-2'}>
+                    <td className={classNames('pb-2 align-top')} colSpan={this.props.addProduct ? 2 : 4}>{p.name}</td>
+                    {this.props.addProduct &&
+                      <td className={classNames('pl-2 align-top text-right whitespace-no-wrap')} colSpan={2}>
+                        <button className="ml-2" onClick={_ => this.props.addProduct && this.props.addProduct(p)}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Add</button>
+                      </td>
+                    }
+                  </tr>
+                  ,
+                  <tr key={p.code + '-3'}>
+                    <td className="pr-1 pb-2" colSpan={4}>
+                      <div className="flex flex-wrap justify-start">
+                        <span className="pr-1 pb-2 whitespace-no-wrap">
+                          <ProductFlags p={p} />
+                        </span>
+                        <span className="pr-1 pb-2 text-grey-dark whitespace-no-wrap">VAT: {p.vatRate} rate</span>
+                      </div>
+                    </td>
+                  </tr>
                 ])
               }
             </table>
           }
         </div>
-        {this.state.showLoadMore && 
+        {this.state.showLoadMore &&
           <LoadMore scrollElement={document.body} loadMore={this.loadMore} />
         }
       </div>

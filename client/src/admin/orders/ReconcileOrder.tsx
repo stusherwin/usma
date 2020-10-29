@@ -46,6 +46,7 @@ export interface ReconcileOrderProps {
   past?: boolean
   endReconcilingItem: (productId: number, productPriceExcVat: number, households: { householdId: number, itemQuantity: number }[]) => void
   endReconcilingOrder: () => void
+  showProductImage: (productCode: string) => void
 }
 
 export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconcilingOrder }: ReconcileOrderProps) => {
@@ -235,7 +236,8 @@ export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconciling
           <tbody>
             {items.map(item => {
               return <React.Fragment>
-                <OrderItem key={item.productId}
+                <OrderItem
+                  key={item.productId}
                   item={item}
                   past={past}
                   minQuantity={0}
@@ -244,9 +246,11 @@ export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconciling
                   editItemQuantity={!item.reconciled && editItemQuantity || undefined}
                   editProductPrice={!item.reconciled && editProductPrice || undefined}
                   saveItem={!item.reconciled && !showHouseholdQuantities(item) && saveItem || undefined}
-                  editItem={item.reconciled && editItem || undefined} />
+                  editItem={item.reconciled && editItem || undefined}
+                  {...this.props} />
                 {!item.reconciled && showHouseholdQuantities(item) &&
-                  <DistributeHouseholdQuantities item={item}
+                  <DistributeHouseholdQuantities
+                    item={item}
                     updateQuantity={updateHouseholdQuantity}
                     saveItem={saveItem} />
                 }

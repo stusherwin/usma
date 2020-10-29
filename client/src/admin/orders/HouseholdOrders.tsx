@@ -15,6 +15,7 @@ export interface HouseholdOrdersProps {
   order: CollectiveOrder
   request: <T extends {}>(p: Promise<T>) => Promise<T>
   reload: () => Promise<void>
+  showProductImage: (productCode: string) => void
 }
 
 export interface HouseholdOrdersState {
@@ -41,7 +42,8 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
         {order.householdOrders.filter(ho => !!ho.items.length).map(ho => {
           return (
             <div key={ho.householdId}>
-              <Collapsible collapsibleKey={ho.householdId}
+              <Collapsible
+                collapsibleKey={ho.householdId}
                 collapsibleState={this.state.collapsibleState}
                 header={
                   <div className="p-2 pt-4 bg-household-lighter min-h-24">
@@ -62,7 +64,8 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                   </div>
                 }>
                 <div className="bg-white border-t border-household-light shadow-inner-top">
-                  <HouseholdOrderItems householdOrder={ho}
+                  <HouseholdOrderItems
+                    householdOrder={ho}
                     readOnly={true}
                     packing={true}
                     {...this.props} />

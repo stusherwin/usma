@@ -7,34 +7,40 @@ import { ProductList } from 'product/ProductList'
 import { FilteredProducts } from 'product/FilteredProducts'
 import { ProductFilters } from 'product/ProductFilters'
 
-export interface AddProductProps { products: ProductCatalogueEntry[]
-                                 , categories: string[]
-                                 , brands: string[]
-                                 , cancelAdd: () => void
-                                 , confirmAdd: (p: ProductCatalogueEntry) => Promise<void>
-                                 }
+export interface AddProductProps {
+  products: ProductCatalogueEntry[]
+  categories: string[]
+  brands: string[]
+  cancelAdd: () => void
+  confirmAdd: (p: ProductCatalogueEntry) => Promise<void>
+  showProductImage: (productCode: string) => void
+}
 
-export interface AddProductState { filteredProducts: FilteredProducts
-                                 , addedProductCodes: string[]
-                                 }
+export interface AddProductState {
+  filteredProducts: FilteredProducts
+  addedProductCodes: string[]
+}
 
 export class AddProduct extends React.Component<AddProductProps, AddProductState> {
   constructor(props: AddProductProps) {
     super(props)
 
-    this.state = { filteredProducts: new FilteredProducts(props.products, props.categories, props.brands)
-                 , addedProductCodes: []
-                 }
+    this.state = {
+      filteredProducts: new FilteredProducts(props.products, props.categories, props.brands)
+      , addedProductCodes: []
+    }
   }
 
   searchChanged = (value: string) => {
-    this.setState({ filteredProducts: this.state.filteredProducts.search(value)
-                  })
+    this.setState({
+      filteredProducts: this.state.filteredProducts.search(value)
+    })
   }
 
   flagChanged = (changedFlag: string) => {
-    this.setState({ filteredProducts: this.state.filteredProducts.toggleFlag(changedFlag)
-                  })
+    this.setState({
+      filteredProducts: this.state.filteredProducts.toggleFlag(changedFlag)
+    })
   }
 
   categoryChanged = (changedCategory: string | null) => {
@@ -49,9 +55,10 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
     this.props.confirmAdd(p)
       .then(() => {
         let addedProductCodes = [...this.state.addedProductCodes, p.code]
-        this.setState({ addedProductCodes
-                      , filteredProducts: this.state.filteredProducts.filter(fp => addedProductCodes.indexOf(fp.code) == -1 )
-                      })
+        this.setState({
+          addedProductCodes
+          , filteredProducts: this.state.filteredProducts.filter(fp => addedProductCodes.indexOf(fp.code) == -1)
+        })
       })
   }
 
@@ -77,17 +84,19 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
           </div>
         </div>
 
-        <ProductFilters searchString={this.state.filteredProducts.searchString}
-                        flags={this.state.filteredProducts.flags}
-                        categories={this.state.filteredProducts.categories}
-                        brands={this.state.filteredProducts.brands}
-                        searchChanged={this.searchChanged}
-                        flagChanged={this.flagChanged}
-                        categoryChanged={this.categoryChanged}
-                        brandChanged={this.brandChanged} />
+        <ProductFilters
+          searchString={this.state.filteredProducts.searchString}
+          flags={this.state.filteredProducts.flags}
+          categories={this.state.filteredProducts.categories}
+          brands={this.state.filteredProducts.brands}
+          searchChanged={this.searchChanged}
+          flagChanged={this.flagChanged}
+          categoryChanged={this.categoryChanged}
+          brandChanged={this.brandChanged} />
         <ProductList products={this.state.filteredProducts.products}
-                     cataloguePopulated={!!this.props.products.length}
-                     addProduct={this.confirmAdd} />
+          cataloguePopulated={!!this.props.products.length}
+          addProduct={this.confirmAdd}
+          showProductImage={this.props.showProductImage} />
       </div>
     )
   }

@@ -72,6 +72,10 @@ button[disabled], button[disabled]:hover {
   @apply border-red border-2;
 }
 
+.bg-black-translucent {
+  background-color: rgba(0,0,0,0.7);
+}
+
 .bg-img-household {
   background-image: url(/img/house.svg);
 }

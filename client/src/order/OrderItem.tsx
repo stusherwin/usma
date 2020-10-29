@@ -24,22 +24,25 @@ export interface OrderItemProps {
   saveItem?: (item: Item) => void
   editItem?: (item: Item) => void
   toggleItemPacked?: (item: Item) => void
+  showProductImage: (productCode: string) => void
 }
 
-export const OrderItem = ({ item
-  , orderAbandoned
-  , minQuantity
-  , maxQuantity
-  , checkedOff
-  , past
-  , packing
-  , editItemQuantity
-  , editProductPrice
-  , removeItem
-  , addToCurrentOrder
-  , saveItem
-  , editItem
-  , toggleItemPacked
+export const OrderItem = ({
+  item,
+  orderAbandoned,
+  minQuantity,
+  maxQuantity,
+  checkedOff,
+  past,
+  packing,
+  editItemQuantity,
+  editProductPrice,
+  removeItem,
+  addToCurrentOrder,
+  saveItem,
+  editItem,
+  toggleItemPacked,
+  showProductImage
 }: OrderItemProps) => {
   if (minQuantity === undefined) minQuantity = 1
   if (maxQuantity === undefined) maxQuantity = 10
@@ -82,7 +85,9 @@ export const OrderItem = ({ item
   return <React.Fragment>
     <tr onClick={_ => packing && toggleItemPacked && toggleItemPacked(item)}>
       <td className={classNames('w-20 h-20 align-top pl-2 pt-4', bgClass)} rowSpan={editProductPrice ? 4 : 3}>
-        <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(item.productCode)} />
+        <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); showProductImage(item.productCode); }}>
+          <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(item.productCode)} />
+        </a>
       </td>
       <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', bgClass)}>
         {(checkedOff || item.packed) && <span className={classNames(checkmarkClass)}>{'\u2713 '} </span>}{item.productCode}

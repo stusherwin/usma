@@ -15,6 +15,7 @@ export interface HouseholdOrderItemsProps {
   packing?: boolean
   request: <T extends {}>(p: Promise<T>) => Promise<T>
   reload: () => Promise<void>
+  showProductImage: (productCode: string) => void
 }
 
 export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProps, {}> {
@@ -52,13 +53,15 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
         <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items {!!this.props.products && !this.props.products.length && ' - the product catalogue is empty'}
       </div>
       : <table className="border-collapse w-full">
-        {items.map((item, index) =>
-          <OrderItem item={item}
+        {items.map(item =>
+          <OrderItem
+            item={item}
             orderAbandoned={householdOrder.isAbandoned}
             packing={this.props.packing}
             editItemQuantity={!this.props.readOnly && householdOrder.isOpen && this.editQuantity || undefined}
             removeItem={!this.props.readOnly && householdOrder.isOpen && this.removeItem || undefined}
-            toggleItemPacked={this.props.readOnly && this.togglePacked || undefined} />
+            toggleItemPacked={this.props.readOnly && this.togglePacked || undefined}
+            {...this.props} />
         )}
         <tr hidden={!discontinuedItems.length}>
           <td colSpan={4} className={classNames("text-red font-bold pb-2 px-2", { "pt-4": !items.length, "pt-8": items.length })}>
@@ -67,9 +70,11 @@ export class HouseholdOrderItems extends React.Component<HouseholdOrderItemsProp
             </span>
           </td>
         </tr>
-        {discontinuedItems.map((item, index) =>
-          <OrderItem item={item}
-            orderAbandoned={householdOrder.isAbandoned} />
+        {discontinuedItems.map(item =>
+          <OrderItem
+            item={item}
+            orderAbandoned={householdOrder.isAbandoned}
+            {...this.props} />
         )}
         <OrderFooter order={householdOrder} />
       </table>
