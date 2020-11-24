@@ -1,10 +1,11 @@
 import * as React from 'react';
 import * as classNames from 'classnames'
 
-import { CollectiveOrder } from 'util/Types'
+import { CollectiveOrder, OrderItem as Item } from 'util/Types'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
+import { ServerApi } from 'util/ServerApi'
 
 import { OrderItem } from 'order/OrderItem'
 import { OrderStatus } from 'order/OrderStatus'
@@ -14,6 +15,8 @@ import { OrderFooter } from 'order/OrderFooter'
 export interface PastHouseholdOrdersProps {
   pastOrder: CollectiveOrder
   showProductImage: (productCode: string) => void
+  request: <T extends {}>(p: Promise<T>) => Promise<T>
+  reload: () => Promise<void>
 }
 
 export interface PastHouseholdOrdersState { collapsibleState: CollapsibleState }
@@ -32,6 +35,11 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
       <table className="border-collapse w-full">
         <tbody>
           {this.props.pastOrder.householdOrders.map((ho, i) => {
+            const togglePacked = (item: Item) => {
+              this.props.request(ServerApi.command.toggleItemPacked(ho.orderId, ho.householdId, item.productCode))
+                .then(this.props.reload)
+            }
+
             return (
               <tr key={ho.householdId}>
                 <td colSpan={2}>
@@ -56,7 +64,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                         </div>
                       </div>
                     }>
-                    <div className="shadow-inner-top bg-white-sepia">
+                    <div className="shadow-inner-top bg-white">
                       {!ho.items.length ?
                         <div className="px-2 py-4 text-black">
                           <Icon type="info" className="w-4 h-4 mr-2 fill-current nudge-d-2" />No order items
@@ -66,7 +74,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                             {ho.items.map((item, index) =>
                               <OrderItem item={item}
                                 past={true}
+                                packing={true}
                                 orderAbandoned={ho.isAbandoned}
+                                toggleItemPacked={togglePacked}
                                 {...this.props} />
                             )}
                             <OrderFooter order={ho} />
