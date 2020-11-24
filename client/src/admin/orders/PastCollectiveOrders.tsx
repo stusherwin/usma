@@ -77,8 +77,8 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
         collapsibleState={this.props.collapsibleState}
         {...this.props}
         header={
-          <div className="p-2 pt-4 bg-past-orders-sepia border-past-orders-sepia-dark border-b border-t min-h-24">
-            <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
+          <div className="p-2 pt-4 bg-past-order border-past-order-dark border-b border-t min-h-24">
+            <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
             <h2 className="leading-none ml-20 relative flex">
               Past orders
                        </h2>
@@ -97,8 +97,8 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                     collapsibleState={this.state.collapsibleState}
                     onCollapsed={this.endReconcilingOrder(o)}
                     header={
-                      <div className={classNames('p-2 pt-4 bg-order-dark-sepia min-h-24', { "shadow-inner-top": i == 0 })}>
-                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order sepia"></div>
+                      <div className={classNames('p-2 pt-4 bg-order-lightest min-h-24', { "shadow-inner-top": i == 0 })}>
+                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
                         <div className="flex items-baseline justify-between ml-20">
                           <div>
                             <h3 className={classNames("leading-none", { 'line-through': o.isAbandoned })}>
@@ -115,7 +115,7 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                       </div>
                     }
                     expandedHeader={!this.state.reconcilingOrder[o.id] && this.props.uploadingOrderId != o.id &&
-                      <div className="p-2 -mt-4 bg-order-dark-sepia">
+                      <div className="p-2 -mt-4 bg-order-lightest">
                         <CollectiveOrderButtons
                           order={o}
                           reconcileOrder={this.startReconcilingOrder(o)}
@@ -124,9 +124,9 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                           <OrderTabs
                             tab={this.state.tabs[i]}
                             setTab={this.setTab(i)}
-                            householdsBg="bg-household-lightest-sepia"
-                            productsBg="bg-white-sepia"
-                            productCodesBg="bg-white-sepia" />
+                            householdsBg="bg-household-lightest"
+                            productsBg="bg-white"
+                            productCodesBg="bg-white" />
                         </div>
                       </div>
                       || undefined}>
@@ -140,25 +140,25 @@ export class PastCollectiveOrders extends React.Component<PastCollectiveOrdersPr
                       : this.props.uploadingOrderId == o.id ?
                         <ReconcileOrderFileUpload
                           collectiveOrder={o}
-                          bgColor="bg-household-lightest-sepia"
+                          bgColor="bg-household-lightest"
                           cancelUpload={this.props.cancelUpload}
                           request={this.props.request}
                           reload={this.props.reload} />
                         : (this.state.tabs[i] || 'households') == 'households' ?
-                          <div className={classNames("border-t bg-household-lightest-sepia", { "shadow-inner-top": this.props.uploadingOrderId != o.id })}>
+                          <div className={classNames("border-t bg-household-lightest", { "shadow-inner-top": this.props.uploadingOrderId != o.id })}>
                             <div className="flex justify-end mt-4 mr-2 mb-4">
                               <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url.householdOrdersDownload(o)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                             </div>
                             <PastHouseholdOrders pastOrder={o} {...this.props} />
                           </div>
                           : this.state.tabs[i] == 'product-list' ?
-                            <div className={classNames("border-t bg-white-sepia", { "shadow-inner-top": this.props.uploadingOrderId != o.id })}>
+                            <div className={classNames("border-t bg-white", { "shadow-inner-top": this.props.uploadingOrderId != o.id })}>
                               <div className="flex justify-end mr-2 mt-4 mb-4">
                                 <button className="flex-no-grow flex-no-shrink" onClick={e => document.location.href = ServerApi.url.collectiveOrderDownload(o)}><Icon type="download" className="w-4 h-4 fill-current mr-2 nudge-d-2" />Download CSV file</button>
                               </div>
                               <OrderItems order={o} {...this.props} />
                             </div>
-                            : <div className={classNames("border-t bg-white-sepia", { "shadow-inner-top": this.props.uploadingOrderId != o.id })}>
+                            : <div className={classNames("border-t bg-white", { "shadow-inner-top": this.props.uploadingOrderId != o.id })}>
                               <ProductCodes order={o} />
                             </div>
                     }

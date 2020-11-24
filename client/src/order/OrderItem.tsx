@@ -71,8 +71,7 @@ export const OrderItem = ({
   }
 
   const bgClass = {
-    'bg-list-lightest-sepia': past && (checkedOff || item.packed),
-    'bg-grey-light': !past && (checkedOff || item.packed),
+    'bg-grey-light': checkedOff || item.packed,
     'cursor-pointer': packing
   }
 

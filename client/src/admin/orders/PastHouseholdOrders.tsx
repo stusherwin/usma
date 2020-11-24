@@ -47,8 +47,8 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                     collapsibleKey={ho.householdId}
                     collapsibleState={this.state.collapsibleState}
                     header={
-                      <div className={classNames('p-2 bg-household-light-sepia min-h-24')}>
-                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-household sepia mt-2"></div>
+                      <div className={classNames('p-2 bg-household-lighter min-h-24')}>
+                        <div className="bg-no-repeat w-16 h-16 absolute bg-img-household mt-2"></div>
                         <div className="flex items-baseline justify-between mt-2 ml-20">
                           <div>
                             <h3 className={classNames("leading-none", { 'line-through': ho.isAbandoned })}>

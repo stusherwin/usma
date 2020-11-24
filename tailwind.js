@@ -45,7 +45,7 @@ View the full documentation at https://tailwindcss.com.
 
 let colors = {
   'transparent': 'transparent',
-  
+
   'household-darker': '#27454a',
   'household-dark': '#2f6671',
   'household': '#34a8c0',
@@ -68,7 +68,7 @@ let colors = {
   'past-orders-sepia': '#ffe7b7',
   'past-orders-sepia-dark': '#f4d59f',
 
-  'past-order': '#ffa868', //#ff6633
+  'past-order': '#ffbf7b', //#ff6633
   'past-order-lighter': '#feb244',
   'past-order-lightest': '#ffd89e',
 
