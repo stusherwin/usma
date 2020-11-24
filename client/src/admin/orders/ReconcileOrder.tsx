@@ -217,8 +217,8 @@ export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconciling
 
   return (
     <div className="">
-      <div className={classNames("text-white h-24 p-2 pt-4 relative shadow-inner-top", { 'bg-list': !past, 'bg-list-sepia': past })}>
-        <div className={classNames("bg-img-list bg-no-repeat w-16 h-16 absolute", { 'sepia': past })}></div>
+      <div className={classNames("text-white h-24 p-2 pt-4 relative shadow-inner-top bg-list")}>
+        <div className={classNames("bg-img-list bg-no-repeat w-16 h-16 absolute")}></div>
         <h2 className="leading-none ml-20">Reconcile order</h2>
         <div className="ml-20 mt-3">
           <button onClick={endReconcilingOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>
@@ -231,7 +231,7 @@ export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconciling
           <input type="text" id="search" placeholder="e.g. 'FX109' or 'Oat Bran'" autoFocus className="w-full input icon" value={searchString} onChange={e => setSearchString(e.target.value)} />
         </div>
       </div>
-      <div className={classNames("shadow-inner-top border-t", { 'bg-white': !past, 'bg-white-sepia': past })}>
+      <div className={classNames("shadow-inner-top border-t")}>
         <table className="border-collapse w-full">
           <tbody>
             {items.map(item => {
