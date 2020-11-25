@@ -62,7 +62,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
         {...this.props}
         header={
           <div className="p-2 pt-4 bg-past-order border-past-order-dark border-b border-t min-h-24">
-            <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+            <svg className="w-16 h-16 absolute">
+              <use xlinkHref="#icon-order" />
+            </svg>
             <div className="flex justify-between items-baseline">
               <h2 className="leading-none ml-20">
                 Past orders
@@ -90,7 +92,9 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                           collapsibleState={this.state.collapsibleState}
                           header={
                             <div className={classNames('p-2 pt-4 bg-order-dark min-h-24', { "shadow-inner-top": i == 0 })}>
-                              <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+                              <svg className="w-16 h-16 absolute">
+                                <use xlinkHref="#icon-order" />
+                              </svg>
                               <div className="flex items-baseline justify-between ml-20">
                                 <div>
                                   <h3 className={classNames("leading-none", { 'line-through': ho.isAbandoned })}>

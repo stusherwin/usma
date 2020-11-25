@@ -66,14 +66,18 @@ export class AddProduct extends React.Component<AddProductProps, AddProductState
     return (
       <div id="add-container">
         {/* <div className="bg-product-light text-white p-2 relative shadow-inner-top">
-          <div className="bg-img-product bg-no-repeat w-16 h-16 absolute"></div>
+          <svg className="w-16 h-16 absolute">
+            <use xlinkHref="#icon-product" />
+          </svg>
           <h2 className="leading-none ml-20">Add items</h2>
           <div className="ml-20 mt-3">
             <button onClick={this.props.cancelAdd}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>
           </div>
         </div> */}
         <div className="p-2 pt-4 bg-product-light h-24 text-white">
-          <div className="bg-no-repeat w-16 h-16 absolute bg-img-product"></div>
+          <svg className="w-16 h-16 absolute">
+            <use xlinkHref="#icon-product" />
+          </svg>
           <div className="flex justify-between">
             <h2 className="leading-none ml-20">
               Add items

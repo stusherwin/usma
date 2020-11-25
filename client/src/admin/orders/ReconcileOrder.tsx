@@ -218,7 +218,9 @@ export const ReconcileOrder = ({ order, past, endReconcilingItem, endReconciling
   return (
     <div className="">
       <div className={classNames("text-white h-24 p-2 pt-4 relative shadow-inner-top bg-list")}>
-        <div className={classNames("bg-img-list bg-no-repeat w-16 h-16 absolute")}></div>
+        <svg className="w-16 h-16 absolute">
+          <use xlinkHref="#icon-list" />
+        </svg>
         <h2 className="leading-none ml-20">Reconcile order</h2>
         <div className="ml-20 mt-3">
           <button onClick={endReconcilingOrder}><Icon type="ok" className="w-4 h-4 mr-2 fill-current nudge-d-1" />Done</button>

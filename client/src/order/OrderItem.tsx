@@ -6,6 +6,7 @@ import { OrderItem as Item } from 'util/Types'
 import { ServerApi } from 'util/ServerApi'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
+import { Image } from 'util/Image'
 
 import { ProductFlags } from 'product/ProductFlags'
 
@@ -84,7 +85,7 @@ export const OrderItem = ({
     <tr onClick={_ => packing && toggleItemPacked && toggleItemPacked(item)}>
       <td className={classNames('w-20 h-20 align-top pl-2 pt-4', bgClass)} rowSpan={editProductPrice ? 4 : 3}>
         <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); showProductImage(item.productCode); }}>
-          <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(item.productCode)} />
+          <Image className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(item.productCode)} />
         </a>
       </td>
       <td className={classNames('pb-2 pl-2 font-bold align-baseline whitespace-no-wrap pt-4', bgClass)}>

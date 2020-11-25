@@ -10,16 +10,18 @@ import { ServerApi } from 'util/ServerApi'
 
 import { HouseholdPaymentForm, PaymentData } from './HouseholdPaymentForm'
 
-export interface HouseholdPaymentsProps { household: Household
-                                        , readOnly?: boolean
-                                        , collapsibleKey: string
-                                        , collapsibleState: CollapsibleState
-                                        , request: <T extends {}>(p: Promise<T>) => Promise<T>
-                                        , reload: () => Promise<void>
-                                        }
+export interface HouseholdPaymentsProps {
+  household: Household
+  , readOnly?: boolean
+  , collapsibleKey: string
+  , collapsibleState: CollapsibleState
+  , request: <T extends {}>(p: Promise<T>) => Promise<T>
+  , reload: () => Promise<void>
+}
 
-export interface HouseholdPaymentsState { editing: 'new' | number | null
-                                        }
+export interface HouseholdPaymentsState {
+  editing: 'new' | number | null
+}
 
 export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, HouseholdPaymentsState> {
   constructor(props: HouseholdPaymentsProps) {
@@ -27,27 +29,27 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
 
     this.state = { editing: null }
   }
-  
+
   startCreate = () => this.setState({ editing: 'new' })
 
   cancelCreate = () => this.setState({ editing: null })
 
-  confirmCreate = ({date, amount}: PaymentData) => 
-      this.props.request(ServerApi.command.createHouseholdPayment(this.props.household.id, date, amount))
-        .then(this.props.reload)
-        .then(_ => this.setState({ editing: null }))
-  
+  confirmCreate = ({ date, amount }: PaymentData) =>
+    this.props.request(ServerApi.command.createHouseholdPayment(this.props.household.id, date, amount))
+      .then(this.props.reload)
+      .then(_ => this.setState({ editing: null }))
+
   startEdit = (payment: HouseholdPayment) => this.setState({ editing: payment.id })
 
   cancelEdit = () => this.setState({ editing: null })
 
-  confirmEdit = ({date, amount}: PaymentData) => {
-    if(typeof this.state.editing !== 'number')
+  confirmEdit = ({ date, amount }: PaymentData) => {
+    if (typeof this.state.editing !== 'number')
       return Promise.resolve()
 
     return this.props.request(ServerApi.command.updateHouseholdPayment(this.state.editing, date, amount))
-        .then(this.props.reload)
-        .then(_ => this.setState({ editing: null }))
+      .then(this.props.reload)
+      .then(_ => this.setState({ editing: null }))
   }
 
   delete = (p: HouseholdPayment) => {
@@ -57,35 +59,37 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
 
   render() {
     const total = this.props.household.householdPayments.reduce((tot, p) => tot + p.amount, 0)
- 
+
     return (
       <Collapsible collapsibleKey={this.props.collapsibleKey}
-                   collapsibleState={this.props.collapsibleState}
-                   onCollapsed={() => this.setState({ editing: null })}
-                   {...this.props}
-                   header={
-                     <div className="p-2 pt-4 bg-payment-light min-h-24">
-                       <div className="bg-no-repeat w-16 h-16 absolute bg-img-payment"></div>
-                       <div className="flex justify-between items-baseline">
-                         <h2 className="leading-none ml-20">
-                           Payments
+        collapsibleState={this.props.collapsibleState}
+        onCollapsed={() => this.setState({ editing: null })}
+        {...this.props}
+        header={
+          <div className="p-2 pt-4 bg-payment-light min-h-24">
+            <svg className="w-16 h-16 absolute">
+              <use xlinkHref="#icon-payment" />
+            </svg>
+            <div className="flex justify-between items-baseline">
+              <h2 className="leading-none ml-20">
+                Payments
                          </h2>
-                         <h3>
-                           <Money className="text-right" amount={-this.props.household.totalPayments} noColour />
-                         </h3>
-                       </div>
-                     </div>
-                   }
-                   expandedHeader={!this.props.readOnly && 
-                     <div className="p-2 pt-0 bg-payment-light flex justify-end">
-                       <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
-                     </div>
-                   || undefined}>
+              <h3>
+                <Money className="text-right" amount={-this.props.household.totalPayments} noColour />
+              </h3>
+            </div>
+          </div>
+        }
+        expandedHeader={!this.props.readOnly &&
+          <div className="p-2 pt-0 bg-payment-light flex justify-end">
+            <button onClick={e => { e.preventDefault(); e.stopPropagation(); this.startCreate() }} disabled={!!this.state.editing}><Icon type="add" className="w-4 h-4 mr-2 fill-current nudge-d-2" />New payment</button>
+          </div>
+          || undefined}>
         <div className="shadow-inner-top bg-white">
           {this.state.editing == 'new' &&
             <HouseholdPaymentForm key="create"
-                                  onCancel={this.cancelCreate}
-                                  onConfirm={this.confirmCreate}>
+              onCancel={this.cancelCreate}
+              onConfirm={this.confirmCreate}>
             </HouseholdPaymentForm>
           }
           {!this.props.household.householdPayments.length && !this.state.editing &&
@@ -96,25 +100,25 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
           {!!this.props.household.householdPayments.length &&
             <table className="border-collapse w-full">
               <tbody>
-                { this.props.household.householdPayments.map((p, i) =>
+                {this.props.household.householdPayments.map((p, i) =>
                   this.state.editing == p.id
-                  ? (
-                    <tr key={p.id}>
-                      <td colSpan={3} className={classNames({"pt-4": i > 0})}>
-                        <HouseholdPaymentForm key="edit"
-                                              payment={p}
-                                              onCancel={this.cancelEdit}
-                                              onConfirm={this.confirmEdit}>
-                        </HouseholdPaymentForm>
-                      </td>
-                    </tr>
-                  )
-                  : <React.Fragment key={p.id}>
+                    ? (
+                      <tr key={p.id}>
+                        <td colSpan={3} className={classNames({ "pt-4": i > 0 })}>
+                          <HouseholdPaymentForm key="edit"
+                            payment={p}
+                            onCancel={this.cancelEdit}
+                            onConfirm={this.confirmEdit}>
+                          </HouseholdPaymentForm>
+                        </td>
+                      </tr>
+                    )
+                    : <React.Fragment key={p.id}>
                       <tr>
-                        <td className={classNames('pt-4 pr-2 pl-20 whitespace-no-wrap')}><span className="pl-2">{ Util.formatDate(p.date) }</span></td>
+                        <td className={classNames('pt-4 pr-2 pl-20 whitespace-no-wrap')}><span className="pl-2">{Util.formatDate(p.date)}</span></td>
                         <td className={classNames('pt-4 pr-2 text-right whitespace-no-wrap')}><Money amount={-p.amount} noColour /></td>
                       </tr>
-                      {!this.props.readOnly && 
+                      {!this.props.readOnly &&
                         <tr>
                           <td colSpan={2} className={classNames("pt-2 pr-2 w-full whitespace-no-wrap")}>
                             <div className="flex justify-end">
@@ -125,9 +129,9 @@ export class HouseholdPayments extends React.Component<HouseholdPaymentsProps, H
                         </tr>
                       }
                     </React.Fragment>
-                ) }
+                )}
                 <tr>
-                  <td className="pt-4 pl-20 pr-2 pb-4 font-bold" colSpan={this.props.readOnly? 2 : 3}>
+                  <td className="pt-4 pl-20 pr-2 pb-4 font-bold" colSpan={this.props.readOnly ? 2 : 3}>
                     <div className="flex justify-between">
                       <span className="pl-2">Total:</span>
                       <span className={classNames("font-bold text-right whitespace-no-wrap")}><Money amount={-total} noColour /></span>

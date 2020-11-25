@@ -4,7 +4,7 @@ import { CollectiveOrder, Household, ProductCatalogueEntry, GroupSettings } from
 import { ServerApi, ApiError } from './util/ServerApi'
 import { Router } from './util/Router'
 import { Loading } from './util/Loading'
-import { Icon } from './util/Icon'
+import { Icon, Icons } from './util/Icon'
 
 import { AdminOrdersPage } from 'admin/orders/AdminOrdersPage'
 import { AdminProductsPage } from 'admin/products/AdminProductsPage'
@@ -234,6 +234,7 @@ export class Main extends React.Component<MainProps, MainState> {
 
     return (
       <div>
+        <Icons className="absolute w-0 h-0" />
         {!this.state.initialised ?
           <div className="fixed pin bg-grey-dark"></div>
           : !this.state.groupKey || !this.state.groupValid ?

@@ -96,7 +96,9 @@ export class AdminProductsPage extends React.Component<AdminProductsPageProps, A
       <div className="bg-product-light min-h-screen">
         <AdminTopNav />
         <div className="p-2 pt-4 bg-product-light h-24 text-white">
-          <div className="bg-no-repeat w-16 h-16 absolute bg-img-product"></div>
+          <svg className="w-16 h-16 absolute">
+            <use xlinkHref="#icon-product" />
+          </svg>
           <div className="flex justify-between">
             <h2 className="leading-none ml-20">
               Products

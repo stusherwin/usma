@@ -47,7 +47,9 @@ export class HouseholdOrders extends React.Component<HouseholdOrdersProps, House
                 collapsibleState={this.state.collapsibleState}
                 header={
                   <div className="p-2 pt-4 bg-household-lighter min-h-24">
-                    <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+                    <svg className="w-16 h-16 absolute">
+                      <use xlinkHref="#icon-household" />
+                    </svg>
                     <div className="flex items-baseline justify-between ml-20">
                       <div>
                         <h3 className={classNames("leading-none", { "line-through": ho.isAbandoned })}>

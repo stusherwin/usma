@@ -112,7 +112,9 @@ export class CollectiveOrderDetails extends React.Component<CollectiveOrderDetai
         {...this.props}
         header={
           <div className="p-2 pt-4 bg-order-dark min-h-24">
-            <div className="bg-no-repeat w-16 h-16 absolute bg-img-order"></div>
+            <svg className="w-16 h-16 absolute">
+              <use xlinkHref="#icon-order" />
+            </svg>
             <div className="flex justify-between items-baseline ml-20">
               <div>
                 <h2 className="leading-none">

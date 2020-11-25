@@ -55,7 +55,9 @@ export class HouseholdPage extends React.Component<HouseholdPageProps, Household
           onExpanded={() => { if (this.editHousehold.current) { this.editHousehold.current.focus() } }}
           header={
             <div className="p-2 pt-0 pb-4 bg-household-light min-h-28">
-              <div className="bg-no-repeat w-16 h-16 absolute bg-img-household"></div>
+              <svg className="w-16 h-16 absolute">
+                <use xlinkHref="#icon-household" />
+              </svg>
               <div className="ml-20 mt-2 flex items-start items-baseline justify-between">
                 <h2 className="mt-1 leading-none mr-2 mb-4">
                   {this.props.household.name}
