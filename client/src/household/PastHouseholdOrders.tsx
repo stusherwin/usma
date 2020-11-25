@@ -91,7 +91,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                         <Collapsible collapsibleKey={ho.orderId}
                           collapsibleState={this.state.collapsibleState}
                           header={
-                            <div className={classNames('p-2 pt-4 bg-order-dark min-h-24', { "shadow-inner-top": i == 0 })}>
+                            <div className={classNames('p-2 pt-4 bg-order-lightest min-h-24', { "shadow-inner-top": i == 0 })}>
                               <svg className="w-16 h-16 absolute">
                                 <use xlinkHref="#icon-order" />
                               </svg>
@@ -111,7 +111,7 @@ export class PastHouseholdOrders extends React.Component<PastHouseholdOrdersProp
                             </div>
                           }
                           expandedHeader={!!ho.items.length && (!this.props.household.currentHouseholdOrder || this.props.household.currentHouseholdOrder.isOpen) &&
-                            <div className="flex justify-start p-2 bg-order-dark pt-0">
+                            <div className="flex justify-start p-2 bg-order-lightest pt-0">
                               <button className="ml-auto" onClick={e => { e.stopPropagation(); e.preventDefault(); this.addAllItemsToCurrentOrder(ho) }}><Icon type="add" className="w-4 h-4 fill-current nudge-d-2 mr-2" />Add all items to current order</button>
                             </div>
                             || undefined}>

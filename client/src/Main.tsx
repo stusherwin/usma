@@ -30,6 +30,7 @@ export interface MainState {
   households: Household[]
   groupSettings: GroupSettings
   productImage: string | null
+  images: string[]
 }
 
 export class Main extends React.Component<MainProps, MainState> {
@@ -53,7 +54,8 @@ export class Main extends React.Component<MainProps, MainState> {
       households: [],
       initialised: !urlInfo.groupKey,
       groupSettings: { enablePayments: false },
-      productImage: null
+      productImage: null,
+      images: []
     }
   }
 

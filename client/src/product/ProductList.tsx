@@ -6,6 +6,7 @@ import { ServerApi } from 'util/ServerApi'
 import { Icon } from 'util/Icon'
 import { Money } from 'util/Money'
 import { LoadMore } from 'util/LoadMore'
+import { Image } from 'util/Image'
 
 import { ProductFlags } from './ProductFlags'
 
@@ -65,7 +66,7 @@ export class ProductList extends React.Component<ProductListProps, ProductListSt
                   <tr key={p.code + '-1'}>
                     <td className={classNames('w-20 h-20 align-top', { 'pt-8': i > 0 })} rowSpan={3}>
                       <a href="#" onClick={e => { e.preventDefault(); e.stopPropagation(); this.props.showProductImage(p.code); }}>
-                        <img className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(p.code)} />
+                        <Image className="w-20 h-20 -ml-1" src={ServerApi.url.productImage(p.code)} />
                       </a>
                     </td>
                     <td className={classNames('pb-2 font-bold align-baseline', { 'pt-8': i > 0 })} colSpan={3}>{p.code}</td>
