@@ -236,7 +236,7 @@ export class Main extends React.Component<MainProps, MainState> {
 
     return (
       <div>
-        <Icons className="absolute w-0 h-0" />
+        <Icons className="hidden" />
         {!this.state.initialised ?
           <div className="fixed pin bg-grey-dark"></div>
           : !this.state.groupKey || !this.state.groupValid ?
