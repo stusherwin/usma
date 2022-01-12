@@ -1,4 +1,4 @@
-Refactor
+Refactor 
 * OrderId needed on API calls if only ever one order per group?
   - Inconsistency on query/command API - query has no orderId parameter
 * Only Past Order Items needed as HouseholdOrder/CollectiveOrder just containers (need isPast flag)
