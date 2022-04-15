@@ -9,16 +9,18 @@
 
 module V2.Repository where 
 
-import Control.Arrow ((***), (&&&))
-import Control.Monad (when, join, liftM)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import Data.ByteString (ByteString)
-import Data.Function (on)
-import Data.List (deleteFirstsBy, intersectBy, nub)
+import           Control.Arrow ((***), (&&&))
+import           Control.Monad (when, join, liftM)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import           Data.ByteString (ByteString)
+import           Data.Function (on)
+import           Data.List (deleteFirstsBy, intersectBy, nub)
 import qualified Data.Map as M (fromList, elems)
-import Data.Maybe (listToMaybe, maybeToList, catMaybes)
-import Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgreSQL, close, withTransaction)
+import           Data.Maybe (listToMaybe, maybeToList, catMaybes)
+import           Data.Text (Text)
+import           Data.Time.Clock (UTCTime)
+import           Database.PostgreSQL.Simple (Connection, Only(..), (:.)(..), connectPostgreSQL, close, withTransaction)
 
 import V2.Domain
 import V2.Repository.SQL
@@ -33,7 +35,7 @@ data Repository = Repository { connection :: Connection }
 connect :: RepositoryConfig -> ((Repository, OrderGroupId) -> MaybeT IO a) -> MaybeT IO a
 connect config action = do
   conn <- liftIO $ connectPostgreSQL $ repoConnectionString $ config
-  groupId <- MaybeT $ listToMaybe . map fromOnly <$> (liftIO $ selectOrderGroupId conn $ repoGroupKey config)
+  groupId <- MaybeT $ listToMaybe . fmap fromOnly <$> (liftIO $ selectOrderGroupId conn $ repoGroupKey config)
   result <- MaybeT $ liftIO $ withTransaction conn $ runMaybeT $ action (Repository conn, groupId)
   liftIO $ close conn
   return result
@@ -48,42 +50,17 @@ getVatRates repo = do
   let conn = connection repo
   selectVatRates conn
 
-getProductCatalogue :: Repository -> IO ProductCatalogue
-getProductCatalogue repo = do
+getProductCatalogueFile :: Repository -> IO (Maybe (UTCTime, Text))
+getProductCatalogueFile repo = do
   let conn = connection repo
 
-  productCatalogue <$> selectCatalogueEntries conn []
+  listToMaybe <$> selectProductCatalogueFile conn
 
-getProductCatalogueForCode :: Repository -> ProductCode -> IO ProductCatalogue
-getProductCatalogueForCode repo code = do
+setProductCatalogueFile :: Repository -> UTCTime -> Text -> IO ()
+setProductCatalogueFile repo date file = do
   let conn = connection repo
 
-  productCatalogue <$> selectCatalogueEntries conn [ForProductCode code]
-
-getProductCatalogueForOrder :: Repository -> OrderGroupId -> OrderId -> IO ProductCatalogue
-getProductCatalogueForOrder repo groupId orderId = do
-  let conn = connection repo
-
-  productCatalogue <$> selectCatalogueEntries conn [ForOrderGroup groupId, ForOrder orderId]
-
-getProductCatalogueCategories :: Repository -> IO [String]
-getProductCatalogueCategories repo = do
-  let conn = connection repo
-
-  (fromOnly <$>) <$> selectCatalogueEntryCategories conn
-
-getProductCatalogueBrands :: Repository -> IO [String]
-getProductCatalogueBrands repo = do
-  let conn = connection repo
-
-  (fromOnly <$>) <$> selectCatalogueEntryBrands conn
-
-setProductCatalogue :: Repository -> ProductCatalogue -> IO ()
-setProductCatalogue repo catalogue = do
-  let conn = connection repo
-
-  truncateCatalogueEntries conn
-  insertCatalogueEntries conn (getEntries catalogue)
+  insertProductCatalogueFile conn date file
 
 -- Needed to convert ProductId to ProductCode
 -- TODO: Remove ProductId altogether

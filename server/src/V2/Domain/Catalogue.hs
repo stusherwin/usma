@@ -9,7 +9,7 @@ import           Control.Arrow ((&&&))
 import           Data.Function (on)
 import qualified Data.HashMap.Lazy as H (fromList, lookup, elems)
 import           Data.Time.Clock (UTCTime)
-import           Data.List (sortBy)
+import           Data.List (sort, sortBy, nub)
 import           Data.List.Extra (trim, lower)
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Text.Read (readMaybe)
@@ -30,6 +30,12 @@ getEntries = sortBy (compare `on` _catalogueEntryCode) . H.elems . fromProductCa
 --TODO: Safe version? If catalogue empty
 getDate :: ProductCatalogue -> UTCTime
 getDate = _catalogueEntryUpdated . head . H.elems . fromProductCatalogue
+
+getCategories :: ProductCatalogue -> [String]
+getCategories = sort . nub . map _catalogueEntryCategory . H.elems . fromProductCatalogue
+
+getBrands :: ProductCatalogue -> [String]
+getBrands = sort . nub . map _catalogueEntryBrand . H.elems . fromProductCatalogue
 
 parseCatalogue :: [VatRate] -> UTCTime -> String -> ProductCatalogue
 parseCatalogue vatRates date file =

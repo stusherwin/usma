@@ -30,14 +30,11 @@ type QueryApi =
   :<|> "past-household-orders" :> Get '[JSON] [Api.PastHouseholdOrder]
   :<|> "households" :> Get '[JSON] [Api.Household]
   :<|> "household-payments" :> Get '[JSON] [Api.HouseholdPayment]
-  :<|> "product-catalogue" :> Get '[JSON] [Api.ProductCatalogueEntry]
   :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
   :<|> "collective-order-download" :> Get '[Csv] FileDownload
   :<|> "household-orders-download" :> Get '[Csv] FileDownload
   :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] FileDownload
   :<|> "past-household-orders-download" :> Capture "orderId" Int :> Get '[Csv] FileDownload
-  :<|> "product-catalogue-categories" :> Get '[JSON] [String]
-  :<|> "product-catalogue-brands" :> Get '[JSON] [String]
   :<|> "group-settings" :> Get '[JSON] Api.GroupSettings
 
 type CommandApi =

@@ -46,14 +46,11 @@ queryServer fetchProductImage config =
     :<|> pastHouseholdOrders
     :<|> households
     :<|> householdPayments
-    :<|> productCatalogue
     :<|> productImage
     :<|> collectiveOrderDownload
     :<|> householdOrdersDownload
     :<|> pastCollectiveOrderDownload
     :<|> pastHouseholdOrdersDownload
-    :<|> productCatalogueCategories
-    :<|> productCatalogueBrands
     :<|> groupSettings
   where
     allData :: Handler Api.ApiData
@@ -92,9 +89,12 @@ queryServer fetchProductImage config =
 
     productCatalogueData :: Handler Api.ProductCatalogueApiData
     productCatalogueData = withRepository config $ \(repo, _) -> do
-      productCatalogue <- map apiProductCatalogueEntry . getEntries <$> (liftIO $ getProductCatalogue repo)
-      categories <- liftIO $ getProductCatalogueCategories repo
-      brands <- liftIO $ getProductCatalogueBrands repo
+      (date, fileContents) <- MaybeT $ liftIO $ getProductCatalogueFile repo
+      vatRates <- liftIO $ getVatRates repo
+      let catalogue = parseCatalogue vatRates date $ T.unpack fileContents
+      let productCatalogue = map apiProductCatalogueEntry $ getEntries $ catalogue
+      let categories = getCategories catalogue
+      let brands = getBrands catalogue
     
       return $ ProductCatalogueApiData productCatalogue categories brands
 
@@ -132,12 +132,6 @@ queryServer fetchProductImage config =
       payments <- liftIO $ getPayments repo (Just groupId)
       return $ apiHouseholdPayment <$> payments
 
-    productCatalogue :: Handler [Api.ProductCatalogueEntry]
-    productCatalogue = withRepository config $ \(repo, _) -> do
-      catalogue <- liftIO $ getProductCatalogue repo
-      let entries = getEntries catalogue
-      return $ apiProductCatalogueEntry <$> entries
-    
     productImage :: String -> Handler BL.ByteString
     productImage code = withRepository config $ \(repo, _) -> do
       MaybeT $ liftIO $ fetchProductImage repo code
@@ -161,14 +155,6 @@ queryServer fetchProductImage config =
     pastHouseholdOrdersDownload orderId = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
         return $ fileDownload "order.csv" $ exportOrderItemsByHousehold order
-
-    productCatalogueCategories :: Handler [String]
-    productCatalogueCategories = withRepository config $ \(repo, _) -> do
-      liftIO $ getProductCatalogueCategories repo
-
-    productCatalogueBrands :: Handler [String]
-    productCatalogueBrands = withRepository config $ \(repo, _) -> do
-      liftIO $ getProductCatalogueBrands repo
 
     groupSettings :: Handler Api.GroupSettings
     groupSettings = withRepository config $ \(repo, groupId) -> do
@@ -243,7 +229,9 @@ commandServer config  =
     reopenHouseholdOrder :: Int -> Int -> Handler ()  
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId orderId)
+      (date, fileContents) <- MaybeT $ liftIO $ getProductCatalogueFile repo
+      vatRates <- liftIO $ getVatRates repo
+      let catalogue = parseCatalogue vatRates date $ T.unpack fileContents
       let order' = applyCatalogueUpdate catalogue . V2.Domain.reopenHouseholdOrder (HouseholdId householdId) $ order
       liftIO $ setOrders repo ([order], [order'])
       return ()
@@ -252,7 +240,9 @@ commandServer config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
-      catalogue <- liftIO $ getProductCatalogueForCode repo (ProductCode productCode)
+      (date, fileContents) <- MaybeT $ liftIO $ getProductCatalogueFile repo
+      vatRates <- liftIO $ getVatRates repo
+      let catalogue = parseCatalogue vatRates date $ T.unpack fileContents
       let order' = addOrUpdateOrderItems catalogue household [(ProductCode productCode, hoidetQuantity details)] order
       liftIO $ setOrders repo ([order], [order'])
       return ()
@@ -262,7 +252,9 @@ commandServer config  =
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       pastOrder <- MaybeT $ getOrder repo groupId (OrderId pastOrderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
-      catalogue <- liftIO $ getProductCatalogueForOrder repo groupId (OrderId pastOrderId)
+      (date, fileContents) <- MaybeT $ liftIO $ getProductCatalogueFile repo
+      vatRates <- liftIO $ getVatRates repo
+      let catalogue = parseCatalogue vatRates date $ T.unpack fileContents
       let order' = addOrderItemsFromPastOrder catalogue household pastOrder order
       liftIO $ setOrders repo ([order], [order'])
       return ()
@@ -327,11 +319,11 @@ commandServer config  =
     uploadProductCatalogue multipartData = withRepository config $ \(repo, _) -> do
       date <- liftIO getCurrentTime
       fileContents <- uploadSingleFile multipartData
+      liftIO $ setProductCatalogueFile repo date $ T.pack $ BL.unpack fileContents
       vatRates <- liftIO $ getVatRates repo
       orders <- liftIO $ getCurrentOrders repo Nothing
       let catalogue = parseCatalogue vatRates date $ BL.unpack fileContents
       let orders' = map (applyCatalogueUpdate catalogue) orders
-      liftIO $ setProductCatalogue repo catalogue
       liftIO $ setOrders repo (orders, orders')
       return ()
 

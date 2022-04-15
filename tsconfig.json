@@ -16,7 +16,7 @@
           "product/*": [ "product/*" ],
           "util/*": [ "util/*" ],
         },
-        "esModuleInterop": true
+        // "esModuleInterop": true
     },
     "include": [
         "./client/src/**/*"

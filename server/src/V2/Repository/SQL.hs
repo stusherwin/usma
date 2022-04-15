@@ -9,19 +9,21 @@
 
 module V2.Repository.SQL where 
 
-import Control.Monad (mzero, void)
-import Data.ByteString (ByteString)
-import Data.Char (isSpace)
-import Data.Functor ((<&>))
-import Data.List (foldl')
+import           Control.Monad (mzero, void)
+import           Data.ByteString (ByteString)
+import           Data.Char (isSpace)
+import           Data.Functor ((<&>))
+import           Data.List (foldl')
 import qualified Data.Text as T (pack)
-import Data.Text.Encoding (encodeUtf8)
-import Database.PostgreSQL.Simple (Connection, Only(..), Query, Binary(..), (:.)(..), query, query_, execute, execute_, executeMany)
-import Database.PostgreSQL.Simple.FromField (FromField(..))
-import Database.PostgreSQL.Simple.FromRow (FromRow(..), RowParser, field)
-import Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
-import Database.PostgreSQL.Simple.ToRow (ToRow(..))
-import Database.PostgreSQL.Simple.SqlQQ (sql)
+import           Data.Text (Text)
+import           Data.Text.Encoding (encodeUtf8)
+import           Data.Time.Clock (UTCTime)
+import           Database.PostgreSQL.Simple (Connection, Only(..), Query, Binary(..), (:.)(..), query, query_, execute, executeMany)
+import           Database.PostgreSQL.Simple.FromField (FromField(..))
+import           Database.PostgreSQL.Simple.FromRow (FromRow(..), RowParser, field)
+import           Database.PostgreSQL.Simple.ToField (ToField(..), Action(..))
+import           Database.PostgreSQL.Simple.ToRow (ToRow(..))
+import           Database.PostgreSQL.Simple.SqlQQ (sql)
 
 import V2.Domain
 
@@ -51,85 +53,21 @@ selectVatRates conn =
     from v2.vat_rate
   |])
 
-selectCatalogueEntries :: Connection -> [WhereParam] -> IO [ProductCatalogueEntry]
-selectCatalogueEntries conn whereParams = 
-    query conn ([sql|
-      select ce.code
-           , ce.category
-           , ce.brand
-           , ce."description"
-           , ce."text"
-           , ce.size
-           , ce.vat_rate
-           , v.multiplier
-           , ce.price
-           , ce.rrp
-           , ce.biodynamic
-           , ce.fair_trade
-           , ce.gluten_free
-           , ce.organic
-           , ce.added_sugar
-           , ce.vegan
-           , ce.updated
-      from v2.catalogue_entry ce
-      join v2.vat_rate v on v.code = ce.vat_rate
-      left join v2.order_item oi on oi.product_code = ce.code
-      left join v2."order" o on oi.order_id = o.id
-      where 1 = 1 |] <> whereClause <> [sql|
-      order by ce.code
-    |]) params
-  where
-    (whereClause, params) = toWhereClause whereParams $ \case
-      (ForProductCode _) -> Just [sql| ce.code = ? |]
-      (ForOrder _) -> Just [sql| o.id = ? |]
-      (ForOrderGroup _) -> Just [sql| o.order_group_id = ? |]
-      _ -> Nothing
-
-selectCatalogueEntryCategories :: Connection -> IO [Only String]
-selectCatalogueEntryCategories conn = 
-    query_ conn [sql|
-      select distinct ce.category
-      from v2.catalogue_entry ce
-      order by ce.category
-    |]
-
-selectCatalogueEntryBrands :: Connection -> IO [Only String]
-selectCatalogueEntryBrands conn = 
-    query_ conn [sql|
-      select distinct ce.brand
-      from v2.catalogue_entry ce
-      order by ce.brand
-    |]
-
-truncateCatalogueEntries :: Connection -> IO ()
-truncateCatalogueEntries conn =   
-  void $ execute_ conn [sql|
-    truncate table v2.catalogue_entry
+selectProductCatalogueFile :: Connection -> IO [(UTCTime, Text)]
+selectProductCatalogueFile conn =
+  query_ conn [sql|
+    select uploaded_date, "file"
+    from v2.catalogue_file
+    order by uploaded_date desc
+    limit 1
   |]
 
-insertCatalogueEntries :: Connection -> [ProductCatalogueEntry] -> IO ()
-insertCatalogueEntries conn entries = 
-  void $ executeMany conn [sql|
-    insert into v2.catalogue_entry 
-      ( "code"
-      , category
-      , brand
-      , "description"
-      , "text"
-      , size
-      , vat_rate
-      , price
-      , rrp
-      , biodynamic
-      , fair_trade
-      , gluten_free
-      , organic
-      , added_sugar
-      , vegan
-      , updated
-      )
-    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  |] entries
+insertProductCatalogueFile :: Connection -> UTCTime -> Text -> IO ()
+insertProductCatalogueFile conn date file = 
+  void $ execute conn [sql|
+    insert into v2.catalogue_file ( uploaded_date, "file" ) 
+    values (?, ?)
+  |] (date, file)
 
 selectProductImage :: Connection -> ProductCode -> IO [Only ByteString]
 selectProductImage conn code =
