@@ -141,7 +141,7 @@ applyItemUpdate catalogue item = case findEntry (itemProductCode item) catalogue
            | otherwise -> adjustItemPrice date (_catalogueEntryPrice e) item
     _ -> discontinueProduct date item
   where
-    date = getDate catalogue
+    date = updatedDate catalogue
 
 acceptItemUpdate :: OrderItem -> OrderItem
 acceptItemUpdate item@OrderItem 

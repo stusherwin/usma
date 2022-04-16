@@ -20,8 +20,8 @@ import           Safe (headMay)
 import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..), Mem)
 
-import           V2.Api as Api
-import           V1.Types as Api
+import qualified V2.Api as Api
+import qualified V1.Types as Api
 import           Config (Config(..))
 import           V2.CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           V2.Domain
@@ -79,24 +79,24 @@ queryServer fetchProductImage config =
       groupSettings <- liftIO $ getOrderGroup repo groupId
       let groupSettings' = apiGroupSettings groupSettings
 
-      return $ ApiData collectiveOrder' 
-                       pastCollectiveOrders'
-                       householdOrders' 
-                       pastHouseholdOrders' 
-                       households' 
-                       householdPayments' 
-                       groupSettings'
+      return $ Api.ApiData collectiveOrder' 
+                           pastCollectiveOrders'
+                           householdOrders' 
+                           pastHouseholdOrders' 
+                           households' 
+                           householdPayments' 
+                           groupSettings'
 
     productCatalogueData :: Handler Api.ProductCatalogueApiData
     productCatalogueData = withRepository config $ \(repo, _) -> do
       (date, fileContents) <- MaybeT $ liftIO $ getProductCatalogueFile repo
       vatRates <- liftIO $ getVatRates repo
       let catalogue = parseCatalogue vatRates date $ T.unpack fileContents
-      let productCatalogue = map apiProductCatalogueEntry $ getEntries $ catalogue
-      let categories = getCategories catalogue
-      let brands = getBrands catalogue
+      let productCatalogue = map apiProductCatalogueEntry $ entries $ catalogue
+      let cs = categories catalogue
+      let bs = brands catalogue
     
-      return $ ProductCatalogueApiData productCatalogue categories brands
+      return $ Api.ProductCatalogueApiData productCatalogue cs bs
 
     collectiveOrder :: Handler (Maybe Api.CollectiveOrder)
     collectiveOrder = withRepository config $ \(repo, groupId) -> do
@@ -136,22 +136,22 @@ queryServer fetchProductImage config =
     productImage code = withRepository config $ \(repo, _) -> do
       MaybeT $ liftIO $ fetchProductImage repo code
 
-    collectiveOrderDownload :: Handler FileDownload
+    collectiveOrderDownload :: Handler Api.FileDownload
     collectiveOrderDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
         return $ fileDownload "order.csv" $ exportOrderItems order
 
-    householdOrdersDownload :: Handler FileDownload
+    householdOrdersDownload :: Handler Api.FileDownload
     householdOrdersDownload = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getCurrentOrder repo groupId
         return $ fileDownload "order.csv" $ exportOrderItemsByHousehold order
 
-    pastCollectiveOrderDownload :: Int -> Handler FileDownload
+    pastCollectiveOrderDownload :: Int -> Handler Api.FileDownload
     pastCollectiveOrderDownload orderId = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
         return $ fileDownload "order.csv" $ exportOrderItems order
 
-    pastHouseholdOrdersDownload :: Int -> Handler FileDownload
+    pastHouseholdOrdersDownload :: Int -> Handler Api.FileDownload
     pastHouseholdOrdersDownload orderId = withRepository config $ \(repo, groupId) -> do
         order <- MaybeT $ liftIO $ getOrder repo groupId (OrderId orderId)
         return $ fileDownload "order.csv" $ exportOrderItemsByHousehold order
@@ -161,7 +161,7 @@ queryServer fetchProductImage config =
       group <- liftIO $ getOrderGroup repo groupId
       return $ apiGroupSettings group
 
-commandServer :: RepositoryConfig -> Server CommandApi
+commandServer :: RepositoryConfig -> Server Api.CommandApi
 commandServer config  = 
          createOrderForHousehold
     :<|> createOrder
@@ -243,7 +243,7 @@ commandServer config  =
       (date, fileContents) <- MaybeT $ liftIO $ getProductCatalogueFile repo
       vatRates <- liftIO $ getVatRates repo
       let catalogue = parseCatalogue vatRates date $ T.unpack fileContents
-      let order' = addOrUpdateOrderItems catalogue household [(ProductCode productCode, hoidetQuantity details)] order
+      let order' = addOrUpdateOrderItems catalogue household [(ProductCode productCode, Api.hoidetQuantity details)] order
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
@@ -269,47 +269,47 @@ commandServer config  =
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
-    createHousehold :: HouseholdDetails -> Handler Int
+    createHousehold :: Api.HouseholdDetails -> Handler Int
     createHousehold details = withRepository config $ \(repo, groupId) -> do
         householdId <- liftIO $ R.createHousehold repo groupId spec
         return $ fromHouseholdId householdId
       where
-        contact = Contact (hdetContactName details)
-                          (hdetContactEmail details)
-                          (hdetContactPhone details)
-        spec = HouseholdSpec (hdetName details) contact
+        contact = Contact (Api.hdetContactName details)
+                          (Api.hdetContactEmail details)
+                          (Api.hdetContactPhone details)
+        spec = HouseholdSpec (Api.hdetName details) contact
 
-    updateHousehold :: Int -> HouseholdDetails -> Handler ()
+    updateHousehold :: Int -> Api.HouseholdDetails -> Handler ()
     updateHousehold householdId details = withRepository config $ \(repo, groupId) -> do
         household <- MaybeT $ getHousehold repo groupId (HouseholdId householdId)
         let household' = V2.Domain.updateHousehold name contact household
         liftIO $ setHousehold repo groupId (household, household')
       where
-        name = hdetName details
-        contact = Contact (hdetContactName details)
-                          (hdetContactEmail details)
-                          (hdetContactPhone details)
+        name = Api.hdetName details
+        contact = Contact (Api.hdetContactName details)
+                          (Api.hdetContactEmail details)
+                          (Api.hdetContactPhone details)
 
     archiveHousehold :: Int -> Handler ()
     archiveHousehold householdId = withRepository config $ \(repo, groupId) ->
       liftIO $ removeHousehold repo groupId (HouseholdId householdId)
 
-    createHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler Int
+    createHouseholdPayment :: Int -> Api.HouseholdPaymentDetails -> Handler Int
     createHouseholdPayment householdId details = withRepository config $ \(repo, groupId) -> do
         paymentId <- liftIO $ createPayment repo groupId $ PaymentSpec (HouseholdId householdId) date amount
         return $ fromPaymentId paymentId
       where
-        date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
-        amount = hpdetAmount details
+        date = UTCTime (Api.hpdetDate details) (secondsToDiffTime 0)
+        amount = Api.hpdetAmount details
 
-    updateHouseholdPayment :: Int -> HouseholdPaymentDetails -> Handler ()
+    updateHouseholdPayment :: Int -> Api.HouseholdPaymentDetails -> Handler ()
     updateHouseholdPayment paymentId details = withRepository config $ \(repo, groupId) -> do
         payment <- MaybeT $ getPayment repo groupId (PaymentId paymentId)
         let payment' = updatePayment date amount payment
         liftIO $ setPayment repo groupId (payment, payment')
       where
-        date = UTCTime (hpdetDate details) (secondsToDiffTime 0)
-        amount = hpdetAmount details
+        date = UTCTime (Api.hpdetDate details) (secondsToDiffTime 0)
+        amount = Api.hpdetAmount details
     
     archiveHouseholdPayment :: Int -> Handler ()
     archiveHouseholdPayment paymentId = withRepository config $ \(repo, groupId) ->
@@ -334,15 +334,15 @@ commandServer config  =
       liftIO $ setOrders repo ([order], [order'])
       return ()
 
-    reconcileOrderItem :: Int -> Int -> ReconcileOrderItemDetails -> Handler ()
+    reconcileOrderItem :: Int -> Int -> Api.ReconcileOrderItemDetails -> Handler ()
     reconcileOrderItem orderId productId details = withRepository config $ \(repo, groupId) -> do
       date <- liftIO getCurrentTime
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       -- Needed to convert ProductId to ProductCode
       -- TODO: Remove ProductId altogether
       productCode <- MaybeT $ getProductCode repo (ProductId productId)
-      let updates = map (\h -> (HouseholdId $ hqdetHouseholdId h, OrderItemSpec productCode (roidetProductPriceExcVat details) (hqdetItemQuantity h)))
-                  $ roidetHouseholdQuantities details
+      let updates = map (\h -> (HouseholdId $ Api.hqdetHouseholdId h, OrderItemSpec productCode (Api.roidetProductPriceExcVat details) (Api.hqdetItemQuantity h)))
+                  $ Api.roidetHouseholdQuantities details
       let order' = reconcileOrderItems date updates order
       liftIO $ setOrders repo ([order], [order'])
       return ()
@@ -380,7 +380,7 @@ uploadSingleFile multipartData = do
   file <- MaybeT $ return $ headMay $ files multipartData
   return $ fdPayload file
 
-fileDownload :: String -> BL.ByteString -> FileDownload
+fileDownload :: String -> BL.ByteString -> Api.FileDownload
 fileDownload fileName file = addHeader header file
   where
     header = T.pack $ "attachment; filename=\"" ++ fileName ++ "\""
@@ -394,60 +394,60 @@ withRepository config query = do
 
 apiHousehold :: V2.Domain.Household -> Api.Household 
 apiHousehold h = Api.Household
-  { hId            = fromHouseholdId . _householdId . _householdInfo $ h
-  , hName          = _householdName                 . _householdInfo $ h
-  , hContactName   = _contactName  . _householdContact $ h
-  , hContactEmail  = _contactEmail . _householdContact $ h
-  , hContactPhone  = _contactPhone . _householdContact $ h
-  , hTotalOrders   = householdTotalOrders h
-  , hTotalPayments = householdTotalPayments h
-  , hBalance       = householdBalance h
+  { Api.hId            = fromHouseholdId . _householdId . _householdInfo $ h
+  , Api.hName          = _householdName                 . _householdInfo $ h
+  , Api.hContactName   = _contactName  . _householdContact $ h
+  , Api.hContactEmail  = _contactEmail . _householdContact $ h
+  , Api.hContactPhone  = _contactPhone . _householdContact $ h
+  , Api.hTotalOrders   = householdTotalOrders h
+  , Api.hTotalPayments = householdTotalPayments   h
+  , Api.hBalance       = householdBalance h
   }
 
-apiHouseholdPayment :: Payment -> HouseholdPayment
-apiHouseholdPayment p = HouseholdPayment 
-  { hpId = fromPaymentId . _paymentId $ p
-  , hpHouseholdId = fromHouseholdId . _paymentHouseholdId $ p
-  , hpDate = apiToNearestSecond . _paymentDate $ p
-  , hpAmount = _paymentAmount p
+apiHouseholdPayment :: Payment -> Api.HouseholdPayment
+apiHouseholdPayment p = Api.HouseholdPayment 
+  { Api.hpId = fromPaymentId . _paymentId $ p
+  , Api.hpHouseholdId = fromHouseholdId . _paymentHouseholdId $ p
+  , Api.hpDate = apiToNearestSecond . _paymentDate $ p
+  , Api.hpAmount = _paymentAmount p
   }
 
 apiCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.CollectiveOrder
 apiCollectiveOrder productIds o = Api.CollectiveOrder
-    { coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
-    , coOrderCreatedDate      = apiToNearestSecond . _orderCreated                         . _orderInfo $ o
-    , coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
-    , coOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
-    , coOrderIsPlaced         = (== OrderPlaced) . _orderStatus $ o
-    , coOrderIsAbandoned      = (== OrderAbandoned) . _orderStatus $ o
-    , coIsComplete            = orderIsComplete o
-    , coAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
-    , coTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
-                                                 Just a -> _orderAdjNewTotal a
-                                                 _      -> orderTotal $ o
-    , coTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
-                                                 Just a -> _orderAdjNewTotal a
-                                                 _      -> orderTotal $ o
-    , coAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
-    , coItems = M.elems $ apiOrderItem productIds <$> orderItemsToPlace o
+    { Api.coId                    = fromOrderId . _orderId                                     . _orderInfo $ o
+    , Api.coOrderCreatedDate      = apiToNearestSecond . _orderCreated                         . _orderInfo $ o
+    , Api.coOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
+    , Api.coOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
+    , Api.coOrderIsPlaced         = (== OrderPlaced) . _orderStatus $ o
+    , Api.coOrderIsAbandoned      = (== OrderAbandoned) . _orderStatus $ o
+    , Api.coIsComplete            = orderIsComplete o
+    , Api.coAllHouseholdsUpToDate = not $ orderIsAwaitingCatalogueUpdateConfirm o
+    , Api.coTotalExcVat           = _moneyExcVat $ case orderAdjustment o of
+                                                     Just a -> _orderAdjNewTotal a
+                                                     _      -> orderTotal $ o
+    , Api.coTotalIncVat           = _moneyIncVat $ case orderAdjustment o of
+                                                     Just a -> _orderAdjNewTotal a
+                                                     _      -> orderTotal $ o
+    , Api.coAdjustment            = apiOrderAdjustment (orderTotal o) $ orderAdjustment o
+    , Api.coItems = M.elems $ apiOrderItem productIds <$> orderItemsToPlace o
     }
 
 apiPastCollectiveOrder :: [(ProductCode, ProductId)] -> Order -> Api.PastCollectiveOrder
 apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
-    { pcoId                    = fromOrderId . _orderId                                     . _orderInfo $ o
-    , pcoOrderCreatedDate      = apiToNearestSecond . _orderCreated                         . _orderInfo $ o
-    , pcoOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
-    , pcoOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
-    , pcoOrderIsPlaced         = (== OrderPlaced) . _orderStatus $ o
-    , pcoOrderIsAbandoned      = (== OrderAbandoned) . _orderStatus $ o
-    , pcoIsComplete            = orderIsComplete o
-    , pcoIsAbandoned           = (== OrderAbandoned) . _orderStatus $ o
-    , pcoIsReconciled          = orderIsReconciled o
-    , pcoAllHouseholdsUpToDate = True
-    , pcoTotalExcVat           = _moneyExcVat adjustedTotal
-    , pcoTotalIncVat           = _moneyIncVat adjustedTotal
-    , pcoAdjustment            = apiOrderAdjustment total $ adjustment
-    , pcoItems = M.elems $ apiOrderItem productIds <$> items
+    { Api.pcoId                    = fromOrderId . _orderId                                     . _orderInfo $ o
+    , Api.pcoOrderCreatedDate      = apiToNearestSecond . _orderCreated                         . _orderInfo $ o
+    , Api.pcoOrderCreatedBy        = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _orderInfo $ o
+    , Api.pcoOrderCreatedByName    = fmap _householdName                      . _orderCreatedBy . _orderInfo $ o
+    , Api.pcoOrderIsPlaced         = (== OrderPlaced) . _orderStatus $ o
+    , Api.pcoOrderIsAbandoned      = (== OrderAbandoned) . _orderStatus $ o
+    , Api.pcoIsComplete            = orderIsComplete o
+    , Api.pcoIsAbandoned           = (== OrderAbandoned) . _orderStatus $ o
+    , Api.pcoIsReconciled          = orderIsReconciled o
+    , Api.pcoAllHouseholdsUpToDate = True
+    , Api.pcoTotalExcVat           = _moneyExcVat adjustedTotal
+    , Api.pcoTotalIncVat           = _moneyIncVat adjustedTotal
+    , Api.pcoAdjustment            = apiOrderAdjustment total $ adjustment
+    , Api.pcoItems = M.elems $ apiOrderItem productIds <$> items
     }
   where 
     adjustedTotal = case adjustment of
@@ -459,32 +459,32 @@ apiPastCollectiveOrder productIds o = Api.PastCollectiveOrder
 
 apiOrderAdjustment :: Money -> Maybe V2.Domain.OrderAdjustment -> Maybe Api.OrderAdjustment
 apiOrderAdjustment total (Just _) = Just $ Api.OrderAdjustment
-  { oaOldTotalExcVat = _moneyExcVat total
-  , oaOldTotalIncVat = _moneyIncVat total
+  { Api.oaOldTotalExcVat = _moneyExcVat total
+  , Api.oaOldTotalIncVat = _moneyIncVat total
   }
 apiOrderAdjustment _ _ = Nothing
 
 apiHouseholdOrder :: [(ProductCode, ProductId)] -> V2.Domain.HouseholdOrder -> Api.HouseholdOrder
 apiHouseholdOrder productIds ho = Api.HouseholdOrder
-    { hoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
-    , hoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
-    , hoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
-    , hoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
-    , hoOrderIsPlaced      = (== OrderPlaced) . _householdOrderOrderStatus $ ho
-    , hoOrderIsAbandoned   = (== OrderAbandoned) . _householdOrderOrderStatus $ ho
-    , hoHouseholdId        = fromHouseholdId . _householdId . _householdOrderHouseholdInfo $ ho
-    , hoHouseholdName      = _householdName                 . _householdOrderHouseholdInfo $ ho
-    , hoIsComplete         = (== HouseholdOrderComplete) . _householdOrderStatus $ ho
-    , hoIsAbandoned        = (== HouseholdOrderAbandoned) . _householdOrderStatus $ ho
-    , hoIsOpen             = apiHouseholdOrderIsOpen ho
-    , hoTotalExcVat        = _moneyExcVat $ case householdOrderAdjustment ho of
-                                              Just a -> _orderAdjNewTotal a
-                                              _      -> householdOrderTotal ho
-    , hoTotalIncVat        = _moneyIncVat $ case householdOrderAdjustment ho of
-                                              Just a -> _orderAdjNewTotal a
-                                              _      -> householdOrderTotal ho
-    , hoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
-    , hoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
+    { Api.hoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
+    , Api.hoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
+    , Api.hoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
+    , Api.hoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
+    , Api.hoOrderIsPlaced      = (== OrderPlaced) . _householdOrderOrderStatus $ ho
+    , Api.hoOrderIsAbandoned   = (== OrderAbandoned) . _householdOrderOrderStatus $ ho
+    , Api.hoHouseholdId        = fromHouseholdId . _householdId . _householdOrderHouseholdInfo $ ho
+    , Api.hoHouseholdName      = _householdName                 . _householdOrderHouseholdInfo $ ho
+    , Api.hoIsComplete         = (== HouseholdOrderComplete) . _householdOrderStatus $ ho
+    , Api.hoIsAbandoned        = (== HouseholdOrderAbandoned) . _householdOrderStatus $ ho
+    , Api.hoIsOpen             = apiHouseholdOrderIsOpen ho
+    , Api.hoTotalExcVat        = _moneyExcVat $ case householdOrderAdjustment ho of
+                                                  Just a -> _orderAdjNewTotal a
+                                                  _      -> householdOrderTotal ho
+    , Api.hoTotalIncVat        = _moneyIncVat $ case householdOrderAdjustment ho of
+                                                  Just a -> _orderAdjNewTotal a
+                                                  _      -> householdOrderTotal ho
+    , Api.hoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
+    , Api.hoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
     }
 
 apiHouseholdOrderIsOpen :: V2.Domain.HouseholdOrder -> Bool
@@ -495,90 +495,90 @@ apiHouseholdOrderIsOpen = (/= HouseholdOrderComplete) . _householdOrderStatus
 
 apiPastHouseholdOrder :: [(ProductCode, ProductId)] -> V2.Domain.HouseholdOrder -> Api.PastHouseholdOrder
 apiPastHouseholdOrder productIds ho = Api.PastHouseholdOrder
-    { phoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
-    , phoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
-    , phoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
-    , phoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
-    , phoOrderIsPlaced      = (== OrderPlaced) . _householdOrderOrderStatus $ ho
-    , phoOrderIsAbandoned   = (== OrderAbandoned) . _householdOrderOrderStatus $ ho
-    , phoHouseholdId        = fromHouseholdId . _householdId . _householdOrderHouseholdInfo $ ho
-    , phoHouseholdName      = _householdName                 . _householdOrderHouseholdInfo $ ho
-    , phoIsComplete         = (== HouseholdOrderComplete) . _householdOrderStatus $ ho
-    , phoIsAbandoned        = (== HouseholdOrderAbandoned) . _householdOrderStatus $ ho
-    , phoIsOpen             = apiHouseholdOrderIsOpen ho
-    , phoIsReconciled       = householdOrderIsReconciled ho
-    , phoTotalExcVat        = _moneyExcVat $ case householdOrderAdjustment ho of
-                                              Just a -> _orderAdjNewTotal a
-                                              _      -> householdOrderTotal ho
-    , phoTotalIncVat        = _moneyIncVat $ case householdOrderAdjustment ho of
-                                              Just a -> _orderAdjNewTotal a
-                                              _      -> householdOrderTotal ho
-    , phoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
-    , phoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
+    { Api.phoOrderId            = fromOrderId . _orderId                                     . _householdOrderOrderInfo $ ho
+    , Api.phoOrderCreatedDate   = apiToNearestSecond . _orderCreated                         . _householdOrderOrderInfo $ ho
+    , Api.phoOrderCreatedBy     = fmap fromHouseholdId . fmap _householdId . _orderCreatedBy . _householdOrderOrderInfo $ ho
+    , Api.phoOrderCreatedByName = fmap _householdName                      . _orderCreatedBy . _householdOrderOrderInfo $ ho
+    , Api.phoOrderIsPlaced      = (== OrderPlaced) . _householdOrderOrderStatus $ ho
+    , Api.phoOrderIsAbandoned   = (== OrderAbandoned) . _householdOrderOrderStatus $ ho
+    , Api.phoHouseholdId        = fromHouseholdId . _householdId . _householdOrderHouseholdInfo $ ho
+    , Api.phoHouseholdName      = _householdName                 . _householdOrderHouseholdInfo $ ho
+    , Api.phoIsComplete         = (== HouseholdOrderComplete) . _householdOrderStatus $ ho
+    , Api.phoIsAbandoned        = (== HouseholdOrderAbandoned) . _householdOrderStatus $ ho
+    , Api.phoIsOpen             = apiHouseholdOrderIsOpen ho
+    , Api.phoIsReconciled       = householdOrderIsReconciled ho
+    , Api.phoTotalExcVat        = _moneyExcVat $ case householdOrderAdjustment ho of
+                                                   Just a -> _orderAdjNewTotal a
+                                                   _      -> householdOrderTotal ho
+    , Api.phoTotalIncVat        = _moneyIncVat $ case householdOrderAdjustment ho of
+                                                   Just a -> _orderAdjNewTotal a
+                                                   _      -> householdOrderTotal ho
+    , Api.phoAdjustment         = apiOrderAdjustment (householdOrderTotal ho) $ householdOrderAdjustment ho
+    , Api.phoItems = M.elems $ apiOrderItem productIds <$> _householdOrderItems ho
     }
 
 apiOrderItem :: [(ProductCode, ProductId)] -> V2.Domain.OrderItem -> Api.OrderItem
 apiOrderItem productIds i = Api.OrderItem
-  { oiProductId          = fromMaybe 0 $ fromProductId <$> lookup (itemProductCode i) productIds
-  , oiProductCode        = fromProductCode . itemProductCode $ i
-  , oiProductName        = _productName . _productInfo . _itemProduct $ i
-  , oiProductVatRate     = apiVatRate . _vatRateType . _priceVatRate . itemProductPrice $ i
-  , oiProductPriceExcVat = _moneyExcVat . _priceAmount $ case _itemAdjustment i of
-                                                           Just a -> _itemAdjNewPrice a
-                                                           _      -> itemProductPrice $ i
-  , oiProductPriceIncVat = _moneyIncVat . _priceAmount $ case _itemAdjustment i of
-                                                           Just a -> _itemAdjNewPrice a
-                                                           _      -> itemProductPrice $ i
-  , oiItemQuantity       = case _itemAdjustment i of
-                             Just a -> _itemAdjNewQuantity a
-                             _      -> _itemQuantity i
-  , oiItemTotalExcVat    = _moneyExcVat $ case _itemAdjustment i of
-                                            Just a -> itemAdjNewTotal a
-                                            _      -> itemTotal $ i
-  , oiItemTotalIncVat    = _moneyIncVat $ case _itemAdjustment i of
-                                            Just a -> itemAdjNewTotal a
-                                            _      -> itemTotal $ i
-  , oiBiodynamic         = _productIsBiodynamic . _productFlags . _itemProduct $ i
-  , oiFairTrade          = _productIsFairTrade  . _productFlags . _itemProduct $ i
-  , oiGlutenFree         = _productIsGlutenFree . _productFlags . _itemProduct $ i
-  , oiOrganic            = _productIsOrganic    . _productFlags . _itemProduct $ i
-  , oiAddedSugar         = _productIsAddedSugar . _productFlags . _itemProduct $ i
-  , oiVegan              = _productIsVegan      . _productFlags . _itemProduct $ i
-  , oiPacked             = _itemIsPacked $ i
-  , oiAdjustment         = apiOrderItemAdjustment i $ _itemAdjustment i
+  { Api.oiProductId          = fromMaybe 0 $ fromProductId <$> lookup (itemProductCode i) productIds
+  , Api.oiProductCode        = fromProductCode . itemProductCode $ i
+  , Api.oiProductName        = _productName . _productInfo . _itemProduct $ i
+  , Api.oiProductVatRate     = apiVatRate . _vatRateType . _priceVatRate . itemProductPrice $ i
+  , Api.oiProductPriceExcVat = _moneyExcVat . _priceAmount $ case _itemAdjustment i of
+                                                               Just a -> _itemAdjNewPrice a
+                                                               _      -> itemProductPrice $ i
+  , Api.oiProductPriceIncVat = _moneyIncVat . _priceAmount $ case _itemAdjustment i of
+                                                               Just a -> _itemAdjNewPrice a
+                                                               _      -> itemProductPrice $ i
+  , Api.oiItemQuantity       = case _itemAdjustment i of
+                                 Just a -> _itemAdjNewQuantity a
+                                 _      -> _itemQuantity i
+  , Api.oiItemTotalExcVat    = _moneyExcVat $ case _itemAdjustment i of
+                                                Just a -> itemAdjNewTotal a
+                                                _      -> itemTotal $ i
+  , Api.oiItemTotalIncVat    = _moneyIncVat $ case _itemAdjustment i of
+                                                Just a -> itemAdjNewTotal a
+                                                _      -> itemTotal $ i
+  , Api.oiBiodynamic         = _productIsBiodynamic . _productFlags . _itemProduct $ i
+  , Api.oiFairTrade          = _productIsFairTrade  . _productFlags . _itemProduct $ i
+  , Api.oiGlutenFree         = _productIsGlutenFree . _productFlags . _itemProduct $ i
+  , Api.oiOrganic            = _productIsOrganic    . _productFlags . _itemProduct $ i
+  , Api.oiAddedSugar         = _productIsAddedSugar . _productFlags . _itemProduct $ i
+  , Api.oiVegan              = _productIsVegan      . _productFlags . _itemProduct $ i
+  , Api.oiPacked             = _itemIsPacked $ i
+  , Api.oiAdjustment         = apiOrderItemAdjustment i $ _itemAdjustment i
   }
 
 apiOrderItemAdjustment :: V2.Domain.OrderItem -> Maybe V2.Domain.OrderItemAdjustment -> Maybe Api.OrderItemAdjustment
 apiOrderItemAdjustment i (Just a) = Just $ Api.OrderItemAdjustment
-  { oiaOldProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
-  , oiaOldProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
-  , oiaOldItemQuantity       = _itemQuantity i
-  , oiaOldItemTotalExcVat    = _moneyExcVat . itemTotal $ i
-  , oiaOldItemTotalIncVat    = _moneyIncVat . itemTotal $ i
-  , oiaProductDiscontinued   = _itemAdjIsDiscontinued a
+  { Api.oiaOldProductPriceExcVat = _moneyExcVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
+  , Api.oiaOldProductPriceIncVat = _moneyIncVat . _priceAmount  . _productPrice . _productInfo . _itemProduct $ i
+  , Api.oiaOldItemQuantity       = _itemQuantity i
+  , Api.oiaOldItemTotalExcVat    = _moneyExcVat . itemTotal $ i
+  , Api.oiaOldItemTotalIncVat    = _moneyIncVat . itemTotal $ i
+  , Api.oiaProductDiscontinued   = _itemAdjIsDiscontinued a
   }
 apiOrderItemAdjustment _ _ = Nothing
 
 apiProductCatalogueEntry :: V2.Domain.ProductCatalogueEntry -> Api.ProductCatalogueEntry
 apiProductCatalogueEntry e = Api.ProductCatalogueEntry
-  { pceCode = fromProductCode . _catalogueEntryCode $ e
-  , pceName = buildProductName e
-  , pcePriceExcVat = _moneyExcVat . _priceAmount . _catalogueEntryPrice $ e
-  , pcePriceIncVat = _moneyIncVat . _priceAmount . _catalogueEntryPrice $ e
-  , pceVatRate = apiVatRate . _vatRateType . _priceVatRate . _catalogueEntryPrice $ e
-  , pceBiodynamic = _catalogueEntryBiodynamic e
-  , pceFairTrade = _catalogueEntryFairTrade e
-  , pceGlutenFree = _catalogueEntryGlutenFree e
-  , pceOrganic = _catalogueEntryOrganic e
-  , pceAddedSugar = _catalogueEntryAddedSugar e
-  , pceVegan = _catalogueEntryVegan e
-  , pceCategory = _catalogueEntryCategory e
-  , pceBrand = _catalogueEntryBrand e
+  { Api.pceCode = fromProductCode . _catalogueEntryCode $ e
+  , Api.pceName = buildProductName e
+  , Api.pcePriceExcVat = _moneyExcVat . _priceAmount . _catalogueEntryPrice $ e
+  , Api.pcePriceIncVat = _moneyIncVat . _priceAmount . _catalogueEntryPrice $ e
+  , Api.pceVatRate = apiVatRate . _vatRateType . _priceVatRate . _catalogueEntryPrice $ e
+  , Api.pceBiodynamic = _catalogueEntryBiodynamic e
+  , Api.pceFairTrade = _catalogueEntryFairTrade e
+  , Api.pceGlutenFree = _catalogueEntryGlutenFree e
+  , Api.pceOrganic = _catalogueEntryOrganic e
+  , Api.pceAddedSugar = _catalogueEntryAddedSugar e
+  , Api.pceVegan = _catalogueEntryVegan e
+  , Api.pceCategory = _catalogueEntryCategory e
+  , Api.pceBrand = _catalogueEntryBrand e
   }
 
 apiGroupSettings :: V2.Domain.OrderGroup -> Api.GroupSettings
 apiGroupSettings g = Api.GroupSettings
-  { gsEnablePayments = _groupSettingsPaymentsEnabled . _groupSettings $ g
+  { Api.gsEnablePayments = _groupSettingsPaymentsEnabled . _groupSettings $ g
   }
 
 apiVatRate :: V2.Domain.VatRateType -> Api.VatRate

@@ -24,18 +24,18 @@ productCatalogue = ProductCatalogue . H.fromList . map (_catalogueEntryCode &&& 
 findEntry :: ProductCode -> ProductCatalogue -> Maybe ProductCatalogueEntry
 findEntry code = H.lookup code . fromProductCatalogue
 
-getEntries :: ProductCatalogue -> [ProductCatalogueEntry]
-getEntries = sortBy (compare `on` _catalogueEntryCode) . H.elems . fromProductCatalogue
+entries :: ProductCatalogue -> [ProductCatalogueEntry]
+entries = sortBy (compare `on` _catalogueEntryCode) . H.elems . fromProductCatalogue
 
 --TODO: Safe version? If catalogue empty
-getDate :: ProductCatalogue -> UTCTime
-getDate = _catalogueEntryUpdated . head . H.elems . fromProductCatalogue
+updatedDate :: ProductCatalogue -> UTCTime
+updatedDate = _catalogueEntryUpdated . head . H.elems . fromProductCatalogue
 
-getCategories :: ProductCatalogue -> [String]
-getCategories = sort . nub . map _catalogueEntryCategory . H.elems . fromProductCatalogue
+categories :: ProductCatalogue -> [String]
+categories = sort . nub . map _catalogueEntryCategory . H.elems . fromProductCatalogue
 
-getBrands :: ProductCatalogue -> [String]
-getBrands = sort . nub . map _catalogueEntryBrand . H.elems . fromProductCatalogue
+brands :: ProductCatalogue -> [String]
+brands = sort . nub . map _catalogueEntryBrand . H.elems . fromProductCatalogue
 
 parseCatalogue :: [VatRate] -> UTCTime -> String -> ProductCatalogue
 parseCatalogue vatRates date file =
@@ -53,7 +53,7 @@ parseCatalogue vatRates date file =
             "1" -> Standard
             "5" -> Reduced
             _ -> Zero
-          vatRate = getVatRate vatRateType vatRates     
+          vatRate = findVatRate vatRateType vatRates     
           price' = atVatRate vatRate $ fromMaybe 0 $ round . (* 100) <$> (readMaybe (trim price) :: Maybe Float)
           rrp' =  round . (* 100) <$> (readMaybe (trim price) :: Maybe Float)
           b' = trim b == "B"

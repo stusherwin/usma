@@ -42,5 +42,5 @@ standardRate = VatRate Standard 1.2
 reducedRate :: VatRate
 reducedRate = VatRate Reduced 1.05
 
-getVatRate :: VatRateType -> [VatRate] -> VatRate
-getVatRate t vs = fromMaybe zeroRate $ lookup t $ map (_vatRateType &&& id) $ vs
+findVatRate :: VatRateType -> [VatRate] -> VatRate
+findVatRate t = fromMaybe zeroRate . lookup t . map (_vatRateType &&& id)
