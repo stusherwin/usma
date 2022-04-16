@@ -9,7 +9,7 @@ module V2.ReconcileSumaOrderFile where
   import Text.HTML.TagSoup (Tag, parseTags, partitions, innerText, fromTagText, isTagText, (~==))
   import Text.Read (readMaybe)
 
-  import V1.Types as Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
+  import V2.Api (UploadedOrderFile(..), UploadedOrderFileRow(..))
   import V2.Domain
 
   parseOrderFileDetails :: String -> String -> Maybe UploadedOrderFile

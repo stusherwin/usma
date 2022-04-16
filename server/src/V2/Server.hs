@@ -21,23 +21,22 @@ import           Servant
 import           Servant.Multipart (MultipartData(..), FileData(..), Mem)
 
 import qualified V2.Api as Api
-import qualified V1.Types as Api
 import           Config (Config(..))
 import           V2.CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           V2.Domain
 import           V2.Repository as R
-import           V2.SumaCatalogue (FetchProductImage)
+import           V2.SumaCatalogue (fetchProductImage)
 import           V2.ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
 
-server :: FetchProductImage -> Config -> Text -> Server Api.Api
-server fetchProductImage config groupKey =
-         queryServer fetchProductImage repoConfig
+server :: Config -> Text -> Server Api.Api
+server config groupKey =
+         queryServer repoConfig
     :<|> commandServer repoConfig
   where
     repoConfig = RepositoryConfig (connectionStringV2 config) (T.unpack groupKey)
 
-queryServer :: FetchProductImage -> RepositoryConfig -> Server Api.QueryApi
-queryServer fetchProductImage config = 
+queryServer :: RepositoryConfig -> Server Api.QueryApi
+queryServer config = 
          allData
     :<|> productCatalogueData     
     :<|> collectiveOrder

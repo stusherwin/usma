@@ -18,16 +18,7 @@ library
   exposed-modules:     App
                      , Api
                      , Config
-                     , CompareV2Api
                      , UpgradeDB 
-                     , V1.Api
-                     , V1.Database
-                     , V1.DatabaseTypes
-                     , V1.ProductCatalogueImport
-                     , V1.ProductImage
-                     , V1.ReconcileHouseholdOrderFile
-                     , V1.Server
-                     , V1.Types
                      , V2.Api
                      , V2.CsvExport
                      , V2.Domain

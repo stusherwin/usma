@@ -22,15 +22,12 @@ import           Servant.Multipart (generalOptions, defaultMultipartOptions, Mem
 
 import Api
 import Config
-import qualified V1.Server as V1 (server)
-import qualified V1.ProductImage as V1 (FetchProductImage)
 import qualified V2.Domain as V2 (fromOrderGroupId)
 import qualified V2.Server as V2 (server)
-import qualified V2.SumaCatalogue as V2 (FetchProductImage)
 import qualified V2.Repository.SQL as V2 (selectOrderGroupId)
 
-app :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Application
-app fetchProductImageV1 fetchProductImageV2 config = serveWithContext fullApi ctxt (server fetchProductImageV1 fetchProductImageV2 config)
+app :: Config -> Application
+app config = serveWithContext fullApi ctxt (server config)
   where ctxt = multipartOpts :. EmptyContext
         multipartOpts = (defaultMultipartOptions (Proxy :: Proxy Mem))
           { generalOptions = clearMaxHeaderLines $
@@ -38,9 +35,9 @@ app fetchProductImageV1 fetchProductImageV2 config = serveWithContext fullApi ct
                              defaultParseRequestBodyOptions 
           }
          
-server :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server Api
-server fetchProductImageV1 fetchProductImageV2 config = 
-       groupServer fetchProductImageV1 fetchProductImageV2 config
+server :: Config -> Server Api
+server config = 
+       groupServer config
   :<|> serveGroupPage
   :<|> serveDirectoryWebApp "client/static"
 
@@ -54,11 +51,10 @@ serveGroupPage _ = Tagged (staticPolicy (addBase "client/static") indexPage)
                    "client/static/index.html"
                Nothing
 
-groupServer :: V1.FetchProductImage -> V2.FetchProductImage -> Config -> Server GroupApi
-groupServer fetchProductImageV1 fetchProductImageV2 config groupKey = 
+groupServer :: Config -> Server GroupApi
+groupServer config groupKey = 
        verifyServer config groupKey
-  :<|> V2.server fetchProductImageV2 config groupKey
-  :<|> V1.server fetchProductImageV1 config groupKey
+  :<|> V2.server config groupKey
 
 verifyServer :: Config -> Text -> Server VerifyApi
 verifyServer config groupKey = do
