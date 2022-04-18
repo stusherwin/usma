@@ -69,21 +69,26 @@ insertProductCatalogueFile conn date file =
     values (?, ?)
   |] (date, file)
 
-selectProductImage :: Connection -> ProductCode -> IO [Only ByteString]
-selectProductImage conn code =
+selectProductData :: Connection -> ProductCode -> IO [(Maybe ByteString, Maybe String, Maybe String, Maybe String, Maybe Int)]
+selectProductData conn code =
   query conn [sql|
-    select image
-    from v2.product_image
+    select image, url, title, imageUrl, size
+    from v2.product_data
     where code = ?
   |] (Only code)
 
-insertProductImage :: Connection -> ProductCode -> ByteString -> IO ()
-insertProductImage conn code image = 
+insertProductData :: Connection -> ProductCode -> Maybe ByteString -> Maybe String -> Maybe String -> Maybe String -> Maybe Int -> IO ()
+insertProductData conn code image url title imageUrl size = 
   void $ execute conn [sql|
-    insert into v2.product_image (code, image)
-    values (?, ?)
-    ON CONFLICT (code) DO UPDATE SET image = EXCLUDED.image;
-  |] (code, Binary image)
+    insert into v2.product_data (code, image, url, title, imageUrl, size)
+    values (?, ?, ?, ?, ?, ?)
+    ON CONFLICT (code) DO UPDATE SET
+      image = EXCLUDED.image,
+      url = EXCLUDED.url,
+      title = EXCLUDED.title,
+      imageUrl = EXCLUDED.imageUrl,
+      size = EXCLUDED.size;
+  |] (code, Binary <$> image, url, title, imageUrl, size)
 
 -- Needed to convert ProductId to ProductCode
 -- TODO: Remove ProductId altogether

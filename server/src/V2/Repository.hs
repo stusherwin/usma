@@ -86,18 +86,17 @@ getProductIdsForPastOrders repo groupId = do
 
   selectProducts conn [ForOrderGroup groupId, OrderIsPast]
 
-getProductImage :: Repository -> ProductCode -> IO (Maybe ByteString)
-getProductImage repo code = do
-  let conn = connection repo
-  
-  image <- selectProductImage conn code
-  return $ listToMaybe $ fmap fromOnly $ image
+getProductData :: Repository -> ProductCode -> IO (Maybe (Maybe ByteString, Maybe String, Maybe String, Maybe String, Maybe Int))
+getProductData repo code = do
+  let conn = connection repo  
+  productData <- selectProductData conn code
+  return $ listToMaybe $ productData
 
-setProductImage :: Repository -> ProductCode -> ByteString -> IO ()
-setProductImage repo code image = do
+setProductData :: Repository -> ProductCode -> Maybe ByteString -> Maybe String -> Maybe String -> Maybe String -> Maybe Int -> IO ()
+setProductData repo code image url title imageUrl size = do
   let conn = connection repo
   
-  insertProductImage conn code image  
+  insertProductData conn code image url title imageUrl size
 
 getHouseholds :: Repository -> Maybe OrderGroupId -> IO [Household]
 getHouseholds repo groupId = do

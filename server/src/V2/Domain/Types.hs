@@ -256,6 +256,13 @@ data ProductCatalogueEntry = ProductCatalogueEntry
   , _catalogueEntryUpdated :: UTCTime
   } deriving (Eq, Show, Generic)
 
+data ProductData = ProductData 
+  { _url :: String
+  , _title :: String
+  , _imageUrl :: String
+  , _size :: Int
+  }
+
 newtype ProductCatalogue = ProductCatalogue { fromProductCatalogue :: H.HashMap ProductCode ProductCatalogueEntry }
 
 makeLenses ''Household

@@ -9,7 +9,7 @@ import           Data.Time.Calendar (addDays)
 import           Network.HTTP.Conduit (simpleHttp)
 import           Text.HTML.TagSoup (parseTags, fromAttrib, sections, (~==))
 
-import           V2.Repository (Repository, getProductImage, setProductImage, getVatRates, getProductCatalogueFile, setProductCatalogueFile)
+import           V2.Repository (Repository, getProductData, setProductData, getVatRates, getProductCatalogueFile, setProductCatalogueFile)
 import           V2.Domain (ProductCode(..), ProductCatalogue, parseCatalogue)
 
 data WebsiteProductData = ProductData 
@@ -23,19 +23,26 @@ type FetchProductImage = Repository -> String -> IO (Maybe BL.ByteString)
 
 fetchProductImage :: FetchProductImage
 fetchProductImage repo code = handle handleException $ do 
-  image <- getProductImage repo (ProductCode code)
-  case image of
-    Just i -> return $ Just $ BL.fromStrict i
+  productData <- getProductData repo (ProductCode code)
+  case productData of
+    Just (Just i, Just _, _, _, _) -> return $ Just $ BL.fromStrict i
+    Just (Just i, Nothing, _, _, _) -> do
+      productData <- fetchProductData code
+      case productData of
+        Just r -> do
+          setProductData repo (ProductCode code) (Just i) (Just $ url r) (Just $ title r) (Just $ imageUrl r) (Just $ size r)
+          return $ Just $ BL.fromStrict i
+        _ -> do
+          return $ Just $ BL.fromStrict i
     _ -> do
       productData <- fetchProductData code
       case productData of
         Just r -> do
           imageData <- simpleHttp (imageUrl r)
-          setProductImage repo (ProductCode code) $ BL.toStrict imageData
+          setProductData repo (ProductCode code) (Just $ BL.toStrict imageData) (Just $ url r) (Just $ title r) (Just $ imageUrl r) (Just $ size r)
           return $ Just $ imageData
         _ -> do
           img <- BL.readFile "client/static/img/404.jpg"
-          setProductImage repo (ProductCode code) $ BL.toStrict img
           return $ Just $ img
   where
   handleException (SomeException ex) = do
@@ -57,8 +64,8 @@ fetchProductData code = do
                                   , size = read $ fromAttrib "height" img
                                   }
 
-fetchProductCatalogue :: Repository -> IO ProductCatalogue
-fetchProductCatalogue repo = do
+fetchProductCatalogue :: Repository -> IO (Maybe ProductCatalogue)
+fetchProductCatalogue repo = handle handleException $ do
   today <- getCurrentTime
   let yesterday = UTCTime (addDays (-1) (utctDay today)) (utctDayTime today)
 
@@ -75,5 +82,9 @@ fetchProductCatalogue repo = do
       return fileContents
 
   vatRates <- getVatRates repo
-  return $ parseCatalogue vatRates today $ T.unpack fileContents
+  return $ Just $ parseCatalogue vatRates today $ T.unpack fileContents
+  where
+  handleException (SomeException ex) = do
+    putStrLn $ show ex
+    return $ Nothing
   

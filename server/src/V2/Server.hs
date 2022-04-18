@@ -88,7 +88,7 @@ queryServer config =
 
     productCatalogueData :: Handler Api.ProductCatalogueApiData
     productCatalogueData = withRepository config $ \(repo, _) -> do
-      catalogue <- liftIO $ fetchProductCatalogue repo
+      catalogue <- MaybeT $ liftIO $ fetchProductCatalogue repo
       let productCatalogue = map apiProductCatalogueEntry $ entries $ catalogue
       let cs = categories catalogue
       let bs = brands catalogue
@@ -226,7 +226,7 @@ commandServer config  =
     reopenHouseholdOrder :: Int -> Int -> Handler ()  
     reopenHouseholdOrder orderId householdId = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
-      catalogue <- liftIO $ fetchProductCatalogue repo
+      catalogue <- MaybeT $ liftIO $ fetchProductCatalogue repo
       let order' = applyCatalogueUpdate catalogue . V2.Domain.reopenHouseholdOrder (HouseholdId householdId) $ order
       liftIO $ setOrders repo ([order], [order'])
       return ()
@@ -235,7 +235,7 @@ commandServer config  =
     ensureHouseholdOrderItem orderId householdId productCode details = withRepository config $ \(repo, groupId) -> do
       order <- MaybeT $ getOrder repo groupId (OrderId orderId)
       household <- MaybeT $ getHouseholdInfo repo groupId (HouseholdId householdId)
-      catalogue <- liftIO $ fetchProductCatalogue repo
+      catalogue <- MaybeT $ liftIO $ fetchProductCatalogue repo
       let order' = addOrUpdateOrderItems catalogue household [(ProductCode productCode, Api.hoidetQuantity details)] order
       liftIO $ setOrders repo ([order], [order'])
       return ()
