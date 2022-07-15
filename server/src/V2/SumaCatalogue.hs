@@ -52,14 +52,15 @@ fetchProductImage repo code = handle handleException $ do
    
 fetchProductData :: String -> IO (Maybe WebsiteProductData)
 fetchProductData code = do
-  html <- simpleHttp ("https://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
-  case sections (~== ("<p class=product-image>" :: String)) $ parseTags $ BL.unpack html of
+  html <- simpleHttp ("http://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
+  case sections (~== ("<div class=\"product details product-item-details\">" :: String)) $ parseTags $ BL.unpack html of
     [] -> return Nothing
     (tags:_) -> do
+      -- putStrLn (show tags)      
       let a = tags !! 2
-      let img = tags !! 4
+      let img = tags !! 8
       return $ Just $ ProductData { url = fromAttrib "href" a
-                                  , title = fromAttrib "title" a
+                                  , title = fromAttrib "alt" img
                                   , imageUrl = fromAttrib "src" img
                                   , size = read $ fromAttrib "height" img
                                   }
