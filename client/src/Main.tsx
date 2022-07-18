@@ -155,6 +155,9 @@ export class Main extends React.Component<MainProps, MainState> {
         collectiveOrder={this.state.collectiveOrders[0]}
         households={this.state.households}
         pastOrders={this.state.collectiveOrders.slice(1)}
+        products={this.state.productCatalogue}
+        categories={this.state.categories}
+        brands={this.state.brands}
         groupSettings={this.state.groupSettings}
         reload={this.reload}
         request={this.request}
@@ -200,6 +203,9 @@ export class Main extends React.Component<MainProps, MainState> {
         collectiveOrder={this.state.collectiveOrders[0]}
         households={this.state.households}
         pastOrders={this.state.collectiveOrders.slice(1)}
+        products={this.state.productCatalogue}
+        categories={this.state.categories}
+        brands={this.state.brands}
         groupSettings={this.state.groupSettings}
         reload={this.reload}
         request={this.request}

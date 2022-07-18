@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classNames from 'classnames'
 
-import { CollectiveOrder, Household, GroupSettings } from 'util/Types'
+import { CollectiveOrder, Household, GroupSettings, ProductCatalogueEntry } from 'util/Types'
 import { Collapsible, CollapsibleState } from 'util/Collapsible'
 import { ServerApi } from 'util/ServerApi'
 import { Icon } from 'util/Icon'
@@ -25,6 +25,9 @@ export interface AdminOrdersPageProps {
   collectiveOrder: CollectiveOrder | undefined
   pastOrders: CollectiveOrder[]
   households: Household[]
+  products: ProductCatalogueEntry[]
+  categories: string[]
+  brands: string[]
   groupSettings: GroupSettings
   request: <T extends {}>(p: Promise<T>) => Promise<T>
   reload: () => Promise<void>
