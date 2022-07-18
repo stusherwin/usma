@@ -112,7 +112,7 @@ export class HouseholdOrder extends React.Component<HouseholdOrderProps, Househo
               <div className="flex items-baseline justify-between ml-20">
                 <div>
                   <h3 className={classNames("leading-none", { "line-through": this.props.householdOrder.isAbandoned })}>
-                    STU {this.props.householdOrder.householdName}
+                    {this.props.householdOrder.householdName}
                   </h3>
                   <h4 className="mt-4 mb-4">
                     <OrderStatus order={this.props.householdOrder} />
