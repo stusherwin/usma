@@ -25,7 +25,7 @@ import           Config (Config(..))
 import           V2.CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           V2.Domain
 import           V2.Repository as R
-import           V2.SumaCatalogue (fetchProductImage, fetchProductCatalogue)
+import           V2.SumaCatalogue (fetchProductImage, fetchProductImageFull, fetchProductCatalogue)
 import           V2.ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
 
 server :: Config -> Text -> Server Api.Api
@@ -46,6 +46,7 @@ queryServer config =
     :<|> households
     :<|> householdPayments
     :<|> productImage
+    :<|> productImageFull
     :<|> collectiveOrderDownload
     :<|> householdOrdersDownload
     :<|> pastCollectiveOrderDownload
@@ -132,6 +133,10 @@ queryServer config =
     productImage :: String -> Handler BL.ByteString
     productImage code = withRepository config $ \(repo, _) -> do
       MaybeT $ liftIO $ fetchProductImage repo code
+
+    productImageFull :: String -> Handler BL.ByteString
+    productImageFull code = withRepository config $ \(repo, _) -> do
+      MaybeT $ liftIO $ fetchProductImageFull repo code
 
     collectiveOrderDownload :: Handler Api.FileDownload
     collectiveOrderDownload = withRepository config $ \(repo, groupId) -> do

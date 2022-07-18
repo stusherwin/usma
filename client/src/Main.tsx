@@ -263,12 +263,12 @@ export class Main extends React.Component<MainProps, MainState> {
         )}
         {!!this.state.productImage && (
           <div className="fixed pin bg-black-translucent flex justify-center items-center" onClick={_ => this.setState({ productImage: null })}>
-            <div className="w-full p-4" style={{ maxWidth: 600 }}>
+            <div className="w-full h-full p-4" style={{ maxWidth: 600 }}>
               <a href="#"
                 onClick={e => { e.preventDefault(); this.setState({ productImage: null }); }}
-                className="bg-white rounded-sm w-full p-4 relative shadow-md border block text-black hover:text-black no-underline hover:no-underline flex justify-center items-center">
+                className="bg-white rounded-sm w-full h-full p-4 relative shadow-md border block text-black hover:text-black no-underline hover:no-underline flex justify-center items-center">
                 <Icon type="close" className="absolute pin-t pin-r mt-2 mr-2 w-3 h-3 fill-current" />
-                <img src={ServerApi.url.productImage(this.state.productImage)} />
+                <img src={ServerApi.url.productImageFull(this.state.productImage)} />
               </a>
             </div>
           </div>

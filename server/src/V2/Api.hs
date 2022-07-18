@@ -35,6 +35,7 @@ type QueryApi =
   :<|> "households" :> Get '[JSON] [Household]
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
+  :<|> "product-image-full" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
   :<|> "collective-order-download" :> Get '[Csv] FileDownload
   :<|> "household-orders-download" :> Get '[Csv] FileDownload
   :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] FileDownload

@@ -192,6 +192,10 @@ const url = {
 
   productImage(productCode: string): string {
     return groupUrl(`/query/product-image/${productCode}`)
+  },
+
+  productImageFull(productCode: string): string {
+    return groupUrl(`/query/product-image-full/${productCode}`)
   }
 }
 
