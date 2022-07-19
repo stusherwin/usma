@@ -36,6 +36,7 @@ type QueryApi =
   :<|> "household-payments" :> Get '[JSON] [HouseholdPayment]
   :<|> "product-image" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
   :<|> "product-image-full" :> Capture "code" String :> Get '[Jpeg] BL.ByteString
+  :<|> "product-info" :> Capture "code" String :> Get '[JSON] (Maybe ProductInfo)
   :<|> "collective-order-download" :> Get '[Csv] FileDownload
   :<|> "household-orders-download" :> Get '[Csv] FileDownload
   :<|> "past-collective-order-download" :> Capture "orderId" Int :> Get '[Csv] FileDownload
@@ -316,6 +317,14 @@ data ProductCatalogueEntry = ProductCatalogueEntry { pceCode :: String
 instance ToJSON ProductCatalogueEntry where
   toJSON = genericToJSON dropFieldPrefixOptions
 instance FromJSON ProductCatalogueEntry where
+  parseJSON = genericParseJSON dropFieldPrefixOptions
+
+data ProductInfo = ProductInfo { piTitle :: String
+                               , piUrl :: String
+                               } deriving (Eq, Show, Generic)
+instance ToJSON ProductInfo where
+  toJSON = genericToJSON dropFieldPrefixOptions
+instance FromJSON ProductInfo where
   parseJSON = genericParseJSON dropFieldPrefixOptions
 
 data GroupSettings = GroupSettings { gsEnablePayments :: Bool

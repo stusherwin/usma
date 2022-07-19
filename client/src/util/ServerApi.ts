@@ -22,6 +22,12 @@ export interface CatalogueData {
   , categories: string[]
   , brands: string[]
 }
+
+export interface ProductInfo {
+  title: string
+  , url: string
+}
+
 function getData(): Promise<ApiData> {
   return Http.get<ApiData>(groupUrl('/query/data'))
     .then(res => {
@@ -39,13 +45,9 @@ function getData(): Promise<ApiData> {
     })
 }
 
-function getProductCatalogueData(): Promise<CatalogueData> {
-  return Http.get<CatalogueData>(groupUrl('/query/product-catalogue-data'))
-}
-
 const query = {
   getCatalogueData(): Promise<CatalogueData> {
-    return getProductCatalogueData()
+    return Http.get<CatalogueData>(groupUrl('/query/product-catalogue-data'));
   },
 
   getData(): Promise<Data> {
@@ -78,6 +80,10 @@ const query = {
           groupSettings
         }
       })
+  },
+
+  getProductInfo(productCode: string): Promise<ProductInfo> {
+    return Http.get<ProductInfo>(groupUrl(`/query/product-info/${productCode}`));
   }
 }
 

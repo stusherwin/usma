@@ -25,7 +25,7 @@ import           Config (Config(..))
 import           V2.CsvExport (exportOrderItems, exportOrderItemsByHousehold)
 import           V2.Domain
 import           V2.Repository as R
-import           V2.SumaCatalogue (fetchProductImage, fetchProductImageFull, fetchProductCatalogue)
+import           V2.SumaCatalogue (ProductInfo(..), fetchProductImage, fetchProductImageFull, fetchProductInfo, fetchProductCatalogue)
 import           V2.ReconcileSumaOrderFile (parseOrderFileDetails, parseOrderFileUpdates)
 
 server :: Config -> Text -> Server Api.Api
@@ -47,6 +47,7 @@ queryServer config =
     :<|> householdPayments
     :<|> productImage
     :<|> productImageFull
+    :<|> productInfo
     :<|> collectiveOrderDownload
     :<|> householdOrdersDownload
     :<|> pastCollectiveOrderDownload
@@ -137,6 +138,11 @@ queryServer config =
     productImageFull :: String -> Handler BL.ByteString
     productImageFull code = withRepository config $ \(repo, _) -> do
       MaybeT $ liftIO $ fetchProductImageFull repo code
+
+    productInfo :: String -> Handler (Maybe Api.ProductInfo)
+    productInfo code = withRepository config $ \(repo, _) -> do
+      info <- liftIO $ fetchProductInfo repo code
+      return $ apiProductInfo <$> info
 
     collectiveOrderDownload :: Handler Api.FileDownload
     collectiveOrderDownload = withRepository config $ \(repo, groupId) -> do
@@ -572,6 +578,12 @@ apiProductCatalogueEntry e = Api.ProductCatalogueEntry
   , Api.pceVegan = _catalogueEntryVegan e
   , Api.pceCategory = _catalogueEntryCategory e
   , Api.pceBrand = _catalogueEntryBrand e
+  }
+
+apiProductInfo :: V2.SumaCatalogue.ProductInfo -> Api.ProductInfo
+apiProductInfo i = Api.ProductInfo 
+  { Api.piTitle = title i
+  , Api.piUrl = url i
   }
 
 apiGroupSettings :: V2.Domain.OrderGroup -> Api.GroupSettings

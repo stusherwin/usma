@@ -18,11 +18,12 @@ import           Text.HTML.TagSoup (parseTags, fromAttrib, fromTagText, sections
 import           V2.Repository (Repository, getProductData, setProductData, getVatRates, getProductCatalogueFile, setProductCatalogueFile)
 import           V2.Domain (ProductCode(..), ProductCatalogue, parseCatalogue)
 
-data ProductData = ProductData 
+data ProductInfo = ProductInfo 
   { url :: String
   , title :: String
   , imageUrl :: String
   , size :: Int
+  , imageData :: BL.ByteString
   }
 
 type FetchProductImage = Repository -> String -> IO (Maybe BL.ByteString)
@@ -30,28 +31,12 @@ type FetchProductImageFull = Repository -> String -> IO (Maybe BL.ByteString)
 
 fetchProductImage :: FetchProductImage
 fetchProductImage repo code = handle handleException $ do 
-  productData <- getProductData repo (ProductCode code)
-  putStrLn $ show productData
-  case productData of
-    Just (Just i, Just _, _, _, _) -> return $ Just $ BL.fromStrict i
-    Just (Just i, Nothing, _, _, _) -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          setProductData repo (ProductCode code) (Just i) (Just $ url r) (Just $ title r) (Just $ imageUrl r) (Just $ size r)
-          return $ Just $ BL.fromStrict i
-        _ -> do
-          return $ Just $ BL.fromStrict i
+  productInfo <- fetchProductInfo repo code
+  case productInfo of
+    Just info -> return $ Just $ imageData info
     _ -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          imageData <- simpleHttp (imageUrl r)
-          setProductData repo (ProductCode code) (Just $ BL.toStrict imageData) (Just $ url r) (Just $ title r) (Just $ imageUrl r) (Just $ size r)
-          return $ Just $ imageData
-        _ -> do
-          img <- BL.readFile "client/static/img/404.jpg"
-          return $ Just $ img
+      img <- BL.readFile "client/static/img/404.jpg"
+      return $ Just $ img
   where
   handleException (SomeException ex) = do
     putStrLn $ show ex
@@ -60,30 +45,10 @@ fetchProductImage repo code = handle handleException $ do
 
 fetchProductImageFull :: FetchProductImageFull
 fetchProductImageFull repo code = handle handleException $ do 
-  productData <- getProductData repo (ProductCode code)
-  productUrl <- case productData of
-    Just (_, Just url, _, _, _) -> return $ Just url
-    Just (Just i, _, _, Nothing, _) -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          setProductData repo (ProductCode code) (Just i) (Just $ url r) (Just $ title r) (Just $ imageUrl r) (Just $ size r)
-          return $ Just $ url r
-        _ -> do
-          return Nothing
-    _ -> do
-      productData <- fetchProductData code
-      case productData of
-        Just r -> do
-          imageData <- simpleHttp (imageUrl r)
-          setProductData repo (ProductCode code) (Just $ BL.toStrict imageData) (Just $ url r) (Just $ title r) (Just $ imageUrl r) (Just $ size r)
-          return $ Just $ url r
-        _ -> do
-          return Nothing
-  putStrLn $ show productUrl
-  case productUrl of
-    Just url -> do
-      html <- simpleHttp url
+  productInfo <- fetchProductInfo repo code
+  case productInfo of
+    Just info -> do
+      html <- simpleHttp $ url info
       let scriptTags = sections (~== ("<script type=\"text/x-magento-init\">" :: String)) $ parseTags $ BL.unpack html
       let text = fromTagText $ scriptTags !! 13 !! 1
       let imageUrl = do
@@ -111,22 +76,43 @@ fetchProductImageFull repo code = handle handleException $ do
     img <- BL.readFile "client/static/img/404.jpg"
     return $ Just $ img
 
-fetchProductData :: String -> IO (Maybe ProductData)
-fetchProductData code = do
-  html <- simpleHttp ("http://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
-  putStrLn $ BL.unpack html
-  case sections (~== ("<div class=\"product details product-item-details\">" :: String)) $ parseTags $ BL.unpack html of
-    (tags:_) -> do
-      let a = tags !! 2
-      putStrLn (show a)      
-      let img = tags !! 8
-      putStrLn (show img)      
-      return $ Just $ ProductData { url = fromAttrib "href" a
-                                  , title = fromAttrib "alt" img
-                                  , imageUrl = fromAttrib "src" img
-                                  , size = read $ fromAttrib "height" img
-                                  }
-    _ -> return Nothing
+fetchProductInfo :: Repository -> String -> IO (Maybe ProductInfo)
+fetchProductInfo repo code = do
+  productData <- getProductData repo (ProductCode code)
+  case productData of
+    Just (Just i, Just url, Just t, Just iurl, Just s) -> return $ Just $ ProductInfo { title = t
+                                                                                      , url = url
+                                                                                      , imageUrl = iurl
+                                                                                      , size = s
+                                                                                      , imageData = BL.fromStrict i
+                                                                                      }
+    Just (Nothing, Just u, Just t, Just iurl, Just s) -> do
+      idata <- simpleHttp iurl
+      let info = ProductInfo { title = t
+                             , url = u
+                             , imageUrl = iurl
+                             , size = s
+                             , imageData = idata
+                             }
+      setProductData repo (ProductCode code) (Just $ BL.toStrict $ imageData info) (Just $ url info) (Just $ title info) (Just $ imageUrl info) (Just $ size info)
+      return $ Just info
+    _ -> do
+      html <- simpleHttp ("http://www.sumawholesale.com/catalogsearch/result/?q=" ++ code)
+      case sections (~== ("<div class=\"product details product-item-details\">" :: String)) $ parseTags $ BL.unpack html of
+        (tags:_) -> do
+          let a = tags !! 2
+          let img = tags !! 8
+          let iurl = fromAttrib "src" img
+          idata <- simpleHttp iurl
+          let info = ProductInfo { title = fromAttrib "alt" img
+                                 , url = fromAttrib "href" a
+                                 , imageUrl = iurl
+                                 , size = read $ fromAttrib "height" img
+                                 , imageData = idata
+                                 }
+          setProductData repo (ProductCode code) (Just $ BL.toStrict $ imageData info) (Just $ url info) (Just $ title info) (Just $ imageUrl info) (Just $ size info)
+          return $ Just info
+        _ -> return Nothing
 
 fetchProductCatalogue :: Repository -> IO (Maybe ProductCatalogue)
 fetchProductCatalogue repo = handle handleException $ do

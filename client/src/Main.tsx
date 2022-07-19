@@ -30,6 +30,8 @@ export interface MainState {
   households: Household[]
   groupSettings: GroupSettings
   productImage: string | null
+  productTitle: string | null
+  productUrl: string | null
   images: string[]
 }
 
@@ -55,6 +57,8 @@ export class Main extends React.Component<MainProps, MainState> {
       initialised: !urlInfo.groupKey,
       groupSettings: { enablePayments: false },
       productImage: null,
+      productTitle: null,
+      productUrl: null,
       images: []
     }
   }
@@ -145,7 +149,11 @@ export class Main extends React.Component<MainProps, MainState> {
     return p
   }
 
-  showProductImage = (productCode: string) => this.setState({ productImage: productCode })
+  showProductImage = (productCode: string) => {
+    this.setState({ productImage: productCode, productTitle: null, productUrl: null });
+    ServerApi.query.getProductInfo(productCode)
+      .then(info => this.setState({ productTitle: info.title, productUrl: info.url }));
+  }
 
   render() {
     const router = new Router('')
@@ -264,12 +272,20 @@ export class Main extends React.Component<MainProps, MainState> {
         {!!this.state.productImage && (
           <div className="fixed pin bg-black-translucent flex justify-center items-center" onClick={_ => this.setState({ productImage: null })}>
             <div className="w-full h-full p-4" style={{ maxWidth: 600 }}>
-              <a href="#"
-                onClick={e => { e.preventDefault(); this.setState({ productImage: null }); }}
-                className="bg-white rounded-sm w-full h-full p-4 relative shadow-md border block text-black hover:text-black no-underline hover:no-underline flex justify-center items-center">
-                <Icon type="close" className="absolute pin-t pin-r mt-2 mr-2 w-3 h-3 fill-current" />
-                <img src={ServerApi.url.productImageFull(this.state.productImage)} />
-              </a>
+              <div className="bg-white rounded-sm w-full h-full shadow-md border flex flex-col">
+                <a href="#"
+                  onClick={e => { e.preventDefault(); this.setState({ productImage: null }); }}
+                  className="block h-full p-4 relative text-black hover:text-black no-underline hover:no-underline flex flex-col">
+                  <Icon type="close" className="absolute pin-t pin-r mt-2 mr-2 w-3 h-3 fill-current" />
+                  <h2 className="text-md mt-4 text-center">{this.state.productTitle}</h2>
+                  <div className="h-full flex flex-col justify-center items-center">
+                    <img src={ServerApi.url.productImageFull(this.state.productImage)} />
+                  </div>
+                </a>
+                {this.state.productUrl && 
+                  <a href={this.state.productUrl} target="_blank" className="block p-4 text-center">See more info on the Suma website</a>
+                }
+              </div>
             </div>
           </div>
         )}
